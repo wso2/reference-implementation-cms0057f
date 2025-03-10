@@ -65,4 +65,3 @@ node_modules/
 **/build/
 **/npm/
 **/dist/
-**/package-lock.json

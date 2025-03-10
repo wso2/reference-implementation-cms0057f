@@ -1,0 +1,111 @@
+openapi: 3.0.1
+info:
+  title: FHIR R4 Questionnaire API
+  description: API for managing FHIR R4 Questionnaire resources.
+  version: 1.0.0
+servers:
+  - url: http://localhost:9090/fhir/r4
+paths:
+  /fhir/r4/Questionnaire/{id}:
+    get:
+      summary: Retrieve a Questionnaire by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response with the requested Questionnaire
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Questionnaire"
+        "404":
+          description: Questionnaire not found
+    put:
+      summary: Update a Questionnaire by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Questionnaire"
+      responses:
+        "501":
+          description: Not implemented
+    delete:
+      summary: Delete a Questionnaire by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "501":
+          description: Not implemented
+  /fhir/r4/Questionnaire:
+    get:
+      summary: Search for Questionnaires
+      parameters:
+        - name: searchParams
+          in: query
+          schema:
+            type: object
+      responses:
+        "200":
+          description: A bundle of matching Questionnaires
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Bundle"
+    post:
+      summary: Create a new Questionnaire
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Questionnaire"
+      responses:
+        "201":
+          description: Successfully created Questionnaire
+  /fhir/r4/Questionnaire/{id}/_history:
+    get:
+      summary: Retrieve the update history of a Questionnaire
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "501":
+          description: Not implemented
+components:
+  schemas:
+    Questionnaire:
+      type: object
+      properties:
+        resourceType:
+          type: string
+          example: Questionnaire
+        id:
+          type: string
+        status:
+          type: string
+          example: active
+    Bundle:
+      type: object
+      properties:
+        resourceType:
+          type: string
+          example: Bundle

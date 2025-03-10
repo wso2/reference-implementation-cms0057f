@@ -1,0 +1,12 @@
+schemaVersion: 1.1
+endpoints:
+  - name: international401-parameters-api
+    displayName: international401 Parameters API
+    service:
+      basePath: /
+      port: 9090
+    type: REST
+    networkVisibilities:
+      - Project
+      - Public
+    schemaFilePath: oas/Parameters.yaml

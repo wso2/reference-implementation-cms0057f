@@ -148,7 +148,7 @@ const QuestionnniarForm = ({
               typeof formData[question.linkId] === "boolean"
                 ? (formData[question.linkId] as boolean)
                 : undefined,
-            valueQuestionnaireResponseNumber:
+            valueQuestionnaireResponseInteger:
               typeof formData[question.linkId] === "number"
                 ? (formData[question.linkId] as number)
                 : undefined,

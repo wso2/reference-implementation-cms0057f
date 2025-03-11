@@ -32,7 +32,7 @@ public type Parameters international401:Parameters;
 service / on new fhirr4:Listener(9090, apiConfig) {
 
     // Create a new resource.
-    isolated resource function post fhir/r4/Questionnaire/\$questionnaire\-package(r4:FHIRContext fhirContext, Parameters parameters) returns error|http:Response {
+    isolated resource function post fhir/r4/Questionnaire/questionnaire\-package(r4:FHIRContext fhirContext, Parameters parameters) returns error|http:Response {
         international401:Parameters createResult = check create(parameters);
         http:Response response = new;
         response.setJsonPayload(createResult.toJson());

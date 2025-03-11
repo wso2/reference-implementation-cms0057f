@@ -14,7 +14,7 @@ tags:
   - name: Parameters
   - name: 4.0.1
 paths:
-  /fhir/r4/QuestionnaireResponse/submit:
+  /fhir/r4/Claim/submit:
     post:
       summary: Submit a new Claim
       tags:

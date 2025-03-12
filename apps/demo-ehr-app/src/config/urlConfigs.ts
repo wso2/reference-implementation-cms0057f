@@ -19,15 +19,15 @@ export const baseUrl =
 
 export const paths = {
   medication_request:
-    "/cms-0057-f/medication-request-servic/v1.0/fhir/r4/MedicationRequest",
+    "/cms-0057-f/medication-request-ser-tw/v1.0/fhir/r4/MedicationRequest",
   prescribe_medication:
-    "/cms-0057-f/cds-service/v1.0/cds-services/prescirbe-medication",
+    "/cms-0057-f/cds-service-qn/v1.0/cds-services/prescirbe-medication",
   questionnaire:
     "/cms-0057-f/questionnaire-service/v1.0/fhir/r4/Questionnaire/",
   questionnaire_package:
     "/cms-0057-f/questionnaire-package-wp/v1.0/fhir/r4/Questionnaire/questionnaire-package",
   questionnaire_response:
-    "/cms-0057-f/claim-submission-servi-hk/v1.0/fhir/r4/QuestionnaireResponse/submit",
+    "/cms-0057-f/questionnaire-response-fh/v1.0/fhir/r4/QuestionnaireResponse",
   claim: "/cms-0057-f/claim-service/v1.0/fhir/r4/Claim",
   claim_submit:
     "/cms-0057-f/claim-submission-servi-hk/v1.0/fhir/r4/Claim/submit",

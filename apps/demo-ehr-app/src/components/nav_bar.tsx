@@ -20,6 +20,7 @@ import { useContext } from "react";
 import { ExpandedContext } from "../utils/expanded_context";
 import { useSelector } from "react-redux";
 import { PATIENT_DETAILS } from "../constants/data";
+import Cookies from "js-cookie";
 
 export default function NavBar() {
   const { expanded } = useContext(ExpandedContext);
@@ -54,7 +55,7 @@ export default function NavBar() {
           alignItems={"center"}
           height="100%"
         >
-          <Button href="/dashboard" color="primary">
+          <Button href="/patient/dashboard" color="primary">
             <Box borderRadius="100%" overflow="hidden" marginLeft={5}>
               <img
                 src="/demo_logo.png"
@@ -87,16 +88,34 @@ export default function NavBar() {
               Order Imaging
             </Button>
           </Box>
-          <Button href="/dashboard/patient">
-            <Box marginRight={10} color="white" fontSize="16px">
-              {currentPatient.name[0].given[0] +
-                " " +
-                currentPatient.name[0].family}
-            </Box>
-            <Box borderRadius="50%" overflow="hidden" marginRight={5}>
-              <img src="/profile.png" alt="Demo Logo" height={40} width={40} />
-            </Box>
-          </Button>
+          <Box>
+            <Button
+              onClick={async () => {
+                window.location.href = `/auth/logout?session_hint=${Cookies.get(
+                  "session_hint"
+                )}`;
+              }}
+            >
+              <Box marginRight={10} color="white" fontSize="16px">
+                Logout
+              </Box>
+            </Button>
+            <Button href="/dashboard/patient">
+              <Box marginRight={10} color="white" fontSize="16px">
+                {currentPatient.name[0].given[0] +
+                  " " +
+                  currentPatient.name[0].family}
+              </Box>
+              <Box borderRadius="50%" overflow="hidden" marginRight={5}>
+                <img
+                  src="/profile.png"
+                  alt="Demo Logo"
+                  height={40}
+                  width={40}
+                />
+              </Box>
+            </Button>
+          </Box>
         </Flex>
       </Box>
     </div>

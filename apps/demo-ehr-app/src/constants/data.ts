@@ -20,34 +20,34 @@ export const SERVICE_CARD_DETAILS = [
     serviceName: "View Patient",
     serviceDescription:
       "Access and manage patient records, including personal details, medical history, and treatment plans.",
-    path: "/dashboard/patient",
+    path: "/patient/dashboard/patient",
   },
   {
     serviceImagePath: "/appointment_book_service.png",
     serviceName: "Book an Appointment",
     serviceDescription:
       "Easily schedule and manage appointments with healthcare providers.",
-    path: "/dashboard/appointment-schedule",
+    path: "/patient/dashboard/appointment-schedule",
   },
   {
     serviceImagePath: "/drug_order_service.png",
     serviceName: "Order Drugs",
     serviceDescription:
       "Order and manage medications for patients, ensuring timely and accurate delivery.",
-    path: "/dashboard/drug-order-v2",
+    path: "/patient/dashboard/drug-order-v2",
   },
   {
     serviceImagePath: "/order_device_service.png",
     serviceName: "Order Devices",
     serviceDescription: "Order and manage medical devices for patient care.",
-    path: "/dashboard/device-order-v2",
+    path: "/patient/dashboard/device-order-v2",
   },
   {
     serviceImagePath: "/medical_imaging.png",
     serviceName: "Schedule Medical Imaging",
     serviceDescription:
       "Schedule and manage medical imaging appointments, including CT scans, X-rays, and MRIs.",
-    path: "/dashboard/medical-imaging",
+    path: "/patient/dashboard/medical-imaging",
   },
 ];
 
@@ -1073,8 +1073,7 @@ export const CLAIM_REQUEST_BODY = (
   };
 };
 
-export const CREATE_MEDICATION_REQUEST_BODY = (
-) => {
+export const CREATE_MEDICATION_REQUEST_BODY = () => {
   return {
     resourceType: "MedicationRequest",
     subject: {

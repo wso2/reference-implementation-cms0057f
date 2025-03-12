@@ -25,12 +25,12 @@ export const paths = {
   questionnaire:
     "/cms-0057-f/questionnaire-service/v1.0/fhir/r4/Questionnaire/",
   questionnaire_package:
-    "/cms-0057-f/questionnaire-package-ser/v1.0/fhir/r4/Questionnaire/questionnaire-package",
+    "/cms-0057-f/questionnaire-package-wp/v1.0/fhir/r4/Questionnaire/questionnaire-package",
   questionnaire_response:
-    "/cms-0057-f/questionnaire-response-se/v1.0/fhir/r4/QuestionnaireResponse",
+    "/cms-0057-f/claim-submission-servi-hk/v1.0/fhir/r4/QuestionnaireResponse/submit",
   claim: "/cms-0057-f/claim-service/v1.0/fhir/r4/Claim",
   claim_submit:
-    "/cms-0057-f/claim-submission-service/v1.0/fhir/r4/Claim/submit",
+    "/cms-0057-f/claim-submission-servi-hk/v1.0/fhir/r4/Claim/submit",
 
   // old urls
   radiology_order:

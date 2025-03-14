@@ -25,10 +25,12 @@ import { SCREEN_WIDTH, SCREEN_HEIGHT } from "../constants/page";
 import { PATIENT_DETAILS } from "../constants/data";
 import { useDispatch } from "react-redux";
 import { selectPatient } from "../redux/patientSlice";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import NavBar from "../components/nav_bar";
+import { useAuth } from "../components/AuthProvider";
 
 function PatientEncounter() {
+  const { isAuthenticated } = useAuth();
   const [selectedPatient, setSelectedPatient] = useState("");
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -49,7 +51,7 @@ function PatientEncounter() {
     navigate("dashboard");
   };
 
-  return (
+  return isAuthenticated ? (
     <>
       <div
         style={{
@@ -129,6 +131,8 @@ function PatientEncounter() {
         </div>
       </div>
     </>
+  ) : (
+    <Navigate to="/" replace />
   );
 }
 

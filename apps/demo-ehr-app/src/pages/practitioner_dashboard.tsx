@@ -23,6 +23,8 @@ import { useContext } from "react";
 import { ExpandedContext } from "../utils/expanded_context";
 import { useSelector } from "react-redux";
 import Form from "react-bootstrap/Form";
+import { useAuth } from "../components/AuthProvider";
+import { Navigate } from "react-router-dom";
 
 function ServiceCardList({ services, expanded }: ServiceCardListProps) {
   return (
@@ -109,6 +111,7 @@ const DetailsDiv = () => {
 };
 
 function PractitionerDashBoard() {
+  const { isAuthenticated } = useAuth();
   const { expanded } = useContext(ExpandedContext);
   const selectedPatientId = useSelector(
     (state: any) => state.patient.selectedPatientId
@@ -121,7 +124,7 @@ function PractitionerDashBoard() {
     currentPatient = PATIENT_DETAILS[0];
   }
 
-  return (
+  return isAuthenticated ? (
     <div style={{ marginLeft: 50, marginBottom: 50 }}>
       <DetailsDiv />
       <div
@@ -138,6 +141,8 @@ function PractitionerDashBoard() {
         <ServiceCardList services={SERVICE_CARD_DETAILS} expanded={expanded} />
       </div>
     </div>
+  ) : (
+    <Navigate to="/" replace />
   );
 }
 

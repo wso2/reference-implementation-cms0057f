@@ -35,7 +35,7 @@ import { useContext, useEffect, useState } from "react";
 import { updateCdsHook, updateRequest } from "../redux/cdsRequestSlice";
 import { Dayjs } from "dayjs";
 import { useDispatch, useSelector } from "react-redux";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { LAB_TEST, ORDER_SIGN_CDS_REQUEST2 } from "../constants/data";
 import { ExpandedContext } from "../utils/expanded_context";
 import { Card } from "@chakra-ui/react";
@@ -43,6 +43,7 @@ import axios from "axios";
 import { updateCdsResponse } from "../redux/cdsResponseSlice";
 import MedicalImagingSign from "./MedicalImagingSign";
 import { baseUrl, paths } from "../config/urlConfigs";
+import { useAuth } from "../components/AuthProvider";
 
 interface Coding {
   id?: string;
@@ -111,6 +112,7 @@ export interface CdsResponse {
 }
 
 function MedicalImaging() {
+  const { isAuthenticated } = useAuth();
   const form_selector_width = SCREEN_WIDTH * 0.3;
   const { expanded } = useContext(ExpandedContext);
   const dispatch = useDispatch();
@@ -261,7 +263,7 @@ function MedicalImaging() {
     dispatch,
   ]);
 
-  return (
+  return isAuthenticated ? (
     <>
       <div
         style={{
@@ -473,6 +475,8 @@ function MedicalImaging() {
         </Box>
       </div>
     </>
+  ) : (
+    <Navigate to="/" replace />
   );
 }
 

@@ -1,5 +1,6 @@
-import { useLocation } from 'react-router-dom';
-import medconnectLogo from '../assets/images/medconnect.png';
+import { Navigate, useLocation } from "react-router-dom";
+import medconnectLogo from "../assets/images/medconnect.png";
+import { useAuth } from "./AuthProvider";
 
 interface LocationState {
   doctorName: string;
@@ -11,6 +12,7 @@ interface LocationState {
 }
 
 function AppointmentReceipt() {
+  const { isAuthenticated } = useAuth();
   const location = useLocation();
   const state = location.state as LocationState | undefined;
 
@@ -18,19 +20,44 @@ function AppointmentReceipt() {
     return <p>Error: No appointment data available.</p>;
   }
 
-  const { doctorName, patientName, date, time, location: appointmentLocation, referenceID } = state;
+  const {
+    doctorName,
+    patientName,
+    date,
+    time,
+    location: appointmentLocation,
+    referenceID,
+  } = state;
 
-  return (
+  return isAuthenticated ? (
     <div className="receipt-page">
-      <img src={medconnectLogo} alt="MedConnect Logo" className="receipt-logo" />
+      <img
+        src={medconnectLogo}
+        alt="MedConnect Logo"
+        className="receipt-logo"
+      />
       <h2>Appointment Receipt</h2>
-      <p><strong>Appointment Reference:</strong> {referenceID}</p>
-      <p><strong>Appointment Status:</strong> Confirmed</p>
-      <p><strong>Patient Name:</strong> {patientName}</p>
-      <p><strong>Doctor Name:</strong> {doctorName}</p>
-      <p><strong>Date:</strong> {date}</p>
-      <p><strong>Time:</strong> {time}</p>
-      <p><strong>Location:</strong> {appointmentLocation}</p>
+      <p>
+        <strong>Appointment Reference:</strong> {referenceID}
+      </p>
+      <p>
+        <strong>Appointment Status:</strong> Confirmed
+      </p>
+      <p>
+        <strong>Patient Name:</strong> {patientName}
+      </p>
+      <p>
+        <strong>Doctor Name:</strong> {doctorName}
+      </p>
+      <p>
+        <strong>Date:</strong> {date}
+      </p>
+      <p>
+        <strong>Time:</strong> {time}
+      </p>
+      <p>
+        <strong>Location:</strong> {appointmentLocation}
+      </p>
 
       {/* Additional Instructions */}
       <div className="receipt-notice">
@@ -38,16 +65,33 @@ function AppointmentReceipt() {
           <li>Your channeling is complete. Please note the reference No.</li>
           <li>For your benefit, you could obtain a print copy of this page.</li>
           <li>Please be at the hospital 15 minutes before the given time.</li>
-          <li>The reference number is essential for you to be able to consult the doctor.</li>
-          <li>The appointment time shown is only an approximate time. It may be subject to change depending on the doctor's arrival time and the time spent with patients ahead of you.</li>
-          <li>In the event of the doctor canceling the appointment, the patient could secure a refund on the doctor fee and/or hospital fee at the discretion of the hospital. Alternatively, you may be able to reschedule the appointment for the same doctor at the hospital for another time and date.</li>
-          <li>MedConnect PLC is not liable for any loss or damages incurred due to a doctor canceling or rescheduling appointments.</li>
+          <li>
+            The reference number is essential for you to be able to consult the
+            doctor.
+          </li>
+          <li>
+            The appointment time shown is only an approximate time. It may be
+            subject to change depending on the doctor's arrival time and the
+            time spent with patients ahead of you.
+          </li>
+          <li>
+            In the event of the doctor canceling the appointment, the patient
+            could secure a refund on the doctor fee and/or hospital fee at the
+            discretion of the hospital. Alternatively, you may be able to
+            reschedule the appointment for the same doctor at the hospital for
+            another time and date.
+          </li>
+          <li>
+            MedConnect PLC is not liable for any loss or damages incurred due to
+            a doctor canceling or rescheduling appointments.
+          </li>
         </ul>
 
         <p>Wishing You Good Health!!</p>
       </div>
-
     </div>
+  ) : (
+    <Navigate to="/" replace />
   );
 }
 

@@ -26,7 +26,7 @@ export const paths = {
   // prescribe_medication:
   //   "/cms-0057-f/cds-service-qn/v1.0/cds-services/prescirbe-medication",
   prescribe_medication:
-    "/choreo-apis/cms-0057-f/cds-service/v1/cds-services/prescirbe-medication",
+    "/choreo-apis/cms-0057-f/cds-service-qn/v1/cds-services/prescirbe-medication",
 
   // questionnaire_package:
   //   "/cms-0057-f/questionnaire-package-wp/v1.0/fhir/r4/Questionnaire/questionnaire-package",

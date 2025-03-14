@@ -20,34 +20,34 @@ export const SERVICE_CARD_DETAILS = [
     serviceName: "View Patient",
     serviceDescription:
       "Access and manage patient records, including personal details, medical history, and treatment plans.",
-    path: "/patient/dashboard/patient",
+    path: "/dashboard/patient",
   },
   {
     serviceImagePath: "/appointment_book_service.png",
     serviceName: "Book an Appointment",
     serviceDescription:
       "Easily schedule and manage appointments with healthcare providers.",
-    path: "/patient/dashboard/appointment-schedule",
+    path: "/dashboard/appointment-schedule",
   },
   {
     serviceImagePath: "/drug_order_service.png",
     serviceName: "Order Drugs",
     serviceDescription:
       "Order and manage medications for patients, ensuring timely and accurate delivery.",
-    path: "/patient/dashboard/drug-order-v2",
+    path: "/dashboard/drug-order-v2",
   },
   {
     serviceImagePath: "/order_device_service.png",
     serviceName: "Order Devices",
     serviceDescription: "Order and manage medical devices for patient care.",
-    path: "/patient/dashboard/device-order-v2",
+    path: "/dashboard/device-order-v2",
   },
   {
     serviceImagePath: "/medical_imaging.png",
     serviceName: "Schedule Medical Imaging",
     serviceDescription:
       "Schedule and manage medical imaging appointments, including CT scans, X-rays, and MRIs.",
-    path: "/patient/dashboard/medical-imaging",
+    path: "/dashboard/medical-imaging",
   },
 ];
 

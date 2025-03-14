@@ -22,13 +22,14 @@ import {
   Collapse,
   Grid,
 } from "@mui/material";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { DRUG_DETAILS } from "../constants/data";
 import { Box } from "@mui/material";
 import { useContext } from "react";
 import { ExpandedContext } from "../utils/expanded_context";
 import { useDispatch } from "react-redux";
 import { updateCdsHook, resetCdsRequest } from "../redux/cdsRequestSlice";
+import { useAuth } from "../components/AuthProvider";
 
 interface CardData {
   name: string;
@@ -82,8 +83,9 @@ const CardComponent = ({ data }: { data: CardData }) => {
 };
 
 export default function DrugOrderPage() {
+  const { isAuthenticated } = useAuth();
   const { expanded } = useContext(ExpandedContext);
-  return (
+  return isAuthenticated ? (
     <div
       style={{
         display: "grid",
@@ -97,5 +99,7 @@ export default function DrugOrderPage() {
         <CardComponent key={index} data={item} />
       ))}
     </div>
+  ) : (
+    <Navigate to="/" replace />
   );
 }

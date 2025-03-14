@@ -15,7 +15,7 @@
 // under the License.
 
 import React, { useState, useEffect, useContext } from "react";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import "../assets/styles/appointment.css";
 import MessageBox from "../components/message_box";
 import appointmentImage from "../assets/images/appointment-booking.png";
@@ -24,6 +24,7 @@ import { ExpandedContext } from "../utils/expanded_context";
 import { useDispatch } from "react-redux";
 import { resetCdsResponse, updateCdsResponse } from "../redux/cdsResponseSlice";
 import { resetCdsRequest, updateRequest } from "../redux/cdsRequestSlice";
+import { useAuth } from "../components/AuthProvider";
 
 // Define interfaces for Doctor, Slot, and Location objects
 interface Doctor {
@@ -44,6 +45,7 @@ interface Location {
 }
 
 function App() {
+  const { isAuthenticated } = useAuth();
   // State variables for user input and app state
   const [firstName, setFirstName] = useState<string>("");
   const [lastName, setLastName] = useState<string>("");
@@ -350,7 +352,7 @@ The return() function defines the structure and user interface for the appointme
 The entire layout is styled using CSS classes to enhance readability, usability, and responsiveness, providing a smooth user experience for booking appointments.
 */
 
-  return (
+  return isAuthenticated ? (
     <div className="appointment-ui">
       <div className="container">
         <div className="book-appointment-heading">Book an Appointment</div>
@@ -494,6 +496,8 @@ The entire layout is styled using CSS classes to enhance readability, usability,
         )}
       </div>
     </div>
+  ) : (
+    <Navigate to="/" replace />
   );
 }
 

@@ -28,6 +28,8 @@ import {
 } from "../redux/cdsRequestSlice";
 import { updateCdsResponse, resetCdsResponse } from "../redux/cdsResponseSlice";
 import { CLAIM_REQUEST_BODY } from "../constants/data";
+import { useAuth } from "../components/AuthProvider";
+import { Navigate } from "react-router-dom";
 
 const ClaimForm = () => {
   const dispatch = useDispatch();
@@ -262,13 +264,14 @@ const ClaimForm = () => {
 };
 
 export default function DrugClaimPage() {
+  const { isAuthenticated } = useAuth();
   const medicationFormData = useSelector(
     (state: { medicationFormData: { medication: string; quantity: string } }) =>
       state.medicationFormData
   );
 
   console.log("medicationFormData", medicationFormData);
-  return (
+  return isAuthenticated ? (
     <div style={{ marginLeft: 50, marginBottom: 50 }}>
       <div className="page-heading">Claim Insurance</div>
       <ClaimForm />
@@ -283,5 +286,7 @@ export default function DrugClaimPage() {
         }
       `}</style>
     </div>
+  ) : (
+    <Navigate to="/" replace />
   );
 }

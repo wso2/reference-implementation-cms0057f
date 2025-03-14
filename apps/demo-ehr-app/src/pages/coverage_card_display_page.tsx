@@ -18,15 +18,18 @@ import { useContext } from "react";
 import { ExpandedContext } from "../utils/expanded_context";
 import { useSelector } from "react-redux";
 import { SystemActionComponent } from "../components/systemAction";
+import { useAuth } from "../components/AuthProvider";
+import { Navigate } from "react-router-dom";
 
 export function CoverageCardDisplayPage() {
+  const { isAuthenticated } = useAuth();
   const { expanded } = useContext(ExpandedContext);
 
   const cdsResponse = useSelector((state: any) => state.cdsResponse);
   console.log("cdsResponse in CoverageCardDisplayPage");
   console.log(cdsResponse);
 
-  return (
+  return isAuthenticated ? (
     <div>
       <div
         style={{
@@ -66,5 +69,7 @@ export function CoverageCardDisplayPage() {
           )}
       </div>
     </div>
+  ) : (
+    <Navigate to="/" replace />
   );
 }

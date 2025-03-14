@@ -16,14 +16,16 @@
 
 import NavBar from "./nav_bar";
 import { DevPortalExpandButton } from "./cds_button";
-import { Outlet } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
 import { useContext } from "react";
 import DevConsole from "./dev_console";
 import { ExpandedContext } from "../utils/expanded_context";
+import { useAuth } from "./AuthProvider";
 
 export const Layout = () => {
+  const { isAuthenticated } = useAuth();
   const { expanded } = useContext(ExpandedContext);
-  return (
+  return isAuthenticated ? (
     <div
       style={{
         height: "100vh",
@@ -88,5 +90,7 @@ export const Layout = () => {
         </div>
       </div>
     </div>
+  ) : (
+    <Navigate to="/" replace />
   );
 };

@@ -42,6 +42,7 @@ import DrugPiorAuthPage from "./pages/drug_prior_auth.tsx";
 import DeviceOrderPageV2 from "./pages/device_order_page_v2.tsx";
 import DrugClaimPage from "./pages/drug_claim_page.tsx";
 import Login from "./pages/login.tsx";
+import { AuthProvider } from "./components/AuthProvider.tsx";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <Provider store={store}>
@@ -49,73 +50,78 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       <ExpandedContextProvider>
         <LocalizationProvider dateAdapter={AdapterDayjs}>
           <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Login />} />
-              <Route path="/patient" element={<PatientEncounter />} />
-              <Route path="patient/dashboard/*" element={<Layout />}>
-                <Route index element={<PractionerDashBoard />} />
-                <Route path="medical-imaging" element={<MedicalImaging />} />
-                <Route
-                  path="medical-imaging/prior-auth"
-                  element={<PriorAuth />}
-                />
-                <Route
-                  path="appointment-schedule"
-                  element={<AppointmentBookPage />}
-                />
-                <Route
-                  path="appointment-receipt"
-                  element={<AppointmentReceipt />}
-                />
-                <Route
-                  path="appointment-schedule/coverage-preview"
-                  element={<CoverageCardDisplayPage />}
-                />
-                <Route
-                  path="appointment-schedule/coverage"
-                  element={<CoverageCardDisplayPage />}
-                />
-                <Route path="drug-order" element={<DrugOrderPage />} />
-                <Route path="drug-order-v2" element={<DrugOrderPageV2 />} />
-                <Route
-                  path="drug-order-v2/prior-auth/*"
-                  element={<DrugPiorAuthPage />}
-                />
-                <Route
-                  path="drug-order-v2/claim-submit/*"
-                  element={<DrugClaimPage />}
-                />
-                <Route
-                  path="drug-order/:drugName"
-                  element={<DrugDetailsPage />}
-                />
-                <Route
-                  path="drug-order/:drugName/coverage-preview"
-                  element={<CoverageCardDisplayPage />}
-                />
-                <Route
-                  path="drug-order/:drugName/coverage"
-                  element={<CoverageCardDisplayPage />}
-                />
-                <Route path="device-order" element={<DeviceOrderPage />} />
-                <Route path="device-order-v2" element={<DeviceOrderPageV2 />} />
-                <Route
-                  path="device-order/:deviceName"
-                  element={<DeviceDetailsPage />}
-                />
-                <Route
-                  path="device-order/:deviceName/coverage-preview"
-                  element={<CoverageCardDisplayPage />}
-                />
-                <Route
-                  path="device-order/:deviceName/coverage"
-                  element={<CoverageCardDisplayPage />}
-                />
-                <Route path="patient" element={<PatientViewPage />} />
-              </Route>
+            <AuthProvider>
+              <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route path="/" element={<PatientEncounter />} />
+                <Route path="dashboard/*" element={<Layout />}>
+                  <Route index element={<PractionerDashBoard />} />
+                  <Route path="medical-imaging" element={<MedicalImaging />} />
+                  <Route
+                    path="medical-imaging/prior-auth"
+                    element={<PriorAuth />}
+                  />
+                  <Route
+                    path="appointment-schedule"
+                    element={<AppointmentBookPage />}
+                  />
+                  <Route
+                    path="appointment-receipt"
+                    element={<AppointmentReceipt />}
+                  />
+                  <Route
+                    path="appointment-schedule/coverage-preview"
+                    element={<CoverageCardDisplayPage />}
+                  />
+                  <Route
+                    path="appointment-schedule/coverage"
+                    element={<CoverageCardDisplayPage />}
+                  />
+                  <Route path="drug-order" element={<DrugOrderPage />} />
+                  <Route path="drug-order-v2" element={<DrugOrderPageV2 />} />
+                  <Route
+                    path="drug-order-v2/prior-auth/*"
+                    element={<DrugPiorAuthPage />}
+                  />
+                  <Route
+                    path="drug-order-v2/claim-submit/*"
+                    element={<DrugClaimPage />}
+                  />
+                  <Route
+                    path="drug-order/:drugName"
+                    element={<DrugDetailsPage />}
+                  />
+                  <Route
+                    path="drug-order/:drugName/coverage-preview"
+                    element={<CoverageCardDisplayPage />}
+                  />
+                  <Route
+                    path="drug-order/:drugName/coverage"
+                    element={<CoverageCardDisplayPage />}
+                  />
+                  <Route path="device-order" element={<DeviceOrderPage />} />
+                  <Route
+                    path="device-order-v2"
+                    element={<DeviceOrderPageV2 />}
+                  />
+                  <Route
+                    path="device-order/:deviceName"
+                    element={<DeviceDetailsPage />}
+                  />
+                  <Route
+                    path="device-order/:deviceName/coverage-preview"
+                    element={<CoverageCardDisplayPage />}
+                  />
+                  <Route
+                    path="device-order/:deviceName/coverage"
+                    element={<CoverageCardDisplayPage />}
+                  />
+                  <Route path="patient" element={<PatientViewPage />} />
+                </Route>
 
-              <Route path="settings" element={<div>Not Implemented</div>} />
-            </Routes>
+                <Route path="settings" element={<div>Not Implemented</div>} />
+              </Routes>
+            </AuthProvider>
           </BrowserRouter>
         </LocalizationProvider>
       </ExpandedContextProvider>

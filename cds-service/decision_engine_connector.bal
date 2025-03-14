@@ -69,7 +69,7 @@ isolated function connectDecisionSystemForPrescirbeMedication(cds:CdsRequest cds
                     },
                     {
                         "label": "Launch SMART App for DTR",
-                        "url": "https://d5a7a3a9-12e4-4949-9cf8-bb3e12517db4.e1-us-east-azure.choreoapps.dev/patient/dashboard/drug-order-v2/prior-auth?questionnaireId=4",
+                        "url": string `${EHR_DTR_APP_LINK}`,
                         "type": "smart"
                     }
                 ]

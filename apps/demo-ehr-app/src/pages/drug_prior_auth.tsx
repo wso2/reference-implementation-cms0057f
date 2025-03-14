@@ -19,7 +19,7 @@ import axios from "axios";
 import Form from "react-bootstrap/Form";
 import Card from "react-bootstrap/Card";
 import Button from "react-bootstrap/Button";
-import { useLocation } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { paths } from "../config/urlConfigs";
 import Select from "react-select";
 import DatePicker from "react-datepicker";
@@ -31,6 +31,7 @@ import {
   resetCdsRequest,
 } from "../redux/cdsRequestSlice";
 import { updateCdsResponse, resetCdsResponse } from "../redux/cdsResponseSlice";
+import { useAuth } from "../components/AuthProvider";
 
 const useQuery = () => {
   return new URLSearchParams(useLocation().search);
@@ -417,12 +418,13 @@ const DetailsDiv = ({ questionnaireId }: { questionnaireId: string }) => {
 };
 
 export default function DrugPiorAuthPage() {
+  const { isAuthenticated } = useAuth();
   const query = useQuery();
   const questionnaireId = query.get("questionnaireId");
   const [isQuestionnaireResponseSubmited, setIsQuestionnaireResponseSubmited] =
     useState(false);
 
-  return (
+  return isAuthenticated ? (
     <div style={{ marginLeft: 50, marginBottom: 50 }}>
       <div className="page-heading">
         Send a Prior-Authorizing Request for Drugs
@@ -445,5 +447,7 @@ export default function DrugPiorAuthPage() {
         }
       `}</style>
     </div>
+  ) : (
+    <Navigate to="/" replace />
   );
 }

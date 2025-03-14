@@ -29,8 +29,11 @@ import { updateCdsHook } from "../redux/cdsRequestSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { LAB_TEST } from "../constants/data";
 import { ExpandedContext } from "../utils/expanded_context";
+import { useAuth } from "../components/AuthProvider";
+import { Navigate } from "react-router-dom";
 
 function LabTest() {
+  const { isAuthenticated } = useAuth();
   const form_selector_width = SCREEN_WIDTH * 0.3;
   const { expanded } = useContext(ExpandedContext);
   const dispatch = useDispatch();
@@ -112,7 +115,7 @@ function LabTest() {
     dispatch(updateCdsHook("order-sign"));
   }, [selectedPatientId, description, dispatch]);
 
-  return (
+  return isAuthenticated ? (
     <>
       <Box
         style={{
@@ -296,6 +299,8 @@ function LabTest() {
         )}
       </Box>
     </>
+  ) : (
+    <Navigate to="/" replace />
   );
 }
 

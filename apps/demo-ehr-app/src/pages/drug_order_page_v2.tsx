@@ -44,6 +44,8 @@ import {
 import { CdsCard, CdsResponse } from "../components/interfaces/cdsCard";
 import axios from "axios";
 import { paths } from "../config/urlConfigs";
+import { useAuth } from "../components/AuthProvider";
+import { Navigate } from "react-router-dom";
 
 const PrescribeForm = ({
   setCdsCards,
@@ -397,9 +399,10 @@ const RequirementCard = ({
 };
 
 export default function DrugOrderPageV2() {
+  const { isAuthenticated } = useAuth();
   const [cdsCards, setCdsCards] = useState<CdsCard[]>([]);
 
-  return (
+  return isAuthenticated ? (
     <div style={{ marginLeft: 50, marginBottom: 50 }}>
       <div className="page-heading">Order Drugs</div>
       <div style={{ display: "flex", gap: "20px" }}>
@@ -440,5 +443,7 @@ export default function DrugOrderPageV2() {
         }
       `}</style>
     </div>
+  ) : (
+    <Navigate to="/" replace />
   );
 }

@@ -65,3 +65,5 @@ node_modules/
 **/build/
 **/npm/
 **/dist/
+bulk-export/bulk-export-client/Config.toml
+bulk-export/bulk-export-client/tests/Config.toml

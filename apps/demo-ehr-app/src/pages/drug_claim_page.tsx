@@ -19,7 +19,7 @@ import axios from "axios";
 import Form from "react-bootstrap/Form";
 import Card from "react-bootstrap/Card";
 import Button from "react-bootstrap/Button";
-import { baseUrl, paths } from "../config/urlConfigs";
+import { paths } from "../config/urlConfigs";
 import { useDispatch, useSelector } from "react-redux";
 import {
   updateRequest,
@@ -84,7 +84,7 @@ const ClaimForm = () => {
     dispatch(updateRequestUrl("/fhir/r4/Claim/$submit"));
     dispatch(resetCdsResponse());
     axios
-      .post(baseUrl + paths.claim_submit, payload, {
+      .post(paths.claim_submit, payload, {
         headers: {
           "Content-Type": "application/fhir+json",
         },

@@ -43,7 +43,7 @@ import {
 } from "../constants/data";
 import { CdsCard, CdsResponse } from "../components/interfaces/cdsCard";
 import axios from "axios";
-import { baseUrl, paths } from "../config/urlConfigs";
+import { paths } from "../config/urlConfigs";
 
 const PrescribeForm = ({
   setCdsCards,
@@ -103,7 +103,7 @@ const PrescribeForm = ({
     dispatch(updateRequestUrl("/cds-services/prescirbe-medication"));
     dispatch(updateRequest(payload));
     axios
-      .post<CdsResponse>(baseUrl + paths.prescribe_medication, payload)
+      .post<CdsResponse>(paths.prescribe_medication, payload)
       .then<CdsResponse>((res) => {
         setCdsCards(res.data.cards);
 
@@ -124,7 +124,7 @@ const PrescribeForm = ({
     dispatch(updateRequestUrl("/fhir/r4/MedicationRequest"));
     dispatch(updateRequest(payload));
     axios
-      .post<CdsResponse>(baseUrl + paths.medication_request, payload, {
+      .post<CdsResponse>(paths.medication_request, payload, {
         headers: {
           "Content-Type": "application/fhir+json",
         },

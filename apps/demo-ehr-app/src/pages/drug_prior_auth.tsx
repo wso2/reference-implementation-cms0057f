@@ -20,7 +20,7 @@ import Form from "react-bootstrap/Form";
 import Card from "react-bootstrap/Card";
 import Button from "react-bootstrap/Button";
 import { useLocation } from "react-router-dom";
-import { baseUrl, paths } from "../config/urlConfigs";
+import { paths } from "../config/urlConfigs";
 import Select from "react-select";
 import DatePicker from "react-datepicker";
 import { useDispatch, useSelector } from "react-redux";
@@ -81,7 +81,7 @@ const QuestionnniarForm = ({
     dispatch(resetCdsResponse());
     // Fetch the questionnaire data from the API
     axios
-      .post(baseUrl + paths.questionnaire_package, requestBody, {
+      .post(paths.questionnaire_package, requestBody, {
         headers: {
           "Content-Type": "application/fhir+json",
         },
@@ -186,7 +186,7 @@ const QuestionnniarForm = ({
 
     // Submit the questionnaire response to the API
     axios
-      .post(baseUrl + paths.questionnaire_response, questionnaireResponse, {
+      .post(paths.questionnaire_response, questionnaireResponse, {
         headers: {
           "Content-Type": "application/fhir+json",
         },

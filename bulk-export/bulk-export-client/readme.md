@@ -75,7 +75,7 @@ Downloads the exported NDJSON files once the export process is complete.
     defaultIntervalInSec = 2.0
 
     [targetServerConfig]
-    type = "fhir" #or fhir
+    type = "fhir" #or ftp
     host = "host"
     port = <port>
     username = "username"

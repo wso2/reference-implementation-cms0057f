@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "../assets/styles/main.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "react-datepicker/dist/react-datepicker.css";
@@ -32,7 +32,10 @@ import {
   resetCdsRequest,
 } from "../redux/cdsRequestSlice";
 import { resetCdsResponse, updateCdsResponse } from "../redux/cdsResponseSlice";
-import { updateMedicationFormData } from "../redux/medicationFormDataSlice";
+import {
+  updateMedicationFormData,
+  resetMedicationFormData,
+} from "../redux/medicationFormDataSlice";
 
 import {
   FREQUENCY_OPTIONS,
@@ -53,9 +56,21 @@ const PrescribeForm = ({
   setCdsCards: React.Dispatch<React.SetStateAction<CdsCard[]>>;
 }) => {
   const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(resetMedicationFormData());
+  }, [dispatch]);
+
   const medicationFormData = useSelector(
     (state: {
-      medicationFormData: { [key: string]: string | number | Date | null };
+      medicationFormData: {
+        treatingSickness: string;
+        medication: string;
+        quantity: number;
+        frequency: string;
+        duration: string;
+        startDate: Date;
+      };
     }) => state.medicationFormData
   );
 
@@ -116,8 +131,28 @@ const PrescribeForm = ({
         dispatch(updateCdsResponse({ cards: err, systemActions: {} }));
       });
   };
+  const validateForm = () => {
+    const requiredFields: (keyof typeof medicationFormData)[] = [
+      "treatingSickness",
+      "medication",
+      "quantity",
+      "frequency",
+      "duration",
+      "startDate",
+    ];
+    let isValid = true;
+    requiredFields.forEach((field) => {
+      if (!medicationFormData[field]) {
+        isValid = false;
+      }
+    });
+    return isValid;
+  };
 
   const handleCreateMedicationOrder = () => {
+    if (!validateForm()) {
+      return;
+    }
     dispatch(resetCdsRequest());
     dispatch(resetCdsResponse());
 
@@ -265,7 +300,7 @@ const PrescribeForm = ({
               // type="submit"
               style={{ marginLeft: "30px", float: "right" }}
               onClick={handleCreateMedicationOrder}
-              disabled={isSubmited}
+              disabled={isSubmited || !validateForm() ? true : false}
             >
               Create Medication Order
             </Button>

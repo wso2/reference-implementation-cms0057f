@@ -210,6 +210,13 @@ const QuestionnniarForm = ({
       });
   };
 
+  const validateForm = () => {
+    return questions.every((question) => {
+      const value = formData[question.linkId];
+      return value !== undefined && value !== "";
+    });
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const questionnaireResponse = generateQuestionnaireResponse();
@@ -271,7 +278,7 @@ const QuestionnniarForm = ({
               style={{ marginTop: "20px" }}
               key={index}
             >
-              <Form.Label>{question.text}</Form.Label>
+              <Form.Label>{question.text}  <span style={{ color: "red" }}>*</span></Form.Label>
               {renderFormField(question)}
             </Form.Group>
           ))}
@@ -280,24 +287,23 @@ const QuestionnniarForm = ({
             type="submit"
             style={{ marginTop: "30px", float: "right" }}
             onClick={handleSubmit}
-            // disabled={isQuestionnaireResponseSubmited}
+            disabled={!validateForm() || isQuestionnaireResponseSubmited}
           >
             Submit Questionnaire Response
           </Button>
         </Form>
-        <Button
-          variant="success"
-          style={{ marginTop: "30px", marginRight: "20px", float: "right" }}
-          onClick={() =>
-            window.open(
-              "/patient/dashboard/drug-order-v2/claim-submit",
-              "_blank"
-            )
-          }
-          disabled={!isQuestionnaireResponseSubmited}
-        >
-          Visit Claim Submission
-        </Button>
+        {isQuestionnaireResponseSubmited && (
+          <Button
+            variant="success"
+            style={{ marginTop: "30px", marginRight: "20px", float: "right" }}
+            onClick={() =>
+              window.open("/dashboard/drug-order-v2/claim-submit", "_blank")
+            }
+            disabled={!isQuestionnaireResponseSubmited}
+          >
+            Visit Claim Submission
+          </Button>
+        )}
       </Card.Body>
     </Card>
   );
@@ -309,7 +315,7 @@ const PrescribedForm = () => {
       medicationFormData: {
         treatingSickness: string;
         medication: string;
-        quantity: string;
+        quantity: number;
         frequency: string;
         startDate: Date;
       };

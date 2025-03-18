@@ -95,7 +95,7 @@ const ClaimForm = () => {
         console.log("Claim submitted successfully");
         dispatch(
           updateCdsResponse({
-            cards: response,
+            cards: response.data,
             systemActions: {},
           })
         );

@@ -55,7 +55,7 @@ export default function NavBar() {
           alignItems={"center"}
           height="100%"
         >
-          <Button href="/patient/dashboard" color="primary">
+          <Button href="/dashboard" color="primary">
             <Box borderRadius="100%" overflow="hidden" marginLeft={5}>
               <img
                 src="/demo_logo.png"

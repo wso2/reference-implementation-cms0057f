@@ -49,6 +49,7 @@ import axios from "axios";
 import { paths } from "../config/urlConfigs";
 import { useAuth } from "../components/AuthProvider";
 import { Navigate } from "react-router-dom";
+import { Alert, Snackbar } from "@mui/material";
 
 const PrescribeForm = ({
   setCdsCards,
@@ -60,6 +61,12 @@ const PrescribeForm = ({
   useEffect(() => {
     dispatch(resetMedicationFormData());
   }, [dispatch]);
+
+  const [alertMessage, setAlertMessage] = useState<string | null>(null);
+  const [alertSeverity, setAlertSeverity] = useState<
+    "error" | "warning" | "info" | "success"
+  >("info");
+  const [openSnackbar, setOpenSnackbar] = useState(false);
 
   const medicationFormData = useSelector(
     (state: {
@@ -122,12 +129,24 @@ const PrescribeForm = ({
     axios
       .post<CdsResponse>(paths.prescribe_medication, payload)
       .then<CdsResponse>((res) => {
+        if (res.status >= 200 && res.status < 300) {
+          setAlertMessage("Payer requirements retrieved successfully!");
+          setAlertSeverity("success");
+        } else {
+          setAlertMessage("Error retrieving payer requirements!");
+          setAlertSeverity("error");
+        }
+        setOpenSnackbar(true);
+
         setCdsCards(res.data.cards);
 
         dispatch(updateCdsResponse({ cards: res.data, systemActions: {} }));
         return res.data;
       })
       .catch((err) => {
+        setAlertMessage("Error retrieving payer requirements!");
+        setAlertSeverity("error");
+        setOpenSnackbar(true);
         dispatch(updateCdsResponse({ cards: err, systemActions: {} }));
       });
   };
@@ -167,13 +186,29 @@ const PrescribeForm = ({
         },
       })
       .then<CdsResponse>((res) => {
+        
+        if (res.status >= 200 && res.status < 300) {
+          setAlertMessage("Medication order created successfully!");
+          setAlertSeverity("success");
+        } else {
+          setAlertMessage("Error creating medication order!");
+          setAlertSeverity("error");
+        }
+        setOpenSnackbar(true);
         dispatch(updateCdsResponse({ cards: res.data, systemActions: {} }));
         setIsSubmited(true);
         return res.data;
       })
       .catch((err) => {
+        setAlertMessage("Error creating medication order!");
+        setAlertSeverity("error");
+        setOpenSnackbar(true);
         dispatch(updateCdsResponse({ cards: err, systemActions: {} }));
       });
+  };
+
+  const handleCloseSnackbar = () => {
+    setOpenSnackbar(false);
   };
 
   return (
@@ -307,6 +342,16 @@ const PrescribeForm = ({
           </div>
         </Form>
       </Card.Body>
+      <Snackbar
+        open={openSnackbar}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      >
+        <Alert onClose={handleCloseSnackbar} severity={alertSeverity}>
+          {alertMessage}
+        </Alert>
+      </Snackbar>
     </Card>
   );
 };

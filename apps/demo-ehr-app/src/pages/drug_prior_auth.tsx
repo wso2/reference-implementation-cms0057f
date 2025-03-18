@@ -24,6 +24,7 @@ import { paths } from "../config/urlConfigs";
 import Select from "react-select";
 import DatePicker from "react-datepicker";
 import { useDispatch, useSelector } from "react-redux";
+import { Alert, Snackbar } from "@mui/material";
 import {
   updateRequest,
   updateRequestUrl,
@@ -55,6 +56,12 @@ const QuestionnniarForm = ({
   const [formData, setFormData] = useState<{
     [key: string]: string | number | boolean;
   }>({});
+
+  const [alertMessage, setAlertMessage] = useState<string | null>(null);
+  const [alertSeverity, setAlertSeverity] = useState<
+    "error" | "warning" | "info" | "success"
+  >("info");
+  const [openSnackbar, setOpenSnackbar] = useState(false);
 
   const requestBody = {
     resourceType: "Parameters",
@@ -88,6 +95,15 @@ const QuestionnniarForm = ({
         },
       })
       .then((response) => {
+        if (response.status >= 200 && response.status < 300) {
+          setAlertMessage("Questionnaire fetched successfully!");
+          setAlertSeverity("success");
+        } else {
+          setAlertMessage("Failed to fetch questionnaire!");
+          setAlertSeverity("error");
+        }
+        setOpenSnackbar(true);
+
         const questionnaire = response.data;
         setQuestions(
           questionnaire.parameter[0].resource.entry[0].resource.item || []
@@ -107,7 +123,10 @@ const QuestionnniarForm = ({
         );
       })
       .catch((error) => {
-        console.error("Error fetching questionnaire data:", error);
+        setAlertMessage("Error fetching questionnaire!");
+        setAlertSeverity("error");
+        setOpenSnackbar(true);
+        console.error("Error fetching questionnaire:", error);
         dispatch(
           updateCdsResponse({
             cards: error,
@@ -193,10 +212,17 @@ const QuestionnniarForm = ({
         },
       })
       .then((response) => {
+        if (response.status >= 200 && response.status < 300) {
+          setAlertMessage("Questionnaire response submitted successfully!");
+          setAlertSeverity("success");
+        } else {
+          setAlertMessage("Failed to submit questionnaire response!");
+          setAlertSeverity("error");
+        }
+        setOpenSnackbar(true);
         dispatch(
           updateCdsResponse({ cards: response.data, systemActions: {} })
         );
-        alert("Questionnaire response submitted successfully!");
         setIsQuestionnaireResponseSubmited(true);
       })
       .catch((error) => {
@@ -267,6 +293,10 @@ const QuestionnniarForm = ({
     }
   };
 
+  const handleCloseSnackbar = () => {
+    setOpenSnackbar(false);
+  };
+
   return (
     <Card style={{ marginTop: "30px", padding: "20px" }}>
       <Card.Body>
@@ -278,7 +308,9 @@ const QuestionnniarForm = ({
               style={{ marginTop: "20px" }}
               key={index}
             >
-              <Form.Label>{question.text}  <span style={{ color: "red" }}>*</span></Form.Label>
+              <Form.Label>
+                {question.text} <span style={{ color: "red" }}>*</span>
+              </Form.Label>
               {renderFormField(question)}
             </Form.Group>
           ))}
@@ -305,6 +337,16 @@ const QuestionnniarForm = ({
           </Button>
         )}
       </Card.Body>
+      <Snackbar
+        open={openSnackbar}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      >
+        <Alert onClose={handleCloseSnackbar} severity={alertSeverity}>
+          {alertMessage}
+        </Alert>
+      </Snackbar>
     </Card>
   );
 };

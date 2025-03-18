@@ -30,6 +30,7 @@ import { updateCdsResponse, resetCdsResponse } from "../redux/cdsResponseSlice";
 import { CLAIM_REQUEST_BODY } from "../constants/data";
 import { useAuth } from "../components/AuthProvider";
 import { Navigate } from "react-router-dom";
+import { Alert, Snackbar } from "@mui/material";
 
 const ClaimForm = () => {
   const dispatch = useDispatch();
@@ -37,6 +38,12 @@ const ClaimForm = () => {
     (state: { medicationFormData: { medication: string; quantity: string } }) =>
       state.medicationFormData
   );
+  const [alertMessage, setAlertMessage] = useState<string | null>(null);
+  const [alertSeverity, setAlertSeverity] = useState<
+    "error" | "warning" | "info" | "success"
+  >("info");
+  const [openSnackbar, setOpenSnackbar] = useState(false);
+
   const [formData, setFormData] = useState<{
     medication: string;
     quantity: string;
@@ -92,21 +99,29 @@ const ClaimForm = () => {
         },
       })
       .then((response) => {
-        console.log("Claim submitted successfully");
+        if (response.status >= 200 && response.status < 300) {
+          setAlertMessage("Claim submitted successfully");
+          setAlertSeverity("success");
+        } else {
+          setAlertMessage("Error submitting claim");
+          setAlertSeverity("error");
+        }
+        setOpenSnackbar(true);
+
         dispatch(
           updateCdsResponse({
             cards: response.data,
             systemActions: {},
           })
         );
-        alert(
-          `Claim submitted successfully. Outcome: ${response.data.parameter[0].resource.outcome}`
-        );
         console.log("response", response);
         console.log("outcome", response.data.parameter[0].resource.outcome);
       })
       .catch((error) => {
-        console.error("Error submitting claim", error);
+        setAlertMessage("Error submitting claim");
+        setAlertSeverity("error");
+        setOpenSnackbar(true);
+
         dispatch(
           updateCdsResponse({
             cards: error,
@@ -114,6 +129,10 @@ const ClaimForm = () => {
           })
         );
       });
+  };
+
+  const handleCloseSnackbar = () => {
+    setOpenSnackbar(false);
   };
 
   return (
@@ -259,6 +278,16 @@ const ClaimForm = () => {
           </Button>
         </Form>
       </Card.Body>
+      <Snackbar
+        open={openSnackbar}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      >
+        <Alert onClose={handleCloseSnackbar} severity={alertSeverity}>
+          {alertMessage}
+        </Alert>
+      </Snackbar>
     </Card>
   );
 };

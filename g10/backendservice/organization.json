@@ -1,0 +1,72 @@
+{
+    "data": [
+        {
+            "resourceType": "Organization",
+            "id": "1ac77c95-a3af-4656-94a9-5efd7820ca81",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization"
+                ]
+            },
+            "text": {
+                "status": "generated",
+                "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p><b>Generated Narrative</b></p><p><b>id</b>: acme-lab</p><p><b>name</b>: Acme Laboratory</p><p><b>identifier</b>: CLIA: 123456789</p><p><b>telecom</b>: ph: (800) 555-5555</p><p><b>address</b>: 123 Lab St, Anytown, USA</p></div>"
+            },
+            "identifier": [
+                {
+                    "system": "http://hl7.org/fhir/sid/us-npi",
+                    "value": "123456789"
+                },
+                {
+                    "system": "urn:oid:2.16.840.1.113883.4.7",
+                    "value": "CLIA-123456789"
+                }
+            ],
+            "active": true,
+            "type": [
+                {
+                    "coding": [
+                        {
+                            "system": "http://terminology.hl7.org/CodeSystem/organization-type",
+                            "code": "lab",
+                            "display": "Laboratory"
+                        }
+                    ],
+                    "text": "Laboratory"
+                }
+            ],
+            "name": "Acme Laboratory",
+            "telecom": [
+                {
+                    "system": "phone",
+                    "value": "(800) 555-5555",
+                    "use": "work"
+                }
+            ],
+            "address": [
+                {
+                    "line": [
+                        "123 Lab St"
+                    ],
+                    "city": "Anytown",
+                    "state": "CA",
+                    "postalCode": "90210",
+                    "country": "USA"
+                }
+            ],
+            "contact": [
+                {
+                    "name": {
+                        "text": "Dr. Emily Carter"
+                    },
+                    "telecom": [
+                        {
+                            "system": "email",
+                            "value": "ecarter@acmelab.com"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,64 @@
+{
+    "data": [
+        {
+            "resourceType": "Procedure",
+            "id": "defib-implant-patient-1",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-procedure"
+                ]
+            },
+            "status": "completed",
+            "code": {
+                "coding": [
+                    {
+                        "system": "http://snomed.info/sct",
+                        "code": "35637008",
+                        "display": "Alcohol rehabilitation"
+                    },
+                    {
+                        "system": "http://www.cms.gov/Medicare/Coding/ICD10",
+                        "code": "HZ30ZZZ",
+                        "display": "Individual Counseling for Substance Abuse Treatment, Cognitive"
+                    }
+                ],
+                "text": "Alcohol rehabilitation"
+            },
+            "subject": {
+                "reference": "Patient/1",
+                "display": "Amy Shaw"
+            },
+            "performedDateTime": "2002-05-23"
+        },
+        {
+            "resourceType": "Procedure",
+            "id": "defib-implant-patient-2",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-procedure"
+                ]
+            },
+            "status": "completed",
+            "code": {
+                "coding": [
+                    {
+                        "system": "http://snomed.info/sct",
+                        "code": "35637008",
+                        "display": "Alcohol rehabilitation"
+                    },
+                    {
+                        "system": "http://www.cms.gov/Medicare/Coding/ICD10",
+                        "code": "HZ30ZZZ",
+                        "display": "Individual Counseling for Substance Abuse Treatment, Cognitive"
+                    }
+                ],
+                "text": "Alcohol rehabilitation"
+            },
+            "subject": {
+                "reference": "Patient/2",
+                "display": "Amy Shaw"
+            },
+            "performedDateTime": "2002-05-23"
+        }
+    ]
+}

@@ -1,0 +1,12 @@
+schemaVersion: 1.1
+endpoints:
+    - name: uscore311-careplan-api
+      displayName: uscore311 CarePlan API
+      service:
+        basePath: /fhir/r4/CarePlan
+        port: 9090
+      type: REST
+      networkVisibilities:
+        - Project
+        - Public
+      schemaFilePath: oas/CarePlan.yaml

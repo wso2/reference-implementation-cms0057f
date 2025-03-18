@@ -1,0 +1,236 @@
+{
+    "data": [
+        {
+            "resourceType": "MedicationRequest",
+            "id": "medreq-1",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-medicationrequest"
+                ]
+            },
+            "status": "active",
+            "intent": "proposal",
+            "medicationCodeableConcept": {
+                "coding": [
+                    {
+                        "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+                        "code": "29046",
+                        "display": "Lisinopril 10 MG Oral Tablet"
+                    }
+                ],
+                "text": "Lisinopril 10 MG Oral Tablet"
+            },
+            "reportedBoolean": true,
+            "encounter": {
+                "reference": "Encounter/38cd73c9-184d-4016-b315-aca42e5f9569"
+            },
+            "subject": {
+                "reference": "Patient/1",
+                "display": "John Doe"
+            },
+            "authoredOn": "2024-02-15",
+            "requester": {
+                "reference": "Practitioner/111",
+                "display": "Dr. Sarah Thompson, MD"
+            },
+            "dosageInstruction": [
+                {
+                    "text": "Take 1 tablet daily",
+                    "timing": {
+                        "repeat": {
+                            "boundsPeriod": {
+                                "start": "2024-02-15"
+                            }
+                        }
+                    }
+                }
+            ],
+            "dispenseRequest": {
+                "numberOfRepeatsAllowed": 2,
+                "quantity": {
+                    "value": 30,
+                    "unit": "tablet",
+                    "system": "http://unitsofmeasure.org",
+                    "code": "tbl"
+                },
+                "expectedSupplyDuration": {
+                    "value": 30,
+                    "unit": "days",
+                    "system": "http://unitsofmeasure.org",
+                    "code": "d"
+                }
+            }
+        },
+        {
+            "resourceType": "MedicationRequest",
+            "id": "medreq-12",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-medicationrequest"
+                ]
+            },
+            "status": "unknown",
+            "intent": "option",
+            "medicationCodeableConcept": {
+                "coding": [
+                    {
+                        "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+                        "code": "29046",
+                        "display": "Lisinopril 10 MG Oral Tablet"
+                    }
+                ],
+                "text": "Lisinopril 10 MG Oral Tablet"
+            },
+            "subject": {
+                "reference": "Patient/1",
+                "display": "John Doe"
+            },
+            "authoredOn": "2024-02-15",
+            "requester": {
+                "reference": "Practitioner/111",
+                "display": "Dr. Sarah Thompson, MD"
+            },
+            "dosageInstruction": [
+                {
+                    "text": "Take 1 tablet daily",
+                    "timing": {
+                        "repeat": {
+                            "boundsPeriod": {
+                                "start": "2024-02-15"
+                            }
+                        }
+                    }
+                }
+            ],
+            "dispenseRequest": {
+                "numberOfRepeatsAllowed": 2,
+                "quantity": {
+                    "value": 30,
+                    "unit": "tablet",
+                    "system": "http://unitsofmeasure.org",
+                    "code": "tbl"
+                },
+                "expectedSupplyDuration": {
+                    "value": 30,
+                    "unit": "days",
+                    "system": "http://unitsofmeasure.org",
+                    "code": "d"
+                }
+            }
+        },
+        {
+            "resourceType": "MedicationRequest",
+            "id": "medreq-2",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-medicationrequest"
+                ]
+            },
+            "status": "active",
+            "intent": "order",
+            "medicationCodeableConcept": {
+                "coding": [
+                    {
+                        "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+                        "code": "860975",
+                        "display": "Metformin 500 MG Oral Tablet"
+                    }
+                ],
+                "text": "Metformin 500 MG Oral Tablet"
+            },
+            "subject": {
+                "reference": "Patient/2",
+                "display": "Jane Smith"
+            },
+            "authoredOn": "2024-01-20",
+            "requester": {
+                "reference": "Practitioner/333",
+                "display": "Dr. Michael Lee, MD"
+            },
+            "dosageInstruction": [
+                {
+                    "text": "Take 1 tablet twice daily",
+                    "timing": {
+                        "repeat": {
+                            "boundsPeriod": {
+                                "start": "2024-01-20"
+                            }
+                        }
+                    }
+                }
+            ],
+            "dispenseRequest": {
+                "numberOfRepeatsAllowed": 1,
+                "quantity": {
+                    "value": 60,
+                    "unit": "tablet",
+                    "system": "http://unitsofmeasure.org",
+                    "code": "tbl"
+                },
+                "expectedSupplyDuration": {
+                    "value": 30,
+                    "unit": "days",
+                    "system": "http://unitsofmeasure.org",
+                    "code": "d"
+                }
+            }
+        },
+        {
+            "resourceType": "MedicationRequest",
+            "id": "medreq-4",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-medicationrequest"
+                ]
+            },
+            "status": "active",
+            "intent": "order",
+            "medicationCodeableConcept": {
+                "coding": [
+                    {
+                        "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+                        "code": "617312",
+                        "display": "Atorvastatin 20 MG Oral Tablet"
+                    }
+                ],
+                "text": "Atorvastatin 20 MG Oral Tablet"
+            },
+            "subject": {
+                "reference": "Patient/4",
+                "display": "Michael Brown"
+            },
+            "authoredOn": "2023-12-10",
+            "requester": {
+                "reference": "Practitioner/333",
+                "display": "Dr. Emily Carter, MD"
+            },
+            "dosageInstruction": [
+                {
+                    "text": "Take 1 tablet daily at bedtime",
+                    "timing": {
+                        "repeat": {
+                            "boundsPeriod": {
+                                "start": "2023-12-10"
+                            }
+                        }
+                    }
+                }
+            ],
+            "dispenseRequest": {
+                "numberOfRepeatsAllowed": 3,
+                "quantity": {
+                    "value": 30,
+                    "unit": "tablet",
+                    "system": "http://unitsofmeasure.org",
+                    "code": "tbl"
+                },
+                "expectedSupplyDuration": {
+                    "value": 30,
+                    "unit": "days",
+                    "system": "http://unitsofmeasure.org",
+                    "code": "d"
+                }
+            }
+        }
+    ]
+}

@@ -1,0 +1,220 @@
+{
+    "data": [
+        {
+            "resourceType": "CareTeam",
+            "id": "g7h8i9j0-abcd-ef12-3456-7890abcdef12",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-careteam"
+                ]
+            },
+            "text": {
+                "status": "generated",
+                "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p><b>Generated Narrative</b></p><p><b>id</b>: hypertension-careteam</p><p><b>status</b>: active</p><p><b>name</b>: Hypertension Management Team</p><p><b>subject</b>: John Doe</p><blockquote><p><b>participant</b></p><p><b>role</b>: Cardiology</p><p><b>member</b>: Dr. Susan Adams, MD</p></blockquote><blockquote><p><b>participant</b></p><p><b>role</b>: General Practice</p><p><b>member</b>: Dr. Mark Johnson, MD</p></blockquote><blockquote><p><b>participant</b></p><p><b>role</b>: Patient</p><p><b>member</b>: John Doe</p></blockquote></div>"
+            },
+            "status": "proposed",
+            "name": "Hypertension Management Team",
+            "subject": {
+                "reference": "Patient/1",
+                "display": "John Doe"
+            },
+            "participant": [
+                {
+                    "role": [
+                        {
+                            "coding": [
+                                {
+                                    "system": "http://nucc.org/provider-taxonomy",
+                                    "code": "207RC0000X",
+                                    "display": "Cardiology"
+                                }
+                            ]
+                        }
+                    ],
+                    "member": {
+                        "reference": "Practitioner/333",
+                        "display": "Dr. Susan Adams, MD"
+                    }
+                },
+                {
+                    "role": [
+                        {
+                            "coding": [
+                                {
+                                    "system": "http://nucc.org/provider-taxonomy",
+                                    "code": "208D00000X",
+                                    "display": "General Practice"
+                                }
+                            ]
+                        }
+                    ],
+                    "member": {
+                        "reference": "Practitioner/111",
+                        "display": "Dr. Mark Johnson, MD"
+                    }
+                },
+                {
+                    "role": [
+                        {
+                            "coding": [
+                                {
+                                    "system": "http://snomed.info/sct",
+                                    "code": "116154003",
+                                    "display": "Patient (person)"
+                                }
+                            ]
+                        }
+                    ],
+                    "member": {
+                        "reference": "Patient/1",
+                        "display": "John Doe"
+                    }
+                }
+            ]
+        },
+        {
+            "resourceType": "CareTeam",
+            "id": "h8i9j0k1-bcde-f123-4567-890abcdef123",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-careteam"
+                ]
+            },
+            "text": {
+                "status": "generated",
+                "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p><b>Generated Narrative</b></p><p><b>id</b>: diabetes-careteam</p><p><b>status</b>: active</p><p><b>name</b>: Diabetes Care Team</p><p><b>subject</b>: Jane Smith</p><blockquote><p><b>participant</b></p><p><b>role</b>: Endocrinology</p><p><b>member</b>: Dr. Robert Lee, MD</p></blockquote><blockquote><p><b>participant</b></p><p><b>role</b>: General Practice</p><p><b>member</b>: Dr. Emily Carter, MD</p></blockquote><blockquote><p><b>participant</b></p><p><b>role</b>: Patient</p><p><b>member</b>: Jane Smith</p></blockquote></div>"
+            },
+            "status": "active",
+            "name": "Diabetes Care Team",
+            "subject": {
+                "reference": "Patient/2",
+                "display": "Jane Smith"
+            },
+            "participant": [
+                {
+                    "role": [
+                        {
+                            "coding": [
+                                {
+                                    "system": "http://nucc.org/provider-taxonomy",
+                                    "code": "207RE0101X",
+                                    "display": "Endocrinology"
+                                }
+                            ]
+                        }
+                    ],
+                    "member": {
+                        "reference": "Practitioner/111",
+                        "display": "Dr. Robert Lee, MD"
+                    }
+                },
+                {
+                    "role": [
+                        {
+                            "coding": [
+                                {
+                                    "system": "http://nucc.org/provider-taxonomy",
+                                    "code": "208D00000X",
+                                    "display": "General Practice"
+                                }
+                            ]
+                        }
+                    ],
+                    "member": {
+                        "reference": "Practitioner/333",
+                        "display": "Dr. Emily Carter, MD"
+                    }
+                },
+                {
+                    "role": [
+                        {
+                            "coding": [
+                                {
+                                    "system": "http://snomed.info/sct",
+                                    "code": "116154003",
+                                    "display": "Patient (person)"
+                                }
+                            ]
+                        }
+                    ],
+                    "member": {
+                        "reference": "Patient/2",
+                        "display": "Jane Smith"
+                    }
+                }
+            ]
+        },
+        {
+            "resourceType": "CareTeam",
+            "id": "i9j0k1l2-cdef-1234-5678-90abcdef1234",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-careteam"
+                ]
+            },
+            "text": {
+                "status": "generated",
+                "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p><b>Generated Narrative</b></p><p><b>id</b>: asthma-careteam</p><p><b>status</b>: active</p><p><b>name</b>: Asthma Care Team</p><p><b>subject</b>: Michael Brown</p><blockquote><p><b>participant</b></p><p><b>role</b>: Pulmonology</p><p><b>member</b>: Dr. Lisa Morgan, MD</p></blockquote><blockquote><p><b>participant</b></p><p><b>role</b>: General Practice</p><p><b>member</b>: Dr. Alan Smith, MD</p></blockquote><blockquote><p><b>participant</b></p><p><b>role</b>: Patient</p><p><b>member</b>: Michael Brown</p></blockquote></div>"
+            },
+            "status": "active",
+            "name": "Asthma Care Team",
+            "subject": {
+                "reference": "Patient/4",
+                "display": "Michael Brown"
+            },
+            "participant": [
+                {
+                    "role": [
+                        {
+                            "coding": [
+                                {
+                                    "system": "http://nucc.org/provider-taxonomy",
+                                    "code": "207RP1001X",
+                                    "display": "Pulmonology"
+                                }
+                            ]
+                        }
+                    ],
+                    "member": {
+                        "reference": "Practitioner/333",
+                        "display": "Dr. Lisa Morgan, MD"
+                    }
+                },
+                {
+                    "role": [
+                        {
+                            "coding": [
+                                {
+                                    "system": "http://nucc.org/provider-taxonomy",
+                                    "code": "208D00000X",
+                                    "display": "General Practice"
+                                }
+                            ]
+                        }
+                    ],
+                    "member": {
+                        "reference": "Practitioner/111",
+                        "display": "Dr. Alan Smith, MD"
+                    }
+                },
+                {
+                    "role": [
+                        {
+                            "coding": [
+                                {
+                                    "system": "http://snomed.info/sct",
+                                    "code": "116154003",
+                                    "display": "Patient (person)"
+                                }
+                            ]
+                        }
+                    ],
+                    "member": {
+                        "reference": "Patient/4",
+                        "display": "Michael Brown"
+                    }
+                }
+            ]
+        }
+    ]
+}

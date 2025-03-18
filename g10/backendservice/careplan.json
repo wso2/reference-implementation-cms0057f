@@ -1,0 +1,91 @@
+{
+    "data": [
+        {
+            "resourceType": "CarePlan",
+            "id": "d4e5f6g7-890a-bcde-f123-4567890abcde",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-careplan"
+                ]
+            },
+            "text": {
+                "status": "additional",
+                "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">\n\t\t\t<strong>Assessment</strong>\n\t\t\t<ol>\n\t\t\t\t<li>Essential hypertension with elevated BP readings.</li>\n\t\t\t\t<li>Risk of cardiovascular disease.</li>\n\t\t\t\t<li>History of smoking, requires lifestyle modifications.</li>\n\t\t\t</ol>\n\t\t\t<table>\n\t\t\t\t<thead>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<th>Planned Activity</th>\n\t\t\t\t\t\t<th>Planned Date</th>\n\t\t\t\t\t</tr>\n\t\t\t\t</thead>\n\t\t\t\t<tbody>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>Blood pressure monitoring</td>\n\t\t\t\t\t\t<td>March 10, 2025</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>Lifestyle counseling (diet, exercise)</td>\n\t\t\t\t\t\t<td>March 15, 2025</td>\n\t\t\t\t\t</tr>\n\t\t\t\t</tbody>\n\t\t\t</table>\n\t\t</div>"
+            },
+            "status": "active",
+            "intent": "order",
+            "category": [
+                {
+                    "coding": [
+                        {
+                            "system": "http://hl7.org/fhir/us/core/CodeSystem/careplan-category",
+                            "code": "assess-plan"
+                        }
+                    ]
+                }
+            ],
+            "subject": {
+                "reference": "Patient/1",
+                "display": "John Doe"
+            }
+        },
+        {
+            "resourceType": "CarePlan",
+            "id": "e5f6g7h8-90ab-cdef-1234-567890abcdef",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-careplan"
+                ]
+            },
+            "text": {
+                "status": "additional",
+                "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">\n\t\t\t<strong>Assessment</strong>\n\t\t\t<ol>\n\t\t\t\t<li>Type 2 diabetes mellitus with uncontrolled glucose levels.</li>\n\t\t\t\t<li>Risk of neuropathy and nephropathy.</li>\n\t\t\t\t<li>Obesity contributing to insulin resistance.</li>\n\t\t\t</ol>\n\t\t\t<table>\n\t\t\t\t<thead>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<th>Planned Activity</th>\n\t\t\t\t\t\t<th>Planned Date</th>\n\t\t\t\t\t</tr>\n\t\t\t\t</thead>\n\t\t\t\t<tbody>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>HbA1c test</td>\n\t\t\t\t\t\t<td>March 18, 2025</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>Dietary consultation</td>\n\t\t\t\t\t\t<td>March 20, 2025</td>\n\t\t\t\t\t</tr>\n\t\t\t\t</tbody>\n\t\t\t</table>\n\t\t</div>"
+            },
+            "status": "active",
+            "intent": "order",
+            "category": [
+                {
+                    "coding": [
+                        {
+                            "system": "http://hl7.org/fhir/us/core/CodeSystem/careplan-category",
+                            "code": "assess-plan"
+                        }
+                    ]
+                }
+            ],
+            "subject": {
+                "reference": "Patient/2",
+                "display": "Jane Smith"
+            }
+        },
+        {
+            "resourceType": "CarePlan",
+            "id": "f6g7h8i9-0abc-def1-2345-67890abcdef1",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-careplan"
+                ]
+            },
+            "text": {
+                "status": "additional",
+                "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">\n\t\t\t<strong>Assessment</strong>\n\t\t\t<ol>\n\t\t\t\t<li>Chronic asthma with frequent exacerbations.</li>\n\t\t\t\t<li>Triggers include dust and pollen.</li>\n\t\t\t\t<li>Frequent use of rescue inhaler, needs better control.</li>\n\t\t\t</ol>\n\t\t\t<table>\n\t\t\t\t<thead>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<th>Planned Activity</th>\n\t\t\t\t\t\t<th>Planned Date</th>\n\t\t\t\t\t</tr>\n\t\t\t\t</thead>\n\t\t\t\t<tbody>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>Pulmonary function test</td>\n\t\t\t\t\t\t<td>March 22, 2025</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>Asthma action plan review</td>\n\t\t\t\t\t\t<td>March 25, 2025</td>\n\t\t\t\t\t</tr>\n\t\t\t\t</tbody>\n\t\t\t</table>\n\t\t</div>"
+            },
+            "status": "active",
+            "intent": "order",
+            "category": [
+                {
+                    "coding": [
+                        {
+                            "system": "http://hl7.org/fhir/us/core/CodeSystem/careplan-category",
+                            "code": "assess-plan"
+                        }
+                    ]
+                }
+            ],
+            "subject": {
+                "reference": "Patient/4",
+                "display": "Michael Brown"
+            }
+        }
+    ]
+}

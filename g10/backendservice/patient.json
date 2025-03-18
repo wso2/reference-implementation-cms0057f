@@ -1,0 +1,624 @@
+{
+    "data": [
+        {
+            "resourceType": "Patient",
+            "id": "1",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient"
+                ]
+            },
+            "text": {
+                "status": "generated",
+                "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p><b>Generated Narrative</b></p><p><b>id</b>: example</p><p><b>meta</b>: </p><p><b>identifier</b>: Medical Record Number: 1032702 (USUAL)</p><p><b>active</b>: true</p><p><b>name</b>: Amy V. Shaw , Amy V. Baxter </p><p><b>telecom</b>: ph: 555-555-5555(HOME), amy.shaw@example.com</p><p><b>gender</b>: female</p><p><b>birthDate</b>: 1987-02-20</p><p><b>address</b>: </p><ul><li>49 Meadow St Mounds OK 74047 US </li><li>183 Mountain View St Mounds OK 74048 US </li></ul></div>"
+            },
+            "identifier": [
+                {
+                    "use": "usual",
+                    "type": {
+                        "coding": [
+                            {
+                                "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+                                "code": "MR",
+                                "display": "Medical Record Number"
+                            }
+                        ],
+                        "text": "Medical Record Number"
+                    },
+                    "system": "http://hospital.smarthealthit.org",
+                    "value": "1032702"
+                }
+            ],
+            "active": true,
+            "name": [
+                {
+                    "family": "Shaw",
+                    "given": [
+                        "Amy",
+                        "V."
+                    ],
+                    "period": {
+                        "start": "2016-12-06",
+                        "end": "2020-07-22"
+                    }
+                },
+                {
+                    "family": "Baxter",
+                    "given": [
+                        "Amy",
+                        "V."
+                    ],
+                    "suffix": [
+                        "PharmD"
+                    ],
+                    "period": {
+                        "start": "2020-07-22"
+                    }
+                }
+            ],
+            "telecom": [
+                {
+                    "system": "phone",
+                    "value": "555-555-5555",
+                    "use": "home"
+                },
+                {
+                    "system": "email",
+                    "value": "amy.shaw@example.com"
+                }
+            ],
+            "gender": "female",
+            "birthDate": "1987-02-20",
+            "communication": [
+                {
+                    "language": {
+                        "coding": [
+                            {
+                                "system": "urn:ietf:bcp:47",
+                                "code": "en-US",
+                                "display": "English (United States)"
+                            }
+                        ],
+                        "text": "English (United States)"
+                    }
+                }
+            ],
+            "address": [
+                {
+                    "line": [
+                        "49 Meadow St"
+                    ],
+                    "city": "Mounds",
+                    "state": "OK",
+                    "postalCode": "74047",
+                    "country": "US",
+                    "period": {
+                        "start": "2016-12-06",
+                        "end": "2020-07-22"
+                    }
+                },
+                {
+                    "line": [
+                        "183 Mountain View St"
+                    ],
+                    "city": "Mounds",
+                    "state": "OK",
+                    "postalCode": "74048",
+                    "country": "US",
+                    "period": {
+                        "start": "2020-07-22"
+                    }
+                }
+            ],
+            "extension": [
+                {
+                    "extension": [
+                        {
+                            "url": "ombCategory",
+                            "valueCoding": {
+                                "system": "urn:oid:2.16.840.1.113883.6.238",
+                                "code": "2106-3",
+                                "display": "White"
+                            }
+                        },
+                        {
+                            "url": "ombCategory",
+                            "valueCoding": {
+                                "system": "urn:oid:2.16.840.1.113883.6.238",
+                                "code": "1002-5",
+                                "display": "American Indian or Alaska Native"
+                            }
+                        },
+                        {
+                            "url": "ombCategory",
+                            "valueCoding": {
+                                "system": "urn:oid:2.16.840.1.113883.6.238",
+                                "code": "2028-9",
+                                "display": "Asian"
+                            }
+                        },
+                        {
+                            "url": "detailed",
+                            "valueCoding": {
+                                "system": "urn:oid:2.16.840.1.113883.6.238",
+                                "code": "1586-7",
+                                "display": "Shoshone"
+                            }
+                        },
+                        {
+                            "url": "detailed",
+                            "valueCoding": {
+                                "system": "urn:oid:2.16.840.1.113883.6.238",
+                                "code": "2036-2",
+                                "display": "Filipino"
+                            }
+                        },
+                        {
+                            "url": "text",
+                            "valueString": "Mixed"
+                        }
+                    ],
+                    "url": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-race"
+                },
+                {
+                    "extension": [
+                        {
+                            "url": "ombCategory",
+                            "valueCoding": {
+                                "system": "urn:oid:2.16.840.1.113883.6.238",
+                                "code": "2135-2",
+                                "display": "Hispanic or Latino"
+                            }
+                        },
+                        {
+                            "url": "detailed",
+                            "valueCoding": {
+                                "system": "urn:oid:2.16.840.1.113883.6.238",
+                                "code": "2184-0",
+                                "display": "Dominican"
+                            }
+                        },
+                        {
+                            "url": "detailed",
+                            "valueCoding": {
+                                "system": "urn:oid:2.16.840.1.113883.6.238",
+                                "code": "2148-5",
+                                "display": "Mexican"
+                            }
+                        },
+                        {
+                            "url": "text",
+                            "valueString": "Hispanic or Latino"
+                        }
+                    ],
+                    "url": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-ethnicity"
+                },
+                {
+                    "url": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-birthsex",
+                    "valueCode": "F"
+                }
+            ]
+        },
+        {
+            "resourceType": "Patient",
+            "id": "2",
+            "active": true,
+            "name": [
+                {
+                    "family": "Smith",
+                    "given": [
+                        "Jane",
+                        "A."
+                    ],
+                    "use": "official"
+                }
+            ],
+            "communication": [
+                {
+                    "language": {
+                        "coding": [
+                            {
+                                "system": "urn:ietf:bcp:47",
+                                "code": "en-US",
+                                "display": "English (United States)"
+                            }
+                        ],
+                        "text": "English (United States)"
+                    }
+                }
+            ],
+            "address": [
+                {
+                    "line": [
+                        "49 Meadow St"
+                    ],
+                    "city": "Mounds",
+                    "state": "OK",
+                    "postalCode": "74047",
+                    "country": "US",
+                    "use": "home"
+                }
+            ],
+            "telecom": [
+                {
+                    "system": "phone",
+                    "value": "+1 (555) 555-5555",
+                    "use": "home"
+                },
+                {
+                    "system": "email",
+                    "value": "jane.smith@example.com",
+                    "use": "work"
+                }
+            ],
+            "identifier": [
+                {
+                    "system": "http://hospital.smarthealth.org/patient-ids",
+                    "value": "98"
+                }
+            ],
+            "birthDate": "1980-01-01",
+            "gender": "female",
+            "extension": [
+                {
+                    "extension": [
+                        {
+                            "url": "ombCategory",
+                            "valueCoding": {
+                                "system": "urn:oid:2.16.840.1.113883.6.238",
+                                "code": "2054-5",
+                                "display": "Black or African American"
+                            }
+                        },
+                        {
+                            "url": "detailed",
+                            "valueCoding": {
+                                "system": "urn:oid:2.16.840.1.113883.6.238",
+                                "code": "1117-1",
+                                "display": "Haitian"
+                            }
+                        },
+                        {
+                            "url": "text",
+                            "valueString": "Black or African American"
+                        }
+                    ],
+                    "url": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-race"
+                },
+                {
+                    "extension": [
+                        {
+                            "url": "ombCategory",
+                            "valueCoding": {
+                                "system": "urn:oid:2.16.840.1.113883.6.238",
+                                "code": "2135-2",
+                                "display": "Hispanic or Latino"
+                            }
+                        },
+                        {
+                            "url": "detailed",
+                            "valueCoding": {
+                                "system": "urn:oid:2.16.840.1.113883.6.238",
+                                "code": "2149-3",
+                                "display": "Puerto Rican"
+                            }
+                        },
+                        {
+                            "url": "text",
+                            "valueString": "Hispanic or Latino"
+                        }
+                    ],
+                    "url": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-ethnicity"
+                },
+                {
+                    "url": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-birthsex",
+                    "valueCode": "M"
+                }
+            ]
+        },
+        {
+            "resourceType": "Patient",
+            "id": "3",
+            "active": true,
+            "identifier": [
+                {
+                    "system": "http://hospital.smarthealth.org/patient-ids",
+                    "value": "321"
+                }
+            ],
+            "communication": [
+                {
+                    "language": {
+                        "coding": [
+                            {
+                                "system": "urn:ietf:bcp:47",
+                                "code": "en-US",
+                                "display": "English (United States)"
+                            }
+                        ],
+                        "text": "English (United States)"
+                    }
+                }
+            ],
+            "name": [
+                {
+                    "family": "Lee",
+                    "given": [
+                        "David",
+                        "C."
+                    ],
+                    "use": "official"
+                }
+            ],
+            "address": [
+                {
+                    "line": [
+                        "123 Main St.",
+                        "Apt. 202"
+                    ],
+                    "city": "San Francisco",
+                    "country": "USA",
+                    "postalCode": "94105",
+                    "type": "physical",
+                    "use": "home"
+                }
+            ],
+            "maritalStatus": {
+                "coding": [
+                    {
+                        "system": "http://terminology.hl7.org/CodeSystem/v3-MaritalStatus",
+                        "code": "M",
+                        "display": "Married"
+                    }
+                ]
+            },
+            "birthDate": "1985-04-25",
+            "gender": "male",
+            "extension": [
+                {
+                    "extension": [
+                        {
+                            "url": "ombCategory",
+                            "valueCoding": {
+                                "system": "urn:oid:2.16.840.1.113883.6.238",
+                                "code": "2076-8",
+                                "display": "Native Hawaiian or Other Pacific Islander"
+                            }
+                        },
+                        {
+                            "url": "ombCategory",
+                            "valueCoding": {
+                                "system": "urn:oid:2.16.840.1.113883.6.238",
+                                "code": "2016-3",
+                                "display": "Asian"
+                            }
+                        },
+                        {
+                            "url": "detailed",
+                            "valueCoding": {
+                                "system": "urn:oid:2.16.840.1.113883.6.238",
+                                "code": "2080-0",
+                                "display": "Native Hawaiian"
+                            }
+                        },
+                        {
+                            "url": "detailed",
+                            "valueCoding": {
+                                "system": "urn:oid:2.16.840.1.113883.6.238",
+                                "code": "2033-9",
+                                "display": "Japanese"
+                            }
+                        },
+                        {
+                            "url": "text",
+                            "valueString": "Native Hawaiian and Japanese"
+                        }
+                    ],
+                    "url": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-race"
+                },
+                {
+                    "extension": [
+                        {
+                            "url": "ombCategory",
+                            "valueCoding": {
+                                "system": "urn:oid:2.16.840.1.113883.6.238",
+                                "code": "2186-5",
+                                "display": "Not Hispanic or Latino"
+                            }
+                        },
+                        {
+                            "url": "text",
+                            "valueString": "Not Hispanic or Latino"
+                        }
+                    ],
+                    "url": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-ethnicity"
+                },
+                {
+                    "url": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-birthsex",
+                    "valueCode": "F"
+                }
+            ]
+        },
+        {
+            "resourceType": "ExplanationOfBenefit",
+            "id": "1",
+            "patient": "1",
+            "created": "2023-08-16",
+            "serviceProvider": "Organization/2",
+            "item": [
+                {
+                    "service": {
+                        "display": "Office consultation"
+                    },
+                    "benefit": [
+                        {
+                            "patientResponsibility": 10
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "resourceType": "ExplanationOfBenefit",
+            "id": "2",
+            "patient": "1",
+            "created": "2014-08-16",
+            "diagnosis": [
+                {
+                    "diagnosisCode": {
+                        "display": "Upper respiratory infection"
+                    }
+                }
+            ],
+            "item": [
+                {
+                    "service": {
+                        "display": "Office visit"
+                    }
+                }
+            ]
+        },
+        {
+            "resourceType": "ExplanationOfBenefit",
+            "id": "3",
+            "patient": "2",
+            "priorAuthorization": {
+                "reference": "PriorAuthorization/123"
+            },
+            "created": "2013-08-16",
+            "item": [
+                {
+                    "service": {
+                        "display": "MRI scan"
+                    },
+                    "benefit": [
+                        {
+                            "allowed": 500
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "resourceType": "Coverage",
+            "id": "1",
+            "patient": "1",
+            "type": {
+                "coding": [
+                    {
+                        "system": "http://terminology.hl7.org/CodeSystem/coverage-type",
+                        "code": "indemnity",
+                        "display": "Indemnity Insurance"
+                    }
+                ]
+            },
+            "status": "active",
+            "issued": "2023-01-01",
+            "effectivePeriod": {
+                "start": "2023-01-01",
+                "end": "2024-12-31"
+            },
+            "payor": [
+                {
+                    "reference": "Organization/2"
+                }
+            ],
+            "beneficiary": {
+                "reference": "Patient/1"
+            },
+            "class": {
+                "coding": [
+                    {
+                        "system": "http://terminology.hl7.org/CodeSystem/coverage-class",
+                        "code": "platinum",
+                        "display": "Platinum Plan"
+                    }
+                ]
+            }
+        },
+        {
+            "resourceType": "Coverage",
+            "id": "2",
+            "patient": "1",
+            "type": {
+                "coding": [
+                    {
+                        "system": "http://terminology.hl7.org/CodeSystem/coverage-type",
+                        "code": "managed-care",
+                        "display": "Managed Care"
+                    }
+                ]
+            },
+            "status": "active",
+            "issued": "2023-07-01",
+            "effectivePeriod": {
+                "start": "2023-07-01",
+                "end": null
+            },
+            "holder": {
+                "reference": "Patient/1"
+            },
+            "payor": [
+                {
+                    "reference": "Organization/3"
+                }
+            ],
+            "beneficiary": [
+                {
+                    "reference": "Patient/1",
+                    "relationship": {
+                        "coding": [
+                            {
+                                "system": "http://terminology.hl7.org/CodeSystem/v2-0006",
+                                "code": "18",
+                                "display": "Child"
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "resourceType": "Coverage",
+            "id": "3",
+            "patient": "2",
+            "type": {
+                "coding": [
+                    {
+                        "system": "http://terminology.hl7.org/CodeSystem/coverage-type",
+                        "code": "vision",
+                        "display": "Vision Insurance"
+                    }
+                ]
+            },
+            "status": "active",
+            "issued": "2024-01-01",
+            "effectivePeriod": {
+                "start": "2024-01-01",
+                "end": "2024-12-31"
+            },
+            "holder": {
+                "reference": "Patient/2"
+            },
+            "payor": [
+                {
+                    "reference": "Organization/4"
+                }
+            ],
+            "network": [
+                {
+                    "reference": "Organization/5",
+                    "relationship": {
+                        "coding": [
+                            {
+                                "system": "http://terminology.hl7.org/CodeSystem/plan-net-relationship",
+                                "code": "in-network",
+                                "display": "In-Network"
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    ]
+}

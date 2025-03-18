@@ -1,0 +1,12 @@
+schemaVersion: 1.1
+endpoints:
+    - name: uscore311-goal-api
+      displayName: uscore311 Goal API
+      service:
+        basePath: /fhir/r4/Goal
+        port: 9090
+      type: REST
+      networkVisibilities:
+        - Project
+        - Public
+      schemaFilePath: oas/Goal.yaml

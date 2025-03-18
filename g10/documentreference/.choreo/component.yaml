@@ -1,0 +1,12 @@
+schemaVersion: 1.1
+endpoints:
+    - name: uscore311-documentreference-api
+      displayName: uscore311 DocumentReference API
+      service:
+        basePath: /fhir/r4/DocumentReference
+        port: 9090
+      type: REST
+      networkVisibilities:
+        - Project
+        - Public
+      schemaFilePath: oas/DocumentReference.yaml

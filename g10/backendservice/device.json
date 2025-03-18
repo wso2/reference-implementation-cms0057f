@@ -1,0 +1,121 @@
+{
+    "data": [
+        {
+            "resourceType": "Device",
+            "id": "pacemaker-1",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-implantable-device"
+                ]
+            },
+            "text": {
+                "status": "generated",
+                "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p><b>Generated Narrative</b></p><p><b>id</b>: pacemaker-1</p><p><b>status</b>: active</p><p><b>expirationDate</b>: 2030-05-15</p><p><b>lotNumber</b>: A12345X</p><p><b>serialNumber</b>: P987654321</p><p><b>type</b>: Pacemaker</p><p><b>patient</b>: John Doe</p></div>"
+            },
+            "udiCarrier": [
+                {
+                    "deviceIdentifier": "12345678901234",
+                    "carrierHRF": "(01)12345678901234(17)300515(10)A12345X(21)P987654321"
+                }
+            ],
+            "status": "active",
+            "expirationDate": "2030-05-15",
+            "lotNumber": "A12345X",
+            "serialNumber": "P987654321",
+            "type": {
+                "coding": [
+                    {
+                        "system": "http://snomed.info/sct",
+                        "code": "304120007",
+                        "display": "Cardiac pacemaker"
+                    }
+                ]
+            },
+            "patient": {
+                "reference": "Patient/1",
+                "display": "John Doe"
+            },
+            "distinctIdentifier": "12345678901234",
+            "manufacturer": "Medtronic",
+            "manufactureDate": "2015-05-15"
+        },
+        {
+            "resourceType": "Device",
+            "id": "insulin-pump-2",
+            "distinctIdentifier": "56789012345678",
+            "manufacturer": "Medtronic",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-implantable-device"
+                ]
+            },
+            "text": {
+                "status": "generated",
+                "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p><b>Generated Narrative</b></p><p><b>id</b>: insulin-pump-2</p><p><b>status</b>: active</p><p><b>expirationDate</b>: 2028-12-31</p><p><b>lotNumber</b>: B67890Y</p><p><b>serialNumber</b>: IP11223344</p><p><b>type</b>: Insulin Pump</p><p><b>patient</b>: Jane Smith</p></div>"
+            },
+            "udiCarrier": [
+                {
+                    "deviceIdentifier": "56789012345678",
+                    "carrierHRF": "(01)56789012345678(17)281231(10)B67890Y(21)IP11223344"
+                }
+            ],
+            "status": "active",
+            "expirationDate": "2028-12-31",
+            "lotNumber": "B67890Y",
+            "serialNumber": "IP11223344",
+            "type": {
+                "coding": [
+                    {
+                        "system": "http://snomed.info/sct",
+                        "code": "46616001",
+                        "display": "Insulin pump"
+                    }
+                ]
+            },
+            "patient": {
+                "reference": "Patient/2",
+                "display": "Jane Smith"
+            },
+            "manufactureDate": "2018-12-31"
+        },
+        {
+            "resourceType": "Device",
+            "id": "inhaler-4",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-implantable-device"
+                ]
+            },
+            "text": {
+                "status": "generated",
+                "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p><b>Generated Narrative</b></p><p><b>id</b>: inhaler-4</p><p><b>status</b>: active</p><p><b>expirationDate</b>: 2026-06-30</p><p><b>lotNumber</b>: C54321Z</p><p><b>serialNumber</b>: IN55443322</p><p><b>type</b>: Inhaler</p><p><b>patient</b>: Michael Brown</p></div>"
+            },
+            "udiCarrier": [
+                {
+                    "deviceIdentifier": "98765432109876",
+                    "carrierHRF": "(01)98765432109876(17)260630(10)C54321Z(21)IN55443322"
+                }
+            ],
+            "status": "active",
+            "expirationDate": "2026-06-30",
+            "lotNumber": "C54321Z",
+            "serialNumber": "IN55443322",
+            "type": {
+                "coding": [
+                    {
+                        "system": "http://snomed.info/sct",
+                        "code": "706018001",
+                        "display": "Inhaler"
+                    }
+                ]
+            },
+            "patient": {
+                "reference": "Patient/4",
+                "display": "Michael Brown"
+            },
+            "distinctIdentifier": "98765432109876",
+            "manufacturer": "GlaxoSmithKline",
+            "manufactureDate": "2016-06-30"
+        }
+    ]
+}

@@ -1,0 +1,605 @@
+{
+    "data": [
+        {
+            "resourceType": "DocumentReference",
+            "id": "patient-1-lab-doc",
+            "identifier": [
+                {
+                    "system": "urn:ietf:rfc:3986",
+                    "value": "urn:uuid:acc9d16d-da9b-9dc9-fbb4-9e6f950b11e6"
+                }
+            ],
+            "author": [
+                {
+                    "reference": "Practitioner/111",
+                    "display": "Dr. Melvin857 Torp761"
+                }
+            ],
+            "context": {
+                "encounter": [
+                    {
+                        "reference": "Encounter/patient-2-xray-encounter"
+                    }
+                ],
+                "period": {
+                    "start": "1940-09-06T01:11:45-04:00",
+                    "end": "1940-09-06T01:26:45-04:00"
+                }
+            },
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-documentreference"
+                ]
+            },
+            "status": "current",
+            "docStatus": "final",
+            "type": {
+                "coding": [
+                    {
+                        "system": "http://loinc.org",
+                        "code": "100449-8",
+                        "display": "Progress note"
+                    }
+                ],
+                "text": "Complete Blood Count (CBC) Panel"
+            },
+            "category": [
+                {
+                    "coding": [
+                        {
+                            "system": "http://loinc.org",
+                            "code": "26436-6",
+                            "display": "Laboratory"
+                        }
+                    ],
+                    "text": "Laboratory"
+                }
+            ],
+            "subject": {
+                "reference": "Patient/1",
+                "display": "John Doe"
+            },
+            "date": "2023-01-15T10:30:00.000Z",
+            "content": [
+                {
+                    "attachment": {
+                        "contentType": "text/plain",
+                        "data": "CjE5NDAtMDktMDYKCiMg",
+                        "title": "Complete Blood Count (CBC) Report",
+                        "creation": "2023-01-15T10:30:00.000Z"
+                    },
+                    "format": {
+                        "system": "http://ihe.net/fhir/ValueSet/IHE.FormatCode.codesystem",
+                        "code": "urn:ihe:iti:xds:2017:mimeTypeSufficient",
+                        "display": "mimeType Sufficient"
+                    }
+                }
+            ]
+        },
+        {
+            "resourceType": "DocumentReference",
+            "id": "patient-2-xray-doc",
+            "identifier": [
+                {
+                    "system": "urn:ietf:rfc:3986",
+                    "value": "urn:uuid:acc9d16d-da9b-9dc9-fbb4-9e6f950b11e6"
+                }
+            ],
+            "author": [
+                {
+                    "reference": "Practitioner/333",
+                    "display": "Dr. Melvin857 Torp761"
+                }
+            ],
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-documentreference"
+                ]
+            },
+            "status": "current",
+            "docStatus": "final",
+            "type": {
+                "coding": [
+                    {
+                        "system": "http://loinc.org",
+                        "code": "30746-2",
+                        "display": "Portable XR Chest Views"
+                    }
+                ],
+                "text": "Portable XR Chest Views"
+            },
+            "category": [
+                {
+                    "coding": [
+                        {
+                            "system": "http://loinc.org",
+                            "code": "LP29684-5",
+                            "display": "Radiology"
+                        }
+                    ],
+                    "text": "Radiology"
+                }
+            ],
+            "subject": {
+                "reference": "Patient/2",
+                "display": "Jane Smith"
+            },
+            "date": "2023-07-20T15:45:00.000Z",
+            "content": [
+                {
+                    "attachment": {
+                        "contentType": "text/plain",
+                        "data": "CjE5NDAtMDktMDYKCiMg",
+                        "title": "Chest X-Ray Report",
+                        "creation": "2023-07-20T15:45:00.000Z"
+                    },
+                    "format": {
+                        "system": "http://ihe.net/fhir/ValueSet/IHE.FormatCode.codesystem",
+                        "code": "urn:ihe:iti:xds:2017:mimeTypeSufficient",
+                        "display": "mimeType Sufficient"
+                    }
+                }
+            ],
+            "context": {
+                "encounter": [
+                    {
+                        "reference": "Encounter/patient-2-xray-encounter"
+                    }
+                ],
+                "period": {
+                    "start": "2023-07-20T15:30:00.000Z",
+                    "end": "2023-07-20T16:00:00.000Z"
+                }
+            }
+        },
+        {
+            "resourceType": "DocumentReference",
+            "id": "patient-4-mri-doc",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-documentreference"
+                ]
+            },
+            "status": "current",
+            "docStatus": "final",
+            "type": {
+                "coding": [
+                    {
+                        "system": "http://loinc.org",
+                        "code": "100226-0",
+                        "display": "MRI Brain"
+                    }
+                ],
+                "text": "MRI Brain"
+            },
+            "category": [
+                {
+                    "coding": [
+                        {
+                            "system": "http://loinc.org",
+                            "code": "LP29684-5",
+                            "display": "Radiology"
+                        }
+                    ],
+                    "text": "Radiology"
+                }
+            ],
+            "subject": {
+                "reference": "Patient/4",
+                "display": "Michael Brown"
+            },
+            "date": "2023-09-10T08:15:00.000Z",
+            "content": [
+                {
+                    "attachment": {
+                        "contentType": "text/plain",
+                        "data": "CjE5NDAtMDktMDYKCiMg",
+                        "title": "Brain MRI Report",
+                        "creation": "2023-09-10T08:15:00.000Z"
+                    },
+                    "format": {
+                        "system": "http://ihe.net/fhir/ValueSet/IHE.FormatCode.codesystem",
+                        "code": "urn:ihe:iti:xds:2017:mimeTypeSufficient",
+                        "display": "mimeType Sufficient"
+                    }
+                }
+            ],
+            "context": {
+                "encounter": [
+                    {
+                        "reference": "Encounter/38cd73c9-184d-4016-b315-aca42e5f9569"
+                    }
+                ],
+                "period": {
+                    "start": "2023-09-10T08:00:00.000Z",
+                    "end": "2023-09-10T08:30:00.000Z"
+                }
+            }
+        },
+        {
+            "resourceType": "DocumentReference",
+            "id": "8d852834-71e1-4146-ac18-6d80ecbe77a6",
+            "meta": {
+                "versionId": "1",
+                "lastUpdated": "2024-12-11T01:04:26.011+00:00",
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-documentreference"
+                ]
+            },
+            "identifier": [
+                {
+                    "system": "urn:ietf:rfc:3986",
+                    "value": "urn:uuid:5904ddbb-2755-44b6-8e39-92abe39f23cc"
+                }
+            ],
+            "status": "superseded",
+            "type": {
+                "coding": [
+                    {
+                        "system": "http://loinc.org",
+                        "code": "11488-4",
+                        "display": "Consult note"
+                    }
+                ],
+                "text": "Consult note"
+            },
+            "category": [
+                {
+                    "coding": [
+                        {
+                            "system": "http://hl7.org/fhir/us/core/CodeSystem/us-core-documentreference-category",
+                            "code": "clinical-note",
+                            "display": "Clinical Note"
+                        }
+                    ]
+                }
+            ],
+            "subject": {
+                "reference": "Patient/1"
+            },
+            "date": "1942-03-06T01:11:45.131-04:00",
+            "author": [
+                {
+                    "reference": "Practitioner/333",
+                    "display": "Dr. Melvin857 Torp761"
+                }
+            ],
+            "custodian": {
+                "reference": "Organization/1ac77c95-a3af-4656-94a9-5efd7820ca81",
+                "display": "PCP87052"
+            },
+            "content": [
+                {
+                    "attachment": {
+                        "contentType": "text/plain",
+                        "data": "CjE5NDItMDMtMDYKCiMgQ2hpZWYgQ29tcGxhaW50Ck5vIGNvbXBsYWludHMuCgojIEhpc3Rvcnkgb2YgUHJlc2VudCBJbGxuZXNzCkx1Y2llbjQwOCBpcyBhIDEgeWVhci1vbGQgbm9uLWhpc3BhbmljIHdoaXRlIG1hbGUuIFBhdGllbnQgaGFzIGEgaGlzdG9yeSBvZiBvdGl0aXMgbWVkaWEsIGFjdXRlIHZpcmFsIHBoYXJ5bmdpdGlzIChkaXNvcmRlcikuCgojIFNvY2lhbCBIaXN0b3J5CiBQYXRpZW50IGhhcyBuZXZlciBzbW9rZWQgYW5kIGlzIGFuIGFsY29ob2xpYy4KClBhdGllbnQgY29tZXMgZnJvbSBhIGhpZ2ggc29jaW9lY29ub21pYyBiYWNrZ3JvdW5kLiBQYXRpZW50IGN1cnJlbnRseSBoYXMgQmx1ZSBDcm9zcyBCbHVlIFNoaWVsZC4KCiMgQWxsZXJnaWVzCk5vIEtub3duIEFsbGVyZ2llcy4KCiMgTWVkaWNhdGlvbnMKYXNwaXJpbiA4MSBtZyBvcmFsIHRhYmxldAoKIyBBc3Nlc3NtZW50IGFuZCBQbGFuCgoKIyMgUGxhbgoKVGhlIGZvbGxvd2luZyBwcm9jZWR1cmVzIHdlcmUgY29uZHVjdGVkOgotIG1lZGljYXRpb24gcmVjb25jaWxpYXRpb24gKHByb2NlZHVyZSkK"
+                    },
+                    "format": {
+                        "system": "http://ihe.net/fhir/ValueSet/IHE.FormatCode.codesystem",
+                        "code": "urn:ihe:iti:xds:2017:mimeTypeSufficient",
+                        "display": "mimeType Sufficient"
+                    }
+                }
+            ],
+            "context": {
+                "encounter": [
+                    {
+                        "reference": "Encounter/patient-2-xray-encounter"
+                    }
+                ],
+                "period": {
+                    "start": "1942-03-06T01:11:45-04:00",
+                    "end": "1942-03-06T01:26:45-04:00"
+                }
+            }
+        },
+        {
+            "resourceType": "DocumentReference",
+            "id": "8c3e42b1-d185-4d23-8175-cc4043e707cb",
+            "meta": {
+                "versionId": "1",
+                "lastUpdated": "2024-12-11T01:04:26.011+00:00",
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-documentreference"
+                ]
+            },
+            "identifier": [
+                {
+                    "system": "urn:ietf:rfc:3986",
+                    "value": "urn:uuid:95f2314e-8bd2-bb55-dc66-6d733185d60e"
+                }
+            ],
+            "status": "superseded",
+            "type": {
+                "coding": [
+                    {
+                        "system": "http://loinc.org",
+                        "code": "18842-5",
+                        "display": "Discharge summary"
+                    }
+                ],
+                "text": "Discharge summary"
+            },
+            "category": [
+                {
+                    "coding": [
+                        {
+                            "system": "http://hl7.org/fhir/us/core/CodeSystem/us-core-documentreference-category",
+                            "code": "clinical-note",
+                            "display": "Clinical Note"
+                        }
+                    ]
+                }
+            ],
+            "subject": {
+                "reference": "Patient/1"
+            },
+            "date": "1947-01-22T01:11:45.131-05:00",
+            "author": [
+                {
+                    "reference": "Practitioner/333",
+                    "display": "Dr. Willena258 Oberbrunner298"
+                }
+            ],
+            "custodian": {
+                "reference": "Organization/1ac77c95-a3af-4656-94a9-5efd7820ca81",
+                "display": "LOWELL GENERAL HOSPITAL"
+            },
+            "content": [
+                {
+                    "attachment": {
+                        "contentType": "text/plain",
+                        "data": "CjE5NDctMDEtMjIKCiMgQ2hpZWYgQ29tcGxhaW50Ck5vIGNvbXBsYWludHMuCgojIEhpc3Rvcnkgb2YgUHJlc2VudCBJbGxuZXNzCkx1Y2llbjQwOCBpcyBhIDYgeWVhci1vbGQgbm9uLWhpc3BhbmljIHdoaXRlIG1hbGUuIFBhdGllbnQgaGFzIGEgaGlzdG9yeSBvZiBvdGl0aXMgbWVkaWEsIGFjdXRlIHZpcmFsIHBoYXJ5bmdpdGlzIChkaXNvcmRlciksIGZyYWN0dXJlIG9mIGNsYXZpY2xlLgoKIyBTb2NpYWwgSGlzdG9yeQogUGF0aWVudCBoYXMgbmV2ZXIgc21va2VkIGFuZCBpcyBhbiBhbGNvaG9saWMuCgpQYXRpZW50IGNvbWVzIGZyb20gYSBoaWdoIHNvY2lvZWNvbm9taWMgYmFja2dyb3VuZC4gUGF0aWVudCBjdXJyZW50bHkgaGFzIEJsdWUgQ3Jvc3MgQmx1ZSBTaGllbGQuCgojIEFsbGVyZ2llcwpObyBLbm93biBBbGxlcmdpZXMuCgojIE1lZGljYXRpb25zCmFzcGlyaW4gODEgbWcgb3JhbCB0YWJsZXQKCiMgQXNzZXNzbWVudCBhbmQgUGxhbgoKCiMjIFBsYW4KCg=="
+                    },
+                    "format": {
+                        "system": "http://ihe.net/fhir/ValueSet/IHE.FormatCode.codesystem",
+                        "code": "urn:ihe:iti:xds:2017:mimeTypeSufficient",
+                        "display": "mimeType Sufficient"
+                    }
+                }
+            ],
+            "context": {
+                "encounter": [
+                    {
+                        "reference": "Encounter/patient-1-lab-encounter"
+                    }
+                ],
+                "period": {
+                    "start": "1947-01-22T01:11:45-05:00",
+                    "end": "1947-01-22T01:26:45-05:00"
+                }
+            }
+        },
+        {
+            "resourceType": "DocumentReference",
+            "id": "2c2082a3-0d21-42f5-b10f-9d310c981f9f",
+            "meta": {
+                "versionId": "1",
+                "lastUpdated": "2024-12-11T01:04:26.011+00:00",
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-documentreference"
+                ]
+            },
+            "identifier": [
+                {
+                    "system": "urn:ietf:rfc:3986",
+                    "value": "urn:uuid:d7130c41-5c6c-b632-dd67-1ba7468f17c2"
+                }
+            ],
+            "status": "superseded",
+            "type": {
+                "coding": [
+                    {
+                        "system": "http://loinc.org",
+                        "code": "34117-2",
+                        "display": "History and physical note"
+                    }
+                ],
+                "text": "History and physical note"
+            },
+            "category": [
+                {
+                    "coding": [
+                        {
+                            "system": "http://hl7.org/fhir/us/core/CodeSystem/us-core-documentreference-category",
+                            "code": "clinical-note",
+                            "display": "Clinical Note"
+                        }
+                    ]
+                }
+            ],
+            "subject": {
+                "reference": "Patient/1"
+            },
+            "date": "1947-03-21T00:11:45.131-05:00",
+            "author": [
+                {
+                    "reference": "Practitioner/333",
+                    "display": "Dr. Melvin857 Torp761"
+                }
+            ],
+            "custodian": {
+                "reference": "Organization/1ac77c95-a3af-4656-94a9-5efd7820ca81",
+                "display": "PCP87052"
+            },
+            "content": [
+                {
+                    "attachment": {
+                        "contentType": "text/plain",
+                        "data": "CjE5NDctMDMtMjEKCiMgQ2hpZWYgQ29tcGxhaW50Ck5vIGNvbXBsYWludHMuCgojIEhpc3Rvcnkgb2YgUHJlc2VudCBJbGxuZXNzCkx1Y2llbjQwOCBpcyBhIDYgeWVhci1vbGQgbm9uLWhpc3BhbmljIHdoaXRlIG1hbGUuIFBhdGllbnQgaGFzIGEgaGlzdG9yeSBvZiBvdGl0aXMgbWVkaWEsIGFjdXRlIHZpcmFsIHBoYXJ5bmdpdGlzIChkaXNvcmRlciksIGZyYWN0dXJlIG9mIGNsYXZpY2xlLgoKIyBTb2NpYWwgSGlzdG9yeQogUGF0aWVudCBoYXMgbmV2ZXIgc21va2VkIGFuZCBpcyBhbiBhbGNvaG9saWMuCgpQYXRpZW50IGNvbWVzIGZyb20gYSBoaWdoIHNvY2lvZWNvbm9taWMgYmFja2dyb3VuZC4gUGF0aWVudCBjdXJyZW50bHkgaGFzIEJsdWUgQ3Jvc3MgQmx1ZSBTaGllbGQuCgojIEFsbGVyZ2llcwpObyBLbm93biBBbGxlcmdpZXMuCgojIE1lZGljYXRpb25zCmFzcGlyaW4gODEgbWcgb3JhbCB0YWJsZXQKCiMgQXNzZXNzbWVudCBhbmQgUGxhbgoKCiMjIFBsYW4KUGF0aWVudCB3YXMgZ2l2ZW4gdGhlIGZvbGxvd2luZyBpbW11bml6YXRpb25zOiBpbmZsdWVuemEsIHNlYXNvbmFsLCBpbmplY3RhYmxlLCBwcmVzZXJ2YXRpdmUgZnJlZS4gCg=="
+                    },
+                    "format": {
+                        "system": "http://ihe.net/fhir/ValueSet/IHE.FormatCode.codesystem",
+                        "code": "urn:ihe:iti:xds:2017:mimeTypeSufficient",
+                        "display": "mimeType Sufficient"
+                    }
+                }
+            ],
+            "context": {
+                "encounter": [
+                    {
+                        "reference": "Encounter/patient-1-lab-encounter"
+                    }
+                ],
+                "period": {
+                    "start": "1947-03-21T00:11:45-05:00",
+                    "end": "1947-03-21T00:26:45-05:00"
+                }
+            }
+        },
+        {
+            "resourceType": "DocumentReference",
+            "id": "49372b6e-204b-4b96-b31c-9bf8531ba275",
+            "meta": {
+                "versionId": "1",
+                "lastUpdated": "2024-12-11T01:04:26.011+00:00",
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-documentreference"
+                ]
+            },
+            "identifier": [
+                {
+                    "system": "urn:ietf:rfc:3986",
+                    "value": "urn:uuid:2469bdd9-fd38-8ff4-1110-5b59ee783ea3"
+                }
+            ],
+            "status": "superseded",
+            "type": {
+                "coding": [
+                    {
+                        "system": "http://loinc.org",
+                        "code": "28570-0",
+                        "display": "Procedure note"
+                    }
+                ],
+                "text": "Procedure note"
+            },
+            "category": [
+                {
+                    "coding": [
+                        {
+                            "system": "http://hl7.org/fhir/us/core/CodeSystem/us-core-documentreference-category",
+                            "code": "clinical-note",
+                            "display": "Clinical Note"
+                        }
+                    ]
+                }
+            ],
+            "subject": {
+                "reference": "Patient/1"
+            },
+            "date": "1947-11-01T00:11:45.131-05:00",
+            "author": [
+                {
+                    "reference": "Practitioner/333",
+                    "display": "Dr. Willena258 Oberbrunner298"
+                }
+            ],
+            "custodian": {
+                "reference": "Organization/1ac77c95-a3af-4656-94a9-5efd7820ca81",
+                "display": "LOWELL GENERAL HOSPITAL"
+            },
+            "content": [
+                {
+                    "attachment": {
+                        "contentType": "text/plain",
+                        "data": "CjE5NDctMTEtMDEKCiMgQ2hpZWYgQ29tcGxhaW50Ck5vIGNvbXBsYWludHMuCgojIEhpc3Rvcnkgb2YgUHJlc2VudCBJbGxuZXNzCkx1Y2llbjQwOCBpcyBhIDcgeWVhci1vbGQgbm9uLWhpc3BhbmljIHdoaXRlIG1hbGUuIFBhdGllbnQgaGFzIGEgaGlzdG9yeSBvZiBvdGl0aXMgbWVkaWEsIGFjdXRlIHZpcmFsIHBoYXJ5bmdpdGlzIChkaXNvcmRlciksIGZyYWN0dXJlIG9mIGNsYXZpY2xlLgoKIyBTb2NpYWwgSGlzdG9yeQogUGF0aWVudCBoYXMgbmV2ZXIgc21va2VkIGFuZCBpcyBhbiBhbGNvaG9saWMuCgpQYXRpZW50IGNvbWVzIGZyb20gYSBoaWdoIHNvY2lvZWNvbm9taWMgYmFja2dyb3VuZC4gUGF0aWVudCBjdXJyZW50bHkgaGFzIEJsdWUgQ3Jvc3MgQmx1ZSBTaGllbGQuCgojIEFsbGVyZ2llcwpObyBLbm93biBBbGxlcmdpZXMuCgojIE1lZGljYXRpb25zCmFzcGlyaW4gODEgbWcgb3JhbCB0YWJsZXQKCiMgQXNzZXNzbWVudCBhbmQgUGxhbgpQYXRpZW50IGlzIHByZXNlbnRpbmcgd2l0aCBvdGl0aXMgbWVkaWEuIAoKIyMgUGxhbgoKVGhlIHBhdGllbnQgd2FzIHByZXNjcmliZWQgdGhlIGZvbGxvd2luZyBtZWRpY2F0aW9uczoKLSBwZW5pY2lsbGluIGcgMzc1IG1nL21sIGluamVjdGFibGUgc29sdXRpb24KLSBhc3BpcmluIDgxIG1nIG9yYWwgdGFibGV0Cg=="
+                    },
+                    "format": {
+                        "system": "http://ihe.net/fhir/ValueSet/IHE.FormatCode.codesystem",
+                        "code": "urn:ihe:iti:xds:2017:mimeTypeSufficient",
+                        "display": "mimeType Sufficient"
+                    }
+                }
+            ],
+            "context": {
+                "encounter": [
+                    {
+                        "reference": "Encounter/patient-1-lab-encounter"
+                    }
+                ],
+                "period": {
+                    "start": "1947-11-01T00:11:45-05:00",
+                    "end": "1947-11-01T00:26:45-05:00"
+                }
+            }
+        },
+        {
+            "resourceType": "DocumentReference",
+            "id": "13596a8a-bfab-4ba8-92b2-23d47f766a61",
+            "meta": {
+                "versionId": "1",
+                "lastUpdated": "2024-12-11T01:04:26.011+00:00",
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-documentreference"
+                ]
+            },
+            "identifier": [
+                {
+                    "system": "urn:ietf:rfc:3986",
+                    "value": "urn:uuid:2536ace1-6f55-5495-bd52-3937e0f63a13"
+                }
+            ],
+            "status": "superseded",
+            "type": {
+                "coding": [
+                    {
+                        "system": "http://loinc.org",
+                        "code": "11506-3",
+                        "display": "Progress note"
+                    }
+                ],
+                "text": "Progress note"
+            },
+            "category": [
+                {
+                    "coding": [
+                        {
+                            "system": "http://hl7.org/fhir/us/core/CodeSystem/us-core-documentreference-category",
+                            "code": "clinical-note",
+                            "display": "Clinical Note"
+                        }
+                    ]
+                }
+            ],
+            "subject": {
+                "reference": "Patient/1"
+            },
+            "date": "1949-04-01T00:11:45.131-05:00",
+            "author": [
+                {
+                    "reference": "Practitioner/333",
+                    "display": "Dr. Melvin857 Torp761"
+                }
+            ],
+            "custodian": {
+                "reference": "Organization/1ac77c95-a3af-4656-94a9-5efd7820ca81",
+                "display": "PCP87052"
+            },
+            "content": [
+                {
+                    "attachment": {
+                        "contentType": "text/plain",
+                        "data": "CjE5NDktMDQtMDEKCiMgQ2hpZWYgQ29tcGxhaW50Ck5vIGNvbXBsYWludHMuCgojIEhpc3Rvcnkgb2YgUHJlc2VudCBJbGxuZXNzCkx1Y2llbjQwOCBpcyBhIDkgeWVhci1vbGQgbm9uLWhpc3BhbmljIHdoaXRlIG1hbGUuIFBhdGllbnQgaGFzIGEgaGlzdG9yeSBvZiBvdGl0aXMgbWVkaWEsIGFjdXRlIHZpcmFsIHBoYXJ5bmdpdGlzIChkaXNvcmRlciksIGZyYWN0dXJlIG9mIGNsYXZpY2xlLgoKIyBTb2NpYWwgSGlzdG9yeQogUGF0aWVudCBoYXMgbmV2ZXIgc21va2VkIGFuZCBpcyBhbiBhbGNvaG9saWMuCgpQYXRpZW50IGNvbWVzIGZyb20gYSBoaWdoIHNvY2lvZWNvbm9taWMgYmFja2dyb3VuZC4gUGF0aWVudCBjdXJyZW50bHkgaGFzIEJsdWUgQ3Jvc3MgQmx1ZSBTaGllbGQuCgojIEFsbGVyZ2llcwpObyBLbm93biBBbGxlcmdpZXMuCgojIE1lZGljYXRpb25zCnBlbmljaWxsaW4gZyAzNzUgbWcvbWwgaW5qZWN0YWJsZSBzb2x1dGlvbjsgYXNwaXJpbiA4MSBtZyBvcmFsIHRhYmxldAoKIyBBc3Nlc3NtZW50IGFuZCBQbGFuCgoKIyMgUGxhbgpQYXRpZW50IHdhcyBnaXZlbiB0aGUgZm9sbG93aW5nIGltbXVuaXphdGlvbnM6IGluZmx1ZW56YSwgc2Vhc29uYWwsIGluamVjdGFibGUsIHByZXNlcnZhdGl2ZSBmcmVlLiAK"
+                    },
+                    "format": {
+                        "system": "http://ihe.net/fhir/ValueSet/IHE.FormatCode.codesystem",
+                        "code": "urn:ihe:iti:xds:2017:mimeTypeSufficient",
+                        "display": "mimeType Sufficient"
+                    }
+                }
+            ],
+            "context": {
+                "encounter": [
+                    {
+                        "reference": "Encounter/patient-1-lab-encounter"
+                    }
+                ],
+                "period": {
+                    "start": "1949-04-01T00:11:45-05:00",
+                    "end": "1949-04-01T00:26:45-05:00"
+                }
+            }
+        }
+    ]
+}

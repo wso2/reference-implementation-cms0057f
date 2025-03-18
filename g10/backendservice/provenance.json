@@ -1,0 +1,263 @@
+{
+    "data": [
+        {
+            "resourceType": "Provenance",
+            "id": "example-targeted-provenance",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-provenance|7.0.0"
+                ]
+            },
+            "target": [
+                {
+                    "reference": "Patient/2"
+                },
+                {
+                    "reference": "MedicationRequest/medreq-2"
+                },
+                {
+                    "reference": "DocumentReference/patient-2-xray-doc"
+                },
+                {
+                    "reference": "Location/d8b7dd62-f16a-4b7a-b517-093579182ac4"
+                },
+                {
+                    "reference": "CarePlan/e5f6g7h8-90ab-cdef-1234-567890abcdef"
+                },
+                {
+                    "reference": "Condition/k1l2m3n4-ef12-3456-7890-abcdef123456"
+                },
+                {
+                    "reference": "Device/insulin-pump-2"
+                },
+                {
+                    "reference": "CareTeam/h8i9j0k1-bcde-f123-4567-890abcdef123"
+                },
+                {
+                    "reference": "Organization/1ac77c95-a3af-4656-94a9-5efd7820ca81"
+                },
+                {
+                    "reference": "Practitioner/333"
+                },
+                {
+                    "reference": "PractitionerRole/41a61c28-6a92-40b2-86fd-bbe41819b271"
+                },
+                {
+                    "reference": "Encounter/35c8b4d6-ca63-4402-8b84-b01a9cfa86f5"
+                },
+                {
+                    "reference": "Observation/123"
+                },
+                {
+                    "reference": "DiagnosticReport/blood-sugar-report-2"
+                },
+                {
+                    "reference": "Encounter/59972354-9faf-41a0-b967-3139b4c5bef2"
+                },
+                {
+                    "reference": "Observation/699c6541-3c3e-44fb-abf9-a55b1b7cd6e1"
+                },
+                {
+                    "reference": "Procedure/defib-implant-patient-2"
+                },
+                {
+                    "reference": "Observation/093a7771-972c-45fb-a42a-8b4199f4c61d"
+                }
+            ],
+            "recorded": "2023-02-28T15:26:23.217+00:00",
+            "agent": [
+                {
+                    "type": {
+                        "coding": [
+                            {
+                                "system": "http://terminology.hl7.org/CodeSystem/provenance-participant-type",
+                                "code": "informant",
+                                "display": "Informant"
+                            }
+                        ]
+                    },
+                    "who": {
+                        "reference": "Patient/2"
+                    }
+                }
+            ],
+            "entity": [
+                {
+                    "role": "source",
+                    "what": {
+                        "display": "admission form"
+                    }
+                }
+            ]
+        },
+        {
+            "resourceType": "Provenance",
+            "id": "example-targeted-provenance2",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-provenance|7.0.0"
+                ]
+            },
+            "target": [
+                {
+                    "reference": "Patient/1"
+                },
+                {
+                    "reference": "MedicationRequest/medreq-1"
+                },
+                {
+                    "reference": "MedicationRequest/medreq-12"
+                },
+                {
+                    "reference": "Observation/urobilinogen-patient-1"
+                },
+                {
+                    "reference": "Observation/pediatric-bmi-patient-1"
+                },
+                {
+                    "reference": "Observation/oxygen-saturation-patient-1"
+                },
+                {
+                    "reference": "Observation/ofc-percentile-patient-1"
+                },
+                {
+                    "reference": "Observation/height-patient-1"
+                },
+                {
+                    "reference": "Observation/temperature-patient-1"
+                },
+                {
+                    "reference": "Observation/blood-pressure-patient-1"
+                },
+                {
+                    "reference": "Observation/weight-patient-1"
+                },
+                {
+                    "reference": "Observation/heart-rate-patient-1"
+                },
+                {
+                    "reference": "Observation/respiratory-rate-patient-1"
+                },
+                {
+                    "reference": "Observation/5768bb81-a4a9-4c00-8845-649def12d48f"
+                },
+                {
+                    "reference": "Goal/patient-1-weight-loss-goal"
+                },
+                {
+                    "reference": "DiagnosticReport/aa185ec1-d7c1-4bde-9664-4f0cebc713be"
+                },
+                {
+                    "reference": "DocumentReference/patient-1-lab-doc"
+                },
+                {
+                    "reference": "Observation/weight-patient-1"
+                },
+                {
+                    "reference": "Observation/pediatric-weight-height-patient-1"
+                },
+                {
+                    "reference": "CareTeam/g7h8i9j0-abcd-ef12-3456-7890abcdef12"
+                },
+                {
+                    "reference": "Condition/j0k1l2m3-def1-2345-6789-0abcdef12345"
+                },
+                {
+                    "reference": "DiagnosticReport/02bf870e-5640-44bc-b1bd-648c02c958cc"
+                },
+                {
+                    "reference": "Device/pacemaker-1"
+                },
+                {
+                    "reference": "CarePlan/d4e5f6g7-890a-bcde-f123-4567890abcde"
+                },
+                {
+                    "reference": "Document/patient-1-lab-doc"
+                },
+                {
+                    "reference": "AllergyIntolerance/a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                },
+                {
+                    "reference": "Location/d8b7dd62-f16a-4b7a-b517-093579182ac4"
+                },
+                {
+                    "reference": "Organization/1ac77c95-a3af-4656-94a9-5efd7820ca81"
+                },
+                {
+                    "reference": "Practitioner/111"
+                },
+                {
+                    "reference": "Procedure/defib-implant-patient-1"
+                },
+                {
+                    "reference": "PractitionerRole/41a61c28-6a92-40b2-86fd-bbe41819b271"
+                },
+                {
+                    "reference": "Encounter/35c8b4d6-ca63-4402-8b84-b01a9cfa86f5"
+                },
+                {
+                    "reference": "Observation/456"
+                },
+                {
+                    "reference": "Encounter/59972354-9faf-41a0-b967-3139b4c5bef2"
+                },
+                {
+                    "reference": "Observation/699c6541-3c3e-44fb-abf9-a55b1b7cd6e1"
+                },
+                {
+                    "reference": "Immunization/imm-patient-1"
+                },
+                {
+                    "reference": "Observation/0cbfa230-ec31-4ac4-aa23-14911c6980c3"
+                }
+            ],
+            "recorded": "2023-02-28T15:26:23.217+00:00",
+            "agent": [
+                {
+                    "type": {
+                        "coding": [
+                            {
+                                "system": "http://terminology.hl7.org/CodeSystem/provenance-participant-type",
+                                "code": "author",
+                                "display": "Author"
+                            }
+                        ],
+                        "text": "Author"
+                    },
+                    "who": {
+                        "reference": "Organization/1ac77c95-a3af-4656-94a9-5efd7820ca81",
+                        "display": "PCP87052"
+                    }
+                },
+                {
+                    "type": {
+                        "coding": [
+                            {
+                                "system": "http://hl7.org/fhir/us/core/CodeSystem/us-core-provenance-participant-type",
+                                "code": "transmitter",
+                                "display": "Transmitter"
+                            }
+                        ],
+                        "text": "Transmitter"
+                    },
+                    "who": {
+                        "reference": "Practitioner/333",
+                        "display": "Dr. Melvin857 Torp761"
+                    },
+                    "onBehalfOf": {
+                        "reference": "Organization/1ac77c95-a3af-4656-94a9-5efd7820ca81",
+                        "display": "PCP87052"
+                    }
+                }
+            ],
+            "entity": [
+                {
+                    "role": "source",
+                    "what": {
+                        "display": "admission form"
+                    }
+                }
+            ]
+        }
+    ]
+}

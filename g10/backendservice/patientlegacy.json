@@ -1,0 +1,163 @@
+{
+    "data": [
+        {
+            "legacyPatientId": "1",
+            "name": {
+                "firstName": "Amy",
+                "middleName": "V",
+                "lastName": "Shaw",
+                "period": {
+                    "startDate": "2020-07-22"
+                }
+            },
+            "previousNames": [
+                {
+                    "firstName": "Amy",
+                    "middleName": "V",
+                    "lastName": "Baxter",
+                    "period": {
+                        "startDate": "2016-12-06",
+                        "endDate": "2020-07-22"
+                    }
+                }
+            ],
+            "dob": "1987-02-20",
+            "sex": "F",
+            "homePhone": "555-555-5555",
+            "emailAddress": "amy.shaw@example.com",
+            "address": {
+                "line1": "183 Mountain View St",
+                "city": "Mounds",
+                "state": "OK",
+                "zip": "74048",
+                "country": "US",
+                "period": {
+                    "startDate": "2016-07-22"
+                }
+            },
+            "previousAddresses": [
+                {
+                    "line1": "49 Meadow St",
+                    "city": "Mounds",
+                    "state": "OK",
+                    "zip": "74047",
+                    "country": "US",
+                    "period": {
+                        "startDate": "2016-12-06",
+                        "endDate": "2020-07-22"
+                    }
+                }
+            ],
+            "medicalRecordNumber": "1032702",
+            "recordActive": "Y",
+            "language": "English",
+            "raceCode": [
+                "2106-3",
+                "1002-5",
+                "2028-9"
+            ],
+            "raceDetail": [
+                "1586-7",
+                "2036-2"
+            ],
+            "raceText": "Mixed",
+            "ethnicityCode": [
+                "2135-2"
+            ],
+            "ethnicityDetail": [
+                "2184-0",
+                "2148-5"
+            ],
+            "ethnicityText": "Hispanic or Latino",
+            "suffix": "PharmD",
+            "maritalStatus": "Single",
+            "height": "165cm",
+            "weight": "60kg",
+            "preferredName": "Ames",
+            "insuranceId": "INS123",
+            "primaryCareProvider": "Dr. Smith",
+            "emergencyContactName": "John Doe",
+            "emergencyContactPhone": "555-123-4567",
+            "allergies": [
+                "Penicillin",
+                "Shellfish"
+            ],
+            "notes": "Patient has a history of migraines."
+        },
+        {
+            "legacyPatientId": "2",
+            "name": {
+                "firstName": "Jane",
+                "middleName": "A",
+                "lastName": "Smith"
+            },
+            "dob": "1980-01-01",
+            "sex": "F",
+            "homePhone": "555-555-5555",
+            "emailAddress": "jane.smith@example.com",
+            "address": {
+                "line1": "49 Meadow St",
+                "city": "Mounds",
+                "state": "OK",
+                "zip": "74047",
+                "country": "USA"
+            },
+            "medicalRecordNumber": "98",
+            "recordActive": "Y",
+            "language": "English",
+            "raceCode": [
+                "2054-5"
+            ],
+            "raceDetail": [
+                "1117-1"
+            ],
+            "raceText": "Black or African American",
+            "ethnicityCode": [
+                "2135-2"
+            ],
+            "ethnicityDetail": [
+                "2149-3"
+            ],
+            "ethnicityText": "Hispanic or Latino",
+            "height": "150cm",
+            "weight": "80kg"
+        },
+        {
+            "legacyPatientId": "3",
+            "name": {
+                "firstName": "David",
+                "middleName": "C",
+                "lastName": "Lee"
+            },
+            "dob": "1985-04-25",
+            "sex": "M",
+            "address": {
+                "line1": "123 Main St.",
+                "line2": "Apt. 202",
+                "city": "San Francisco",
+                "state": "CA",
+                "zip": "94105",
+                "country": "USA"
+            },
+            "medicalRecordNumber": "321",
+            "recordActive": "Y",
+            "language": "English",
+            "raceCode": [
+                "2076-8",
+                "2016-3"
+            ],
+            "raceDetail": [
+                "2080-0",
+                "2033-9"
+            ],
+            "raceText": "Native Hawaiian and Japanese",
+            "ethnicityCode": [
+                "2186-5"
+            ],
+            "ethnicityText": "Not Hispanic or Latino",
+            "maritalStatus": "Married",
+            "height": "180cm",
+            "weight": "90kg"
+        }
+    ]
+}

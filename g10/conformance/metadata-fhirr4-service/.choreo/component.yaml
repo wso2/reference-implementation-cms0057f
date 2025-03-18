@@ -1,0 +1,12 @@
+schemaVersion: 1.1
+endpoints:
+    - name: metadata-api
+      displayName: Metadata API
+      service:
+        basePath: /fhir/r4/metadata
+        port: 9090
+      type: REST
+      networkVisibilities:
+        - Project
+        - Public
+      schemaFilePath: oas/capability_statement.yaml

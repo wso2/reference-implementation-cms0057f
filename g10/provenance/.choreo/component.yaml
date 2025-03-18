@@ -1,0 +1,12 @@
+schemaVersion: 1.1
+endpoints:
+    - name: uscore311-provenance-api
+      displayName: uscore311 Provenance API
+      service:
+        basePath: /fhir/r4/Provenance
+        port: 9090
+      type: REST
+      networkVisibilities:
+        - Project
+        - Public
+      schemaFilePath: oas/Provenance.yaml

@@ -43,6 +43,7 @@ import {
   CHECK_PAYER_REQUIREMENTS_REQUEST_BODY,
   TREATMENT_OPTIONS,
   CREATE_MEDICATION_REQUEST_BODY,
+  PATIENT_DETAILS,
 } from "../constants/data";
 import { CdsCard, CdsResponse } from "../components/interfaces/cdsCard";
 import axios from "axios";
@@ -186,7 +187,6 @@ const PrescribeForm = ({
         },
       })
       .then<CdsResponse>((res) => {
-        
         if (res.status >= 200 && res.status < 300) {
           setAlertMessage("Medication order created successfully!");
           setAlertSeverity("success");
@@ -482,6 +482,17 @@ export default function DrugOrderPageV2() {
   const { isAuthenticated } = useAuth();
   const [cdsCards, setCdsCards] = useState<CdsCard[]>([]);
 
+  const selectedPatientId = useSelector(
+    (state: any) => state.patient.selectedPatientId
+  );
+  let currentPatient = PATIENT_DETAILS.find(
+    (patient) => patient.id === selectedPatientId
+  );
+
+  if (!currentPatient) {
+    currentPatient = PATIENT_DETAILS[0];
+  }
+
   return isAuthenticated ? (
     <div style={{ marginLeft: 50, marginBottom: 50 }}>
       <div className="page-heading">Order Drugs</div>
@@ -491,14 +502,18 @@ export default function DrugOrderPageV2() {
           style={{ marginTop: "20px", flex: "1 1 100%" }}
         >
           <Form.Label>Patient Name</Form.Label>
-          <Form.Control type="text" value="John Smith" disabled />
+          <Form.Control
+            type="text"
+            value={`${currentPatient?.name[0].given[0]} ${currentPatient?.name[0].family}`}
+            disabled
+          />
         </Form.Group>
         <Form.Group
           controlId="formPatientID"
           style={{ marginTop: "20px", flex: "1 1 100%" }}
         >
           <Form.Label>Patient ID</Form.Label>
-          <Form.Control type="text" value="PT32403" disabled />
+          <Form.Control type="text" value={currentPatient?.id} disabled />
         </Form.Group>
       </div>
       <div>

@@ -27,7 +27,7 @@ import {
   updateRequestUrl,
 } from "../redux/cdsRequestSlice";
 import { updateCdsResponse, resetCdsResponse } from "../redux/cdsResponseSlice";
-import { CLAIM_REQUEST_BODY } from "../constants/data";
+import { CLAIM_REQUEST_BODY, PATIENT_DETAILS } from "../constants/data";
 import { useAuth } from "../components/AuthProvider";
 import { Navigate } from "react-router-dom";
 import { Alert, Snackbar } from "@mui/material";
@@ -44,6 +44,17 @@ const ClaimForm = () => {
   >("info");
   const [openSnackbar, setOpenSnackbar] = useState(false);
 
+  const selectedPatientId = useSelector(
+    (state: any) => state.patient.selectedPatientId
+  );
+  let currentPatient = PATIENT_DETAILS.find(
+    (patient) => patient.id === selectedPatientId
+  );
+
+  if (!currentPatient) {
+    currentPatient = PATIENT_DETAILS[0];
+  }
+
   const [formData, setFormData] = useState<{
     medication: string;
     quantity: string;
@@ -57,7 +68,8 @@ const ClaimForm = () => {
   }>({
     medication: medicationFormData.medication,
     quantity: medicationFormData.quantity,
-    patient: "Patient/101",
+    patient:
+      currentPatient?.name[0].given[0] + " " + currentPatient?.name[0].family,
     provider: "PractitionerRole/456",
     insurer: "Organization/insurance-org",
     use: "preauthorization",

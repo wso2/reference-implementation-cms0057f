@@ -1,0 +1,12 @@
+schemaVersion: 1.1
+endpoints:
+    - name: uscore501-patient-api
+      displayName: uscore501 Patient API
+      service:
+        basePath: /Patient
+        port: 9090
+      type: REST
+      networkVisibilities:
+        - Project
+        - Public
+      schemaFilePath: oas/Patient.yaml

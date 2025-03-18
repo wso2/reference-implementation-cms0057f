@@ -1,0 +1,12 @@
+schemaVersion: 1.1
+endpoints:
+    - name: uscore501-location-api
+      displayName: uscore501 Location API
+      service:
+        basePath: /Location
+        port: 9090
+      type: REST
+      networkVisibilities:
+        - Project
+        - Public
+      schemaFilePath: oas/Location.yaml

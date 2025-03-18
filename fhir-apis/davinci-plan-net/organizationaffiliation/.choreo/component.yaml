@@ -1,0 +1,12 @@
+schemaVersion: 1.1
+endpoints:
+    - name: davinciplannet-organizationaffiliation-api
+      displayName: davinciplannet OrganizationAffiliation API
+      service:
+        basePath: /OrganizationAffiliation
+        port: 9090
+      type: REST
+      networkVisibilities:
+        - Project
+        - Public
+      schemaFilePath: oas/OrganizationAffiliation.yaml

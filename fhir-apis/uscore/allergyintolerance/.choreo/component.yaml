@@ -1,0 +1,12 @@
+schemaVersion: 1.1
+endpoints:
+    - name: uscore501-allergyintolerance-api
+      displayName: uscore501 AllergyIntolerance API
+      service:
+        basePath: /AllergyIntolerance
+        port: 9090
+      type: REST
+      networkVisibilities:
+        - Project
+        - Public
+      schemaFilePath: oas/AllergyIntolerance.yaml

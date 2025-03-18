@@ -1,0 +1,12 @@
+schemaVersion: 1.1
+endpoints:
+    - name: carinbb200-explanationofbenefit-api
+      displayName: carinbb200 ExplanationOfBenefit API
+      service:
+        basePath: /ExplanationOfBenefit
+        port: 9090
+      type: REST
+      networkVisibilities:
+        - Project
+        - Public
+      schemaFilePath: oas/ExplanationOfBenefit.yaml

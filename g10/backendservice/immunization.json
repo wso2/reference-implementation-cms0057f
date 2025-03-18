@@ -1,0 +1,107 @@
+{
+    "data": [
+        {
+            "resourceType": "Immunization",
+            "id": "imm-patient-1",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-immunization"
+                ]
+            },
+            "status": "completed",
+            "vaccineCode": {
+                "coding": [
+                    {
+                        "system": "http://hl7.org/fhir/sid/cvx",
+                        "code": "207",
+                        "display": "COVID-19, mRNA, Pfizer-BioNTech"
+                    },
+                    {
+                        "system": "http://hl7.org/fhir/sid/ndc",
+                        "code": "59267-1000-01",
+                        "display": "Pfizer-BioNTech COVID-19 Vaccine"
+                    }
+                ],
+                "text": "COVID-19 Vaccine (Pfizer-BioNTech)"
+            },
+            "statusReason": {
+                "coding": [
+                    {
+                        "system": "http://terminology.hl7.org/CodeSystem/v3-ActReason",
+                        "code": "OSTOCK",
+                        "display": "product out of stock"
+                    }
+                ],
+                "text": "product out of stock"
+            },
+            "patient": {
+                "reference": "Patient/1",
+                "display": "John Doe"
+            },
+            "occurrenceDateTime": "2023-12-15",
+            "primarySource": true
+        },
+        {
+            "resourceType": "Immunization",
+            "id": "imm-patient-2",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-immunization"
+                ]
+            },
+            "status": "completed",
+            "vaccineCode": {
+                "coding": [
+                    {
+                        "system": "http://hl7.org/fhir/sid/cvx",
+                        "code": "8",
+                        "display": "Hepatitis B, adolescent or pediatric"
+                    },
+                    {
+                        "system": "http://hl7.org/fhir/sid/ndc",
+                        "code": "58160-0976-20",
+                        "display": "ENGERIX-B"
+                    }
+                ],
+                "text": "Hepatitis B Vaccine (Adolescent/Pediatric)"
+            },
+            "patient": {
+                "reference": "Patient/2",
+                "display": "Jane Smith"
+            },
+            "occurrenceDateTime": "2023-08-10",
+            "primarySource": true
+        },
+        {
+            "resourceType": "Immunization",
+            "id": "imm-patient-4",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-immunization"
+                ]
+            },
+            "status": "completed",
+            "vaccineCode": {
+                "coding": [
+                    {
+                        "system": "http://hl7.org/fhir/sid/cvx",
+                        "code": "03",
+                        "display": "MMR (Measles, Mumps, and Rubella)"
+                    },
+                    {
+                        "system": "http://hl7.org/fhir/sid/ndc",
+                        "code": "00006-4681-00",
+                        "display": "MMR II"
+                    }
+                ],
+                "text": "Measles, Mumps, Rubella (MMR) Vaccine"
+            },
+            "patient": {
+                "reference": "Patient/4",
+                "display": "Michael Brown"
+            },
+            "occurrenceDateTime": "2022-05-20",
+            "primarySource": true
+        }
+    ]
+}

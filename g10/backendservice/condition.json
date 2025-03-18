@@ -1,0 +1,184 @@
+{
+    "data": [
+        {
+            "resourceType": "Condition",
+            "id": "j0k1l2m3-def1-2345-6789-0abcdef12345",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-condition"
+                ]
+            },
+            "text": {
+                "status": "generated",
+                "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p><b>Generated Narrative</b></p><p><b>id</b>: hypertension</p><p><b>clinicalStatus</b>: Active</p><p><b>verificationStatus</b>: Confirmed</p><p><b>category</b>: Problem List Item</p><p><b>code</b>: Essential (primary) hypertension</p><p><b>subject</b>: John Doe</p><p><b>onset</b>: 2020-06-15</p></div>"
+            },
+            "clinicalStatus": {
+                "coding": [
+                    {
+                        "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+                        "code": "active",
+                        "display": "Active"
+                    }
+                ],
+                "text": "Active"
+            },
+            "verificationStatus": {
+                "coding": [
+                    {
+                        "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+                        "code": "confirmed",
+                        "display": "Confirmed"
+                    }
+                ],
+                "text": "Confirmed"
+            },
+            "category": [
+                {
+                    "coding": [
+                        {
+                            "system": "http://terminology.hl7.org/CodeSystem/condition-category",
+                            "code": "problem-list-item",
+                            "display": "Problem List Item"
+                        }
+                    ],
+                    "text": "Problem"
+                }
+            ],
+            "code": {
+                "coding": [
+                    {
+                        "system": "http://snomed.info/sct",
+                        "code": "38341003",
+                        "display": "Essential (primary) hypertension"
+                    }
+                ],
+                "text": "Essential (primary) hypertension"
+            },
+            "subject": {
+                "reference": "Patient/1",
+                "display": "John Doe"
+            },
+            "onsetDateTime": "2020-06-15"
+        },
+        {
+            "resourceType": "Condition",
+            "id": "k1l2m3n4-ef12-3456-7890-abcdef123456",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-condition"
+                ]
+            },
+            "text": {
+                "status": "generated",
+                "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p><b>Generated Narrative</b></p><p><b>id</b>: diabetes</p><p><b>clinicalStatus</b>: Active</p><p><b>verificationStatus</b>: Confirmed</p><p><b>category</b>: Problem List Item</p><p><b>code</b>: Type 2 diabetes mellitus</p><p><b>subject</b>: Jane Smith</p><p><b>onset</b>: 2018-03-20</p></div>"
+            },
+            "clinicalStatus": {
+                "coding": [
+                    {
+                        "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+                        "code": "active",
+                        "display": "Active"
+                    }
+                ],
+                "text": "Active"
+            },
+            "verificationStatus": {
+                "coding": [
+                    {
+                        "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+                        "code": "confirmed",
+                        "display": "Confirmed"
+                    }
+                ],
+                "text": "Confirmed"
+            },
+            "category": [
+                {
+                    "coding": [
+                        {
+                            "system": "http://terminology.hl7.org/CodeSystem/condition-category",
+                            "code": "problem-list-item",
+                            "display": "Problem List Item"
+                        }
+                    ],
+                    "text": "Problem"
+                }
+            ],
+            "code": {
+                "coding": [
+                    {
+                        "system": "http://snomed.info/sct",
+                        "code": "44054006",
+                        "display": "Type 2 diabetes mellitus"
+                    }
+                ],
+                "text": "Type 2 diabetes mellitus"
+            },
+            "subject": {
+                "reference": "Patient/2",
+                "display": "Jane Smith"
+            },
+            "onsetDateTime": "2018-03-20"
+        },
+        {
+            "resourceType": "Condition",
+            "id": "l2m3n4o5-f123-4567-890a-bcdef1234567",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-condition"
+                ]
+            },
+            "text": {
+                "status": "generated",
+                "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p><b>Generated Narrative</b></p><p><b>id</b>: asthma</p><p><b>clinicalStatus</b>: Active</p><p><b>verificationStatus</b>: Confirmed</p><p><b>category</b>: Problem List Item</p><p><b>code</b>: Asthma</p><p><b>subject</b>: Michael Brown</p><p><b>onset</b>: 2015-09-12</p></div>"
+            },
+            "clinicalStatus": {
+                "coding": [
+                    {
+                        "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+                        "code": "active",
+                        "display": "Active"
+                    }
+                ],
+                "text": "Active"
+            },
+            "verificationStatus": {
+                "coding": [
+                    {
+                        "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+                        "code": "confirmed",
+                        "display": "Confirmed"
+                    }
+                ],
+                "text": "Confirmed"
+            },
+            "category": [
+                {
+                    "coding": [
+                        {
+                            "system": "http://terminology.hl7.org/CodeSystem/condition-category",
+                            "code": "problem-list-item",
+                            "display": "Problem List Item"
+                        }
+                    ],
+                    "text": "Problem"
+                }
+            ],
+            "code": {
+                "coding": [
+                    {
+                        "system": "http://snomed.info/sct",
+                        "code": "195967001",
+                        "display": "Asthma"
+                    }
+                ],
+                "text": "Asthma"
+            },
+            "subject": {
+                "reference": "Patient/4",
+                "display": "Michael Brown"
+            },
+            "onsetDateTime": "2015-09-12"
+        }
+    ]
+}

@@ -489,9 +489,6 @@ export default function DrugOrderPageV2() {
     (patient) => patient.id === selectedPatientId
   );
 
-  if (!currentPatient) {
-    currentPatient = PATIENT_DETAILS[0];
-  }
 
   return isAuthenticated ? (
     <div style={{ marginLeft: 50, marginBottom: 50 }}>

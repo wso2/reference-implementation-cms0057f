@@ -54,6 +54,7 @@ function PatientEncounter() {
 
   const handleBtnClick = () => {
     dispatch(selectPatient(selectedPatient));
+    localStorage.setItem("selectedPatientId", selectedPatient);
     navigate("dashboard");
   };
 

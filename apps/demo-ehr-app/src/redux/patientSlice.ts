@@ -27,8 +27,11 @@ const patientSlice = createSlice({
     selectPatient(state, action) {
       state.selectedPatientId = action.payload;
     },
+    dismissPatient() {
+      return initialState;
+    },
   },
 });
 
-export const { selectPatient } = patientSlice.actions;
+export const { selectPatient, dismissPatient } = patientSlice.actions;
 export default patientSlice.reducer;

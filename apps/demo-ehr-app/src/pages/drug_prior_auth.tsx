@@ -34,6 +34,7 @@ import {
 import { updateCdsResponse, resetCdsResponse } from "../redux/cdsResponseSlice";
 import { useAuth } from "../components/AuthProvider";
 import { PATIENT_DETAILS } from "../constants/data";
+import { selectPatient } from "../redux/patientSlice";
 
 const useQuery = () => {
   return new URLSearchParams(useLocation().search);
@@ -361,6 +362,7 @@ const PrescribedForm = () => {
         quantity: number;
         frequency: string;
         startDate: Date;
+        duration: string;
       };
     }) => state.medicationFormData
   );
@@ -368,6 +370,7 @@ const PrescribedForm = () => {
   const medication = medicationFormData.medication;
   const quantity = medicationFormData.quantity;
   const frequency = medicationFormData.frequency;
+  const duration = medicationFormData.duration;
 
   return (
     <Card style={{ marginTop: "30px", padding: "20px" }}>
@@ -414,7 +417,7 @@ const PrescribedForm = () => {
               style={{ marginTop: "20px", flex: "1 1 100%" }}
             >
               <Form.Label>Duration (days)</Form.Label>
-              <Form.Control type="text" value={frequency || ""} disabled />
+              <Form.Control type="text" value={duration || ""} disabled />
             </Form.Group>
 
             <Form.Group
@@ -439,16 +442,17 @@ const PrescribedForm = () => {
 };
 
 const DetailsDiv = ({ questionnaireId }: { questionnaireId: string }) => {
+  const dispatch = useDispatch();
+  const savedPatientId = localStorage.getItem("selectedPatientId");
+  if (savedPatientId) {
+    dispatch(selectPatient(savedPatientId));
+  }
   const selectedPatientId = useSelector(
     (state: any) => state.patient.selectedPatientId
   );
-  let currentPatient = PATIENT_DETAILS.find(
+  const currentPatient = PATIENT_DETAILS.find(
     (patient) => patient.id === selectedPatientId
   );
-
-  if (!currentPatient) {
-    currentPatient = PATIENT_DETAILS[0];
-  }
 
   return (
     <div style={{ display: "flex", gap: "20px" }}>

@@ -31,6 +31,7 @@ import { CLAIM_REQUEST_BODY, PATIENT_DETAILS } from "../constants/data";
 import { useAuth } from "../components/AuthProvider";
 import { Navigate } from "react-router-dom";
 import { Alert, Snackbar } from "@mui/material";
+import { selectPatient } from "../redux/patientSlice";
 
 const ClaimForm = () => {
   const dispatch = useDispatch();
@@ -43,6 +44,11 @@ const ClaimForm = () => {
     "error" | "warning" | "info" | "success"
   >("info");
   const [openSnackbar, setOpenSnackbar] = useState(false);
+
+  const savedPatientId = localStorage.getItem("selectedPatientId");
+    if (savedPatientId) {
+      dispatch(selectPatient(savedPatientId));
+    }
 
   const selectedPatientId = useSelector(
     (state: any) => state.patient.selectedPatientId
@@ -126,8 +132,6 @@ const ClaimForm = () => {
             systemActions: {},
           })
         );
-        console.log("response", response);
-        console.log("outcome", response.data.parameter[0].resource.outcome);
       })
       .catch((error) => {
         setAlertMessage("Error submitting claim");
@@ -314,7 +318,7 @@ export default function DrugClaimPage() {
   console.log("medicationFormData", medicationFormData);
   return isAuthenticated ? (
     <div style={{ marginLeft: 50, marginBottom: 50 }}>
-      <div className="page-heading">Claim Insurance</div>
+      <div className="page-heading">Claim Submission</div>
       <ClaimForm />
       <style>{`
         .card {

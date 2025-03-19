@@ -19,12 +19,14 @@ import { SERVICE_CARD_DETAILS, PATIENT_DETAILS } from "../constants/data";
 import Button from "@mui/material/Button";
 import { ServiceCardListProps } from "../components/interfaces/card";
 import MultiActionAreaCard from "../components/serviceCard";
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { ExpandedContext } from "../utils/expanded_context";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { dismissPatient, selectPatient } from "../redux/patientSlice";
 import Form from "react-bootstrap/Form";
 import { useAuth } from "../components/AuthProvider";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
+import { Alert, Snackbar } from "@mui/material";
 
 function ServiceCardList({ services, expanded }: ServiceCardListProps) {
   return (
@@ -49,6 +51,20 @@ function ServiceCardList({ services, expanded }: ServiceCardListProps) {
 }
 
 const DetailsDiv = () => {
+  const dispatch = useDispatch();
+  const [alertMessage, setAlertMessage] = useState<string | null>(null);
+  const [alertSeverity, setAlertSeverity] = useState<
+    "error" | "warning" | "info" | "success"
+  >("info");
+  const [openSnackbar, setOpenSnackbar] = useState(false);
+  const navigate = useNavigate();
+
+  const savedPatientId = localStorage.getItem("selectedPatientId");
+  console.log("savedPatientId", savedPatientId);
+  if (savedPatientId) {
+    dispatch(selectPatient(savedPatientId));
+  }
+
   const selectedPatientId = useSelector(
     (state: any) => state.patient.selectedPatientId
   );
@@ -59,6 +75,9 @@ const DetailsDiv = () => {
   if (!currentPatient) {
     currentPatient = PATIENT_DETAILS[0];
   }
+  const handleCloseSnackbar = () => {
+    setOpenSnackbar(false);
+  };
 
   return (
     <div style={{ display: "flex", gap: "20px" }}>
@@ -93,7 +112,13 @@ const DetailsDiv = () => {
         }}
       ></div>
       <Button
-        href="/"
+        onClick={() => {
+          dispatch(dismissPatient());
+          setAlertMessage("Patient Dismissed");
+          setAlertSeverity("success");
+          setOpenSnackbar(true);
+          navigate("/");
+        }}
         variant="contained"
         style={{
           borderRadius: "50px",
@@ -106,6 +131,16 @@ const DetailsDiv = () => {
       >
         Dismiss Patient
       </Button>
+      <Snackbar
+        open={openSnackbar}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      >
+        <Alert onClose={handleCloseSnackbar} severity={alertSeverity}>
+          {alertMessage}
+        </Alert>
+      </Snackbar>
     </div>
   );
 };

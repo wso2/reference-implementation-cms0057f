@@ -42,7 +42,6 @@ import { Card } from "@chakra-ui/react";
 import axios from "axios";
 import { updateCdsResponse } from "../redux/cdsResponseSlice";
 import MedicalImagingSign from "./MedicalImagingSign";
-import { baseUrl, paths } from "../config/urlConfigs";
 import { useAuth } from "../components/AuthProvider";
 
 interface Coding {
@@ -213,8 +212,9 @@ function MedicalImaging() {
 
     setCdsCards([]);
     setEnableSubmitButton(false);
+    const Config = window.Config;
     axios
-      .post<CdsResponse>(baseUrl + paths.radiology_order, payload)
+      .post<CdsResponse>(Config.baseUrl + Config.radiology_order, payload)
       .then<CdsResponse>((res) => {
         setCdsCards(res.data.cards);
 

@@ -47,7 +47,6 @@ import {
 } from "../constants/data";
 import { CdsCard, CdsResponse } from "../components/interfaces/cdsCard";
 import axios from "axios";
-import { paths } from "../config/urlConfigs";
 import { useAuth } from "../components/AuthProvider";
 import { Navigate } from "react-router-dom";
 import { Alert, Snackbar } from "@mui/material";
@@ -127,8 +126,11 @@ const PrescribeForm = ({
     dispatch(updateRequestMethod("POST"));
     dispatch(updateRequestUrl("/cds-services/prescirbe-medication"));
     dispatch(updateRequest(payload));
+
+    const Config = window.Config;
+
     axios
-      .post<CdsResponse>(paths.prescribe_medication, payload)
+      .post<CdsResponse>(Config.prescribe_medication, payload)
       .then<CdsResponse>((res) => {
         if (res.status >= 200 && res.status < 300) {
           setAlertMessage("Payer requirements retrieved successfully!");
@@ -180,8 +182,10 @@ const PrescribeForm = ({
     dispatch(updateRequestMethod("POST"));
     dispatch(updateRequestUrl("/fhir/r4/MedicationRequest"));
     dispatch(updateRequest(payload));
+
+    const Config = window.Config;
     axios
-      .post<CdsResponse>(paths.medication_request, payload, {
+      .post<CdsResponse>(Config.medication_request, payload, {
         headers: {
           "Content-Type": "application/fhir+json",
         },
@@ -485,7 +489,7 @@ export default function DrugOrderPageV2() {
   const selectedPatientId = useSelector(
     (state: any) => state.patient.selectedPatientId
   );
-  let currentPatient = PATIENT_DETAILS.find(
+  const currentPatient = PATIENT_DETAILS.find(
     (patient) => patient.id === selectedPatientId
   );
 

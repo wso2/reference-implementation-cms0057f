@@ -20,7 +20,6 @@ import Form from "react-bootstrap/Form";
 import Card from "react-bootstrap/Card";
 import Button from "react-bootstrap/Button";
 import { Navigate, useLocation } from "react-router-dom";
-import { paths } from "../config/urlConfigs";
 import Select from "react-select";
 import DatePicker from "react-datepicker";
 import { useDispatch, useSelector } from "react-redux";
@@ -90,8 +89,9 @@ const QuestionnniarForm = ({
     dispatch(resetCdsRequest());
     dispatch(resetCdsResponse());
     // Fetch the questionnaire data from the API
+    const Config = window.Config;
     axios
-      .post(paths.questionnaire_package, requestBody, {
+      .post(Config.questionnaire_package, requestBody, {
         headers: {
           "Content-Type": "application/fhir+json",
         },
@@ -207,8 +207,9 @@ const QuestionnniarForm = ({
     dispatch(updateRequestMethod("POST"));
 
     // Submit the questionnaire response to the API
+    const Config = window.Config;
     axios
-      .post(paths.questionnaire_response, questionnaireResponse, {
+      .post(Config.questionnaire_response, questionnaireResponse, {
         headers: {
           "Content-Type": "application/fhir+json",
         },
@@ -489,6 +490,7 @@ export default function DrugPiorAuthPage() {
   const { isAuthenticated } = useAuth();
   const query = useQuery();
   const questionnaireId = query.get("questionnaireId");
+  console.log("questionnaireId", questionnaireId);
   const [isQuestionnaireResponseSubmited, setIsQuestionnaireResponseSubmited] =
     useState(false);
 

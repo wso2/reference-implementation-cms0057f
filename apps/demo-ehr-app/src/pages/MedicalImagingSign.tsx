@@ -38,7 +38,6 @@ import { updateCdsResponse } from "../redux/cdsResponseSlice";
 import axios from "axios";
 import { CdsCard, CdsResponse } from "./MedicalImaging";
 import { Card } from "@chakra-ui/react";
-import { baseUrl, paths } from "../config/urlConfigs";
 
 function MedicalImagingSign() {
   const { expanded } = useContext(ExpandedContext);
@@ -97,9 +96,10 @@ function MedicalImagingSign() {
       practionerId,
       selectedImagingCenter
     );
+    const Config = window.Config;
     axios
       .post<CdsResponse>(
-        baseUrl + paths.book_imaging_center,
+        Config.baseUrl + Config.book_imaging_center,
         payload
       )
       .then<CdsResponse>((res) => {

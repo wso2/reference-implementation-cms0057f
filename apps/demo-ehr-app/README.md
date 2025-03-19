@@ -49,5 +49,9 @@ Then execute the following command to run the build in the production mode.
 ```
 serve -s build
 ```
+or if your build location is `/dist`
+```
+server -s dist
+```
 
 > By default it will run the application in port `3000`. http://localhost:3000

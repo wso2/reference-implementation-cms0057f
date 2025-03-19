@@ -1,21 +1,17 @@
 // src/pages/LoginPage.js
 import { useState } from "react";
 import {
-  TextField,
   Button,
   Typography,
   Box,
   Container,
   Paper,
-  InputLabel,
-  MenuItem,
-  Select,
   FormControl,
-  ListItem,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import apiClient from "../../services/apiClient";
 import { BFF_BASE_URL } from "../../configs/Constants";
+import React from "react";
 
 const LoginPage = () => {
   const [memberId, setMemberId] = useState("");
@@ -38,22 +34,27 @@ const LoginPage = () => {
     }
 
     // Simulate an API call that returns a 200 status
-    apiClient(BFF_BASE_URL).post("/member/login", { memberId: memberId, password: password, name: "" }).then((response) => {
-      console.log(response);
-      if (response.status === 201) {
-        console.log("Login successful:", { memberId: memberId, password });
-        setError("");
-        // Redirect to /home upon successful login
-        navigate("/dashboard", { state: { userName, memberId  } });
-      }else{
-        setError("Login failed. Please check your credentials)");
-      }
-    }
-
-    ).catch((error) => {
-      console.error("Error:", error);
-      setError("Login failed. Please check your credentials");
-    });
+    apiClient(BFF_BASE_URL)
+      .post("/member/login", {
+        memberId: memberId,
+        password: password,
+        name: "",
+      })
+      .then((response) => {
+        console.log(response);
+        if (response.status === 201) {
+          console.log("Login successful:", { memberId: memberId, password });
+          setError("");
+          // Redirect to /home upon successful login
+          navigate("/dashboard", { state: { userName, memberId } });
+        } else {
+          setError("Login failed. Please check your credentials)");
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        setError("Login failed. Please check your credentials");
+      });
   };
 
   return (
@@ -69,16 +70,18 @@ const LoginPage = () => {
           sx={{ backgroundColor: "background.paper" }} // Background color for visual separation
         >
           <Box display={"row"}>
-          <Typography variant="h2" align="center" padding={4}>
-            USPayer Member Portal
-          </Typography>
-          <Typography variant="h6" align="center">
-          This website serves as an interactive platform showcasing real-world use cases of the 
-          DaVinci Payer Data Exchange implementation guide, a crucial initiative aimed at 
-          streamlining healthcare data sharing between payers, providers, and other stakeholders. 
-          With a focus on interoperability, this site demonstrates how DaVinci standards enable seamless, 
-          secure, and efficient exchange of clinical and administrative data.
-          </Typography>
+            <Typography variant="h2" align="center" padding={4}>
+              USPayer Member Portal
+            </Typography>
+            <Typography variant="h6" align="center">
+              This website serves as an interactive platform showcasing
+              real-world use cases of the DaVinci Payer Data Exchange
+              implementation guide, a crucial initiative aimed at streamlining
+              healthcare data sharing between payers, providers, and other
+              stakeholders. With a focus on interoperability, this site
+              demonstrates how DaVinci standards enable seamless, secure, and
+              efficient exchange of clinical and administrative data.
+            </Typography>
           </Box>
         </Box>
 
@@ -101,7 +104,7 @@ const LoginPage = () => {
 
             <Box component="form" onSubmit={handleLogin}>
               <FormControl fullWidth>
-                <InputLabel id="select-member-id-label">Select A Member</InputLabel>
+                {/* <InputLabel id="select-member-id-label">Select A Member</InputLabel>
                 <Select
                   labelId="select-member-id-label"
                   id="select-member-id"
@@ -138,13 +141,16 @@ const LoginPage = () => {
                   >
                     {error}
                   </Typography>
-                )}
+                )} */}
 
                 <Button
                   type="submit"
                   variant="contained"
                   fullWidth
                   sx={{ mt: 3, mb: 2 }}
+                  onClick={() => {
+                    window.location.href = "/auth/login";
+                  }}
                 >
                   Login
                 </Button>

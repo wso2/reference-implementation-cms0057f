@@ -15,10 +15,13 @@ import {
 import { useEffect, useState } from "react";
 import CollapsibleTable from "../common/Table";
 import Header from "../common/Header";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import CloseIcon from "@mui/icons-material/Close";
 import apiClient from "../../services/apiClient";
 import { BFF_BASE_URL } from "../../configs/Constants";
+import { useAuth } from "../common/AuthProvider";
+import React from "react";
+import Cookies from "js-cookie";
 
 interface RowData {
   name: string;
@@ -48,6 +51,7 @@ function createTableData(responseData: RowData): RowData[] {
 }
 
 export const LandingPage = () => {
+  const { isAuthenticated } = useAuth();
   const [name, setName] = useState("");
   const [lastPayer, setLastPayer] = useState("");
   const [exportLabel, setExportLabel] = useState("Export");
@@ -58,7 +62,6 @@ export const LandingPage = () => {
   const navigate = useNavigate(); // Initialize navigate hook
   const location = useLocation();
   const memberId = location.state?.memberId || "nil";
-  const userName = location.state?.userName || "nil";
   const [error, setError] = useState("");
   const [payerList, setPayerList] = useState([
     { payerId: "p-1", name: "A Care Insurance" },
@@ -84,7 +87,7 @@ export const LandingPage = () => {
           Status: "finished",
           Provider: "",
           Participant: "",
-        }
+        },
       ]
     ),
     // createData(
@@ -121,6 +124,17 @@ export const LandingPage = () => {
   useEffect(() => {
     reloadTableData(); // This will only run after `checked` state has been updated
   }, [checked]);
+
+  useEffect(() => {
+    const encodedUserInfo = Cookies.get("userinfo");
+    if (encodedUserInfo) {
+      const loggedUser = encodedUserInfo
+        ? JSON.parse(atob(encodedUserInfo))
+        : { username: "User", first_name: "User Name", last_name: "" };
+
+      setName(loggedUser.first_name);
+    }
+  }, []);
 
   // useEffect(() => {
   //   setExportLabel("Exporting... "+exportStatus+"% Completed.");  // This will only run after `checked` state has been updated
@@ -283,7 +297,6 @@ export const LandingPage = () => {
             //   ...prevData,
             //   ...createTableData(data),  // Merge new key-value pairs into existing state
             // }));
-
           } else {
             setError("Login failed. Please check your credentials)");
           }
@@ -320,7 +333,7 @@ export const LandingPage = () => {
     //           ...prevData,
     //           ...createTableData(data),  // Merge new key-value pairs into existing state
     //         }));
-            
+
     //       } else {
     //         setError("Login failed. Please check your credentials)");
     //       }
@@ -342,9 +355,9 @@ export const LandingPage = () => {
     fetchData();
   };
 
-  return (
+  return isAuthenticated ? (
     <Container maxWidth="lg">
-      <Header userName={userName} avatarUrl={avatarUrl} isLoggedIn={true} />
+      <Header userName={name} avatarUrl={avatarUrl} isLoggedIn={true} />
       {/* Top Section: Label and Form */}
       <Box
         display="flex"
@@ -362,7 +375,7 @@ export const LandingPage = () => {
             padding: 2,
           }}
         >
-          <Typography variant="h4">Hello, {userName}</Typography>
+          <Typography variant="h4">Hello, {name}</Typography>
           <Typography variant="h6">
             Welcome to the USPayer Data Exchange Portal. If you haven't yet
             synced your data with your previous, please select your previous
@@ -405,7 +418,9 @@ export const LandingPage = () => {
           Submit
         </Button> */}
           <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
-            <InputLabel id="select-payer-label">Select Payer to Resolve Member ID</InputLabel>
+            <InputLabel id="select-payer-label">
+              Select Payer to Resolve Member ID
+            </InputLabel>
             <Select
               labelId="select-payer-label"
               id="select-payer"
@@ -485,5 +500,7 @@ export const LandingPage = () => {
         <CollapsibleTable rows={tableData} />
       </Box>
     </Container>
+  ) : (
+    <Navigate to="/login" replace />
   );
 };

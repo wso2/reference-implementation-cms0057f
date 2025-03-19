@@ -88,25 +88,30 @@ export default function NavBar() {
               DEMO EHR
             </Box>
           </Box>
-          {currentPatient && (
-            <Box display="flex" alignItems="center">
-              <Button href="/dashboard" color="inherit">
-                Dashboard
-              </Button>
-              <Button href="/dashboard/appointment-schedule" color="inherit">
-                Appointment
-              </Button>
-              <Button href="/dashboard/drug-order-v2" color="inherit">
-                Order Drugs
-              </Button>
-              <Button href="/dashboard/device-order-v2" color="inherit">
-                Order Devices
-              </Button>
-              <Button href="/dashboard/medical-imaging" color="inherit">
-                Order Imaging
-              </Button>
-            </Box>
-          )}
+          <Box display="flex" alignItems="center">
+            <Button href="/" color="inherit">
+              Home
+            </Button>
+            {currentPatient && (
+              <>
+                <Button href="/dashboard" color="inherit">
+                  Dashboard
+                </Button>
+                {/* <Button href="/dashboard/appointment-schedule" color="inherit">
+                  Appointment
+                </Button>
+                <Button href="/dashboard/drug-order-v2" color="inherit">
+                  Order Drugs
+                </Button>
+                <Button href="/dashboard/device-order-v2" color="inherit">
+                  Order Devices
+                </Button>
+                <Button href="/dashboard/medical-imaging" color="inherit">
+                  Order Imaging
+                </Button> */}
+              </>
+            )}
+          </Box>
           <Box display="flex" alignItems="center" marginRight={10}>
             {isAuthenticated && loggedUser && (
               <Box display="flex" alignItems="center">

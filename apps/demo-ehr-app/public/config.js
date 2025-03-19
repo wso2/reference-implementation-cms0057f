@@ -14,32 +14,18 @@
 // specific language governing permissions and limitations
 // under the License.
 
-export const baseUrl =
-  "https://c32618cf-389d-44f1-93ee-b67a3468aae3-dev.e1-us-east-azure.choreoapis.dev";
+const Config = {
+  baseUrl:
+    "https://c32618cf-389d-44f1-93ee-b67a3468aae3-dev.e1-us-east-azure.choreoapis.dev",
 
-export const paths = {
-  // medication_request:
-  // "/cms-0057-f/medication-request-ser-tw/v1.0/fhir/r4/MedicationRequest",
   medication_request:
     "/choreo-apis/cms-0057-f/medication-request-ser-tw/v1/fhir/r4/MedicationRequest",
-
-  // prescribe_medication:
-  //   "/cms-0057-f/cds-service-qn/v1.0/cds-services/prescirbe-medication",
   prescribe_medication:
     "/choreo-apis/cms-0057-f/cds-service-qn/v1/cds-services/prescirbe-medication",
-
-  // questionnaire_package:
-  //   "/cms-0057-f/questionnaire-package-wp/v1.0/fhir/r4/Questionnaire/questionnaire-package",
   questionnaire_package:
     "/choreo-apis/cms-0057-f/questionnaire-package-wp/v1/fhir/r4/Questionnaire/questionnaire-package",
-
-  // questionnaire_response:
-  //   "/cms-0057-f/questionnaire-response-fh/v1.0/fhir/r4/QuestionnaireResponse",
   questionnaire_response:
     "/choreo-apis/cms-0057-f/questionnaire-response-fh/v1/fhir/r4/QuestionnaireResponse",
-
-  // claim_submit:
-  //   "/cms-0057-f/claim-submission-servi-hk/v1.0/fhir/r4/Claim/submit",
   claim_submit:
     "/choreo-apis/cms-0057-f/claim-submission-servi-hk/v1/fhir/r4/Claim/submit",
 
@@ -54,4 +40,5 @@ export const paths = {
     "/cmsdemosetups/medconnect-service/cerner-fhir-location-api-cbc/v1.0/fhir/r4/Location",
   appointment:
     "/cmsdemosetups/medconnect-service/cerner-fhir-appointment-api-2ae/v1.0/fhir/r4/Appointment",
+
 };

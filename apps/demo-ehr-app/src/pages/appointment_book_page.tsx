@@ -19,7 +19,6 @@ import { Navigate, useNavigate } from "react-router-dom";
 import "../assets/styles/appointment.css";
 import MessageBox from "../components/message_box";
 import appointmentImage from "../assets/images/appointment-booking.png";
-import { baseUrl, paths } from "../config/urlConfigs";
 import { ExpandedContext } from "../utils/expanded_context";
 import { useDispatch } from "react-redux";
 import { resetCdsResponse, updateCdsResponse } from "../redux/cdsResponseSlice";
@@ -94,7 +93,8 @@ function App() {
     setAppointmentCreated(false); // Clear any appointment state
 
     setLoading(true); // Show spinner while loading doctors
-    const url = `${baseUrl}${paths.practitioner}?family=${lastName}&given=${firstName}`;
+    const Config = window.Config;
+    const url = `${Config.baseUrl}${Config.practitioner}?family=${lastName}&given=${firstName}`;
     dispatch(resetCdsRequest());
     dispatch(updateRequest({ Method: "GET", URL: url }));
     dispatch(resetCdsResponse());
@@ -139,8 +139,9 @@ function App() {
       const startDate = appointmentDate;
       const endDate = appointmentDate;
       const practitionerId = selectedDoctor.id;
+      const Config = window.Config;
 
-      const url = `${baseUrl}${paths.slot}?startDate=${startDate}&endDate=${endDate}&practitioner=${practitionerId}`;
+      const url = `${Config.baseUrl}${Config.slot}?startDate=${startDate}&endDate=${endDate}&practitioner=${practitionerId}`;
       dispatch(resetCdsRequest());
       dispatch(updateRequest({ Method: "GET", URL: url }));
       dispatch(resetCdsResponse());
@@ -179,7 +180,8 @@ function App() {
     for (const slot of slots) {
       if (!newLocations[slot.locationReference]) {
         try {
-          const locationUrl = `${baseUrl}${paths.location}/${slot.locationReference}`;
+          const Config = window.Config;
+          const locationUrl = `${Config.baseUrl}${Config.location}/${slot.locationReference}`;
           const res = await fetch(locationUrl);
           const data = await res.json();
           newLocations[slot.locationReference] = data.name;
@@ -266,7 +268,8 @@ function App() {
     };
 
     try {
-      const appointmentUrl = `${baseUrl}${paths.appointment}`;
+      const Config = window.Config;
+      const appointmentUrl = `${Config.baseUrl}${Config.appointment}`;
       dispatch(resetCdsRequest());
       dispatch(
         updateRequest({

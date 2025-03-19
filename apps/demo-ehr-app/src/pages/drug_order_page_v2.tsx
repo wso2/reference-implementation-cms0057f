@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "../assets/styles/main.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "react-datepicker/dist/react-datepicker.css";
@@ -32,7 +32,10 @@ import {
   resetCdsRequest,
 } from "../redux/cdsRequestSlice";
 import { resetCdsResponse, updateCdsResponse } from "../redux/cdsResponseSlice";
-import { updateMedicationFormData } from "../redux/medicationFormDataSlice";
+import {
+  updateMedicationFormData,
+  resetMedicationFormData,
+} from "../redux/medicationFormDataSlice";
 
 import {
   FREQUENCY_OPTIONS,
@@ -40,12 +43,13 @@ import {
   CHECK_PAYER_REQUIREMENTS_REQUEST_BODY,
   TREATMENT_OPTIONS,
   CREATE_MEDICATION_REQUEST_BODY,
+  PATIENT_DETAILS,
 } from "../constants/data";
 import { CdsCard, CdsResponse } from "../components/interfaces/cdsCard";
 import axios from "axios";
-import { paths } from "../config/urlConfigs";
 import { useAuth } from "../components/AuthProvider";
 import { Navigate } from "react-router-dom";
+import { Alert, Snackbar } from "@mui/material";
 
 const PrescribeForm = ({
   setCdsCards,
@@ -53,9 +57,27 @@ const PrescribeForm = ({
   setCdsCards: React.Dispatch<React.SetStateAction<CdsCard[]>>;
 }) => {
   const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(resetMedicationFormData());
+  }, [dispatch]);
+
+  const [alertMessage, setAlertMessage] = useState<string | null>(null);
+  const [alertSeverity, setAlertSeverity] = useState<
+    "error" | "warning" | "info" | "success"
+  >("info");
+  const [openSnackbar, setOpenSnackbar] = useState(false);
+
   const medicationFormData = useSelector(
     (state: {
-      medicationFormData: { [key: string]: string | number | Date | null };
+      medicationFormData: {
+        treatingSickness: string;
+        medication: string;
+        quantity: number;
+        frequency: string;
+        duration: string;
+        startDate: Date;
+      };
     }) => state.medicationFormData
   );
 
@@ -104,20 +126,55 @@ const PrescribeForm = ({
     dispatch(updateRequestMethod("POST"));
     dispatch(updateRequestUrl("/cds-services/prescirbe-medication"));
     dispatch(updateRequest(payload));
+
+    const Config = window.Config;
+
     axios
-      .post<CdsResponse>(paths.prescribe_medication, payload)
+      .post<CdsResponse>(Config.prescribe_medication, payload)
       .then<CdsResponse>((res) => {
+        if (res.status >= 200 && res.status < 300) {
+          setAlertMessage("Payer requirements retrieved successfully!");
+          setAlertSeverity("success");
+        } else {
+          setAlertMessage("Error retrieving payer requirements!");
+          setAlertSeverity("error");
+        }
+        setOpenSnackbar(true);
+
         setCdsCards(res.data.cards);
 
         dispatch(updateCdsResponse({ cards: res.data, systemActions: {} }));
         return res.data;
       })
       .catch((err) => {
+        setAlertMessage("Error retrieving payer requirements!");
+        setAlertSeverity("error");
+        setOpenSnackbar(true);
         dispatch(updateCdsResponse({ cards: err, systemActions: {} }));
       });
   };
+  const validateForm = () => {
+    const requiredFields: (keyof typeof medicationFormData)[] = [
+      "treatingSickness",
+      "medication",
+      "quantity",
+      "frequency",
+      "duration",
+      "startDate",
+    ];
+    let isValid = true;
+    requiredFields.forEach((field) => {
+      if (!medicationFormData[field]) {
+        isValid = false;
+      }
+    });
+    return isValid;
+  };
 
   const handleCreateMedicationOrder = () => {
+    if (!validateForm()) {
+      return;
+    }
     dispatch(resetCdsRequest());
     dispatch(resetCdsResponse());
 
@@ -125,20 +182,37 @@ const PrescribeForm = ({
     dispatch(updateRequestMethod("POST"));
     dispatch(updateRequestUrl("/fhir/r4/MedicationRequest"));
     dispatch(updateRequest(payload));
+
+    const Config = window.Config;
     axios
-      .post<CdsResponse>(paths.medication_request, payload, {
+      .post<CdsResponse>(Config.medication_request, payload, {
         headers: {
           "Content-Type": "application/fhir+json",
         },
       })
       .then<CdsResponse>((res) => {
+        if (res.status >= 200 && res.status < 300) {
+          setAlertMessage("Medication order created successfully!");
+          setAlertSeverity("success");
+        } else {
+          setAlertMessage("Error creating medication order!");
+          setAlertSeverity("error");
+        }
+        setOpenSnackbar(true);
         dispatch(updateCdsResponse({ cards: res.data, systemActions: {} }));
         setIsSubmited(true);
         return res.data;
       })
       .catch((err) => {
+        setAlertMessage("Error creating medication order!");
+        setAlertSeverity("error");
+        setOpenSnackbar(true);
         dispatch(updateCdsResponse({ cards: err, systemActions: {} }));
       });
+  };
+
+  const handleCloseSnackbar = () => {
+    setOpenSnackbar(false);
   };
 
   return (
@@ -265,13 +339,23 @@ const PrescribeForm = ({
               // type="submit"
               style={{ marginLeft: "30px", float: "right" }}
               onClick={handleCreateMedicationOrder}
-              disabled={isSubmited}
+              disabled={isSubmited || !validateForm() ? true : false}
             >
               Create Medication Order
             </Button>
           </div>
         </Form>
       </Card.Body>
+      <Snackbar
+        open={openSnackbar}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      >
+        <Alert onClose={handleCloseSnackbar} severity={alertSeverity}>
+          {alertMessage}
+        </Alert>
+      </Snackbar>
     </Card>
   );
 };
@@ -402,6 +486,14 @@ export default function DrugOrderPageV2() {
   const { isAuthenticated } = useAuth();
   const [cdsCards, setCdsCards] = useState<CdsCard[]>([]);
 
+  const selectedPatientId = useSelector(
+    (state: any) => state.patient.selectedPatientId
+  );
+  const currentPatient = PATIENT_DETAILS.find(
+    (patient) => patient.id === selectedPatientId
+  );
+
+
   return isAuthenticated ? (
     <div style={{ marginLeft: 50, marginBottom: 50 }}>
       <div className="page-heading">Order Drugs</div>
@@ -411,14 +503,18 @@ export default function DrugOrderPageV2() {
           style={{ marginTop: "20px", flex: "1 1 100%" }}
         >
           <Form.Label>Patient Name</Form.Label>
-          <Form.Control type="text" value="John Smith" disabled />
+          <Form.Control
+            type="text"
+            value={`${currentPatient?.name[0].given[0]} ${currentPatient?.name[0].family}`}
+            disabled
+          />
         </Form.Group>
         <Form.Group
           controlId="formPatientID"
           style={{ marginTop: "20px", flex: "1 1 100%" }}
         >
           <Form.Label>Patient ID</Form.Label>
-          <Form.Control type="text" value="PT32403" disabled />
+          <Form.Control type="text" value={currentPatient?.id} disabled />
         </Form.Group>
       </div>
       <div>

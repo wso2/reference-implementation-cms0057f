@@ -21,6 +21,26 @@ import reactLogo from "./assets/react.svg";
 import viteLogo from "/vite.svg";
 import "./App.css";
 
+// Extend the Window interface to include the Config property
+declare global {
+  interface Window {
+    Config: {
+      baseUrl: string;
+      medication_request: string;
+      prescribe_medication: string;
+      questionnaire_package: string;
+      questionnaire_response: string;
+      claim_submit: string;
+      radiology_order: string;
+      book_imaging_center: string;
+      practitioner: string;
+      slot: string;
+      location: string;
+      appointment: string;
+    };
+  }
+}
+
 function App() {
   const [count, setCount] = useState(0);
 

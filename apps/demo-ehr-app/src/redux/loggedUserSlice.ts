@@ -1,4 +1,4 @@
-// Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com).
+// Copyright (c) 2025, WSO2 LLC. (http://www.wso2.com).
 //
 // WSO2 LLC. licenses this file to you under the Apache License,
 // Version 2.0 (the "License"); you may not use this file except
@@ -17,21 +17,25 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
-  selectedPatientId: "",
+  username: "",
+  first_name: "",
+  last_name: "",
 };
 
-const patientSlice = createSlice({
-  name: "patient",
+const loggedUserSlice = createSlice({
+  name: "loggedUser",
   initialState,
   reducers: {
-    selectPatient(state, action) {
-      state.selectedPatientId = action.payload;
+    updateLoggedUser(state, action) {
+      state.username = action.payload.username;
+      state.first_name = action.payload.first_name;
+      state.last_name = action.payload.last_name;
     },
-    dismissPatient() {
+    resetLoggedUser() {
       return initialState;
     },
   },
 });
 
-export const { selectPatient, dismissPatient } = patientSlice.actions;
-export default patientSlice.reducer;
+export const { updateLoggedUser, resetLoggedUser } = loggedUserSlice.actions;
+export default loggedUserSlice.reducer;

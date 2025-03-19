@@ -16,25 +16,45 @@
 
 import { Button } from "@mui/material";
 import { Box, Flex } from "@chakra-ui/react";
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { ExpandedContext } from "../utils/expanded_context";
 import { useSelector } from "react-redux";
 import { PATIENT_DETAILS } from "../constants/data";
 import Cookies from "js-cookie";
+import { useAuth } from "./AuthProvider";
+import { useDispatch } from "react-redux";
+import { updateLoggedUser } from "../redux/loggedUserSlice";
 
 export default function NavBar() {
+  const dispatch = useDispatch();
+  const encodedUserInfo = Cookies.get("userinfo");
+  if (encodedUserInfo) {
+    const loggedUser = encodedUserInfo
+      ? JSON.parse(atob(encodedUserInfo))
+      : { username: "", first_name: "", last_name: "" };
+
+    dispatch(
+      updateLoggedUser({
+        username: loggedUser.username,
+        first_name: loggedUser.first_name,
+        last_name: loggedUser.last_name,
+      })
+    );
+  }
+
+  const loggedUser = useSelector((state: any) => state.loggedUser);
+
+  const { isAuthenticated } = useAuth();
   const { expanded } = useContext(ExpandedContext);
+
+  const [showDropdown, setShowDropdown] = useState(false);
 
   const selectedPatientId = useSelector(
     (state: any) => state.patient.selectedPatientId
   );
-  let currentPatient = PATIENT_DETAILS.find(
+  const currentPatient = PATIENT_DETAILS.find(
     (patient) => patient.id === selectedPatientId
   );
-
-  if (!currentPatient) {
-    currentPatient = PATIENT_DETAILS[0];
-  }
 
   return (
     <div
@@ -55,7 +75,7 @@ export default function NavBar() {
           alignItems={"center"}
           height="100%"
         >
-          <Button href="/patient/dashboard" color="primary">
+          <Box display="flex" alignItems="center" style={{ marginLeft: 6 }}>
             <Box borderRadius="100%" overflow="hidden" marginLeft={5}>
               <img
                 src="/demo_logo.png"
@@ -67,54 +87,82 @@ export default function NavBar() {
             <Box marginLeft={10} color="white" fontSize="16px" fontWeight={600}>
               DEMO EHR
             </Box>
-          </Button>
-          <Box display="flex" alignItems="center">
-            <Button href="/dashboard/appointment-schedule" color="inherit">
-              Appointment
-            </Button>
-            <Button href="/dashboard/drug-order-v2" color="inherit">
-              Order Drugs
-            </Button>
-            {/* <Button href="/dashboard/drug-order-v2/prior-auth?questionnaireId=4" color="inherit">
-              Drugs Prior Auth
-            </Button>
-            <Button href="/dashboard/drug-order-v2/claim-submit" color="inherit">
-              Drugs Claim Submit
-            </Button> */}
-            <Button href="/dashboard/device-order-v2" color="inherit">
-              Order Devices
-            </Button>
-            <Button href="/dashboard/medical-imaging" color="inherit">
-              Order Imaging
-            </Button>
           </Box>
-          <Box>
-            <Button
-              onClick={async () => {
-                window.location.href = `/auth/logout?session_hint=${Cookies.get(
-                  "session_hint"
-                )}`;
-              }}
-            >
-              <Box marginRight={10} color="white" fontSize="16px">
-                Logout
-              </Box>
+          <Box display="flex" alignItems="center">
+            <Button href="/" color="inherit">
+              Home
             </Button>
-            <Button href="/dashboard/patient">
-              <Box marginRight={10} color="white" fontSize="16px">
-                {currentPatient.name[0].given[0] +
-                  " " +
-                  currentPatient.name[0].family}
+            {currentPatient && (
+              <>
+                <Button href="/dashboard" color="inherit">
+                  Dashboard
+                </Button>
+                {/* <Button href="/dashboard/appointment-schedule" color="inherit">
+                  Appointment
+                </Button>
+                <Button href="/dashboard/drug-order-v2" color="inherit">
+                  Order Drugs
+                </Button>
+                <Button href="/dashboard/device-order-v2" color="inherit">
+                  Order Devices
+                </Button>
+                <Button href="/dashboard/medical-imaging" color="inherit">
+                  Order Imaging
+                </Button> */}
+              </>
+            )}
+          </Box>
+          <Box display="flex" alignItems="center" marginRight={10}>
+            {isAuthenticated && loggedUser && (
+              <Box display="flex" alignItems="center">
+                <Box marginRight={10} color="white" fontSize="16px">
+                  {loggedUser.first_name.toUpperCase() +
+                    " " +
+                    loggedUser.last_name.toUpperCase()}
+                </Box>
+                <Box position="relative">
+                  <Box
+                    borderRadius="50%"
+                    overflow="hidden"
+                    onClick={() => setShowDropdown(!showDropdown)}
+                    cursor={"pointer"}
+                  >
+                    <img
+                      src="/profile.png"
+                      alt="Demo Logo"
+                      height={40}
+                      width={40}
+                    />
+                  </Box>
+                  {showDropdown && (
+                    <Box
+                      position="absolute"
+                      right={-10}
+                      marginTop={15}
+                      bg="grey"
+                      boxShadow="md"
+                      borderRadius="20"
+                      width="90px"
+                      zIndex={1}
+                      display="flex"
+                      justifyContent="center"
+                      alignItems="center"
+                    >
+                      <Button
+                        onClick={async () => {
+                          window.location.href = `/auth/logout?session_hint=${Cookies.get(
+                            "session_hint"
+                          )}`;
+                        }}
+                        color="inherit"
+                      >
+                        Log Out
+                      </Button>
+                    </Box>
+                  )}
+                </Box>
               </Box>
-              <Box borderRadius="50%" overflow="hidden" marginRight={5}>
-                <img
-                  src="/profile.png"
-                  alt="Demo Logo"
-                  height={40}
-                  width={40}
-                />
-              </Box>
-            </Button>
+            )}
           </Box>
         </Flex>
       </Box>

@@ -20,10 +20,10 @@ import Form from "react-bootstrap/Form";
 import Card from "react-bootstrap/Card";
 import Button from "react-bootstrap/Button";
 import { Navigate, useLocation } from "react-router-dom";
-import { paths } from "../config/urlConfigs";
 import Select from "react-select";
 import DatePicker from "react-datepicker";
 import { useDispatch, useSelector } from "react-redux";
+import { Alert, Snackbar } from "@mui/material";
 import {
   updateRequest,
   updateRequestUrl,
@@ -32,6 +32,8 @@ import {
 } from "../redux/cdsRequestSlice";
 import { updateCdsResponse, resetCdsResponse } from "../redux/cdsResponseSlice";
 import { useAuth } from "../components/AuthProvider";
+import { PATIENT_DETAILS } from "../constants/data";
+import { selectPatient } from "../redux/patientSlice";
 
 const useQuery = () => {
   return new URLSearchParams(useLocation().search);
@@ -55,6 +57,12 @@ const QuestionnniarForm = ({
   const [formData, setFormData] = useState<{
     [key: string]: string | number | boolean;
   }>({});
+
+  const [alertMessage, setAlertMessage] = useState<string | null>(null);
+  const [alertSeverity, setAlertSeverity] = useState<
+    "error" | "warning" | "info" | "success"
+  >("info");
+  const [openSnackbar, setOpenSnackbar] = useState(false);
 
   const requestBody = {
     resourceType: "Parameters",
@@ -81,13 +89,23 @@ const QuestionnniarForm = ({
     dispatch(resetCdsRequest());
     dispatch(resetCdsResponse());
     // Fetch the questionnaire data from the API
+    const Config = window.Config;
     axios
-      .post(paths.questionnaire_package, requestBody, {
+      .post(Config.questionnaire_package, requestBody, {
         headers: {
           "Content-Type": "application/fhir+json",
         },
       })
       .then((response) => {
+        if (response.status >= 200 && response.status < 300) {
+          setAlertMessage("Questionnaire fetched successfully!");
+          setAlertSeverity("success");
+        } else {
+          setAlertMessage("Failed to fetch questionnaire!");
+          setAlertSeverity("error");
+        }
+        setOpenSnackbar(true);
+
         const questionnaire = response.data;
         setQuestions(
           questionnaire.parameter[0].resource.entry[0].resource.item || []
@@ -107,7 +125,10 @@ const QuestionnniarForm = ({
         );
       })
       .catch((error) => {
-        console.error("Error fetching questionnaire data:", error);
+        setAlertMessage("Error fetching questionnaire!");
+        setAlertSeverity("error");
+        setOpenSnackbar(true);
+        console.error("Error fetching questionnaire:", error);
         dispatch(
           updateCdsResponse({
             cards: error,
@@ -186,17 +207,25 @@ const QuestionnniarForm = ({
     dispatch(updateRequestMethod("POST"));
 
     // Submit the questionnaire response to the API
+    const Config = window.Config;
     axios
-      .post(paths.questionnaire_response, questionnaireResponse, {
+      .post(Config.questionnaire_response, questionnaireResponse, {
         headers: {
           "Content-Type": "application/fhir+json",
         },
       })
       .then((response) => {
+        if (response.status >= 200 && response.status < 300) {
+          setAlertMessage("Questionnaire response submitted successfully!");
+          setAlertSeverity("success");
+        } else {
+          setAlertMessage("Failed to submit questionnaire response!");
+          setAlertSeverity("error");
+        }
+        setOpenSnackbar(true);
         dispatch(
           updateCdsResponse({ cards: response.data, systemActions: {} })
         );
-        alert("Questionnaire response submitted successfully!");
         setIsQuestionnaireResponseSubmited(true);
       })
       .catch((error) => {
@@ -208,6 +237,13 @@ const QuestionnniarForm = ({
           })
         );
       });
+  };
+
+  const validateForm = () => {
+    return questions.every((question) => {
+      const value = formData[question.linkId];
+      return value !== undefined && value !== "";
+    });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -260,6 +296,10 @@ const QuestionnniarForm = ({
     }
   };
 
+  const handleCloseSnackbar = () => {
+    setOpenSnackbar(false);
+  };
+
   return (
     <Card style={{ marginTop: "30px", padding: "20px" }}>
       <Card.Body>
@@ -271,7 +311,9 @@ const QuestionnniarForm = ({
               style={{ marginTop: "20px" }}
               key={index}
             >
-              <Form.Label>{question.text}</Form.Label>
+              <Form.Label>
+                {question.text} <span style={{ color: "red" }}>*</span>
+              </Form.Label>
               {renderFormField(question)}
             </Form.Group>
           ))}
@@ -280,25 +322,34 @@ const QuestionnniarForm = ({
             type="submit"
             style={{ marginTop: "30px", float: "right" }}
             onClick={handleSubmit}
-            // disabled={isQuestionnaireResponseSubmited}
+            disabled={!validateForm() || isQuestionnaireResponseSubmited}
           >
             Submit Questionnaire Response
           </Button>
         </Form>
-        <Button
-          variant="success"
-          style={{ marginTop: "30px", marginRight: "20px", float: "right" }}
-          onClick={() =>
-            window.open(
-              "/patient/dashboard/drug-order-v2/claim-submit",
-              "_blank"
-            )
-          }
-          disabled={!isQuestionnaireResponseSubmited}
-        >
-          Visit Claim Submission
-        </Button>
+        {isQuestionnaireResponseSubmited && (
+          <Button
+            variant="success"
+            style={{ marginTop: "30px", marginRight: "20px", float: "right" }}
+            onClick={() =>
+              window.open("/dashboard/drug-order-v2/claim-submit", "_blank")
+            }
+            disabled={!isQuestionnaireResponseSubmited}
+          >
+            Visit Claim Submission
+          </Button>
+        )}
       </Card.Body>
+      <Snackbar
+        open={openSnackbar}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      >
+        <Alert onClose={handleCloseSnackbar} severity={alertSeverity}>
+          {alertMessage}
+        </Alert>
+      </Snackbar>
     </Card>
   );
 };
@@ -309,9 +360,10 @@ const PrescribedForm = () => {
       medicationFormData: {
         treatingSickness: string;
         medication: string;
-        quantity: string;
+        quantity: number;
         frequency: string;
         startDate: Date;
+        duration: string;
       };
     }) => state.medicationFormData
   );
@@ -319,6 +371,7 @@ const PrescribedForm = () => {
   const medication = medicationFormData.medication;
   const quantity = medicationFormData.quantity;
   const frequency = medicationFormData.frequency;
+  const duration = medicationFormData.duration;
 
   return (
     <Card style={{ marginTop: "30px", padding: "20px" }}>
@@ -365,7 +418,7 @@ const PrescribedForm = () => {
               style={{ marginTop: "20px", flex: "1 1 100%" }}
             >
               <Form.Label>Duration (days)</Form.Label>
-              <Form.Control type="text" value={frequency || ""} disabled />
+              <Form.Control type="text" value={duration || ""} disabled />
             </Form.Group>
 
             <Form.Group
@@ -390,6 +443,18 @@ const PrescribedForm = () => {
 };
 
 const DetailsDiv = ({ questionnaireId }: { questionnaireId: string }) => {
+  const dispatch = useDispatch();
+  const savedPatientId = localStorage.getItem("selectedPatientId");
+  if (savedPatientId) {
+    dispatch(selectPatient(savedPatientId));
+  }
+  const selectedPatientId = useSelector(
+    (state: any) => state.patient.selectedPatientId
+  );
+  const currentPatient = PATIENT_DETAILS.find(
+    (patient) => patient.id === selectedPatientId
+  );
+
   return (
     <div style={{ display: "flex", gap: "20px" }}>
       <Form.Group
@@ -397,14 +462,18 @@ const DetailsDiv = ({ questionnaireId }: { questionnaireId: string }) => {
         style={{ marginTop: "20px", flex: "1 1 100%" }}
       >
         <Form.Label>Patient Name</Form.Label>
-        <Form.Control type="text" value="PA0012323" disabled />
+        <Form.Control
+          type="text"
+          value={`${currentPatient?.name[0].given[0]} ${currentPatient?.name[0].family}`}
+          disabled
+        />
       </Form.Group>
       <Form.Group
         controlId="formPatientID"
         style={{ marginTop: "20px", flex: "1 1 100%" }}
       >
         <Form.Label>Patient ID</Form.Label>
-        <Form.Control type="text" value="PT32403" disabled />
+        <Form.Control type="text" value={currentPatient?.id} disabled />
       </Form.Group>
       <Form.Group
         controlId="formPatientName"
@@ -421,6 +490,7 @@ export default function DrugPiorAuthPage() {
   const { isAuthenticated } = useAuth();
   const query = useQuery();
   const questionnaireId = query.get("questionnaireId");
+  console.log("questionnaireId", questionnaireId);
   const [isQuestionnaireResponseSubmited, setIsQuestionnaireResponseSubmited] =
     useState(false);
 

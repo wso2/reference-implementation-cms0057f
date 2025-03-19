@@ -16,7 +16,6 @@
 
 import ReactDOM from "react-dom/client";
 import { ExpandedContextProvider } from "./utils/expanded_context.tsx";
-import PatientEncounter from "./pages/patient_encounter_start.tsx";
 import PractionerDashBoard from "./pages/practitioner_dashboard.tsx";
 import AppointmentBookPage from "./pages/appointment_book_page.tsx";
 import AppointmentReceipt from "./components/appointment_receipt.tsx";
@@ -41,8 +40,9 @@ import PriorAuth from "./pages/PriorAuth.tsx";
 import DrugPiorAuthPage from "./pages/drug_prior_auth.tsx";
 import DeviceOrderPageV2 from "./pages/device_order_page_v2.tsx";
 import DrugClaimPage from "./pages/drug_claim_page.tsx";
-import Login from "./pages/login.tsx";
+import LoginV2 from "./pages/login_v2.tsx";
 import { AuthProvider } from "./components/AuthProvider.tsx";
+import PatientEncounterV2 from "./pages/patient_encounter_v2.tsx";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <Provider store={store}>
@@ -52,8 +52,8 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           <BrowserRouter>
             <AuthProvider>
               <Routes>
-                <Route path="/login" element={<Login />} />
-                <Route path="/" element={<PatientEncounter />} />
+                <Route path="/login" element={<LoginV2 />} />
+                <Route path="/" element={<PatientEncounterV2 />} />
                 <Route path="dashboard/*" element={<Layout />}>
                   <Route index element={<PractionerDashBoard />} />
                   <Route path="medical-imaging" element={<MedicalImaging />} />

@@ -34,7 +34,6 @@ function PatientEncounter() {
   const [selectedPatient, setSelectedPatient] = useState("");
   const dispatch = useDispatch();
   const navigate = useNavigate();
-
   const patients: { [key: string]: string } = {};
 
   PATIENT_DETAILS.forEach((patient) => {

@@ -119,8 +119,11 @@ function PatientEncounter() {
                 </Form.Group>
                 <Button
                   variant="success"
-                  // type="submit"
-                  style={{ marginLeft: "30px", marginTop: "30px", float: "right" }}
+                  style={{
+                    marginLeft: "30px",
+                    marginTop: "30px",
+                    float: "right",
+                  }}
                   onClick={handleBtnClick}
                   disabled={!validateForm()}
                 >

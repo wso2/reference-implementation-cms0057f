@@ -21,8 +21,30 @@ import { ExpandedContext } from "../utils/expanded_context";
 import { useSelector } from "react-redux";
 import { PATIENT_DETAILS } from "../constants/data";
 import Cookies from "js-cookie";
+import { useAuth } from "./AuthProvider";
+import { useDispatch } from "react-redux";
+import { updateLoggedUser } from "../redux/loggedUserSlice";
 
 export default function NavBar() {
+  const dispatch = useDispatch();
+  const encodedUserInfo = Cookies.get("userinfo");
+  if (encodedUserInfo) {
+    const loggedUser = encodedUserInfo
+      ? JSON.parse(atob(encodedUserInfo))
+      : { username: "", first_name: "", last_name: "" };
+
+    dispatch(
+      updateLoggedUser({
+        username: loggedUser.username,
+        first_name: loggedUser.first_name,
+        last_name: loggedUser.last_name,
+      })
+    );
+  }
+
+  const loggedUser = useSelector((state: any) => state.loggedUser);
+
+  const { isAuthenticated } = useAuth();
   const { expanded } = useContext(ExpandedContext);
 
   const selectedPatientId = useSelector(
@@ -100,21 +122,22 @@ export default function NavBar() {
                 Logout
               </Box>
             </Button>
-            <Button href="/dashboard/patient">
-              <Box marginRight={10} color="white" fontSize="16px">
-                {currentPatient.name[0].given[0] +
-                  " " +
-                  currentPatient.name[0].family}
-              </Box>
-              <Box borderRadius="50%" overflow="hidden" marginRight={5}>
-                <img
-                  src="/profile.png"
-                  alt="Demo Logo"
-                  height={40}
-                  width={40}
-                />
-              </Box>
-            </Button>
+
+            {isAuthenticated && loggedUser && (
+              <Button>
+                <Box marginRight={10} color="white" fontSize="16px">
+                  {loggedUser.first_name + " " + loggedUser.last_name}
+                </Box>
+                <Box borderRadius="50%" overflow="hidden" marginRight={5}>
+                  <img
+                    src="/profile.png"
+                    alt="Demo Logo"
+                    height={40}
+                    width={40}
+                  />
+                </Box>
+              </Button>
+            )}
           </Box>
         </Flex>
       </Box>

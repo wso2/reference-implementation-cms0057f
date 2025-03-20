@@ -29,7 +29,7 @@ const Config = {
   claim_submit:
     "/choreo-apis/cms-0057-f/claim-submission-servi-hk/v1/fhir/r4/Claim/submit",
   practitioner_new:
-    "/choreo-apis/cms-0057-f/practitioner-service-um/v1.0/fhir/r4/Practitioner?_id=456",
+    "/choreo-apis/cms-0057-f/practitioner-service-um/v1.0/fhir/r4/Practitioner",
 
   // old urls
   radiology_order:

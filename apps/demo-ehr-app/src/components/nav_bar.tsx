@@ -40,7 +40,6 @@ export default function NavBar() {
         });
 
       if (loggedUser) {
-        console.log("dispatching logged user:", loggedUser.username);
         dispatch(
           updateLoggedUser({
             username: loggedUser.username,

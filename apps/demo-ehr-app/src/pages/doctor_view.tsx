@@ -30,41 +30,59 @@ import { updateCdsResponse, resetCdsResponse } from "../redux/cdsResponseSlice";
 export function DoctorViewPage() {
   const Config = window.Config;
   const dispatch = useDispatch();
+  const loggedUser = useSelector((state: any) => state.loggedUser);
 
   useEffect(() => {
     const fetchPractitionerDetails = async () => {
       try {
         dispatch(resetCdsResponse());
         dispatch(updateRequestMethod("GET"));
-        dispatch(updateRequestUrl("/fhir/r4/Practitioner?_id=456"));
+        const req_url = Config.practitioner_new + "?name=" + loggedUser.username;
+        dispatch(updateRequestUrl("/fhir/r4/Practitioner?name=" + loggedUser.username));
 
-        const response = await axios.get(Config.practitioner_new);
-        dispatch(
-          updateCdsResponse({
-            cards: response.data,
-            systemActions: {},
+        console.log("Fetching practitioner details...");
+
+        axios
+          .get(req_url)
+          .then((response) => {
+            console.log("Practitioner details:", response.data);
+            dispatch(
+              updateCdsResponse({
+                cards: response.data,
+                systemActions: {},
+              })
+            );
+            const user = response.data.entry[0];
+            console.log("Practitioner details:", response.data);
+            dispatch(
+              updateLoggedUser({
+                prefix: user.resource.name[0].prefix[0],
+                id: user.resource.id,
+                phone: user.resource.telecom[0].value,
+                email: user.resource.telecom[1].value,
+                first_name: user.resource.name[0].given[0],
+                last_name: user.resource.name[0].family,
+                address:
+                  user.resource.address[0].line[0] +
+                  ", " +
+                  user.resource.address[0].city +
+                  ", " +
+                  user.resource.address[0].state +
+                  ", " +
+                  user.resource.address[0].postalCode,
+              })
+            );
           })
-        );
-        const user = response.data.entry[0];
-        console.log("Practitioner details:", response.data);
-        dispatch(
-          updateLoggedUser({
-            prefix: user.resource.name[0].prefix[0],
-            id: user.resource.id,
-            phone: user.resource.telecom[0].value,
-            email: user.resource.telecom[1].value,
-            first_name: user.resource.name[0].given[0],
-            last_name: user.resource.name[0].family,
-            address:
-              user.resource.address[0].line[0] +
-              ", " +
-              user.resource.address[0].city +
-              ", " +
-              user.resource.address[0].state +
-              ", " +
-              user.resource.address[0].postalCode,
-          })
-        );
+          .catch((error) => {
+            console.error("Error submitting claim:", error);
+
+            dispatch(
+              updateCdsResponse({
+                cards: error,
+                systemActions: {},
+              })
+            );
+          });
       } catch (error) {
         console.error("Error fetching practitioner details:", error);
       }
@@ -73,7 +91,6 @@ export function DoctorViewPage() {
     fetchPractitionerDetails();
   }, [dispatch, Config]);
 
-  const loggedUser = useSelector((state: any) => state.loggedUser);
 
   return (
     <div className="profile-page">

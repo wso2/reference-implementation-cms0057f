@@ -95,7 +95,6 @@ const ClaimForm = () => {
   };
 
   const handleSubmit = () => {
-    console.log("Form data submitted:", formData);
     const payload = CLAIM_REQUEST_BODY(
       formData.patient,
       formData.provider,
@@ -121,9 +120,20 @@ const ClaimForm = () => {
       })
       .then((response) => {
         if (response.status >= 200 && response.status < 300) {
-          setAlertMessage("Claim submitted successfully");
-          setAlertSeverity("success");
-          setShowSuccessAnimation(true);
+          console.log("Claim submitted successfully:", response.data);
+          if (
+            response.data.parameter[0].resource.outcome &&
+            response.data.parameter[0].resource.outcome === "complete"
+          ) {
+            setAlertMessage("Prior Authorization Status: Completed");
+            setAlertSeverity("success");
+            setShowSuccessAnimation(true);
+          } else {
+            console.log("Prior Authorization error:", response.data.issue);
+            setAlertMessage("Prior Authorization");
+            setAlertSeverity("error");
+          }
+          
         } else {
           setAlertMessage("Error submitting claim");
           setAlertSeverity("error");
@@ -301,8 +311,8 @@ const ClaimForm = () => {
           {showSuccessAnimation && (
             <div style={{ textAlign: "center", marginTop: "50px" }}>
               <Lottie options={defaultOptions} height={70} width={70} />
-              <br/>
-              <h5>Claim Submitted Successfully</h5>
+              <br />
+              <h5>Prior Authorization completed.</h5>
             </div>
           )}
           {!showSuccessAnimation && (
@@ -332,12 +342,7 @@ const ClaimForm = () => {
 
 export default function DrugClaimPage() {
   const { isAuthenticated } = useAuth();
-  const medicationFormData = useSelector(
-    (state: { medicationFormData: { medication: string; quantity: string } }) =>
-      state.medicationFormData
-  );
 
-  console.log("medicationFormData", medicationFormData);
   return isAuthenticated ? (
     <div style={{ marginLeft: 50, marginBottom: 50 }}>
       <div className="page-heading">Claim Submission</div>

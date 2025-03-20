@@ -31,6 +31,8 @@ import { useAuth } from "../components/AuthProvider";
 import { Navigate } from "react-router-dom";
 import { Alert, Snackbar } from "@mui/material";
 import { selectPatient } from "../redux/patientSlice";
+import Lottie from "react-lottie";
+import successAnimation from "../animations/success-animation.json"; // Add your animation JSON file here
 
 const ClaimForm = () => {
   const dispatch = useDispatch();
@@ -43,11 +45,12 @@ const ClaimForm = () => {
     "error" | "warning" | "info" | "success"
   >("info");
   const [openSnackbar, setOpenSnackbar] = useState(false);
+  const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
 
   const savedPatientId = localStorage.getItem("selectedPatientId");
-    if (savedPatientId) {
-      dispatch(selectPatient(savedPatientId));
-    }
+  if (savedPatientId) {
+    dispatch(selectPatient(savedPatientId));
+  }
 
   const selectedPatientId = useSelector(
     (state: any) => state.patient.selectedPatientId
@@ -120,6 +123,7 @@ const ClaimForm = () => {
         if (response.status >= 200 && response.status < 300) {
           setAlertMessage("Claim submitted successfully");
           setAlertSeverity("success");
+          setShowSuccessAnimation(true);
         } else {
           setAlertMessage("Error submitting claim");
           setAlertSeverity("error");
@@ -149,6 +153,15 @@ const ClaimForm = () => {
 
   const handleCloseSnackbar = () => {
     setOpenSnackbar(false);
+  };
+
+  const defaultOptions = {
+    loop: false,
+    autoplay: true,
+    animationData: successAnimation,
+    rendererSettings: {
+      preserveAspectRatio: "xMidYMid slice",
+    },
   };
 
   return (
@@ -285,13 +298,22 @@ const ClaimForm = () => {
               />
             </Form.Group>
           </div>
-          <Button
-            variant="success"
-            style={{ marginTop: "30px", marginRight: "20px", float: "right" }}
-            onClick={handleSubmit}
-          >
-            Submit Claim
-          </Button>
+          {showSuccessAnimation && (
+            <div style={{ textAlign: "center", marginTop: "50px" }}>
+              <Lottie options={defaultOptions} height={70} width={70} />
+              <br/>
+              <h5>Claim Submitted Successfully</h5>
+            </div>
+          )}
+          {!showSuccessAnimation && (
+            <Button
+              variant="success"
+              style={{ marginTop: "30px", marginRight: "20px", float: "right" }}
+              onClick={handleSubmit}
+            >
+              Submit Claim
+            </Button>
+          )}
         </Form>
       </Card.Body>
       <Snackbar

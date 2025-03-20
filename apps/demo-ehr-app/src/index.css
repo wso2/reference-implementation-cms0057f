@@ -108,6 +108,7 @@ button:focus-visible {
   margin-top: -75px;
   border: 5px solid white;
   margin-left: 50px;
+  object-fit: cover;
 }
 
 .profile-content {

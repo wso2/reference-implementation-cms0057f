@@ -10,8 +10,8 @@ import {
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import apiClient from "../../services/apiClient";
-import { BFF_BASE_URL } from "../../configs/Constants";
 import React from "react";
+import { ORGANIZATION_SERVICE_URL } from "../../configs/Constants";
 
 const LoginPage = () => {
   const [memberId, setMemberId] = useState("");
@@ -34,7 +34,7 @@ const LoginPage = () => {
     }
 
     // Simulate an API call that returns a 200 status
-    apiClient(BFF_BASE_URL)
+    apiClient(ORGANIZATION_SERVICE_URL)
       .post("/member/login", {
         memberId: memberId,
         password: password,

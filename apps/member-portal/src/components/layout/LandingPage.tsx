@@ -18,10 +18,11 @@ import Header from "../common/Header";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import CloseIcon from "@mui/icons-material/Close";
 import apiClient from "../../services/apiClient";
-import { BFF_BASE_URL } from "../../configs/Constants";
 import { useAuth } from "../common/AuthProvider";
 import React from "react";
 import Cookies from "js-cookie";
+import axios from "axios";
+import { ORGANIZATION_SERVICE_URL } from "../../configs/Constants";
 
 interface RowData {
   name: string;
@@ -30,6 +31,11 @@ interface RowData {
   total: number;
   columns: string[];
   data: Record<string, string>[];
+}
+
+interface Payer {
+  id: number;
+  name: string;
 }
 
 // Create data helper function with TypeScript types
@@ -63,11 +69,7 @@ export const LandingPage = () => {
   const location = useLocation();
   const memberId = location.state?.memberId || "nil";
   const [error, setError] = useState("");
-  const [payerList, setPayerList] = useState([
-    { payerId: "p-1", name: "A Care Insurance" },
-    { payerId: "p-2", name: "B Med Insurance" },
-    { payerId: "p-3", name: "C Doc Insurance" },
-  ]);
+  const [payerList, setPayerList] = useState<Payer[]>([]);
   const [checked, setChecked] = useState(false);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
@@ -90,27 +92,6 @@ export const LandingPage = () => {
         },
       ]
     ),
-    // createData(
-    //   "Providers",
-    //   10,
-    //   2,
-    //   12,
-    //   ["Practitioner", "Provider", "Type", "Status"],
-    //   [
-    //     {
-    //       Practitioner: "Amal Jayalath",
-    //       Provider: "11091700",
-    //       Type: "Resource",
-    //       status: "pending",
-    //     },
-    //     {
-    //       Practitioner: "Amal Jayalath",
-    //       Provider: "11091700",
-    //       Type: "Resource",
-    //       status: "pending",
-    //     },
-    //   ]
-    // ),
   ]);
 
   // State to manage selected options
@@ -136,6 +117,29 @@ export const LandingPage = () => {
     }
   }, []);
 
+  const fetchOrganizations = async (): Promise<Payer[]> => {
+    try {
+      const response = await fetch(ORGANIZATION_SERVICE_URL);
+      const data = await response.json();
+      return data.entry.map((entry: any) => ({
+        id: entry.resource.id,
+        name: entry.resource.name,
+      }));
+    } catch (error) {
+      console.error("Error fetching organizations:", error);
+      return [];
+    }
+  };
+
+  useEffect(() => {
+    const loadOrganizations = async () => {
+      const payers = await fetchOrganizations();
+      console.log(payers);
+      setPayerList(payers);
+    };
+    loadOrganizations();
+  }, []);
+
   // useEffect(() => {
   //   setExportLabel("Exporting... "+exportStatus+"% Completed.");  // This will only run after `checked` state has been updated
   // }, [exportStatus]);
@@ -159,7 +163,9 @@ export const LandingPage = () => {
 
     const intervalId = setInterval(async () => {
       try {
-        const statusResponse = await apiClient(BFF_BASE_URL).get(statusUrl);
+        const statusResponse = await apiClient(ORGANIZATION_SERVICE_URL).get(
+          statusUrl
+        );
         const statusData = statusResponse.data;
 
         console.log("Polling status:", statusData);
@@ -203,7 +209,7 @@ export const LandingPage = () => {
     console.log("Submitted name:", selectedOptions);
     const fhirResourceUrl = "/member/" + memberId + "/export";
     try {
-      apiClient(BFF_BASE_URL)
+      apiClient(ORGANIZATION_SERVICE_URL)
         .get(fhirResourceUrl)
         .then((response) => {
           console.log(response);
@@ -237,7 +243,7 @@ export const LandingPage = () => {
     console.log("Selected Payer", value);
     const matchUrl = "/member/" + memberId + "/matchPatient";
     try {
-      apiClient(BFF_BASE_URL)
+      apiClient(ORGANIZATION_SERVICE_URL)
         .get(matchUrl, {
           // params: {
           //   payer: "value",
@@ -277,7 +283,7 @@ export const LandingPage = () => {
     console.log("Fetching data..." + checked);
     const fhirResourceUrl = "/member/" + memberId + "/other";
     try {
-      apiClient(BFF_BASE_URL)
+      apiClient(ORGANIZATION_SERVICE_URL)
         .get(fhirResourceUrl, {
           params: {
             resourceType: "Encounter",
@@ -313,7 +319,7 @@ export const LandingPage = () => {
       setError("Error fetching data");
     }
     // try {
-    //   apiClient(BFF_BASE_URL)
+    //   apiClient(ORGANIZATION_SERVICE_URL)
     //     .get(fhirResourceUrl, {
     //       params: {
     //         resourceType: "DiagnosticReport",
@@ -430,7 +436,7 @@ export const LandingPage = () => {
               label="Select Payer/s to Resolve Member"
             >
               {payerList.map((payer, index) => (
-                <MenuItem key={index} value={payer.payerId}>
+                <MenuItem key={index} value={payer.id}>
                   {payer.name}
                 </MenuItem>
               ))}
@@ -441,9 +447,7 @@ export const LandingPage = () => {
                 <Box>
                   <Chip
                     key={option}
-                    label={
-                      payerList.find((payer) => payer.payerId === option)?.name
-                    }
+                    label={payerList.find((payer) => payer.id === option)?.name}
                     sx={{ margin: "3px" }}
                     onDelete={() => handleRemoveTag(option)} // Close icon removes the tag
                     deleteIcon={<CloseIcon />}

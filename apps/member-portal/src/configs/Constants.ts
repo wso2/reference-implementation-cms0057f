@@ -1,1 +1,4 @@
-export const BFF_BASE_URL: string = window.Config?.apiUrl ? window.Config.apiUrl : "/";
+export const ORGANIZATION_SERVICE_URL: string = window.Config
+  ?.organizationServiceUrl
+  ? window.Config.organizationServiceUrl
+  : "/";

@@ -25,22 +25,33 @@ import { useAuth } from "./AuthProvider";
 import { useDispatch } from "react-redux";
 import { updateLoggedUser } from "../redux/loggedUserSlice";
 
+import { useEffect } from "react";
+
 export default function NavBar() {
   const dispatch = useDispatch();
-  const encodedUserInfo = Cookies.get("userinfo");
-  if (encodedUserInfo) {
-    const loggedUser = encodedUserInfo
-      ? JSON.parse(atob(encodedUserInfo))
-      : { username: "", first_name: "", last_name: "" };
 
-    dispatch(
-      updateLoggedUser({
-        username: loggedUser.username,
-        first_name: loggedUser.first_name,
-        last_name: loggedUser.last_name,
-      })
-    );
-  }
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      const loggedUser = await fetch("/auth/userinfo")
+        .then((response) => response.json())
+        .then((data) => {
+          console.log("Logged User Info: ", data);
+          return data;
+        });
+
+      if (loggedUser) {
+        dispatch(
+          updateLoggedUser({
+            username: loggedUser.username,
+            first_name: loggedUser.first_name,
+            last_name: loggedUser.last_name,
+          })
+        );
+      }
+    };
+
+    fetchUserInfo();
+  }, [dispatch]);
 
   const loggedUser = useSelector((state: any) => state.loggedUser);
 
@@ -75,44 +86,49 @@ export default function NavBar() {
           alignItems={"center"}
           height="100%"
         >
-          <Box display="flex" alignItems="center" style={{ marginLeft: 6 }}>
-            <Box borderRadius="100%" overflow="hidden" marginLeft={5}>
-              <img
-                src="/demo_logo.png"
-                alt="Demo Logo"
-                height={40}
-                width={40}
-              />
+          <Box display="flex" alignItems="center" style={{ marginLeft: 1 }}>
+            <Box
+              borderRadius="100%"
+              overflow="hidden"
+              marginLeft={5}
+              backgroundColor={"white"}
+              padding={5}
+            >
+              <img src="/demo.png" alt="Demo Logo" height={40} width={40} />
             </Box>
             <Box marginLeft={10} color="white" fontSize="16px" fontWeight={600}>
               DEMO EHR
             </Box>
           </Box>
           <Box display="flex" alignItems="center">
-            <Button href="/" color="inherit">
-              Home
-            </Button>
             {currentPatient && (
               <>
                 <Button href="/dashboard" color="inherit">
-                  Dashboard
+                Current Patient :
+                  <div
+                    style={{
+                      backgroundColor: "black",
+                      paddingLeft: 15,
+                      paddingRight: 15,
+                      paddingTop: 5,
+                      paddingBottom: 5,
+                      borderRadius: 250,
+                      marginLeft: 10,
+                    }}
+                  >
+
+                    {currentPatient?.name
+                      .map((name) => name.given.join(" ") + " " + name.family)
+                      .join(", ")}
+                  </div>
                 </Button>
-                {/* <Button href="/dashboard/appointment-schedule" color="inherit">
-                  Appointment
-                </Button>
-                <Button href="/dashboard/drug-order-v2" color="inherit">
-                  Order Drugs
-                </Button>
-                <Button href="/dashboard/device-order-v2" color="inherit">
-                  Order Devices
-                </Button>
-                <Button href="/dashboard/medical-imaging" color="inherit">
-                  Order Imaging
-                </Button> */}
               </>
             )}
+            <Button href="/" color="inherit">
+              Switch Patient
+            </Button>
           </Box>
-          <Box display="flex" alignItems="center" marginRight={10}>
+          <Box display="flex" alignItems="center" marginRight={5}>
             {isAuthenticated && loggedUser && (
               <Box display="flex" alignItems="center">
                 <Box marginRight={10} color="white" fontSize="16px">
@@ -126,12 +142,13 @@ export default function NavBar() {
                     overflow="hidden"
                     onClick={() => setShowDropdown(!showDropdown)}
                     cursor={"pointer"}
+                    backgroundColor={"white"}
                   >
                     <img
-                      src="/profile.png"
+                      src="/doctor.jpg"
                       alt="Demo Logo"
-                      height={40}
-                      width={40}
+                      height={50}
+                      width={50}
                     />
                   </Box>
                   {showDropdown && (
@@ -141,13 +158,22 @@ export default function NavBar() {
                       marginTop={15}
                       bg="grey"
                       boxShadow="md"
-                      borderRadius="20"
+                      borderRadius="10"
                       width="90px"
                       zIndex={1}
                       display="flex"
+                      flexDirection="column"
                       justifyContent="center"
                       alignItems="center"
                     >
+                      <Button
+                        onClick={() => {
+                          window.location.href = "/dashboard/doctor";
+                        }}
+                        color="inherit"
+                      >
+                        Profile
+                      </Button>
                       <Button
                         onClick={async () => {
                           window.location.href = `/auth/logout?session_hint=${Cookies.get(

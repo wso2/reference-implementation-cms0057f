@@ -34,9 +34,11 @@ declare global {
       radiology_order: string;
       book_imaging_center: string;
       practitioner: string;
+      practitioner_new: string;
       slot: string;
       location: string;
       appointment: string;
+      patient: string;
     };
   }
 }

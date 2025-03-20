@@ -43,6 +43,7 @@ import DrugClaimPage from "./pages/drug_claim_page.tsx";
 import LoginV2 from "./pages/login_v2.tsx";
 import { AuthProvider } from "./components/AuthProvider.tsx";
 import PatientEncounterV2 from "./pages/patient_encounter_v2.tsx";
+import { DoctorViewPage } from "./pages/doctor_view.tsx";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <Provider store={store}>
@@ -53,9 +54,12 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
             <AuthProvider>
               <Routes>
                 <Route path="/login" element={<LoginV2 />} />
-                <Route path="/" element={<PatientEncounterV2 />} />
+                <Route path="/" element={<Layout />}>
+                  <Route index element={<PatientEncounterV2 />} />
+                </Route>
                 <Route path="dashboard/*" element={<Layout />}>
                   <Route index element={<PractionerDashBoard />} />
+                  <Route path="doctor" element={<DoctorViewPage />} />
                   <Route path="medical-imaging" element={<MedicalImaging />} />
                   <Route
                     path="medical-imaging/prior-auth"

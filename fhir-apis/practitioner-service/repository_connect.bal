@@ -113,7 +113,7 @@ public isolated function search(map<string[]>? searchParameters = ()) returns r4
                             string fullName = string `${nameRecord.family} ${given}`;
 
                             string targetString = searchParameters.get('key)[0];
-                            boolean matchesResult = regex:matches(fullName, string `.*${targetString}.*`);
+                            boolean matchesResult = regex:matches(fullName.toLowerAscii(), string `.*${targetString.toLowerAscii()}.*`);
 
                             if matchesResult {
                                 r4:Bundle clonedBundle = bundle.clone();

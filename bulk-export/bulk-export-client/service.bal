@@ -1,4 +1,3 @@
-
 // Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com).
 // WSO2 LLC. licenses this file to you under the Apache License,
 // Version 2.0 (the "License"); you may not use this file except
@@ -11,6 +10,7 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
+
 import ballerina/file;
 import ballerina/http;
 import ballerina/log;
@@ -32,7 +32,7 @@ http:OAuth2ClientCredentialsGrantConfig config = {
 
 isolated http:Client statusClient = check new (sourceServerConfig.baseUrl);
 
-isolated service / on new http:Listener(clientServiceConfig.port) {
+isolated service /bulk on new http:Listener(9099) {
 
     function init() returns error? {
 
@@ -49,6 +49,15 @@ isolated service / on new http:Listener(clientServiceConfig.port) {
         log:printInfo("Bulk export client Service is started...", port = clientServiceConfig.port);
     }
 
+    // This function is responsible for exporting data in bulk.
+    // It is an isolated resource function that handles the HTTP GET request for exporting data.
+    // The exported data will be saved to the specified file path.
+    //
+    // @param _outputFormat - The output format of the exported data.
+    // @param _since - The date and time from which the data should be exported.
+    // @param _type - The type of the resource to be exported.
+    //
+    // @return The response indicating the success or failure of the export operation.
     isolated resource function get export(string? _outputFormat, string? _since, string? _type) returns json|error {
 
         // update config for status polling
@@ -147,6 +156,16 @@ isolated service / on new http:Listener(clientServiceConfig.port) {
 
     }
 
+    // Kick-off the export task for a specific group.
+    // This function is responsible for kicking-off the export task for a specific group.
+    // The export task will be persisted in the memory.
+    //
+    // @param group_id - The ID of the group.
+    // @param _outputFormat - The output format of the exported data.
+    // @param _since - The date and time from which the data should be exported.
+    // @param _type - The type of the resource to be exported.
+    //
+    // @return The response indicating the success or failure of the export operation.
     isolated resource function get export/group/[string group_id](string? _outputFormat, string? _since, string? _type) returns json|error {
 
         // update config for status polling
@@ -190,12 +209,24 @@ isolated service / on new http:Listener(clientServiceConfig.port) {
 
     }
 
+    // Get status of the export task.
+    // This function is responsible for getting the status of the export task.
+    // The status will be returned as a JSON object.
+    //
+    // @param exportId - The ID of the export task.
+    //
+    // @return The status of the export task.
     isolated resource function get status(string exportId) returns json|error {
 
         return getExportTaskFromMemory(exportId).toJson();
 
     }
 
+    // Resource function to download a specific file.
+    // This function is responsible for downloading a specific file from the bulk export server.
+    // The downloaded file will be saved to the configured file path.
+    //
+    // @param location - The location of the file to be downloaded.
     isolated resource function get download(string location) returns http:STATUS_ACCEPTED|http:STATUS_INTERNAL_SERVER_ERROR {
 
         error? saveFileResult = saveFileInFS(location, "exportedData.json");
@@ -207,8 +238,19 @@ isolated service / on new http:Listener(clientServiceConfig.port) {
         return http:STATUS_ACCEPTED;
 
     }
+}
+// File API
 
-    isolated resource function get file/download(http:Request req, string exportId, string resourceType) returns http:Response|error? {
+isolated service /file on new http:Listener(8099) {
+
+    // Resource function to fetch the exported files.
+    //
+    // @param req - The HTTP request.
+    // @param exportId - The ID of the export task.
+    // @param resourceType - The type of the resource to be exported.
+    //
+    // @return The response containing the downloaded file.
+    isolated resource function get fetch(http:Request req, string exportId, string resourceType) returns @http:Payload {mediaType: "gzip"} http:Response|error? {
 
         log:printInfo("Downloading file for member: " + exportId + " and resource type: " + resourceType);
         string filePath = clientServiceConfig.targetDirectory + file:pathSeparator + exportId + file:pathSeparator + resourceType + "-exported.ndjson";
@@ -225,6 +267,7 @@ isolated service / on new http:Listener(clientServiceConfig.port) {
         return response;
 
     }
+
 }
 
 isolated function submitBackgroundJob(string taskId, http:Response|http:ClientError status) {

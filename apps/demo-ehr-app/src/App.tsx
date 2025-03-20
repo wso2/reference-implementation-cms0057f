@@ -38,6 +38,7 @@ declare global {
       slot: string;
       location: string;
       appointment: string;
+      patient: string;
     };
   }
 }

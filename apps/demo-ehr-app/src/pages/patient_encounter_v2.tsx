@@ -14,8 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import { useState } from "react";
-import { PATIENT_DETAILS } from "../constants/data";
+import { useState, useMemo } from "react";
 import { useDispatch } from "react-redux";
 import { selectPatient } from "../redux/patientSlice";
 import { Navigate, useNavigate } from "react-router-dom";
@@ -25,19 +24,42 @@ import Form from "react-bootstrap/Form";
 import Card from "react-bootstrap/Card";
 import Select, { SingleValue } from "react-select";
 import Button from "react-bootstrap/Button";
+import { useEffect } from "react";
+import axios from "axios";
 
 function PatientEncounter() {
   const { isAuthenticated } = useAuth();
   const [selectedPatient, setSelectedPatient] = useState("");
+  const [isLoaded, setIsLoaded] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const Config = window.Config;
+  const patients = useMemo<{ [key: string]: { fullName: string } }>(() => ({}), []);
 
-  const patients: { [key: string]: string } = {};
+  useEffect(() => {
+    const fetchPatientDetails = async () => {
+      try {
+        const response = await axios.get(Config.patient);
+        const patientData = response.data.entry;
+        // console.log("Patient Data: ", patientData);
+        console.log("Patients: ", patients);
+        patientData.forEach((patient: any) => {
+          patients[patient.resource.id] = {
+            fullName:
+              patient.resource.name[0].given[0] +
+              " " +
+              patient.resource.name[0].family,
+          };
+        });
+        console.log("Patients: ", patients);
+        setIsLoaded(true);
+      } catch (error) {
+        console.error("Error fetching patient details:", error);
+      }
+    };
 
-  PATIENT_DETAILS.forEach((patient) => {
-    const fullName = patient.name[0].given[0] + " " + patient.name[0].family;
-    patients[patient.id] = fullName;
-  });
+    fetchPatientDetails();
+  }, [Config, patients]);
 
   const handleSelectChange = (
     selectedOption: SingleValue<{ value: string | null }>
@@ -92,32 +114,28 @@ function PatientEncounter() {
             <Card style={{ marginTop: "30px", padding: "20px" }}>
               <Card.Body>
                 <Card.Title>Search for patient</Card.Title>
-                <Form.Group
-                  controlId="formTreatingSickness"
-                  style={{ marginTop: "20px" }}
-                >
-                  <Form.Label>
-                    Patient Name <span style={{ color: "red" }}>*</span>
-                  </Form.Label>
-                  <Select
-                    name="treatingSickness"
-                    options={PATIENT_DETAILS.map(
-                      (patient: {
-                        id: string;
-                        name: { given: string[]; family: string }[];
-                      }) => ({
-                        value: patient.id,
-                        label:
-                          patient.name[0].given[0] +
-                          " " +
-                          patient.name[0].family,
-                      })
-                    )}
-                    isSearchable
-                    onChange={handleSelectChange}
-                    required
-                  />
-                </Form.Group>
+                {!isLoaded ? (
+                  <div>Loading...</div>
+                ) : (
+                  <Form.Group
+                    controlId="formTreatingSickness"
+                    style={{ marginTop: "20px" }}
+                  >
+                    <Form.Label>
+                      Patient Name <span style={{ color: "red" }}>*</span>
+                    </Form.Label>
+                    <Select
+                      name="treatingSickness"
+                      options={Object.keys(patients).map((id) => ({
+                        value: id,
+                        label: patients[id].fullName,
+                      }))}
+                      isSearchable
+                      onChange={handleSelectChange}
+                      required
+                    />
+                  </Form.Group>
+                )}
                 <Button
                   variant="success"
                   style={{

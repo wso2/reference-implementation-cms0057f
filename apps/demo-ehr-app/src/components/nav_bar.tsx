@@ -116,7 +116,7 @@ export default function NavBar() {
                       marginLeft: 10,
                     }}
                   >
-                    
+
                     {currentPatient?.name
                       .map((name) => name.given.join(" ") + " " + name.family)
                       .join(", ")}

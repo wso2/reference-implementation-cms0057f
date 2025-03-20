@@ -133,7 +133,7 @@ const ClaimForm = () => {
             setAlertMessage("Prior Authorization");
             setAlertSeverity("error");
           }
-          
+
         } else {
           setAlertMessage("Error submitting claim");
           setAlertSeverity("error");

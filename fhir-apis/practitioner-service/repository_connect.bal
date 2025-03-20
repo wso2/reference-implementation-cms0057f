@@ -1,4 +1,5 @@
 import ballerina/http;
+import ballerina/regex;
 import ballerinax/health.clients.fhir;
 import ballerinax/health.fhir.r4;
 import ballerinax/health.fhir.r4.parser;
@@ -76,7 +77,7 @@ public isolated function search(map<string[]>? searchParameters = ()) returns r4
     };
 
     if searchParameters is map<string[]> {
-        if searchParameters.keys().count() == 1 {
+        if searchParameters.keys().length() == 1 {
             lock {
                 r4:BundleEntry[] bundleEntries = [];
                 foreach var item in practitioners {
@@ -101,6 +102,34 @@ public isolated function search(map<string[]>? searchParameters = ()) returns r4
                         }
                     ];
                     return bundle;
+                }
+
+                "name" => {
+                    lock {
+                        foreach var item in practitioners {
+
+                            uscore501:USCorePractitionerProfileName nameRecord = item.name[0];
+                            string given = nameRecord.given is string[] ? (<string[]>nameRecord.given)[0] : "";
+                            string fullName = string `${nameRecord.family} ${given}`;
+
+                            string targetString = searchParameters.get('key)[0];
+                            boolean matchesResult = regex:matches(fullName.toLowerAscii(), string `.*${targetString.toLowerAscii()}.*`);
+
+                            if matchesResult {
+                                r4:Bundle clonedBundle = bundle.clone();
+                                clonedBundle.entry = [
+                                    {
+                                        'resource: item
+                                    }
+                                ];
+                                return clonedBundle.clone();
+                            }
+
+                        }
+
+                        return bundle.clone();
+                    }
+
                 }
                 _ => {
                     return r4:createFHIRError(string `Not supported search parameter: ${'key}`, r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);

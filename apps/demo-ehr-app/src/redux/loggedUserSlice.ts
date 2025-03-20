@@ -32,7 +32,6 @@ const loggedUserSlice = createSlice({
   initialState,
   reducers: {
     updateLoggedUser(state, action) {
-      console.log("action.payload", action.payload);
     return { ...state, ...action.payload };
   },
     resetLoggedUser() {

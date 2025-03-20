@@ -5,7 +5,7 @@
 
 [ballerina]
 dependencies-toml-version = "2"
-distribution-version = "2201.10.2"
+distribution-version = "2201.10.4"
 
 [[package]]
 org = "ballerina"
@@ -57,6 +57,23 @@ dependencies = [
 	{org = "ballerina", name = "os"},
 	{org = "ballerina", name = "time"}
 ]
+modules = [
+	{org = "ballerina", packageName = "file", moduleName = "file"}
+]
+
+[[package]]
+org = "ballerina"
+name = "ftp"
+version = "2.11.0"
+dependencies = [
+	{org = "ballerina", name = "io"},
+	{org = "ballerina", name = "jballerina.java"},
+	{org = "ballerina", name = "log"},
+	{org = "ballerina", name = "task"}
+]
+modules = [
+	{org = "ballerina", packageName = "ftp", moduleName = "ftp"}
+]
 
 [[package]]
 org = "ballerina"
@@ -97,6 +114,9 @@ version = "1.6.3"
 dependencies = [
 	{org = "ballerina", name = "jballerina.java"},
 	{org = "ballerina", name = "lang.value"}
+]
+modules = [
+	{org = "ballerina", packageName = "io", moduleName = "io"}
 ]
 
 [[package]]
@@ -141,6 +161,15 @@ dependencies = [
 org = "ballerina"
 name = "lang.decimal"
 version = "0.0.0"
+dependencies = [
+	{org = "ballerina", name = "jballerina.java"}
+]
+
+[[package]]
+org = "ballerina"
+name = "lang.error"
+version = "0.0.0"
+scope = "testOnly"
 dependencies = [
 	{org = "ballerina", name = "jballerina.java"}
 ]
@@ -203,6 +232,9 @@ dependencies = [
 	{org = "ballerina", name = "lang.value"},
 	{org = "ballerina", name = "observe"}
 ]
+modules = [
+	{org = "ballerina", packageName = "log", moduleName = "log"}
+]
 
 [[package]]
 org = "ballerina"
@@ -213,6 +245,9 @@ dependencies = [
 	{org = "ballerina", name = "jballerina.java"},
 	{org = "ballerina", name = "lang.int"},
 	{org = "ballerina", name = "log"}
+]
+modules = [
+	{org = "ballerina", packageName = "mime", moduleName = "mime"}
 ]
 
 [[package]]
@@ -247,23 +282,28 @@ dependencies = [
 
 [[package]]
 org = "ballerina"
-name = "regex"
-version = "1.4.3"
-dependencies = [
-	{org = "ballerina", name = "jballerina.java"},
-	{org = "ballerina", name = "lang.string"}
-]
-modules = [
-	{org = "ballerina", packageName = "regex", moduleName = "regex"}
-]
-
-[[package]]
-org = "ballerina"
 name = "task"
 version = "2.5.0"
 dependencies = [
 	{org = "ballerina", name = "jballerina.java"},
 	{org = "ballerina", name = "time"}
+]
+modules = [
+	{org = "ballerina", packageName = "task", moduleName = "task"}
+]
+
+[[package]]
+org = "ballerina"
+name = "test"
+version = "0.0.0"
+scope = "testOnly"
+dependencies = [
+	{org = "ballerina", name = "jballerina.java"},
+	{org = "ballerina", name = "lang.array"},
+	{org = "ballerina", name = "lang.error"}
+]
+modules = [
+	{org = "ballerina", packageName = "test", moduleName = "test"}
 ]
 
 [[package]]
@@ -272,6 +312,9 @@ name = "time"
 version = "2.5.0"
 dependencies = [
 	{org = "ballerina", name = "jballerina.java"}
+]
+modules = [
+	{org = "ballerina", packageName = "time", moduleName = "time"}
 ]
 
 [[package]]
@@ -292,6 +335,9 @@ dependencies = [
 	{org = "ballerina", name = "lang.int"},
 	{org = "ballerina", name = "time"}
 ]
+modules = [
+	{org = "ballerina", packageName = "uuid", moduleName = "uuid"}
+]
 
 [[package]]
 org = "ballerinai"
@@ -300,6 +346,9 @@ version = "0.0.0"
 dependencies = [
 	{org = "ballerina", name = "jballerina.java"},
 	{org = "ballerina", name = "observe"}
+]
+modules = [
+	{org = "ballerinai", packageName = "observe", moduleName = "observe"}
 ]
 
 [[package]]
@@ -318,24 +367,8 @@ dependencies = [
 
 [[package]]
 org = "ballerinax"
-name = "health.clients.fhir"
-version = "2.1.0"
-dependencies = [
-	{org = "ballerina", name = "http"},
-	{org = "ballerina", name = "io"},
-	{org = "ballerina", name = "log"},
-	{org = "ballerina", name = "url"},
-	{org = "ballerinai", name = "observe"},
-	{org = "ballerinax", name = "health.base"}
-]
-modules = [
-	{org = "ballerinax", packageName = "health.clients.fhir", moduleName = "health.clients.fhir"}
-]
-
-[[package]]
-org = "ballerinax"
 name = "health.fhir.r4"
-version = "5.2.2"
+version = "5.2.1"
 dependencies = [
 	{org = "ballerina", name = "constraint"},
 	{org = "ballerina", name = "http"},
@@ -362,70 +395,30 @@ dependencies = [
 	{org = "ballerina", name = "log"},
 	{org = "ballerinax", name = "health.fhir.r4"}
 ]
-
-[[package]]
-org = "ballerinax"
-name = "health.fhir.r4.parser"
-version = "5.2.1"
-dependencies = [
-	{org = "ballerina", name = "constraint"},
-	{org = "ballerina", name = "http"},
-	{org = "ballerina", name = "lang.regexp"},
-	{org = "ballerina", name = "log"},
-	{org = "ballerinax", name = "health.fhir.r4"},
-	{org = "ballerinax", name = "health.fhir.r4.international401"}
-]
 modules = [
-	{org = "ballerinax", packageName = "health.fhir.r4.parser", moduleName = "health.fhir.r4.parser"}
-]
-
-[[package]]
-org = "ballerinax"
-name = "health.fhir.r4.uscore501"
-version = "1.4.0"
-dependencies = [
-	{org = "ballerina", name = "constraint"},
-	{org = "ballerina", name = "log"},
-	{org = "ballerinax", name = "health.fhir.r4"}
-]
-modules = [
-	{org = "ballerinax", packageName = "health.fhir.r4.uscore501", moduleName = "health.fhir.r4.uscore501"}
-]
-
-[[package]]
-org = "ballerinax"
-name = "health.fhirr4"
-version = "1.4.1"
-dependencies = [
-	{org = "ballerina", name = "http"},
-	{org = "ballerina", name = "io"},
-	{org = "ballerina", name = "jballerina.java"},
-	{org = "ballerina", name = "jwt"},
-	{org = "ballerina", name = "lang.regexp"},
-	{org = "ballerina", name = "log"},
-	{org = "ballerinai", name = "observe"},
-	{org = "ballerinax", name = "health.fhir.r4"},
-	{org = "ballerinax", name = "health.fhir.r4.international401"},
-	{org = "ballerinax", name = "health.fhir.r4.parser"}
-]
-modules = [
-	{org = "ballerinax", packageName = "health.fhirr4", moduleName = "health.fhirr4"}
+	{org = "ballerinax", packageName = "health.fhir.r4.international401", moduleName = "health.fhir.r4.international401"}
 ]
 
 [[package]]
 org = "wso2"
-name = "practitioner.api"
-version = "1.0.0"
+name = "bulk_export_client_service"
+version = "0.1.0"
 dependencies = [
+	{org = "ballerina", name = "file"},
+	{org = "ballerina", name = "ftp"},
 	{org = "ballerina", name = "http"},
-	{org = "ballerina", name = "regex"},
-	{org = "ballerinax", name = "health.clients.fhir"},
+	{org = "ballerina", name = "io"},
+	{org = "ballerina", name = "log"},
+	{org = "ballerina", name = "mime"},
+	{org = "ballerina", name = "task"},
+	{org = "ballerina", name = "test"},
+	{org = "ballerina", name = "time"},
+	{org = "ballerina", name = "uuid"},
+	{org = "ballerinai", name = "observe"},
 	{org = "ballerinax", name = "health.fhir.r4"},
-	{org = "ballerinax", name = "health.fhir.r4.parser"},
-	{org = "ballerinax", name = "health.fhir.r4.uscore501"},
-	{org = "ballerinax", name = "health.fhirr4"}
+	{org = "ballerinax", name = "health.fhir.r4.international401"}
 ]
 modules = [
-	{org = "wso2", packageName = "practitioner.api", moduleName = "practitioner.api"}
+	{org = "wso2", packageName = "bulk_export_client_service", moduleName = "bulk_export_client_service"}
 ]
 

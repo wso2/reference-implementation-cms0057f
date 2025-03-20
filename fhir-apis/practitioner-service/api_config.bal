@@ -20,13 +20,22 @@ import ballerinax/health.fhir.r4;
 final r4:ResourceAPIConfig apiConfig = {
     resourceType: "Practitioner",
     profiles: [
-            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-practitioner"        
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-practitioner"
     ],
     defaultProfile: (),
     searchParameters: [
-        ],
+        {
+            name: "name",
+            active: true,
+            information: {
+                description: "A server defined search that may match any of the string fields in the HumanName, including family, give, prefix, suffix, suffix, and/or text",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Patient-name"
+            }
+        }
+    ],
     operations: [
-    
+
     ],
     serverConfig: (),
     authzConfig: ()

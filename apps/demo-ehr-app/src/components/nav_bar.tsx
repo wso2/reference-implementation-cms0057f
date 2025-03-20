@@ -35,7 +35,7 @@ export default function NavBar() {
       const loggedUser = await fetch("/auth/userinfo")
         .then((response) => response.json())
         .then((data) => {
-          console.log("data", data);
+          console.log("Logged User Info: ", data);
           return data;
         });
 

@@ -21,6 +21,11 @@ import Form from "react-bootstrap/Form";
 import { useEffect } from "react";
 import axios from "axios";
 import { updateLoggedUser } from "../redux/loggedUserSlice";
+import {
+  updateRequestMethod,
+  updateRequestUrl,
+} from "../redux/cdsRequestSlice";
+import { updateCdsResponse, resetCdsResponse } from "../redux/cdsResponseSlice";
 
 export function DoctorViewPage() {
   const Config = window.Config;
@@ -29,7 +34,17 @@ export function DoctorViewPage() {
   useEffect(() => {
     const fetchPractitionerDetails = async () => {
       try {
+        dispatch(resetCdsResponse());
+        dispatch(updateRequestMethod("GET"));
+        dispatch(updateRequestUrl("/fhir/r4/Practitioner?_id=456"));
+
         const response = await axios.get(Config.practitioner_new);
+        dispatch(
+          updateCdsResponse({
+            cards: response.data,
+            systemActions: {},
+          })
+        );
         const user = response.data.entry[0];
         console.log("Practitioner details:", response.data);
         dispatch(
@@ -109,11 +124,7 @@ export function DoctorViewPage() {
                 </Form.Group>
                 <Form.Group style={{ marginTop: "20px", flex: "1 1 100%" }}>
                   <Form.Label>User ID</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={loggedUser.id}
-                    disabled
-                  />
+                  <Form.Control type="text" value={loggedUser.id} disabled />
                 </Form.Group>
               </div>
               <div

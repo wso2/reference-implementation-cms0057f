@@ -54,7 +54,9 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
             <AuthProvider>
               <Routes>
                 <Route path="/login" element={<LoginV2 />} />
-                <Route path="/" element={<PatientEncounterV2 />} />
+                <Route path="/" element={<Layout />}>
+                  <Route index element={<PatientEncounterV2 />} />
+                </Route>
                 <Route path="dashboard/*" element={<Layout />}>
                   <Route index element={<PractionerDashBoard />} />
                   <Route path="doctor" element={<DoctorViewPage />} />

@@ -18,7 +18,6 @@ import { useState, useMemo } from "react";
 import { useDispatch } from "react-redux";
 import { selectPatient } from "../redux/patientSlice";
 import { Navigate, useNavigate } from "react-router-dom";
-import NavBar from "../components/nav_bar";
 import { useAuth } from "../components/AuthProvider";
 import Form from "react-bootstrap/Form";
 import Card from "react-bootstrap/Card";
@@ -26,6 +25,11 @@ import Select, { SingleValue } from "react-select";
 import Button from "react-bootstrap/Button";
 import { useEffect } from "react";
 import axios from "axios";
+import {
+  updateRequestMethod,
+  updateRequestUrl,
+} from "../redux/cdsRequestSlice";
+import { updateCdsResponse, resetCdsResponse } from "../redux/cdsResponseSlice";
 
 function PatientEncounter() {
   const { isAuthenticated } = useAuth();
@@ -34,14 +38,25 @@ function PatientEncounter() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const Config = window.Config;
-  const patients = useMemo<{ [key: string]: { fullName: string } }>(() => ({}), []);
+  const patients = useMemo<{ [key: string]: { fullName: string } }>(
+    () => ({}),
+    []
+  );
 
   useEffect(() => {
     const fetchPatientDetails = async () => {
+      dispatch(resetCdsResponse());
+      dispatch(updateRequestMethod("GET"));
+      dispatch(updateRequestUrl("/fhir/r4/Patient"));
       try {
         const response = await axios.get(Config.patient);
+        dispatch(
+          updateCdsResponse({
+            cards: response.data,
+            systemActions: {},
+          })
+        );
         const patientData = response.data.entry;
-        // console.log("Patient Data: ", patientData);
         console.log("Patients: ", patients);
         patientData.forEach((patient: any) => {
           patients[patient.resource.id] = {
@@ -59,7 +74,7 @@ function PatientEncounter() {
     };
 
     fetchPatientDetails();
-  }, [Config, patients]);
+  }, [Config, patients, dispatch]);
 
   const handleSelectChange = (
     selectedOption: SingleValue<{ value: string | null }>
@@ -82,75 +97,56 @@ function PatientEncounter() {
 
   return isAuthenticated ? (
     <>
-      <div
-        style={{
-          height: "100vh",
-          width: "100vw",
-          display: "flex",
-          flexDirection: "column",
-        }}
-      >
+      <div>
         <div
           style={{
-            position: "sticky",
-            top: 0,
-            zIndex: 1000,
-            color: "white",
+            marginLeft: 50,
+            marginRight: 50,
+            marginBottom: 50,
+            marginTop: 30,
           }}
         >
-          <NavBar />
-        </div>
-        <div>
-          <div
-            style={{
-              marginLeft: 50,
-              marginRight: 50,
-              marginBottom: 50,
-              marginTop: 30,
-            }}
-          >
-            <div className="page-heading">Select Patient</div>
+          <div className="page-heading">Select Patient</div>
 
-            <Card style={{ marginTop: "30px", padding: "20px" }}>
-              <Card.Body>
-                <Card.Title>Search for patient</Card.Title>
-                {!isLoaded ? (
-                  <div>Loading...</div>
-                ) : (
-                  <Form.Group
-                    controlId="formTreatingSickness"
-                    style={{ marginTop: "20px" }}
-                  >
-                    <Form.Label>
-                      Patient Name <span style={{ color: "red" }}>*</span>
-                    </Form.Label>
-                    <Select
-                      name="treatingSickness"
-                      options={Object.keys(patients).map((id) => ({
-                        value: id,
-                        label: patients[id].fullName,
-                      }))}
-                      isSearchable
-                      onChange={handleSelectChange}
-                      required
-                    />
-                  </Form.Group>
-                )}
-                <Button
-                  variant="success"
-                  style={{
-                    marginLeft: "30px",
-                    marginTop: "30px",
-                    float: "right",
-                  }}
-                  onClick={handleBtnClick}
-                  disabled={!validateForm()}
+          <Card style={{ marginTop: "30px", padding: "20px" }}>
+            <Card.Body>
+              <Card.Title>Search for patient</Card.Title>
+              {!isLoaded ? (
+                <div>Loading...</div>
+              ) : (
+                <Form.Group
+                  controlId="formTreatingSickness"
+                  style={{ marginTop: "20px" }}
                 >
-                  Select Patient
-                </Button>
-              </Card.Body>
-            </Card>
-          </div>
+                  <Form.Label>
+                    Patient Name <span style={{ color: "red" }}>*</span>
+                  </Form.Label>
+                  <Select
+                    name="treatingSickness"
+                    options={Object.keys(patients).map((id) => ({
+                      value: id,
+                      label: patients[id].fullName,
+                    }))}
+                    isSearchable
+                    onChange={handleSelectChange}
+                    required
+                  />
+                </Form.Group>
+              )}
+              <Button
+                variant="success"
+                style={{
+                  marginLeft: "30px",
+                  marginTop: "30px",
+                  float: "right",
+                }}
+                onClick={handleBtnClick}
+                disabled={!validateForm()}
+              >
+                Select Patient
+              </Button>
+            </Card.Body>
+          </Card>
         </div>
       </div>
     </>

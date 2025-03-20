@@ -28,6 +28,8 @@ const Config = {
     "/choreo-apis/cms-0057-f/questionnaire-response-fh/v1/fhir/r4/QuestionnaireResponse",
   claim_submit:
     "/choreo-apis/cms-0057-f/claim-submission-servi-hk/v1/fhir/r4/Claim/submit",
+  practitioner_new:
+    "/choreo-apis/cms-0057-f/practitioner-service-um/v1.0/fhir/r4/Practitioner?_id=456",
 
   // old urls
   radiology_order:
@@ -40,5 +42,4 @@ const Config = {
     "/cmsdemosetups/medconnect-service/cerner-fhir-location-api-cbc/v1.0/fhir/r4/Location",
   appointment:
     "/cmsdemosetups/medconnect-service/cerner-fhir-appointment-api-2ae/v1.0/fhir/r4/Appointment",
-
 };

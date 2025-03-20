@@ -88,3 +88,30 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+.profile-page {
+  text-align: left;
+  padding-left: 30px;
+}
+
+.cover-photo img {
+  width: 100%;
+  height: 250px;
+  object-fit: cover;
+  border-radius: 25px;
+}
+
+.profile-photo img {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  margin-top: -75px;
+  border: 5px solid white;
+  margin-left: 50px;
+}
+
+.profile-content {
+  margin-top: 30px;
+  margin-left: 70px;
+  margin-bottom: 50px;
+}

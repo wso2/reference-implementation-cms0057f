@@ -1,0 +1,12 @@
+schemaVersion: 1.1
+endpoints:
+    - name: davincidrug-graphdefinition-api
+      displayName: davincidrug GraphDefinition API
+      service:
+        basePath: /GraphDefinition
+        port: 9090
+      type: REST
+      networkVisibilities:
+        - Project
+        - Public
+      schemaFilePath: oas/GraphDefinition.yaml

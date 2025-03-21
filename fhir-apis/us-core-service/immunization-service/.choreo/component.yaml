@@ -1,0 +1,12 @@
+schemaVersion: 1.1
+endpoints:
+    - name: uscore700-immunization-api
+      displayName: uscore700 Immunization API
+      service:
+        basePath: /
+        port: 9090
+      type: REST
+      networkVisibilities:
+        - Project
+        - Public
+      schemaFilePath: oas/Immunization.yaml

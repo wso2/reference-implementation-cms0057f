@@ -74,6 +74,7 @@ export const LandingPage = () => {
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [oldMemberId, setOldMemberId] = useState("");
+  const [exportId, setExportId] = useState("");
   const [columns, setColumns] = useState([]);
   const [exportStatus, setExportStatus] = useState("0");
   const [tableData, setTableData] = useState([
@@ -207,32 +208,60 @@ export const LandingPage = () => {
 
     setExporting(true);
     console.log("Submitted name:", selectedOptions);
-    const fhirResourceUrl = "/member/" + memberId + "/export";
-    try {
-      apiClient(ORGANIZATION_SERVICE_URL)
-        .get(fhirResourceUrl)
-        .then((response) => {
-          console.log(response);
-          if (response.status === 200) {
-            pollStatus(); // Start polling the /status endpoint after export starts
-            console.log("Export trigger successful:");
-            console.log(response.data);
-            setError("");
-          } else {
-            setError("Export failed. Please retry");
+
+    const postOrganizationId = async () => {
+      const payload = [{ id: "644d85af-aaf9-4068-ad23-1e55aedd5205" }];
+
+      try {
+        const response = await axios.post(
+          "https://c32618cf-389d-44f1-93ee-b67a3468aae3-dev.e1-us-east-azure.choreoapis.dev/cms-0057-f/bulk-export-client/v1.0/export",
+          payload,
+          {
+            headers: {
+              "Content-Type": "application/json",
+            },
           }
-        })
-        .catch((error) => {
-          console.error("Error:", error);
-          setError("Export failed. Please retry");
-        })
-        .finally(() => {
-          setLoading(false); // Turn off loading after API call completes
-        });
-    } catch (error) {
-      console.error("Error:", error);
-      setError("Error fetching data");
-    }
+        );
+        console.log("POST response:", response.data);
+
+        const diagnostics: string = response.data.issue?.[0]?.diagnostics || "";
+        const match = diagnostics.match(/ExportId:\s([\w-]+)/);
+        if (match && match[1]) {
+          setExportId(match[1]);
+          console.log("Export ID:", match[1]);
+          checkStatusUntilDownloaded(match[1]);
+        } else {
+          console.warn("Export ID not found in diagnostics message.");
+        }
+      } catch (error) {
+        console.error("Error posting data:", error);
+      }
+    };
+
+    const checkStatusUntilDownloaded = async (exportId: string) => {
+      const interval = setInterval(async () => {
+        try {
+          const response = await axios.get(
+            `https://c32618cf-389d-44f1-93ee-b67a3468aae3-dev.e1-us-east-azure.choreoapis.dev/cms-0057-f/bulk-export-client/v1.0/status?exportId=${exportId}`
+          );
+          const currentStatus = response.data.lastStatus;
+          console.log("Checking status:", currentStatus);
+
+          if (currentStatus === "Downloaded") {
+            clearInterval(interval);
+            const finalPayload = await axios.get(
+              `https://c32618cf-389d-44f1-93ee-b67a3468aae3-dev.e1-us-east-azure.choreoapis.dev/cms-0057-f/bulk-export-client/file-service/v1.0/fetch?exportId=${exportId}&resourceType=Claim`
+            );
+            setStatus(finalPayload.data);
+            console.log("Final Payload:", finalPayload.data);
+          }
+        } catch (error) {
+          console.error("Error checking status:", error);
+        }
+      }, 3000); // Check every 3 seconds
+    };
+
+    postOrganizationId();
   };
 
   const handleSwitchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -318,43 +347,6 @@ export const LandingPage = () => {
       console.error("Error:", error);
       setError("Error fetching data");
     }
-    // try {
-    //   apiClient(ORGANIZATION_SERVICE_URL)
-    //     .get(fhirResourceUrl, {
-    //       params: {
-    //         resourceType: "DiagnosticReport",
-    //         isExported: checked,
-    //       },
-    //     })
-    //     .then((response) => {
-    //       console.log(response);
-    //       if (response.status === 200) {
-    //         console.log("DiagnosticReport fetched successful:");
-    //         console.log(response.data);
-    //         setError("");
-    //         const data = response.data;
-    //         setColumns(data.columns); // Set dynamic columns
-    //         // setTableData(createTableData(data)); // Set dynamic rows
-    //         setTableData((prevData) => ({
-    //           ...prevData,
-    //           ...createTableData(data),  // Merge new key-value pairs into existing state
-    //         }));
-
-    //       } else {
-    //         setError("Login failed. Please check your credentials)");
-    //       }
-    //     })
-    //     .catch((error) => {
-    //       console.error("Error:", error);
-    //       setError("Login failed. Please check your credentials");
-    //     })
-    //     .finally(() => {
-    //       setLoading(false); // Turn off loading after API call completes
-    //     });
-    // } catch (error) {
-    //   console.error("Error:", error);
-    //   setError("Error fetching data");
-    // }
   };
 
   const reloadTableData = () => {

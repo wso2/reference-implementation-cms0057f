@@ -1,8 +1,0 @@
-[package]
-org = "healthcare"
-name = "health.fhir.r4.uscore501.procedure"
-version = "1.0.0"
-distribution = "2201.8.1"
-authors = ["Ballerina"]
-keywords = ["Healthcare", "FHIR", "Procedure", "r4", "health.fhir.r4.uscore501"]
-template = true

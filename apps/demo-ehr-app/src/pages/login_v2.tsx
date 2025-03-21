@@ -29,7 +29,7 @@ function LoginV2() {
     <div>
       <div
         style={{
-          backgroundImage: `url('/public/background-gray-med.svg')`,
+          backgroundImage: `url('/background-gray-med.svg')`,
           backgroundSize: "cover",
           height: "100vh",
           width: "100vw",
@@ -56,7 +56,7 @@ function LoginV2() {
             }}
           >
             <img
-              src="/public/welcome-img.svg"
+              src="/welcome-img.svg"
               alt="Doctor"
               style={{ width: "300px", marginBottom: "20px" }}
             />

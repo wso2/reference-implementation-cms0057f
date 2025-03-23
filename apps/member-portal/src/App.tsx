@@ -1,6 +1,4 @@
-import {
-  Box
-} from "@mui/material";
+import { Box } from "@mui/material";
 import React, { Suspense } from "react";
 
 const MainContent = React.lazy(() =>

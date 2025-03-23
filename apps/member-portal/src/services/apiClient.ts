@@ -2,7 +2,7 @@ import axios from "axios";
 
 const apiClient = (url: string) => {
   return axios.create({
-    baseURL: url
+    baseURL: url,
   });
 };
 

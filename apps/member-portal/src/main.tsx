@@ -6,6 +6,9 @@ import App from "./App";
 import { theme } from "./configs/ThemeConfig";
 import "./index.css";
 import { AuthProvider } from "./components/common/AuthProvider";
+import { Provider } from "react-redux";
+import { store } from "./components/redux/store";
+import { ExpandedContextProvider } from "./components/layout/ExpandedContext";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
@@ -13,13 +16,17 @@ const root = ReactDOM.createRoot(
 
 root.render(
   <React.StrictMode>
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <BrowserRouter>
-        <AuthProvider>
-          <App />
-        </AuthProvider>
-      </BrowserRouter>
-    </ThemeProvider>
+    <Provider store={store}>
+      <ExpandedContextProvider>
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          <BrowserRouter>
+            <AuthProvider>
+              <App />
+            </AuthProvider>
+          </BrowserRouter>
+        </ThemeProvider>
+      </ExpandedContextProvider>
+    </Provider>
   </React.StrictMode>
 );

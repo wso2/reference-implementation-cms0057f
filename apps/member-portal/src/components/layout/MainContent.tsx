@@ -3,6 +3,8 @@ import { useLocation } from "react-router-dom";
 import LoginPage from "./LoginPage";
 import { LandingPage } from "./LandingPage";
 import React from "react";
+import DevConsole from "./DevConsole";
+import { Layout } from "./Layout";
 
 declare global {
   interface Window {
@@ -17,7 +19,13 @@ export const MainContent = () => {
     return <LoginPage />;
   }
   if (location.pathname === "/") {
-    return <LandingPage />;
+    return (
+      <>
+        {/* <DevConsole></DevConsole>
+        <LandingPage /> */}
+        <Layout></Layout>
+      </>
+    );
   }
 
   const Config = window.Config;

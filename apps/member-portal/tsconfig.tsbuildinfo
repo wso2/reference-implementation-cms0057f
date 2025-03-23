@@ -1,0 +1,20 @@
+{
+    "root": [
+        "./src/app.tsx",
+        "./src/main.tsx",
+        "./src/vite-env.d.ts",
+        "./src/components/common/authprovider.tsx",
+        "./src/components/common/dynamictable.tsx",
+        "./src/components/common/header.tsx",
+        "./src/components/common/preloader.tsx",
+        "./src/components/common/table.tsx",
+        "./src/components/common/index.ts",
+        "./src/components/layout/landingpage.tsx",
+        "./src/components/layout/loginpage.tsx",
+        "./src/components/layout/maincontent.tsx",
+        "./src/configs/constants.ts",
+        "./src/configs/themeconfig.ts",
+        "./src/services/apiclient.ts"
+    ],
+    "version": "5.6.2"
+}

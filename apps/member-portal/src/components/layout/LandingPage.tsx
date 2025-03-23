@@ -22,7 +22,10 @@ import { useAuth } from "../common/AuthProvider";
 import React from "react";
 import Cookies from "js-cookie";
 import axios from "axios";
-import { ORGANIZATION_SERVICE_URL } from "../../configs/Constants";
+import {
+  BULK_EXPORT_KICKOFF_URL,
+  ORGANIZATION_SERVICE_URL,
+} from "../../configs/Constants";
 
 interface RowData {
   name: string;
@@ -98,15 +101,6 @@ export const LandingPage = () => {
   // State to manage selected options
   const [selectedOptions, setSelectedOptions] = useState([]);
 
-  // useEffect to make API call on component mount (page load)
-  useEffect(() => {
-    fetchData(); // Fetch data when the page loads
-  }, []);
-
-  useEffect(() => {
-    reloadTableData(); // This will only run after `checked` state has been updated
-  }, [checked]);
-
   useEffect(() => {
     const encodedUserInfo = Cookies.get("userinfo");
     if (encodedUserInfo) {
@@ -118,32 +112,30 @@ export const LandingPage = () => {
     }
   }, []);
 
-  const fetchOrganizations = async (): Promise<Payer[]> => {
-    try {
-      const response = await fetch(ORGANIZATION_SERVICE_URL);
-      const data = await response.json();
-      return data.entry.map((entry: any) => ({
-        id: entry.resource.id,
-        name: entry.resource.name,
-      }));
-    } catch (error) {
-      console.error("Error fetching organizations:", error);
-      return [];
-    }
-  };
-
   useEffect(() => {
+    const fetchOrganizations = async (): Promise<Payer[]> => {
+      try {
+        const response = await fetch(ORGANIZATION_SERVICE_URL);
+        const data = await response.json();
+        return data.entry.map((entry: any) => ({
+          id: entry.resource.id,
+          name: entry.resource.name,
+        }));
+      } catch (error) {
+        console.error("Error fetching organizations:", error);
+        return [];
+      }
+    };
+
     const loadOrganizations = async () => {
       const payers = await fetchOrganizations();
       console.log(payers);
       setPayerList(payers);
     };
+
     loadOrganizations();
   }, []);
 
-  // useEffect(() => {
-  //   setExportLabel("Exporting... "+exportStatus+"% Completed.");  // This will only run after `checked` state has been updated
-  // }, [exportStatus]);
   // Handle selection of options
   const handleSelectChange = (event: { target: { value: any } }) => {
     const { value } = event.target;
@@ -213,15 +205,11 @@ export const LandingPage = () => {
       const payload = [{ id: "644d85af-aaf9-4068-ad23-1e55aedd5205" }];
 
       try {
-        const response = await axios.post(
-          "https://c32618cf-389d-44f1-93ee-b67a3468aae3-dev.e1-us-east-azure.choreoapis.dev/cms-0057-f/bulk-export-client/v1.0/export",
-          payload,
-          {
-            headers: {
-              "Content-Type": "application/json",
-            },
-          }
-        );
+        const response = await axios.post(BULK_EXPORT_KICKOFF_URL, payload, {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
         console.log("POST response:", response.data);
 
         const diagnostics: string = response.data.issue?.[0]?.diagnostics || "";
@@ -302,55 +290,6 @@ export const LandingPage = () => {
       console.error("Error:", error);
       setError("Error fetching data");
     }
-  };
-
-  const handleRefresh = (data: any) => {};
-
-  // Function to fetch data from API
-  const fetchData = async () => {
-    setLoading(true); // Set loading state while fetching data
-    console.log("Fetching data..." + checked);
-    const fhirResourceUrl = "/member/" + memberId + "/other";
-    try {
-      apiClient(ORGANIZATION_SERVICE_URL)
-        .get(fhirResourceUrl, {
-          params: {
-            resourceType: "Encounter",
-            isExported: checked,
-          },
-        })
-        .then((response) => {
-          console.log(response);
-          if (response.status === 200) {
-            console.log("Encounters fetched successful:");
-            console.log(response.data);
-            setError("");
-            const data = response.data;
-            setColumns(data.columns); // Set dynamic columns
-            setTableData(createTableData(data)); // Set dynamic rows
-            // setTableData((prevData) => ({
-            //   ...prevData,
-            //   ...createTableData(data),  // Merge new key-value pairs into existing state
-            // }));
-          } else {
-            setError("Login failed. Please check your credentials)");
-          }
-        })
-        .catch((error) => {
-          console.error("Error:", error);
-          setError("Login failed. Please check your credentials");
-        })
-        .finally(() => {
-          setLoading(false); // Turn off loading after API call completes
-        });
-    } catch (error) {
-      console.error("Error:", error);
-      setError("Error fetching data");
-    }
-  };
-
-  const reloadTableData = () => {
-    fetchData();
   };
 
   return isAuthenticated ? (

@@ -57,10 +57,10 @@ export const ExportedDataPage = () => {
   } = {
     Encounter: {
       tableHeadings: [
-        "Clinitian",
+        "Clinician",
         "Hospital",
-        "Start Time",
-        "End Time",
+        "Encounter Started At",
+        "Encounter Finished At",
         "Status",
       ],
       tableData: [
@@ -73,12 +73,14 @@ export const ExportedDataPage = () => {
     },
     Claim: {
       tableHeadings: [
-        "Insurance",
-        "Type",
+        "Payer",
+        "Claim Type",
         "Cause",
         "Hospital",
-        "Start Time",
-        "End Time",
+        "Billing Start Date:Time",
+        "Billing End Date:Time",
+        "Amount",
+        "Currency",
         "Status",
       ],
       tableData: [
@@ -88,15 +90,18 @@ export const ExportedDataPage = () => {
         "provider.display",
         "billablePeriod.start",
         "billablePeriod.end",
+        "total.value",
+        "total.currency",
         "status",
       ],
     },
     DiagnosticReport: {
       tableHeadings: [
         "Category",
-        "Case",
-        "Effective Date & Time",
-        "Issued Date & Time",
+        "Test Name",
+        "Performed On",
+        "Report Issued On",
+        "Test Result(s)",
         "Status",
       ],
       tableData: [
@@ -104,6 +109,7 @@ export const ExportedDataPage = () => {
         "code.text",
         "effectiveDateTime",
         "issued",
+        "result[0].display",
         "status",
       ],
     },

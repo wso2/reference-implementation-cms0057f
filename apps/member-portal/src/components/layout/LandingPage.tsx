@@ -71,6 +71,7 @@ export const LandingPage = () => {
   const [exportId, setExportId] = useState("");
   const [exportStatus, setExportStatus] = useState("0");
   const dispatch = useDispatch();
+  const [isExportCompleted, setIsExportCompleted] = useState(false);
 
   // State to manage selected options
   const [selectedOptions, setSelectedOptions] = useState([]);
@@ -180,7 +181,7 @@ export const LandingPage = () => {
     console.log("Submitted name:", selectedOptions);
 
     const postOrganizationId = async () => {
-      const memberID = "644d85af-aaf9-4068-ad23-1e55aedd5205";
+      const memberID = oldMemberId;
       const payload = [{ id: memberID }];
       dispatch(updateRequestMethod("POST"));
       dispatch(updateRequestUrl("/bulk-export-client/v1.0/export"));
@@ -230,13 +231,16 @@ export const LandingPage = () => {
             const finalPayload = await axios.get(
               `https://c32618cf-389d-44f1-93ee-b67a3468aae3-dev.e1-us-east-azure.choreoapis.dev/cms-0057-f/bulk-export-client/file-service/v1.0/fetch?exportId=${exportId}&resourceType=Claim`
             );
-            setStatus(finalPayload.data);
+            // setStatus(finalPayload.data);
             console.log("Final Payload:", finalPayload.data);
+            setStatus("Export Completed.");
+            setIsExportCompleted(true);
+            setExportStatus("100");
           }
         } catch (error) {
           console.error("Error checking status:", error);
         }
-      }, 3000); // Check every 3 seconds
+      }, 300); // Check every 0.3 seconds
     };
 
     postOrganizationId();
@@ -244,16 +248,20 @@ export const LandingPage = () => {
 
   const handlePayerSelection = (value: string) => {
     console.log("Selected Payer", value);
-    const matchUrl = "/member/" + memberId + "/matchPatient";
+    // const matchUrl = "/member/" + memberId + "/matchPatient";
+    const matchUrl = "/3e2fa8c7-28d2-47e8-b739-1cf48a457983";
     try {
-      apiClient(ORGANIZATION_SERVICE_URL)
-        .get(matchUrl)
+      axios
+        .get("https://run.mocky.io/v3" + matchUrl)
         .then((response) => {
-          console.log(response);
+          // console.log(response);
           if (response.status === 200) {
-            console.log("Member match trigger successful:");
-            console.log(response.data);
-            setOldMemberId(response.data.oldMemberId);
+            console.log("Member match trigger successful: ");
+            console.log(response);
+            console.log("----------");
+            // console.log("MemberID: ", response.data.resourceType);
+            // setOldMemberId(response.data.oldMemberId);
+            setOldMemberId("644d85af-aaf9-4068-ad23-1e55aedd5205");
             setError("");
             setStatus("Ready");
           } else {
@@ -275,55 +283,24 @@ export const LandingPage = () => {
   };
 
   return isAuthenticated ? (
-    <Container maxWidth="lg">
+    <Container>
       <Header userName={name} avatarUrl={avatarUrl} isLoggedIn={true} />
-      {/* Top Section: Label and Form */}
-      <Box
-        display="flex"
-        justifyContent="space-between"
-        alignItems="center"
-        sx={{ mt: 2, padding: 6 }}
-      >
-        {/* Label in top-left */}
-        <Box
-          sx={{
-            mt: 4,
-            display: "row",
-            alignItems: "left",
-            width: "80vh",
-            padding: 2,
-          }}
-        >
-          <Typography variant="h4">Hello, {name}</Typography>
-          <Typography variant="h6">
+      <Box sx={{ mt: 5, ml:2, mr:2 }}>
+        <Box>
+          <Typography variant="h4">Hello {name},</Typography>
+          <Typography variant="h6" sx={{ mt: 2, mb: 4 }}>
             Welcome to the USPayer Data Exchange Portal. If you haven't yet
             synced your data with your previous, please select your previous
             payer(s) and click 'Export' to securely transfer your data to
             USPayer. The transfer will run in the background, and you will be
             notified once the process is complete.
           </Typography>
-          <Box sx={{ mt: 4, outline: 1, mr: 1, padding: 1 }}>
-            <Typography variant="h5">Status: {status}</Typography>
-            <Box sx={{ display: "flex", alignItems: "center" }}>
-              <Box sx={{ width: "100%", mt: 2, mr: 1, padding: 2 }}>
-                <LinearProgress variant="determinate" value={+exportStatus} />
-              </Box>
-              <Box sx={{ minWidth: 35 }}>
-                <Typography
-                  variant="body2"
-                  sx={{ color: "text.secondary" }}
-                >{`${Math.round(+exportStatus)}%`}</Typography>
-              </Box>
-            </Box>
-          </Box>
         </Box>
 
-        {/* Form in top-right */}
         <Box
           component="form"
           onSubmit={handleSubmit}
-          sx={{ p: 2, border: "1px dashed grey", padding: 2 }}
-          width={400}
+          sx={{ p: 2, border: "1px dashed grey", padding: 4, borderRadius: 2 }}
         >
           <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
             <InputLabel id="select-payer-label">
@@ -344,50 +321,98 @@ export const LandingPage = () => {
               ))}
             </Select>
             {/* Display selected options as tags (chips) */}
-            <Box sx={{ display: "flex", flexWrap: "wrap", mt: 2 }}>
-              {selectedOptions.map((option) => (
-                <Box>
-                  <Chip
-                    key={option}
-                    label={payerList.find((payer) => payer.id === option)?.name}
-                    sx={{ margin: "3px" }}
-                    onDelete={() => handleRemoveTag(option)} // Close icon removes the tag
-                    deleteIcon={<CloseIcon />}
-                  />
-                  <TextField
-                    label="Member ID"
-                    type="text"
-                    fullWidth
-                    variant="outlined"
-                    margin="normal"
-                    value={oldMemberId}
-                    onChange={(event: { target: { value: any } }) =>
-                      setOldMemberId(event.target.value)
-                    }
-                  />
-                </Box>
-              ))}
-            </Box>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={handleSubmit}
-              disabled={exporting || error != "" || oldMemberId === ""}
+            <div
+              style={{
+                marginTop: "20px",
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+                gap: "20px",
+              }}
             >
-              {exportLabel}
-            </Button>
+              {selectedOptions.map((option) => (
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <Box sx={{ width: "100%" }}>
+                    <Chip
+                      key={option}
+                      label={
+                        payerList.find((payer) => payer.id === option)?.name
+                      }
+                      onDelete={() => handleRemoveTag(option)} // Close icon removes the tag
+                      deleteIcon={<CloseIcon />}
+                    />
+                    <TextField
+                      label="Member ID"
+                      type="text"
+                      fullWidth
+                      variant="outlined"
+                      margin="normal"
+                      value={oldMemberId}
+                      onChange={(event: { target: { value: any } }) =>
+                        setOldMemberId(event.target.value)
+                      }
+                    />
+                  </Box>
+                </div>
+              ))}
+            </div>
+            <Box
+              sx={{
+                mt: 2,
+                mb: 4,
+                border: "1px solid lightGrey",
+                padding: 2,
+                borderRadius: 1,
+              }}
+            >
+              <Typography variant="h5">Status: {status}</Typography>
+              <Box sx={{ display: "flex", alignItems: "center" }}>
+                <Box sx={{ width: "100%", mt: 2, height: 6 }}>
+                  <LinearProgress variant="determinate" value={+exportStatus} />
+                </Box>
+                <Box sx={{ minWidth: 40, paddingLeft: 2, height: 10 }}>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "text.secondary" }}
+                  >{`${Math.round(+exportStatus)}%`}</Typography>
+                </Box>
+              </Box>
+              {isExportCompleted && (
+                <Typography variant="body1" sx={{ mt: 2, color: "black" }}>
+                  Export ID: {exportId}
+                </Typography>
+              )}
+            </Box>
+            {isExportCompleted || error != "" ? (
+              <>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={() => window.open("/exported-data", "_blank")}
+                  sx={{ mt: 2 }}
+                >
+                  View Exported Data
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handleSubmit}
+                  disabled={exporting || error != "" || oldMemberId === ""}
+                >
+                  {exportLabel}
+                </Button>
+              </>
+            )}
           </FormControl>
         </Box>
-      </Box>
-      <Box sx={{ mt: 4 }}>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={() => window.open("/exported-data", "_blank")}
-          sx={{ mt: 2 }}
-        >
-          View Exported Data
-        </Button>
       </Box>
     </Container>
   ) : (

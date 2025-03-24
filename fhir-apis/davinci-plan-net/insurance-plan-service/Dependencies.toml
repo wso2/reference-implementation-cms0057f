@@ -388,7 +388,7 @@ modules = [
 ]
 
 [[package]]
-org = "healthcare"
+org = "wso2"
 name = "health.fhir.r4.davinciplannet.insuranceplan"
 version = "1.0.0"
 dependencies = [
@@ -400,6 +400,6 @@ dependencies = [
 	{org = "ballerinax", name = "health.fhirr4"}
 ]
 modules = [
-	{org = "healthcare", packageName = "health.fhir.r4.davinciplannet.insuranceplan", moduleName = "health.fhir.r4.davinciplannet.insuranceplan"}
+	{org = "wso2", packageName = "health.fhir.r4.davinciplannet.insuranceplan", moduleName = "health.fhir.r4.davinciplannet.insuranceplan"}
 ]
 

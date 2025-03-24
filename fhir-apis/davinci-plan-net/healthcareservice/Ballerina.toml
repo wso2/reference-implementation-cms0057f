@@ -1,8 +1,0 @@
-[package]
-org = "healthcare"
-name = "health.fhir.r4.davinciplannet.healthcareservice"
-version = "1.0.0"
-distribution = "2201.8.1"
-authors = ["Ballerina"]
-keywords = ["Healthcare", "FHIR", "HealthcareService", "r4", "health.fhir.r4.davinciplannet"]
-template = true

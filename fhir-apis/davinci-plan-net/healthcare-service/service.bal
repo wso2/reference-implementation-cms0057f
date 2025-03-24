@@ -18,12 +18,12 @@
 import ballerina/http;
 import ballerinax/health.fhir.r4;
 import ballerinax/health.fhirr4;
-import ballerinax/health.fhir.r4.davinciplannet;
+import ballerinax/health.fhir.r4.davinciplannet120;
 
 # Generic type to wrap all implemented profiles.
 # Add required profile types here.
 # public type HealthcareService r4:HealthcareService|<other_HealthcareService_Profile>;
-public type HealthcareService davinciplannet:PlannetHealthcareService;
+public type HealthcareService davinciplannet120:PlannetHealthcareService;
 
 # initialize source system endpoint here
 
@@ -33,7 +33,7 @@ service / on new fhirr4:Listener(9090, apiConfig) {
 
     // Read the current state of single resource based on its id.
     isolated resource function get fhir/r4/HealthcareService/[string id] (r4:FHIRContext fhirContext) returns HealthcareService|r4:OperationOutcome|r4:FHIRError {
-        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+        return getById(id);
     }
 
     // Read the state of a specific version of a resource based on its id.
@@ -43,12 +43,13 @@ service / on new fhirr4:Listener(9090, apiConfig) {
 
     // Search for resources based on a set of criteria.
     isolated resource function get fhir/r4/HealthcareService (r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
-        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+        r4:Bundle searchResult = check search(getQueryParamsMap(fhirContext.getRequestSearchParameters()));
+        return searchResult;
     }
 
     // Create a new resource.
     isolated resource function post fhir/r4/HealthcareService (r4:FHIRContext fhirContext, HealthcareService procedure) returns HealthcareService|r4:OperationOutcome|r4:FHIRError {
-        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+        return check create(procedure.toJson());
     }
 
     // Update the current state of a resource completely.

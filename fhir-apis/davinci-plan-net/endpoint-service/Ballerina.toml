@@ -1,8 +1,8 @@
 [package]
-org = "healthcare"
-name = "health.fhir.r4.davinciplannet.endpoint"
-version = "1.0.0"
-distribution = "2201.8.1"
 authors = ["Ballerina"]
+distribution = "2201.8.1"
 keywords = ["Healthcare", "FHIR", "Endpoint", "r4", "health.fhir.r4.davinciplannet"]
+name = "health.fhir.r4.davinciplannet.endpoint"
+org = "wso2"
 template = true
+version = "1.0.0"

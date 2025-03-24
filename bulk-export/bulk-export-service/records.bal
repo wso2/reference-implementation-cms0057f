@@ -29,9 +29,25 @@ public type SearchServerConfig record {
     string clientId = "";
     string clientSecret = "";
     string[] scopes = [];
-    string[] types = ["AllergyIntolerence", "CarePlan", "CareTeam", "Condition", "Coverage", "Device", 
-             "DiagnosticReport", "DocumentReference", "Encounter", "Goal", "Immunization", "MedicationRequest", "Observation", 
-             "Organization", "Patient", "Practitioner", "Procedure"];
+    string[] types = [
+        "AllergyIntolerence",
+        "CarePlan",
+        "CareTeam",
+        "Condition",
+        "Coverage",
+        "Device",
+        "DiagnosticReport",
+        "DocumentReference",
+        "Encounter",
+        "Goal",
+        "Immunization",
+        "MedicationRequest",
+        "Observation",
+        "Organization",
+        "Patient",
+        "Practitioner",
+        "Procedure"
+    ];
 };
 
 # Configs for pre built export service.
@@ -42,6 +58,7 @@ public type SearchServerConfig record {
 public type BulkExportServerConfig record {|
     int port;
     string baseUrl;
+    string contextPath;
     string targetDirectory;
 |};
 

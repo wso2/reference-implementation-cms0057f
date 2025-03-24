@@ -18,12 +18,12 @@
 import ballerina/http;
 import ballerinax/health.fhir.r4;
 import ballerinax/health.fhirr4;
-import ballerinax/health.fhir.r4.davincidrug;
+import ballerinax/health.fhir.r4.davincidrugformulary210;
 
 # Generic type to wrap all implemented profiles.
 # Add required profile types here.
-# public type InsurancePlan r4:InsurancePlan|<other_InsurancePlan_Profile>;
-public type InsurancePlan davincidrug:Formulary|davincidrug:PayerInsurancePlan;
+# public type Location r4:Location|<other_Location_Profile>;
+public type Location davincidrugformulary210:InsurancePlanLocation;
 
 # initialize source system endpoint here
 
@@ -32,47 +32,48 @@ public type InsurancePlan davincidrug:Formulary|davincidrug:PayerInsurancePlan;
 service / on new fhirr4:Listener(9090, apiConfig) {
 
     // Read the current state of single resource based on its id.
-    isolated resource function get fhir/r4/InsurancePlan/[string id] (r4:FHIRContext fhirContext) returns InsurancePlan|r4:OperationOutcome|r4:FHIRError {
-        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    isolated resource function get fhir/r4/Location/[string id](r4:FHIRContext fhirContext) returns Location|r4:OperationOutcome|r4:FHIRError {
+        return getById(id);
     }
 
     // Read the state of a specific version of a resource based on its id.
-    isolated resource function get fhir/r4/InsurancePlan/[string id]/_history/[string vid] (r4:FHIRContext fhirContext) returns InsurancePlan|r4:OperationOutcome|r4:FHIRError {
+    isolated resource function get fhir/r4/Location/[string id]/_history/[string vid](r4:FHIRContext fhirContext) returns Location|r4:OperationOutcome|r4:FHIRError {
         return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
     }
 
     // Search for resources based on a set of criteria.
-    isolated resource function get fhir/r4/InsurancePlan (r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
-        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    isolated resource function get fhir/r4/Location(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+        r4:Bundle searchResult = check search(getQueryParamsMap(fhirContext.getRequestSearchParameters()));
+        return searchResult;
     }
 
     // Create a new resource.
-    isolated resource function post fhir/r4/InsurancePlan (r4:FHIRContext fhirContext, InsurancePlan procedure) returns InsurancePlan|r4:OperationOutcome|r4:FHIRError {
-        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    isolated resource function post fhir/r4/Location(r4:FHIRContext fhirContext, Location procedure) returns Location|r4:OperationOutcome|r4:FHIRError {
+        return check create(procedure.toJson());
     }
 
     // Update the current state of a resource completely.
-    isolated resource function put fhir/r4/InsurancePlan/[string id] (r4:FHIRContext fhirContext, InsurancePlan insuranceplan) returns InsurancePlan|r4:OperationOutcome|r4:FHIRError {
+    isolated resource function put fhir/r4/Location/[string id](r4:FHIRContext fhirContext, Location location) returns Location|r4:OperationOutcome|r4:FHIRError {
         return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
     }
 
     // Update the current state of a resource partially.
-    isolated resource function patch fhir/r4/InsurancePlan/[string id] (r4:FHIRContext fhirContext, json patch) returns InsurancePlan|r4:OperationOutcome|r4:FHIRError {
+    isolated resource function patch fhir/r4/Location/[string id](r4:FHIRContext fhirContext, json patch) returns Location|r4:OperationOutcome|r4:FHIRError {
         return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
     }
 
     // Delete a resource.
-    isolated resource function delete fhir/r4/InsurancePlan/[string id] (r4:FHIRContext fhirContext) returns r4:OperationOutcome|r4:FHIRError {
+    isolated resource function delete fhir/r4/Location/[string id](r4:FHIRContext fhirContext) returns r4:OperationOutcome|r4:FHIRError {
         return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
     }
 
     // Retrieve the update history for a particular resource.
-    isolated resource function get fhir/r4/InsurancePlan/[string id]/_history (r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+    isolated resource function get fhir/r4/Location/[string id]/_history(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
         return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
     }
 
     // Retrieve the update history for all resources.
-    isolated resource function get fhir/r4/InsurancePlan/_history (r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+    isolated resource function get fhir/r4/Location/_history(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
         return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
     }
 }

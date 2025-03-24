@@ -1,25 +1,33 @@
 openapi: 3.0.1
 info:
-  title: InsurancePlan
+  title: Organization
   description:
-    "A simplified version of the HL7 FHIR API for InsurancePlan resource.\n\
-    Supported Profiles: \nhttp://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/plannet-InsurancePlan\n"
+    "A simplified version of the HL7 FHIR API for Organization resource.\n\
+    Supported Profiles: \nhttp://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/plannet-Network\n"
   contact:
     name: API Support
     url: https://wso2.com/contact/`
     email: user@email.com
   version: 1.0.0
 tags:
-  - name: http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/plannet-InsurancePlan
-  - name: InsurancePlan
+  - name: http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/plannet-Network
+  - name: Organization
   - name: 4.0.1
 paths:
-  /fhir/r4/InsurancePlan:
+  /fhir/r4/Organization:
     get:
       tags:
         - GET
-        - InsurancePlan
+        - Organization
       parameters:
+        - name: active
+          in: query
+          description: Is the Organization record active
+          required: false
+          schema:
+            type: string
+            example: null
+          x-wso2-oh-fhirType: token
         - name: address
           in: query
           description:
@@ -71,17 +79,11 @@ paths:
             type: string
             example: null
           x-wso2-oh-fhirType: token
-        - name: administered-by
-          in: query
-          description: Product administrator
-          required: false
-          schema:
-            type: string
-            example: null
-          x-wso2-oh-fhirType: reference
         - name: endpoint
           in: query
-          description: Technical endpoint
+          description:
+            Technical endpoints providing access to services operated for
+            the organization
           required: false
           schema:
             type: string
@@ -105,7 +107,7 @@ paths:
             type: string
             example: null
           x-wso2-oh-fhirType: string
-        - name: owned-by
+        - name: partof
           in: query
           description: An organization of which this organization forms a part
           required: false
@@ -123,14 +125,6 @@ paths:
             type: string
             example: null
           x-wso2-oh-fhirType: string
-        - name: status
-          in: query
-          description: Is the Organization record active
-          required: false
-          schema:
-            type: string
-            example: null
-          x-wso2-oh-fhirType: token
         - name: type
           in: query
           description: A code for the type of organization
@@ -147,7 +141,7 @@ paths:
         - $ref: "#/components/parameters/_profileParam"
       responses:
         "200":
-          description: search InsurancePlan operation successful
+          description: search Organization operation successful
           content:
             application/fhir+json:
               schema:
@@ -156,24 +150,24 @@ paths:
         - default: []
       x-auth-type: Application & Application User
     post:
-      summary: Create a new InsurancePlan
+      summary: Create a new Organization
       tags:
         - POST
-        - InsurancePlan
+        - Organization
       requestBody:
         required: true
         content:
           application/fhir+json:
             schema:
-              $ref: "#/components/schemas/InsurancePlan"
+              $ref: "#/components/schemas/Organization"
       responses:
         "201":
-          description: Successfully created InsurancePlan
-  /fhir/r4/InsurancePlan/{id}:
+          description: Successfully created Organization
+  /fhir/r4/Organization/{id}:
     get:
       tags:
         - GET
-        - InsurancePlan
+        - Organization
       parameters:
         - name: id
           in: path
@@ -184,18 +178,18 @@ paths:
             example: null
       responses:
         "200":
-          description: read InsurancePlan operation successful
+          description: read Organization operation successful
           content:
             application/fhir+json:
               schema:
-                $ref: "#/components/schemas/InsurancePlan"
+                $ref: "#/components/schemas/Organization"
       security:
         - default: []
       x-auth-type: Application & Application User
     put:
       tags:
         - PUT
-        - InsurancePlan
+        - Organization
       parameters:
         - name: id
           in: path
@@ -206,14 +200,14 @@ paths:
             example: null
       responses:
         "200":
-          description: update InsurancePlan operation successful
+          description: update Organization operation successful
       security:
         - default: []
       x-auth-type: Application & Application User
     delete:
       tags:
         - DELETE
-        - InsurancePlan
+        - Organization
       parameters:
         - name: id
           in: path
@@ -224,14 +218,14 @@ paths:
             example: null
       responses:
         "204":
-          description: delete InsurancePlan operation successful
+          description: delete Organization operation successful
       security:
         - default: []
       x-auth-type: Application & Application User
     patch:
       tags:
         - PATCH
-        - InsurancePlan
+        - Organization
       parameters:
         - name: id
           in: path
@@ -242,7 +236,7 @@ paths:
             example: null
       responses:
         "200":
-          description: patch InsurancePlan operation successful
+          description: patch Organization operation successful
       security:
         - default: []
       x-auth-type: Application & Application User
@@ -2375,6 +2369,6 @@ components:
         implicit:
           authorizationUrl: https://localhost:8243/authorize
           scopes: {}
-x-wso2-oh-fhir-resourceType: InsurancePlan
+x-wso2-oh-fhir-resourceType: Organization
 x-wso2-oh-fhir-profile:
-  - http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/plannet-InsurancePlan
+  - http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/plannet-Network

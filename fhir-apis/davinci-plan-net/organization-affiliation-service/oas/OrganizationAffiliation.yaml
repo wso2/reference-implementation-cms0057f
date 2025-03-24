@@ -1,87 +1,56 @@
 openapi: 3.0.1
 info:
-  title: InsurancePlan
+  title: OrganizationAffiliation
   description:
-    "A simplified version of the HL7 FHIR API for InsurancePlan resource.\n\
-    Supported Profiles: \nhttp://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/plannet-InsurancePlan\n"
+    "A simplified version of the HL7 FHIR API for OrganizationAffiliation\
+    \ resource.\nSupported Profiles: \nhttp://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/plannet-OrganizationAffiliation\n"
   contact:
     name: API Support
     url: https://wso2.com/contact/`
     email: user@email.com
   version: 1.0.0
 tags:
-  - name: http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/plannet-InsurancePlan
-  - name: InsurancePlan
+  - name: http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/plannet-OrganizationAffiliation
+  - name: OrganizationAffiliation
   - name: 4.0.1
 paths:
-  /fhir/r4/InsurancePlan:
+  /fhir/r4/OrganizationAffiliation:
     get:
       tags:
         - GET
-        - InsurancePlan
+        - OrganizationAffiliation
       parameters:
-        - name: address
+        - name: active
           in: query
-          description:
-            "A server defined search that may match any of the string fields\
-            \ in the Address, including line, city, district, state, country, postalCode,\
-            \ and/or text"
-          required: false
-          schema:
-            type: string
-            example: null
-          x-wso2-oh-fhirType: string
-        - name: address-city
-          in: query
-          description: A city specified in an address
-          required: false
-          schema:
-            type: string
-            example: null
-          x-wso2-oh-fhirType: string
-        - name: address-country
-          in: query
-          description: A country specified in an address
-          required: false
-          schema:
-            type: string
-            example: null
-          x-wso2-oh-fhirType: string
-        - name: address-postalcode
-          in: query
-          description: A postal code specified in an address
-          required: false
-          schema:
-            type: string
-            example: null
-          x-wso2-oh-fhirType: string
-        - name: address-state
-          in: query
-          description: A state specified in an address
-          required: false
-          schema:
-            type: string
-            example: null
-          x-wso2-oh-fhirType: string
-        - name: address-use
-          in: query
-          description: A use code specified in an address
+          description: Whether this organization affiliation record is in active use
           required: false
           schema:
             type: string
             example: null
           x-wso2-oh-fhirType: token
-        - name: administered-by
+        - name: date
           in: query
-          description: Product administrator
+          description:
+            The period during which the participatingOrganization is affiliated
+            with the primary organization
           required: false
           schema:
             type: string
             example: null
-          x-wso2-oh-fhirType: reference
+          x-wso2-oh-fhirType: date
+        - name: email
+          in: query
+          description: A value in an email contact
+          required: false
+          schema:
+            type: string
+            example: null
+          x-wso2-oh-fhirType: token
         - name: endpoint
           in: query
-          description: Technical endpoint
+          description:
+            Technical endpoints providing access to services operated for
+            this role
           required: false
           schema:
             type: string
@@ -89,51 +58,86 @@ paths:
           x-wso2-oh-fhirType: reference
         - name: identifier
           in: query
-          description:
-            Any identifier for the organization (not the accreditation issuer's
-            identifier)
+          description: An organization affiliation's Identifier
           required: false
           schema:
             type: string
             example: null
           x-wso2-oh-fhirType: token
-        - name: name
+        - name: location
           in: query
-          description: A portion of the organization's name or alias
-          required: false
-          schema:
-            type: string
-            example: null
-          x-wso2-oh-fhirType: string
-        - name: owned-by
-          in: query
-          description: An organization of which this organization forms a part
+          description: The location(s) at which the role occurs
           required: false
           schema:
             type: string
             example: null
           x-wso2-oh-fhirType: reference
-        - name: phonetic
+        - name: network
           in: query
           description:
-            A portion of the organization's name using some kind of phonetic
-            matching algorithm
+            Health insurance provider network in which the participatingOrganization
+            provides the role's services (if defined) at the indicated locations (if
+            defined)
           required: false
           schema:
             type: string
             example: null
-          x-wso2-oh-fhirType: string
-        - name: status
+          x-wso2-oh-fhirType: reference
+        - name: participating-organization
           in: query
-          description: Is the Organization record active
+          description: The organization that provides services to the primary organization
+          required: false
+          schema:
+            type: string
+            example: null
+          x-wso2-oh-fhirType: reference
+        - name: phone
+          in: query
+          description: A value in a phone contact
           required: false
           schema:
             type: string
             example: null
           x-wso2-oh-fhirType: token
-        - name: type
+        - name: primary-organization
           in: query
-          description: A code for the type of organization
+          description:
+            The organization that receives the services from the participating
+            organization
+          required: false
+          schema:
+            type: string
+            example: null
+          x-wso2-oh-fhirType: reference
+        - name: role
+          in: query
+          description: Definition of the role the participatingOrganization plays
+          required: false
+          schema:
+            type: string
+            example: null
+          x-wso2-oh-fhirType: token
+        - name: service
+          in: query
+          description: Healthcare services provided through the role
+          required: false
+          schema:
+            type: string
+            example: null
+          x-wso2-oh-fhirType: reference
+        - name: specialty
+          in: query
+          description:
+            Specific specialty of the participatingOrganization in the context
+            of the role
+          required: false
+          schema:
+            type: string
+            example: null
+          x-wso2-oh-fhirType: token
+        - name: telecom
+          in: query
+          description: The value in any kind of contact
           required: false
           schema:
             type: string
@@ -147,7 +151,7 @@ paths:
         - $ref: "#/components/parameters/_profileParam"
       responses:
         "200":
-          description: search InsurancePlan operation successful
+          description: search OrganizationAffiliation operation successful
           content:
             application/fhir+json:
               schema:
@@ -156,24 +160,24 @@ paths:
         - default: []
       x-auth-type: Application & Application User
     post:
-      summary: Create a new InsurancePlan
+      summary: Create a new OrganizationAffiliation
       tags:
         - POST
-        - InsurancePlan
+        - OrganizationAffiliation
       requestBody:
         required: true
         content:
           application/fhir+json:
             schema:
-              $ref: "#/components/schemas/InsurancePlan"
+              $ref: "#/components/schemas/OrganizationAffiliation"
       responses:
         "201":
-          description: Successfully created InsurancePlan
-  /fhir/r4/InsurancePlan/{id}:
+          description: Successfully created OrganizationAffiliation
+  /fhir/r4/OrganizationAffiliation/{id}:
     get:
       tags:
         - GET
-        - InsurancePlan
+        - OrganizationAffiliation
       parameters:
         - name: id
           in: path
@@ -184,18 +188,18 @@ paths:
             example: null
       responses:
         "200":
-          description: read InsurancePlan operation successful
+          description: read OrganizationAffiliation operation successful
           content:
             application/fhir+json:
               schema:
-                $ref: "#/components/schemas/InsurancePlan"
+                $ref: "#/components/schemas/OrganizationAffiliation"
       security:
         - default: []
       x-auth-type: Application & Application User
     put:
       tags:
         - PUT
-        - InsurancePlan
+        - OrganizationAffiliation
       parameters:
         - name: id
           in: path
@@ -206,14 +210,14 @@ paths:
             example: null
       responses:
         "200":
-          description: update InsurancePlan operation successful
+          description: update OrganizationAffiliation operation successful
       security:
         - default: []
       x-auth-type: Application & Application User
     delete:
       tags:
         - DELETE
-        - InsurancePlan
+        - OrganizationAffiliation
       parameters:
         - name: id
           in: path
@@ -224,14 +228,14 @@ paths:
             example: null
       responses:
         "204":
-          description: delete InsurancePlan operation successful
+          description: delete OrganizationAffiliation operation successful
       security:
         - default: []
       x-auth-type: Application & Application User
     patch:
       tags:
         - PATCH
-        - InsurancePlan
+        - OrganizationAffiliation
       parameters:
         - name: id
           in: path
@@ -242,7 +246,7 @@ paths:
             example: null
       responses:
         "200":
-          description: patch InsurancePlan operation successful
+          description: patch OrganizationAffiliation operation successful
       security:
         - default: []
       x-auth-type: Application & Application User
@@ -2375,6 +2379,6 @@ components:
         implicit:
           authorizationUrl: https://localhost:8243/authorize
           scopes: {}
-x-wso2-oh-fhir-resourceType: InsurancePlan
+x-wso2-oh-fhir-resourceType: OrganizationAffiliation
 x-wso2-oh-fhir-profile:
-  - http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/plannet-InsurancePlan
+  - http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/plannet-OrganizationAffiliation

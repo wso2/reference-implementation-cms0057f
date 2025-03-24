@@ -1,0 +1,24 @@
+# +required Version of the endpoint configuration YAML
+schemaVersion: 1.1
+
+# +required List of endpoints to create
+endpoints:
+  # +required Unique name for the endpoint. (This name will be used when generating the managed API)
+- name: fhir-bulk-export-service
+  # +required Type of the traffic this endpoint is accepting. Example: REST, GraphQL, etc.
+  # Allowed values: REST, GraphQL, GRPC, UDP, TCP
+  type: REST
+  # +optional Network level visibility of this endpoint. Defaults to Public
+  # Accepted values: Project|Organization|Public.
+  networkVisibilities:
+    - Public
+  # +optional Context (base path) of the API that is exposed via this endpoint.
+  # This is mandatory if the endpoint type is set to REST or GraphQL.
+  displayName: FHIR Bulkdata Export Service
+  # +required Service section has the user service endpoint details
+  service:
+    # +optional Context (base path) of the API that gets exposed via the endpoint.
+    basePath: /
+    # +required Numeric port value that gets exposed via the endpoint
+    port: 9094
+  schemaFilePath: openapi/service_openapi.yaml

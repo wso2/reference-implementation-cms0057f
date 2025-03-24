@@ -10,12 +10,13 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-import ballerina/log;
-import ballerina/task;
-import ballerinax/health.fhir.r4;
-import ballerina/time;
+
 import ballerina/http;
 import ballerina/io;
+import ballerina/log;
+import ballerina/task;
+import ballerina/time;
+import ballerinax/health.fhir.r4;
 
 # Execute export task.
 #
@@ -24,8 +25,10 @@ import ballerina/io;
 # + serverConfig - The configuration related to the export server
 # + return - error while scheduling job
 public isolated function executeJob(string exportTaskId, SearchServerConfig sourceConfig, BulkExportServerConfig serverConfig) returns error? {
+
+    log:printDebug(string `Executing Job ${exportTaskId}`);
     FileCreateTask fileCreateTask = new FileCreateTask(exportTaskId, sourceConfig, serverConfig);
-    task:JobId|error id = task:scheduleOneTimeJob(fileCreateTask, time:utcToCivil(time:utcAddSeconds(time:utcNow(1),2)));
+    task:JobId|error id = task:scheduleOneTimeJob(fileCreateTask, time:utcToCivil(time:utcAddSeconds(time:utcNow(1), 2)));
     if id is error {
         return id;
     }
@@ -47,7 +50,7 @@ public class FileCreateTask {
             // Initialize the HTTP client
             http:Client clientEp;
             if self.sourceConfig.authEnabled {
-                clientEp = check new (self.sourceConfig.searchUrl, 
+                clientEp = check new (self.sourceConfig.searchUrl,
                     auth = {
                         tokenUrl: self.sourceConfig.tokenUrl,
                         clientId: self.sourceConfig.clientId,
@@ -58,14 +61,18 @@ public class FileCreateTask {
             } else {
                 clientEp = check new (self.sourceConfig.searchUrl);
             }
-            
-            string [] types = searchServerConfig.types;
+
+            string[] types = searchServerConfig.types;
+            log:printDebug(string `Task initialted for ${self.sourceConfig.searchUrl}`);
 
             foreach string resourceType in types {
-                    do {
+                do {
+                    log:printDebug(string `Searching ${resourceType}`);
+                    // Construct the request path
+                    string reqPath = string `${exportServiceConfig.contextPath}${resourceType}/_search`;
                     // Make the POST _search request
-                    json response = check clientEp->post(path="/fhir/r4/" + resourceType + "/_search", message = {},
-                        headers={"Accept": "application/fhir+json", "Content-Type": "application/fhir+json"}
+                    json response = check clientEp->post(path = reqPath + resourceType + "/_search", message = {},
+                        headers = {"Accept": "application/fhir+json", "Content-Type": "application/fhir+json"}
                     );
 
                     r4:Bundle bundle = check response.cloneWithType(r4:Bundle);
@@ -104,6 +111,8 @@ public class FileCreateTask {
                 lines.push(entry?.'resource.toJsonString());
             }
         }
+
+        log:printDebug(string `Content Extracted ${recordType}`);
 
         io:Error? fileResult = io:fileWriteLines(filePath, lines);
         if fileResult is io:Error {

@@ -55,6 +55,7 @@ Downloads the exported NDJSON files once the export process is complete.
     [searchServerConfig]
     authEnabled = <true/false>      # true if the search server requires client-credentials authentication
     searchUrl = "<source-hostname>" # search URL of the source server. Only the host needs to be configured here
+    contextPath = "<source-context>"# FHIR server's context path. Ex: "fhir/r4","baseR4"
     tokenUrl = "<token-endpoint>"   # token endpoint URL. Not required if authEnabled is false
     clientId = "<client-id>"        # client ID. Not required if authEnabled is false
     clientSecret = "<client-secret>"# client secret. Not required if authEnabled is false

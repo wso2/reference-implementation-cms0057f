@@ -1,0 +1,12 @@
+schemaVersion: 1.1
+endpoints:
+    - name: davinciplannet-insuranceplan-api
+      displayName: davinciplannet InsurancePlan API
+      service:
+        basePath: /InsurancePlan
+        port: 9090
+      type: REST
+      networkVisibilities:
+        - Project
+        - Public
+      schemaFilePath: oas/InsurancePlan.yaml

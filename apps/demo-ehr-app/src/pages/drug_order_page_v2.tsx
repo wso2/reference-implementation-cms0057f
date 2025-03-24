@@ -464,7 +464,7 @@ const RequirementCard = ({
                     <div key={index}>
                       <li>
                         <Card.Link
-                          href={`${link.url}`}
+                          href={`${window.location.origin}${new URL(link.url).pathname}`}
                           target="_blank"
                           style={{ color: "#4635B1" }}
                         >

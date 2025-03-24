@@ -20,6 +20,11 @@ const initialState = {
   username: "",
   first_name: "",
   last_name: "",
+  prefix: "",
+  phone: "",
+  email: "",
+  id: "",
+  address: "",
 };
 
 const loggedUserSlice = createSlice({
@@ -27,10 +32,8 @@ const loggedUserSlice = createSlice({
   initialState,
   reducers: {
     updateLoggedUser(state, action) {
-      state.username = action.payload.username;
-      state.first_name = action.payload.first_name;
-      state.last_name = action.payload.last_name;
-    },
+    return { ...state, ...action.payload };
+  },
     resetLoggedUser() {
       return initialState;
     },

@@ -114,7 +114,6 @@ public isolated function sendFileFromFSToFTP(TargetServerConfig config, string s
 public isolated function downloadFiles(json exportSummary, string exportId) returns error? {
 
     ExportSummary exportSummary1 = check exportSummary.cloneWithType(ExportSummary);
-    updateExportTaskStatus updateExportStatusFunc = updateExportTaskStatusInMemory;
 
     foreach OutputFile item in exportSummary1.output {
         log:printDebug("Downloading the file.", url = item.url);
@@ -133,7 +132,7 @@ public isolated function downloadFiles(json exportSummary, string exportId) retu
         }
     }
     lock {
-        boolean _ = updateExportStatusFunc(taskMap = exportTasks, exportTaskId = exportId, newStatus = "Downloaded");
+        boolean _ = updateExportTaskStatusInMemory(taskMap = exportTasks, exportTaskId = exportId, newStatus = "Downloaded");
     }
     log:printInfo("All files downloaded successfully.");
     return null;

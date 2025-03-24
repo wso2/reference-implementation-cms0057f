@@ -29,7 +29,7 @@ function LoginV2() {
     <div>
       <div
         style={{
-          backgroundImage: `url('/public/background-gray-med.svg')`,
+          backgroundImage: `url('/background-gray-med.svg')`,
           backgroundSize: "cover",
           height: "100vh",
           width: "100vw",
@@ -56,9 +56,9 @@ function LoginV2() {
             }}
           >
             <img
-              src="/public/medical-computing.webp"
+              src="/welcome-img.svg"
               alt="Doctor"
-              style={{ width: "500px", marginBottom: "20px" }}
+              style={{ width: "300px", marginBottom: "20px" }}
             />
             <h1 style={{ color: "#4C585B" }}>Welcome</h1>
             <p style={{ color: "#4C585B" }}>to your Healthcare HQ</p>

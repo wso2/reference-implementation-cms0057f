@@ -1,3 +1,19 @@
+// Copyright (c) 2024-2025, WSO2 LLC. (http://www.wso2.com).
+//
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
 import {
   Container,
   Typography,
@@ -8,95 +24,53 @@ import {
   MenuItem,
   Select,
   Chip,
-  Switch,
   TextField,
   LinearProgress,
 } from "@mui/material";
 import { useEffect, useState } from "react";
-import CollapsibleTable from "../common/Table";
 import Header from "../common/Header";
-import { Navigate, useLocation, useNavigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import CloseIcon from "@mui/icons-material/Close";
 import apiClient from "../../services/apiClient";
 import { useAuth } from "../common/AuthProvider";
-import React from "react";
 import Cookies from "js-cookie";
 import axios from "axios";
 import {
   BULK_EXPORT_KICKOFF_URL,
   ORGANIZATION_SERVICE_URL,
 } from "../../configs/Constants";
-
-interface RowData {
-  name: string;
-  active: number;
-  old: number;
-  total: number;
-  columns: string[];
-  data: Record<string, string>[];
-}
+import { useDispatch } from "react-redux";
+import {
+  updateRequestUrl,
+  updateRequest,
+  updateRequestMethod,
+  resetCdsRequest,
+} from "../redux/cdsRequestSlice";
+import { updateCdsResponse, resetCdsResponse } from "../redux/cdsResponseSlice";
 
 interface Payer {
   id: number;
   name: string;
 }
 
-// Create data helper function with TypeScript types
-function createData(
-  name: string,
-  active: number,
-  old: number,
-  total: number,
-  columns: string[],
-  data: Record<string, string>[]
-): RowData {
-  return { name, active, old, total, columns, data };
-}
-
-function createTableData(responseData: RowData): RowData[] {
-  const rowdata: RowData[] = [];
-  rowdata.push(responseData);
-  return rowdata;
-}
-
 export const LandingPage = () => {
   const { isAuthenticated } = useAuth();
   const [name, setName] = useState("");
-  const [lastPayer, setLastPayer] = useState("");
   const [exportLabel, setExportLabel] = useState("Export");
   const [status, setStatus] = useState("Member Not Resolved.");
   const [avatarUrl, setAvatarUrl] = useState(
     "https://i.pravatar.cc/100?img=58"
   );
-  const navigate = useNavigate(); // Initialize navigate hook
   const location = useLocation();
   const memberId = location.state?.memberId || "nil";
   const [error, setError] = useState("");
   const [payerList, setPayerList] = useState<Payer[]>([]);
-  const [checked, setChecked] = useState(false);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [oldMemberId, setOldMemberId] = useState("");
   const [exportId, setExportId] = useState("");
-  const [columns, setColumns] = useState([]);
   const [exportStatus, setExportStatus] = useState("0");
-  const [tableData, setTableData] = useState([
-    createData(
-      "Encounter",
-      0,
-      0,
-      0,
-      ["Code", "Status", "Provider", "Participant"],
-      [
-        {
-          Code: "AB",
-          Status: "finished",
-          Provider: "",
-          Participant: "",
-        },
-      ]
-    ),
-  ]);
+  const dispatch = useDispatch();
 
   // State to manage selected options
   const [selectedOptions, setSelectedOptions] = useState([]);
@@ -109,6 +83,7 @@ export const LandingPage = () => {
         : { username: "User", first_name: "User Name", last_name: "" };
 
       setName(loggedUser.first_name);
+      // console.log("Logged in user:", loggedUser);
     }
   }, []);
 
@@ -194,6 +169,9 @@ export const LandingPage = () => {
   };
 
   const handleSubmit = (e: { preventDefault: () => void }) => {
+    dispatch(resetCdsRequest());
+    dispatch(resetCdsResponse());
+
     e.preventDefault();
     setExportLabel("Exporting...");
     setStatus("Exporting...");
@@ -202,7 +180,11 @@ export const LandingPage = () => {
     console.log("Submitted name:", selectedOptions);
 
     const postOrganizationId = async () => {
-      const payload = [{ id: "644d85af-aaf9-4068-ad23-1e55aedd5205" }];
+      const memberID = "644d85af-aaf9-4068-ad23-1e55aedd5205";
+      const payload = [{ id: memberID }];
+      dispatch(updateRequestMethod("POST"));
+      dispatch(updateRequestUrl("/bulk-export-client/v1.0/export"));
+      dispatch(updateRequest({ id: memberID }));
 
       try {
         const response = await axios.post(BULK_EXPORT_KICKOFF_URL, payload, {
@@ -211,12 +193,20 @@ export const LandingPage = () => {
           },
         });
         console.log("POST response:", response.data);
+        dispatch(
+          updateCdsResponse({
+            cards: response.data,
+            systemActions: {},
+          })
+        );
 
         const diagnostics: string = response.data.issue?.[0]?.diagnostics || "";
         const match = diagnostics.match(/ExportId:\s([\w-]+)/);
         if (match && match[1]) {
           setExportId(match[1]);
           console.log("Export ID:", match[1]);
+          localStorage.setItem("exportId", match[1]);
+          // localStorage.setItem("exportId", "01f00853-7663-11c8-ab9a-79b02c667daa");
           checkStatusUntilDownloaded(match[1]);
         } else {
           console.warn("Export ID not found in diagnostics message.");
@@ -252,20 +242,12 @@ export const LandingPage = () => {
     postOrganizationId();
   };
 
-  const handleSwitchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setChecked(event.target.checked);
-  };
-
   const handlePayerSelection = (value: string) => {
     console.log("Selected Payer", value);
     const matchUrl = "/member/" + memberId + "/matchPatient";
     try {
       apiClient(ORGANIZATION_SERVICE_URL)
-        .get(matchUrl, {
-          // params: {
-          //   payer: "value",
-          // },
-        })
+        .get(matchUrl)
         .then((response) => {
           console.log(response);
           if (response.status === 200) {
@@ -343,17 +325,6 @@ export const LandingPage = () => {
           sx={{ p: 2, border: "1px dashed grey", padding: 2 }}
           width={400}
         >
-          {/* <TextField
-          label="Name"
-          variant="outlined"
-          size="small"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          sx={{ marginRight: 2 }}
-        />
-        <Button type="submit" variant="contained">
-          Submit
-        </Button> */}
           <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
             <InputLabel id="select-payer-label">
               Select Payer to Resolve Member ID
@@ -397,7 +368,6 @@ export const LandingPage = () => {
                 </Box>
               ))}
             </Box>
-            {/* Submit button */}
             <Button
               variant="contained"
               color="primary"
@@ -406,33 +376,18 @@ export const LandingPage = () => {
             >
               {exportLabel}
             </Button>
-
-            {/* Hyperlinked text */}
-            {/* <Typography align="center">
-                <Link to="#">Forgot password?</Link>
-              </Typography>
-
-              <Typography align="center" mt={2}>
-                Don't have an account?{" "}
-                <Link to="#" style={{ textDecoration: "underline" }}>
-                  Sign up
-                </Link>
-              </Typography> */}
           </FormControl>
         </Box>
       </Box>
-
-      {/* Collapsible Table in Bottom Section */}
-      <Box sx={{ mt: 4, display: "flex", alignItems: "center" }}>
-        <Switch
-          checked={checked}
-          onChange={handleSwitchChange}
-          inputProps={{ "aria-label": "controlled" }}
-        />
-        <Typography variant="h6">Show Previous Data</Typography>
-      </Box>
       <Box sx={{ mt: 4 }}>
-        <CollapsibleTable rows={tableData} />
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => window.open("/exported-data", "_blank")}
+          sx={{ mt: 2 }}
+        >
+          View Exported Data
+        </Button>
       </Box>
     </Container>
   ) : (

@@ -19,11 +19,6 @@ const LoginPage = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate(); // Initialize navigate hook
-  const [userList, setUserList] = useState([
-    { userId: "1", name: "Cortez Prohaska" },
-    { userId: "2", name: "Veola Rutherford" },
-    { userId: "3", name: "Eliana Jacobi" },
-  ]);
 
   const handleLogin = (e: { preventDefault: () => void }) => {
     e.preventDefault();
@@ -67,7 +62,7 @@ const LoginPage = () => {
           justifyContent="center"
           alignItems="center"
           p={4}
-          sx={{ backgroundColor: "background.paper" }} // Background color for visual separation
+          sx={{ backgroundColor: "background.paper" }}
         >
           <Box display={"row"}>
             <Typography variant="h2" align="center" padding={4}>
@@ -85,7 +80,6 @@ const LoginPage = () => {
           </Box>
         </Box>
 
-        {/* Right 1/3 section - Login Form */}
         <Box
           flex={1}
           display="flex"
@@ -99,50 +93,11 @@ const LoginPage = () => {
             sx={{ p: 4, width: "100%", maxWidth: "400px", borderRadius: "8px" }}
           >
             <Typography variant="h5" align="center" mb={3}>
-              Login
+              Welcome to the Member Portal
             </Typography>
 
             <Box component="form" onSubmit={handleLogin}>
               <FormControl fullWidth>
-                {/* <InputLabel id="select-member-id-label">Select A Member</InputLabel>
-                <Select
-                  labelId="select-member-id-label"
-                  id="select-member-id"
-                  value={memberId}
-                  label="Select a Member"
-                  onChange={(e) => {
-                    setMemberId(e.target.value);
-                    setUserName(
-                      userList.find((user) => user.userId === e.target.value)
-                        ?.name || ""
-                    );
-                  }}
-                >
-                  {userList.map((user, index) => (
-                      <MenuItem value={user.userId} key={index}>{user.name}</MenuItem>
-                  ))}
-                </Select>
-                <TextField
-                  label="Password"
-                  type="password"
-                  fullWidth
-                  variant="outlined"
-                  margin="normal"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-
-                {error && (
-                  <Typography
-                    color="error"
-                    variant="body2"
-                    align="center"
-                    mt={2}
-                  >
-                    {error}
-                  </Typography>
-                )} */}
-
                 <Button
                   type="submit"
                   variant="contained"
@@ -154,18 +109,6 @@ const LoginPage = () => {
                 >
                   Login
                 </Button>
-
-                {/* Hyperlinked text */}
-                {/* <Typography align="center">
-                <Link to="#">Forgot password?</Link>
-              </Typography>
-
-              <Typography align="center" mt={2}>
-                Don't have an account?{" "}
-                <Link to="#" style={{ textDecoration: "underline" }}>
-                  Sign up
-                </Link>
-              </Typography> */}
               </FormControl>
             </Box>
           </Paper>

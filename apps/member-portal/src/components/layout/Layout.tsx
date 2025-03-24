@@ -14,15 +14,14 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { useContext } from "react";
 import { useAuth } from "../common/AuthProvider";
 import DevConsole from "./DevConsole";
 import { ExpandedContext } from "./ExpandedContext";
 import { DevPortalExpandButton } from "./DevPortalExpandButton";
-import { LandingPage } from "./LandingPage";
 
-export const Layout = () => {
+export const Layout = ({ Component }: { Component: React.ComponentType }) => {
   const { isAuthenticated } = useAuth();
   const { expanded } = useContext(ExpandedContext);
   return isAuthenticated ? (
@@ -47,10 +46,9 @@ export const Layout = () => {
             overflowY: "hidden",
             transition: "width 0.5s ease-in-out",
             height: "100%",
-            marginTop: "30px",
           }}
         >
-          <LandingPage />
+          <Component />
         </div>
 
         <div style={{ width: "1.5vw", marginLeft: "2vw" }}>

@@ -132,9 +132,9 @@ export default function NavBar() {
             {isAuthenticated && loggedUser && (
               <Box display="flex" alignItems="center">
                 <Box marginRight={10} color="white" fontSize="16px">
-                  {loggedUser.first_name.toUpperCase() +
+                  {loggedUser?.first_name?.toUpperCase() +
                     " " +
-                    loggedUser.last_name.toUpperCase()}
+                    loggedUser?.last_name?.toUpperCase()}
                 </Box>
                 <Box position="relative">
                   <Box

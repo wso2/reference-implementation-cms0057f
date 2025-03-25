@@ -149,29 +149,29 @@ function init() returns error? {
                     "target": [
                         {
                             "type": "InsurancePlan",
-                            "profile": "http://hl7.org/fhir/us/davinci-drug-formulary/StructureDefinition/usdf-Formulary",
-                            "link": [
-                                {
-                                    "target": [
-                                        {
-                                            "type": "Basic",
-                                            "params": "formulary={ref}",
-                                            "profile": "http://hl7.org/fhir/us/davinci-drug-formulary/StructureDefinition/usdf-FormularyItem",
-                                            "link": [
-                                                {
-                                                    "path": "Basic.subject",
-                                                    "target": [
-                                                        {
-                                                            "type": "MedicationKnowledge",
-                                                            "profile": "http://hl7.org/fhir/us/davinci-drug-formulary/StructureDefinition/usdf-FormularyDrug"
-                                                        }
-                                                    ]
-                                                }
-                                            ]
-                                        }
-                                    ]
-                                }
-                            ]
+                            "profile": "http://hl7.org/fhir/us/davinci-drug-formulary/StructureDefinition/usdf-Formulary"
+                            // "link": [
+                            //     {
+                            //         "target": [
+                            //             {
+                            //                 "type": "Basic",
+                            //                 "params": "formulary={ref}",
+                            //                 "profile": "http://hl7.org/fhir/us/davinci-drug-formulary/StructureDefinition/usdf-FormularyItem",
+                            //                 "link": [
+                            //                     {
+                            //                         "path": "Basic.subject",
+                            //                         "target": [
+                            //                             {
+                            //                                 "type": "MedicationKnowledge",
+                            //                                 "profile": "http://hl7.org/fhir/us/davinci-drug-formulary/StructureDefinition/usdf-FormularyDrug"
+                            //                             }
+                            //                         ]
+                            //                     }
+                            //                 ]
+                            //             }
+                            //         ]
+                            //     }
+                            // ]
                         }
                     ]
                 }

@@ -15,7 +15,7 @@ tags:
 - name: GraphDefinition
 - name: 4.0.1
 paths:
-  /:
+  /fhir/r4/GraphDefinition:
     get:
       tags:
       - GET
@@ -352,7 +352,21 @@ paths:
       security:
       - default: []
       x-auth-type: Application & Application User
-  /{id}:
+    post:
+      summary: Create a new GraphDefinition
+      tags:
+        - POST
+        - GraphDefinition
+      requestBody:
+        required: true
+        content:
+          application/fhir+json:
+            schema:
+              $ref: "#/components/schemas/GraphDefinition"
+      responses:
+        "201":
+          description: Successfully created GraphDefinition
+  /fhir/r4/GraphDefinition/{id}:
     get:
       tags:
       - GET

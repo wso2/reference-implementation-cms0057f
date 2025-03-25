@@ -14,8 +14,8 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import { useSelector } from "react-redux";
-import { PATIENT_DETAILS} from "../constants/data";
+import { useSelector, useDispatch } from "react-redux";
+import { PATIENT_DETAILS } from "../constants/data";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
@@ -24,6 +24,14 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Paper from "@mui/material/Paper";
 import Form from "react-bootstrap/Form";
+import { useEffect, useState } from "react";
+import {
+  updateRequestMethod,
+  updateRequestUrl,
+  resetCdsRequest,
+} from "../redux/cdsRequestSlice";
+import { updateCdsResponse, resetCdsResponse } from "../redux/cdsResponseSlice";
+import axios from "axios";
 
 function createData(
   date: string,
@@ -133,6 +141,81 @@ export function PatientViewPage() {
   const age =
     new Date().getFullYear() - new Date(currentPatient.birthDate).getFullYear();
 
+  const dispatch = useDispatch();
+  const Config = window.Config;
+
+  interface Patient {
+    resourceType: string;
+    gender: string;
+    telecom: Telecom[];
+    id: string;
+    identifier: Identifier[];
+    address: Address[];
+    birthDate: string;
+    meta: Meta;
+    name: Name[];
+  }
+
+  interface Telecom {
+    system: string;
+    use?: string;
+    value: string;
+  }
+
+  interface Identifier {
+    system: string;
+    value: string;
+  }
+
+  interface Address {
+    country: string;
+    city: string;
+    line: string[];
+    postalCode: string;
+    state: string;
+  }
+
+  interface Meta {
+    profile: string[];
+  }
+
+  interface Name {
+    given: string[];
+    use: string;
+    family: string;
+  }
+
+  const [fetchedPatient, setPatientDetails] = useState<Patient | null>(null);
+
+  useEffect(() => {
+    console.log("Current Patient:", currentPatient);
+
+    const fetchPatientDetails = async () => {
+      try {
+        console.log("Fetching patient details...");
+        dispatch(resetCdsRequest());
+        dispatch(resetCdsResponse());
+        const req_url = Config.patient + "/" + currentPatient.id;
+        dispatch(updateRequestMethod("GET"));
+        dispatch(updateRequestUrl("/fhir/r4/Patient/101"));
+
+        axios.get(req_url).then((response) => {
+          console.log("Patient details:", response.data);
+          dispatch(
+            updateCdsResponse({
+              cards: response.data,
+              systemActions: {},
+            })
+          );
+          setPatientDetails(response.data);
+        });
+      } catch (error) {
+        console.error("Error fetching patient details:", error);
+      }
+    };
+    fetchPatientDetails();
+  }, [currentPatient, dispatch]);
+
   return (
     <div className="profile-page">
       <div className="cover-photo">
@@ -155,7 +238,7 @@ export function PatientViewPage() {
         <div style={{ fontSize: 24, fontWeight: 600, marginTop: "3vh" }}>
           Personal Details
         </div>
-        <div style={{ display: "flex", flexDirection: "row" }}>
+        <div>
           <div>
             <Form>
               <div
@@ -165,31 +248,82 @@ export function PatientViewPage() {
                 }}
               >
                 <Form.Group style={{ marginTop: "20px", flex: "1 1 100%" }}>
-                  <Form.Label>Gender</Form.Label>
+                  <Form.Label>ID</Form.Label>
                   <Form.Control
                     type="text"
-                    value={currentPatient.gender.toUpperCase()}
+                    value={fetchedPatient?.id}
                     disabled
                   />
                 </Form.Group>
                 <Form.Group style={{ marginTop: "20px", flex: "1 1 100%" }}>
-                  <Form.Label>Age</Form.Label>
-                  <Form.Control type="text" value={age} disabled />
+                  <Form.Label>Gender</Form.Label>
+                  <Form.Control
+                    type="text"
+                    value={fetchedPatient?.gender.toUpperCase()}
+                    disabled
+                  />
                 </Form.Group>
                 <Form.Group style={{ marginTop: "20px", flex: "1 1 100%" }}>
-                  <Form.Label>Contact</Form.Label>
-                  <Form.Control type="text" value="+94 773213213" disabled />
+                  <Form.Label>Birth Date</Form.Label>
+                  <Form.Control
+                    type="text"
+                    value={fetchedPatient?.birthDate}
+                    disabled
+                  />
+                </Form.Group>
+                <Form.Group style={{ marginTop: "20px", flex: "1 1 100%" }}>
+                  <Form.Label>Phone</Form.Label>
+                  <Form.Control
+                    type="text"
+                    value={
+                      fetchedPatient?.telecom.find(
+                        (contact) => contact.system === "phone"
+                      )?.value
+                    }
+                    disabled
+                  />
                 </Form.Group>
                 <Form.Group style={{ marginTop: "20px", flex: "1 1 100%" }}>
                   <Form.Label>Email</Form.Label>
                   <Form.Control
                     type="text"
-                    value={`${currentPatient.name[0].given[0].toLocaleLowerCase()}@gmail.com`}
+                    value={
+                      fetchedPatient?.telecom.find(
+                        (contact) => contact.system === "email"
+                      )?.value
+                    }
+                    disabled
+                  />
+                </Form.Group>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  gap: "20px",
+                }}
+              >
+                <Form.Group style={{ marginTop: "20px", flex: "1 1 100%" }}>
+                  <Form.Label>Address</Form.Label>
+                  <Form.Control
+                    type="text"
+                    value={
+                      fetchedPatient?.address[0].line.join(", ") +
+                      ", " +
+                      fetchedPatient?.address[0].city +
+                      ", " +
+                      fetchedPatient?.address[0].state +
+                      ", " +
+                      fetchedPatient?.address[0].postalCode +
+                      ", " +
+                      fetchedPatient?.address[0].country
+                    }
                     disabled
                   />
                 </Form.Group>
               </div>
             </Form>
+
+            <hr style={{ marginTop: "50px" }} />
 
             <div style={{ fontSize: 24, fontWeight: 600, marginTop: "3vh" }}>
               Known Allergies
@@ -231,27 +365,47 @@ export function PatientViewPage() {
             <Form.Group style={{ marginTop: "20px", flex: "1 1 100%" }}>
               <Form.Label>Blood Glucose Level</Form.Label>
               <Form.Control type="text" value="90mg/dt" disabled />
-              <Form.Control type="text" value="Before meal - 11/03/2024" style={{marginTop:5}}/>
+              <Form.Control
+                type="text"
+                value="Before meal - 11/03/2024"
+                style={{ marginTop: 5 }}
+              />
             </Form.Group>
             <Form.Group style={{ marginTop: "20px", flex: "1 1 100%" }}>
               <Form.Label>Body Temperature</Form.Label>
               <Form.Control type="text" value="98.1 °F" disabled />
-              <Form.Control type="text" value="Today" style={{marginTop:5}}/>
+              <Form.Control
+                type="text"
+                value="Today"
+                style={{ marginTop: 5 }}
+              />
             </Form.Group>
             <Form.Group style={{ marginTop: "20px", flex: "1 1 100%" }}>
               <Form.Label>Blood pressure</Form.Label>
               <Form.Control type="text" value="120/80 mm hg" disabled />
-              <Form.Control type="text" value="Today" style={{marginTop:5}}/>
+              <Form.Control
+                type="text"
+                value="Today"
+                style={{ marginTop: 5 }}
+              />
             </Form.Group>
             <Form.Group style={{ marginTop: "20px", flex: "1 1 100%" }}>
               <Form.Label>Blood Glucose Level</Form.Label>
               <Form.Control type="text" value="120mg/dt" disabled />
-              <Form.Control type="text" value="After meal - 11/03/2024" style={{marginTop:5}}/>
+              <Form.Control
+                type="text"
+                value="After meal - 11/03/2024"
+                style={{ marginTop: 5 }}
+              />
             </Form.Group>
             <Form.Group style={{ marginTop: "20px", flex: "1 1 100%" }}>
               <Form.Label>Body Weight</Form.Label>
               <Form.Control type="text" value="55kg" disabled />
-              <Form.Control type="text" value="11/03/2024" style={{marginTop:5}}/>
+              <Form.Control
+                type="text"
+                value="11/03/2024"
+                style={{ marginTop: 5 }}
+              />
             </Form.Group>
           </div>
         </Form>
@@ -269,18 +423,42 @@ export function PatientViewPage() {
           >
             <Form.Group style={{ marginTop: "20px", flex: "1 1 100%" }}>
               <Form.Control type="text" value="Mr. Moscow" disabled />
-              <Form.Control type="text" value="Father" style={{marginTop:5}}/>
-              <Form.Control type="text" value="+94 771231231" style={{marginTop:5}}/>
+              <Form.Control
+                type="text"
+                value="Father"
+                style={{ marginTop: 5 }}
+              />
+              <Form.Control
+                type="text"
+                value="+94 771231231"
+                style={{ marginTop: 5 }}
+              />
             </Form.Group>
             <Form.Group style={{ marginTop: "20px", flex: "1 1 100%" }}>
               <Form.Control type="text" value="Mrs. Moscow" disabled />
-              <Form.Control type="text" value="Mother" style={{marginTop:5}}/>
-              <Form.Control type="text" value="+94 771231232" style={{marginTop:5}}/>
+              <Form.Control
+                type="text"
+                value="Mother"
+                style={{ marginTop: 5 }}
+              />
+              <Form.Control
+                type="text"
+                value="+94 771231232"
+                style={{ marginTop: 5 }}
+              />
             </Form.Group>
             <Form.Group style={{ marginTop: "20px", flex: "1 1 100%" }}>
               <Form.Control type="text" value="Mr. Elbow" disabled />
-              <Form.Control type="text" value="Brother" style={{marginTop:5}}/>
-              <Form.Control type="text" value="+94 771231233" style={{marginTop:5}}/>
+              <Form.Control
+                type="text"
+                value="Brother"
+                style={{ marginTop: 5 }}
+              />
+              <Form.Control
+                type="text"
+                value="+94 771231233"
+                style={{ marginTop: 5 }}
+              />
             </Form.Group>
           </div>
         </Form>

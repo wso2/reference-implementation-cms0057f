@@ -475,13 +475,13 @@ const DetailsDiv = ({ questionnaireId }: { questionnaireId: string }) => {
         <Form.Label>Patient ID</Form.Label>
         <Form.Control type="text" value={currentPatient?.id} disabled />
       </Form.Group>
-      <Form.Group
+      {/* <Form.Group
         controlId="formPatientName"
         style={{ marginTop: "20px", flex: "1 1 100%" }}
       >
         <Form.Label>Questionnaire ID</Form.Label>
         <Form.Control type="text" value={questionnaireId} disabled />
-      </Form.Group>
+      </Form.Group> */}
     </div>
   );
 };

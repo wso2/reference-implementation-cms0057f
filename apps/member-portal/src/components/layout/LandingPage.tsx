@@ -39,7 +39,7 @@ import {
   BULK_EXPORT_KICKOFF_URL,
   ORGANIZATION_SERVICE_URL,
 } from "../../configs/Constants";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import {
   updateRequestUrl,
   updateRequest,
@@ -47,6 +47,8 @@ import {
   resetCdsRequest,
 } from "../redux/cdsRequestSlice";
 import { updateCdsResponse, resetCdsResponse } from "../redux/cdsResponseSlice";
+import Profile from "../common/Profile";
+import { updateLoggedUser } from "../redux/loggedUserSlice";
 
 interface Payer {
   id: number;
@@ -55,6 +57,7 @@ interface Payer {
 
 export const LandingPage = () => {
   const { isAuthenticated } = useAuth();
+  const [isLoginLoaded, setIsLoginLoaded] = useState(false);
   const [name, setName] = useState("");
   const [exportLabel, setExportLabel] = useState("Export");
   const [status, setStatus] = useState("Member Not Resolved.");
@@ -75,18 +78,33 @@ export const LandingPage = () => {
 
   // State to manage selected options
   const [selectedOptions, setSelectedOptions] = useState([]);
+  const Config = window.Config;
 
   useEffect(() => {
-    const encodedUserInfo = Cookies.get("userinfo");
-    if (encodedUserInfo) {
-      const loggedUser = encodedUserInfo
-        ? JSON.parse(atob(encodedUserInfo))
-        : { username: "User", first_name: "User Name", last_name: "" };
+    const fetchUserInfo = async () => {
+      const loggedUser = await fetch("/auth/userinfo")
+        .then((response) => response.json())
+        .then((data) => {
+          console.log("Logged User Info: ", data);
+          setIsLoginLoaded(true);
+          return data;
+        });
 
-      setName(loggedUser.first_name);
-      // console.log("Logged in user:", loggedUser);
-    }
-  }, []);
+      if (loggedUser) {
+        setName(loggedUser.first_name);
+        dispatch(
+          updateLoggedUser({
+            username: loggedUser.username,
+            first_name: loggedUser.first_name,
+            last_name: loggedUser.last_name,
+            id: loggedUser.id,
+          })
+        );
+      }
+    };
+
+    fetchUserInfo();
+  }, [dispatch]);
 
   useEffect(() => {
     const fetchOrganizations = async (): Promise<Payer[]> => {
@@ -124,49 +142,6 @@ export const LandingPage = () => {
     setSelectedOptions(
       selectedOptions.filter((option) => option !== optionToRemove)
     );
-  };
-
-  // Function to poll the /status endpoint
-  const pollStatus = (pollingInterval = 3000) => {
-    const statusUrl = "/member/" + memberId + "/export/status";
-
-    const intervalId = setInterval(async () => {
-      try {
-        const statusResponse = await apiClient(ORGANIZATION_SERVICE_URL).get(
-          statusUrl
-        );
-        const statusData = statusResponse.data;
-
-        console.log("Polling status:", statusData);
-
-        // Update export progress
-        // Assuming the progress is returned
-        if (statusData.progress != "Ex") {
-          setExportStatus(statusData.progress);
-          setExportLabel(
-            "Exporting... " + statusData.progress + "% Completed."
-          );
-          setStatus("Exporting... ");
-        }
-
-        if (statusData.status === "Completed") {
-          console.log("Export completed");
-          clearInterval(intervalId); // Stop polling when export is completed
-          setExportLabel("Export completed!");
-          setStatus("Export Completed.");
-        } else if (statusData.status === "Failed") {
-          console.error("Export failed");
-          clearInterval(intervalId); // Stop polling if export failed
-          setError("Export failed. Please try again.");
-          setStatus("Export Failed.");
-        }
-      } catch (error) {
-        console.error("Error polling status:", error);
-        clearInterval(intervalId); // Stop polling on error
-        setError("Error checking export status.");
-        setStatus("Export Failed.");
-      }
-    }, pollingInterval); // Poll every 3 seconds (3000ms)
   };
 
   const handleSubmit = (e: { preventDefault: () => void }) => {
@@ -207,7 +182,6 @@ export const LandingPage = () => {
           setExportId(match[1]);
           console.log("Export ID:", match[1]);
           localStorage.setItem("exportId", match[1]);
-          // localStorage.setItem("exportId", "01f00853-7663-11c8-ab9a-79b02c667daa");
           checkStatusUntilDownloaded(match[1]);
         } else {
           console.warn("Export ID not found in diagnostics message.");
@@ -220,19 +194,16 @@ export const LandingPage = () => {
     const checkStatusUntilDownloaded = async (exportId: string) => {
       const interval = setInterval(async () => {
         try {
-          const response = await axios.get(
-            `https://c32618cf-389d-44f1-93ee-b67a3468aae3-dev.e1-us-east-azure.choreoapis.dev/cms-0057-f/bulk-export-client/v1.0/status?exportId=${exportId}`
-          );
+          const response = await axios.get(Config.bulkExportStatusUrl, {
+            params: { exportId: exportId },
+          });
           const currentStatus = response.data.lastStatus;
           console.log("Checking status:", currentStatus);
 
+          setStatus(currentStatus);
+
           if (currentStatus === "Downloaded") {
             clearInterval(interval);
-            const finalPayload = await axios.get(
-              `https://c32618cf-389d-44f1-93ee-b67a3468aae3-dev.e1-us-east-azure.choreoapis.dev/cms-0057-f/bulk-export-client/file-service/v1.0/fetch?exportId=${exportId}&resourceType=Claim`
-            );
-            // setStatus(finalPayload.data);
-            console.log("Final Payload:", finalPayload.data);
             setStatus("Export Completed.");
             setIsExportCompleted(true);
             setExportStatus("100");
@@ -282,138 +253,174 @@ export const LandingPage = () => {
     }
   };
 
+  const loggedUser = useSelector((state: any) => state.loggedUser);
+
   return isAuthenticated ? (
     <Container>
-      <Header userName={name} avatarUrl={avatarUrl} isLoggedIn={true} />
-      <Box sx={{ mt: 5, ml:2, mr:2 }}>
-        <Box>
-          <Typography variant="h4">Hello {name},</Typography>
-          <Typography variant="h6" sx={{ mt: 2, mb: 4 }}>
-            Welcome to the USPayer Data Exchange Portal. If you haven't yet
-            synced your data with your previous, please select your previous
-            payer(s) and click 'Export' to securely transfer your data to
-            USPayer. The transfer will run in the background, and you will be
-            notified once the process is complete.
-          </Typography>
-        </Box>
+      <Header
+        userName={loggedUser.first_name}
+        avatarUrl={avatarUrl}
+        isLoggedIn={true}
+      />
+      {isLoginLoaded ? (
+        <div>
+          <Profile
+            userName={loggedUser.username}
+            firstName={loggedUser.first_name}
+            lastName={loggedUser.last_name}
+            id={loggedUser.id}
+          />
 
-        <Box
-          component="form"
-          onSubmit={handleSubmit}
-          sx={{ p: 2, border: "1px dashed grey", padding: 4, borderRadius: 2 }}
-        >
-          <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
-            <InputLabel id="select-payer-label">
-              Select Payer to Resolve Member ID
-            </InputLabel>
-            <Select
-              labelId="select-payer-label"
-              id="select-payer"
-              multiple
-              value={selectedOptions}
-              onChange={handleSelectChange}
-              label="Select Payer/s to Resolve Member"
-            >
-              {payerList.map((payer, index) => (
-                <MenuItem key={index} value={payer.id}>
-                  {payer.name}
-                </MenuItem>
-              ))}
-            </Select>
-            {/* Display selected options as tags (chips) */}
-            <div
-              style={{
-                marginTop: "20px",
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-                gap: "20px",
+          <Box sx={{ mt: 4, mb: 4, ml: 2, mr: 2 }}>
+            <Box>
+              <Typography variant="h4">Fetch previous payer data</Typography>
+              <Typography variant="h6" sx={{ mt: 2, mb: 4 }}>
+                Welcome to the USPayer Data Exchange Portal. If you haven't yet
+                synced your data with your previous, please select your previous
+                payer(s) and click 'Export' to securely transfer your data to
+                USPayer. The transfer will run in the background, and you will
+                be notified once the process is complete.
+              </Typography>
+            </Box>
+
+            <Box
+              component="form"
+              onSubmit={handleSubmit}
+              sx={{
+                p: 2,
+                border: "1px dashed grey",
+                padding: 4,
+                borderRadius: 2,
               }}
             >
-              {selectedOptions.map((option) => (
+              <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
+                <InputLabel id="select-payer-label">
+                Select previous payer
+                </InputLabel>
+                <Select
+                  labelId="select-payer-label"
+                  id="select-payer"
+                  multiple
+                  value={selectedOptions}
+                  onChange={handleSelectChange}
+                  label="Select previous payer"
+                >
+                  {payerList.map((payer, index) => (
+                    <MenuItem key={index} value={payer.id}>
+                      {payer.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+                {/* Display selected options as tags (chips) */}
                 <div
                   style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
+                    marginTop: "20px",
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+                    gap: "20px",
                   }}
                 >
-                  <Box sx={{ width: "100%" }}>
-                    <Chip
-                      key={option}
-                      label={
-                        payerList.find((payer) => payer.id === option)?.name
-                      }
-                      onDelete={() => handleRemoveTag(option)} // Close icon removes the tag
-                      deleteIcon={<CloseIcon />}
-                    />
-                    <TextField
-                      label="Member ID"
-                      type="text"
-                      fullWidth
-                      variant="outlined"
-                      margin="normal"
-                      value={oldMemberId}
-                      onChange={(event: { target: { value: any } }) =>
-                        setOldMemberId(event.target.value)
-                      }
-                    />
-                  </Box>
+                  {selectedOptions.map((option) => (
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                      }}
+                    >
+                      <Box sx={{ width: "100%" }}>
+                        <Chip
+                          key={option}
+                          label={
+                            payerList.find((payer) => payer.id === option)?.name
+                          }
+                          onDelete={() => handleRemoveTag(option)} // Close icon removes the tag
+                          deleteIcon={<CloseIcon />}
+                        />
+                        <TextField
+                          label="Member ID"
+                          type="text"
+                          fullWidth
+                          variant="outlined"
+                          margin="normal"
+                          value={oldMemberId}
+                          onChange={(event: { target: { value: any } }) =>
+                            setOldMemberId(event.target.value)
+                          }
+                        />
+                      </Box>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-            <Box
-              sx={{
-                mt: 2,
-                mb: 4,
-                border: "1px solid lightGrey",
-                padding: 2,
-                borderRadius: 1,
-              }}
-            >
-              <Typography variant="h5">Status: {status}</Typography>
-              <Box sx={{ display: "flex", alignItems: "center" }}>
-                <Box sx={{ width: "100%", mt: 2, height: 6 }}>
-                  <LinearProgress variant="determinate" value={+exportStatus} />
+                <Box
+                  sx={{
+                    mt: 2,
+                    mb: 4,
+                    border: "1px solid lightGrey",
+                    padding: 2,
+                    borderRadius: 1,
+                  }}
+                >
+                  <Typography variant="h5">Status: {status}</Typography>
+                  <Box sx={{ display: "flex", alignItems: "center" }}>
+                    <Box sx={{ width: "100%", mt: 2, height: 6 }}>
+                      <LinearProgress
+                        variant="determinate"
+                        value={+exportStatus}
+                      />
+                    </Box>
+                    <Box sx={{ minWidth: 40, paddingLeft: 2, height: 10 }}>
+                      <Typography
+                        variant="body2"
+                        sx={{ color: "text.secondary" }}
+                      >{`${Math.round(+exportStatus)}%`}</Typography>
+                    </Box>
+                  </Box>
+                  {isExportCompleted && (
+                    <Typography variant="body1" sx={{ mt: 2, color: "black" }}>
+                      Export ID: {exportId}
+                    </Typography>
+                  )}
                 </Box>
-                <Box sx={{ minWidth: 40, paddingLeft: 2, height: 10 }}>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "text.secondary" }}
-                  >{`${Math.round(+exportStatus)}%`}</Typography>
-                </Box>
-              </Box>
-              {isExportCompleted && (
-                <Typography variant="body1" sx={{ mt: 2, color: "black" }}>
-                  Export ID: {exportId}
-                </Typography>
-              )}
+                {isExportCompleted || error != "" ? (
+                  <>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={() => window.open("/exported-data", "_blank")}
+                      sx={{ mt: 2 }}
+                    >
+                      View Exported Data
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={handleSubmit}
+                      disabled={exporting || error != "" || oldMemberId === ""}
+                    >
+                      {exportLabel}
+                    </Button>
+                  </>
+                )}
+              </FormControl>
             </Box>
-            {isExportCompleted || error != "" ? (
-              <>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={() => window.open("/exported-data", "_blank")}
-                  sx={{ mt: 2 }}
-                >
-                  View Exported Data
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={handleSubmit}
-                  disabled={exporting || error != "" || oldMemberId === ""}
-                >
-                  {exportLabel}
-                </Button>
-              </>
-            )}
-          </FormControl>
-        </Box>
-      </Box>
+          </Box>
+        </div>
+      ) : (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "50vh",
+          }}
+        >
+          <Typography variant="h6">Loading...</Typography>
+        </div>
+      )}
     </Container>
   ) : (
     <Navigate to="/login" replace />

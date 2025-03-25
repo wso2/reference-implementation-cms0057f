@@ -154,7 +154,7 @@ export const ExportedDataPage = () => {
     );
 
     axios
-      .get(Config.fetch, {
+      .get(Config.bulkExportFetch, {
         params: {
           exportId: exportId,
           resourceType: resource,

@@ -1,0 +1,12 @@
+schemaVersion: 1.1
+endpoints:
+  - name: davincidrug-medicationknowledge-api
+    displayName: davincidrug MedicationKnowledge API
+    service:
+      basePath: /
+      port: 9090
+    type: REST
+    networkVisibilities:
+      - Project
+      - Public
+    schemaFilePath: oas/MedicationKnowledge.yaml

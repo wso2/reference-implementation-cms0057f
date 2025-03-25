@@ -385,7 +385,7 @@ modules = [
 ]
 
 [[package]]
-org = "healthcare"
+org = "wso2"
 name = "health.fhir.r4.uscore700.location"
 version = "1.0.0"
 dependencies = [
@@ -396,6 +396,6 @@ dependencies = [
 	{org = "ballerinax", name = "health.fhirr4"}
 ]
 modules = [
-	{org = "healthcare", packageName = "health.fhir.r4.uscore700.location", moduleName = "health.fhir.r4.uscore700.location"}
+	{org = "wso2", packageName = "health.fhir.r4.uscore700.location", moduleName = "health.fhir.r4.uscore700.location"}
 ]
 

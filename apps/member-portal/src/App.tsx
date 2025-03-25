@@ -9,27 +9,27 @@ const MainContent = React.lazy(() =>
 
 const App = () => {
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", height: "100vh" }}>
-      <Suspense
-        fallback={
-          <>
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "center",
-                alignItems: "center",
-                height: "100vh",
-              }}
-            >
-              {/* <PreLoader setActive={true} size={50} /> */}
-            </Box>
-          </>
-        }
-      >
-        <MainContent />
-      </Suspense>
-    </Box>
+    // <Box sx={{ display: "flex", flexDirection: "column", height: "100vh" }}>
+    //   <Suspense
+    //     fallback={
+    //       <>
+    //         <Box
+    //           sx={{
+    //             display: "flex",
+    //             flexDirection: "column",
+    //             justifyContent: "center",
+    //             alignItems: "center",
+    //             height: "100vh",
+    //           }}
+    //         >
+    //         </Box>
+    //       </>
+    //     }
+    //   >
+    //     <MainContent />
+    //   </Suspense>
+    // </Box>
+    <MainContent />
   );
 };
 

@@ -56,25 +56,24 @@ interface Payer {
 }
 
 export const LandingPage = () => {
+  const avatarUrl = "https://i.pravatar.cc/100?img=58";
+
   const { isAuthenticated } = useAuth();
-  const [isLoginLoaded, setIsLoginLoaded] = useState(false);
-  const [name, setName] = useState("");
-  const [exportLabel, setExportLabel] = useState("Export");
-  const [status, setStatus] = useState("Member Not Resolved.");
-  const [avatarUrl, setAvatarUrl] = useState(
-    "https://i.pravatar.cc/100?img=58"
-  );
-  const location = useLocation();
-  const memberId = location.state?.memberId || "nil";
-  const [error, setError] = useState("");
+  const [isPatientDataLoaded, setIsPatientDataLoaded] = useState(false);
+
+  const [exportButtonLabel, setExportButtonLabel] = useState("Export");
   const [payerList, setPayerList] = useState<Payer[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [exporting, setExporting] = useState(false);
   const [oldMemberId, setOldMemberId] = useState("");
   const [exportId, setExportId] = useState("");
-  const [exportStatus, setExportStatus] = useState("0");
-  const dispatch = useDispatch();
+
+  const [error, setError] = useState("");
+  const [isMemberIDFetched, setIsMemberIDFetched] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportPercentage, setExportPercentage] = useState("0");
   const [isExportCompleted, setIsExportCompleted] = useState(false);
+  const [status, setStatus] = useState("Member Not Resolved.");
+
+  const dispatch = useDispatch();
 
   // State to manage selected options
   const [selectedOptions, setSelectedOptions] = useState([]);
@@ -86,12 +85,11 @@ export const LandingPage = () => {
         .then((response) => response.json())
         .then((data) => {
           console.log("Logged User Info: ", data);
-          setIsLoginLoaded(true);
+          setIsPatientDataLoaded(true);
           return data;
         });
 
       if (loggedUser) {
-        setName(loggedUser.first_name);
         dispatch(
           updateLoggedUser({
             username: loggedUser.username,
@@ -132,6 +130,9 @@ export const LandingPage = () => {
 
   // Handle selection of options
   const handleSelectChange = (event: { target: { value: any } }) => {
+    setOldMemberId("");
+    setExportButtonLabel("Export");
+    setIsExportCompleted(false);
     const { value } = event.target;
     handlePayerSelection(value);
     setSelectedOptions(value); // Update selected options
@@ -149,10 +150,10 @@ export const LandingPage = () => {
     dispatch(resetCdsResponse());
 
     e.preventDefault();
-    setExportLabel("Exporting...");
+    setExportButtonLabel("Exporting...");
     setStatus("Exporting...");
 
-    setExporting(true);
+    setIsExporting(true);
     console.log("Submitted name:", selectedOptions);
 
     const postOrganizationId = async () => {
@@ -206,7 +207,8 @@ export const LandingPage = () => {
             clearInterval(interval);
             setStatus("Export Completed.");
             setIsExportCompleted(true);
-            setExportStatus("100");
+            setExportPercentage("100");
+            setIsExporting(false);
           }
         } catch (error) {
           console.error("Error checking status:", error);
@@ -245,7 +247,7 @@ export const LandingPage = () => {
           setStatus("Member Not Resoved.");
         })
         .finally(() => {
-          setLoading(false); // Turn off loading after API call completes
+          setIsMemberIDFetched(true); // Turn off loading after API call completes
         });
     } catch (error) {
       console.error("Error:", error);
@@ -262,7 +264,7 @@ export const LandingPage = () => {
         avatarUrl={avatarUrl}
         isLoggedIn={true}
       />
-      {isLoginLoaded ? (
+      {isPatientDataLoaded ? (
         <div>
           <Profile
             userName={loggedUser.username}
@@ -295,15 +297,15 @@ export const LandingPage = () => {
             >
               <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
                 <InputLabel id="select-payer-label">
-                Select previous payer
+                  Select old payer to fetch Member ID
                 </InputLabel>
                 <Select
                   labelId="select-payer-label"
                   id="select-payer"
-                  multiple
+                  // multiple
                   value={selectedOptions}
                   onChange={handleSelectChange}
-                  label="Select previous payer"
+                  label="Select old payer to fetch Member ID"
                 >
                   {payerList.map((payer, index) => (
                     <MenuItem key={index} value={payer.id}>
@@ -311,8 +313,9 @@ export const LandingPage = () => {
                     </MenuItem>
                   ))}
                 </Select>
+
                 {/* Display selected options as tags (chips) */}
-                <div
+                {/* <div
                   style={{
                     marginTop: "20px",
                     display: "grid",
@@ -351,7 +354,16 @@ export const LandingPage = () => {
                       </Box>
                     </div>
                   ))}
-                </div>
+                </div> */}
+
+                <TextField
+                  required
+                  id="outlined-required"
+                  label="Member ID"
+                  style={{ marginTop: "15px" }}
+                  value={oldMemberId}
+                ></TextField>
+
                 <Box
                   sx={{
                     mt: 2,
@@ -366,14 +378,14 @@ export const LandingPage = () => {
                     <Box sx={{ width: "100%", mt: 2, height: 6 }}>
                       <LinearProgress
                         variant="determinate"
-                        value={+exportStatus}
+                        value={+exportPercentage}
                       />
                     </Box>
                     <Box sx={{ minWidth: 40, paddingLeft: 2, height: 10 }}>
                       <Typography
                         variant="body2"
                         sx={{ color: "text.secondary" }}
-                      >{`${Math.round(+exportStatus)}%`}</Typography>
+                      >{`${Math.round(+exportPercentage)}%`}</Typography>
                     </Box>
                   </Box>
                   {isExportCompleted && (
@@ -399,9 +411,11 @@ export const LandingPage = () => {
                       variant="contained"
                       color="primary"
                       onClick={handleSubmit}
-                      disabled={exporting || error != "" || oldMemberId === ""}
+                      disabled={
+                        isExporting || error != "" || oldMemberId === ""
+                      }
                     >
-                      {exportLabel}
+                      {exportButtonLabel}
                     </Button>
                   </>
                 )}

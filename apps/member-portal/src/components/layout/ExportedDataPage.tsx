@@ -211,19 +211,32 @@ export const ExportedDataPage = () => {
                 <TableRow key={rowIndex}>
                   {simpleMappings[type].tableData.map((dataPath, index) => (
                     <TableCell key={index}>
-                      {dataPath.split(".").reduce((acc, part) => {
-                        if (part.includes("[") && part.includes("]")) {
-                          const [arrayPart, indexPart] = part
-                            .split(/[[\]]/)
-                            .filter(Boolean);
-                          return (
-                            acc &&
-                            acc[arrayPart] &&
-                            acc[arrayPart][parseInt(indexPart, 10)]
-                          );
+                      {(() => {
+                        const value = dataPath
+                          .split(".")
+                          .reduce((acc, part) => {
+                            if (part.includes("[") && part.includes("]")) {
+                              const [arrayPart, indexPart] = part
+                                .split(/[[\]]/)
+                                .filter(Boolean);
+                              return (
+                                acc &&
+                                acc[arrayPart] &&
+                                acc[arrayPart][parseInt(indexPart, 10)]
+                              );
+                            }
+                            return acc && acc[part];
+                          }, row);
+
+                        if (
+                          typeof value === "string" &&
+                          !isNaN(Date.parse(value))
+                        ) {
+                          return new Date(value).toLocaleString();
                         }
-                        return acc && acc[part];
-                      }, row)}
+
+                        return value;
+                      })()}
                     </TableCell>
                   ))}
                   <TableCell>

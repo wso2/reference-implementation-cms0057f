@@ -23,17 +23,13 @@ import {
   InputLabel,
   MenuItem,
   Select,
-  Chip,
   TextField,
   LinearProgress,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import Header from "../common/Header";
-import { Navigate, useLocation } from "react-router-dom";
-import CloseIcon from "@mui/icons-material/Close";
-import apiClient from "../../services/apiClient";
+import { Navigate } from "react-router-dom";
 import { useAuth } from "../common/AuthProvider";
-import Cookies from "js-cookie";
 import axios from "axios";
 import {
   BULK_EXPORT_KICKOFF_URL,

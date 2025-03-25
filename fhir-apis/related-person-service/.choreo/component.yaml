@@ -1,7 +1,7 @@
 schemaVersion: 1.1
 endpoints:
-    - name: carinbb200-relatedperson-api
-      displayName: carinbb200 RelatedPerson API
+    - name: relatedperson-api
+      displayName: RelatedPerson API
       service:
         basePath: /
         port: 9090

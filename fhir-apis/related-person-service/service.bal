@@ -19,11 +19,12 @@ import ballerina/http;
 import ballerinax/health.fhir.r4;
 import ballerinax/health.fhirr4;
 import ballerinax/health.fhir.r4.carinbb200;
+import ballerinax/health.fhir.r4.uscore700;
 
 # Generic type to wrap all implemented profiles.
 # Add required profile types here.
 # public type RelatedPerson r4:RelatedPerson|<other_RelatedPerson_Profile>;
-public type RelatedPerson carinbb200:C4BBRelatedPerson;
+public type RelatedPerson carinbb200:C4BBRelatedPerson|uscore700:USCoreRelatedPersonProfile;
 
 # initialize source system endpoint here
 
@@ -32,50 +33,47 @@ public type RelatedPerson carinbb200:C4BBRelatedPerson;
 service / on new fhirr4:Listener(9090, apiConfig) {
 
     // Read the current state of single resource based on its id.
-    isolated resource function get fhir/r4/RelatedPerson/[string id] (r4:FHIRContext fhirContext) returns RelatedPerson|r4:OperationOutcome|r4:FHIRError {
-        return getById(id);
+    isolated resource function get fhir/r4/RelatedPerson/[string id](r4:FHIRContext fhirContext) returns RelatedPerson|r4:OperationOutcome|r4:FHIRError {
+        return getById(id, ());
     }
 
     // Read the state of a specific version of a resource based on its id.
-    isolated resource function get fhir/r4/RelatedPerson/[string id]/_history/[string vid] (r4:FHIRContext fhirContext) returns RelatedPerson|r4:OperationOutcome|r4:FHIRError {
+    isolated resource function get fhir/r4/RelatedPerson/[string id]/_history/[string vid](r4:FHIRContext fhirContext) returns RelatedPerson|r4:OperationOutcome|r4:FHIRError {
         return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
     }
 
     // Search for resources based on a set of criteria.
     isolated resource function get fhir/r4/RelatedPerson(r4:FHIRContext fhirContext) returns r4:FHIRError|error|r4:Bundle {
-        r4:Bundle searchResult = check search(getQueryParamsMap(fhirContext.getRequestSearchParameters()));
-        return searchResult;
+        return check search(getQueryParamsMap(fhirContext.getRequestSearchParameters()));
     }
 
     // Create a new resource.
-    isolated resource function post fhir/r4/RelatedPerson (r4:FHIRContext fhirContext, RelatedPerson procedure) returns RelatedPerson|r4:OperationOutcome|r4:FHIRError {
-        carinbb200:C4BBRelatedPerson relatedPerson = check create(procedure.toJson());
-
-        return relatedPerson;
+    isolated resource function post fhir/r4/RelatedPerson(r4:FHIRContext fhirContext, RelatedPerson procedure) returns RelatedPerson|r4:OperationOutcome|r4:FHIRError {
+        return check create(procedure.toJson());
     }
 
     // Update the current state of a resource completely.
-    isolated resource function put fhir/r4/RelatedPerson/[string id] (r4:FHIRContext fhirContext, RelatedPerson relatedperson) returns RelatedPerson|r4:OperationOutcome|r4:FHIRError {
+    isolated resource function put fhir/r4/RelatedPerson/[string id](r4:FHIRContext fhirContext, RelatedPerson relatedperson) returns RelatedPerson|r4:OperationOutcome|r4:FHIRError {
         return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
     }
 
     // Update the current state of a resource partially.
-    isolated resource function patch fhir/r4/RelatedPerson/[string id] (r4:FHIRContext fhirContext, json patch) returns RelatedPerson|r4:OperationOutcome|r4:FHIRError {
+    isolated resource function patch fhir/r4/RelatedPerson/[string id](r4:FHIRContext fhirContext, json patch) returns RelatedPerson|r4:OperationOutcome|r4:FHIRError {
         return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
     }
 
     // Delete a resource.
-    isolated resource function delete fhir/r4/RelatedPerson/[string id] (r4:FHIRContext fhirContext) returns r4:OperationOutcome|r4:FHIRError {
+    isolated resource function delete fhir/r4/RelatedPerson/[string id](r4:FHIRContext fhirContext) returns r4:OperationOutcome|r4:FHIRError {
         return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
     }
 
     // Retrieve the update history for a particular resource.
-    isolated resource function get fhir/r4/RelatedPerson/[string id]/_history (r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+    isolated resource function get fhir/r4/RelatedPerson/[string id]/_history(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
         return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
     }
 
     // Retrieve the update history for all resources.
-    isolated resource function get fhir/r4/RelatedPerson/_history (r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+    isolated resource function get fhir/r4/RelatedPerson/_history(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
         return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
     }
 }

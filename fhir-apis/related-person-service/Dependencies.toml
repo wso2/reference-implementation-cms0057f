@@ -307,7 +307,7 @@ dependencies = [
 [[package]]
 org = "ballerinax"
 name = "health.fhir.r4"
-version = "5.2.1"
+version = "5.2.2"
 dependencies = [
 	{org = "ballerina", name = "constraint"},
 	{org = "ballerina", name = "http"},
@@ -328,7 +328,7 @@ modules = [
 [[package]]
 org = "ballerinax"
 name = "health.fhir.r4.carinbb200"
-version = "1.1.0"
+version = "1.1.1"
 dependencies = [
 	{org = "ballerina", name = "constraint"},
 	{org = "ballerina", name = "log"},
@@ -366,8 +366,21 @@ modules = [
 
 [[package]]
 org = "ballerinax"
+name = "health.fhir.r4.uscore700"
+version = "1.0.2"
+dependencies = [
+	{org = "ballerina", name = "constraint"},
+	{org = "ballerina", name = "log"},
+	{org = "ballerinax", name = "health.fhir.r4"}
+]
+modules = [
+	{org = "ballerinax", packageName = "health.fhir.r4.uscore700", moduleName = "health.fhir.r4.uscore700"}
+]
+
+[[package]]
+org = "ballerinax"
 name = "health.fhirr4"
-version = "1.4.1"
+version = "1.4.2"
 dependencies = [
 	{org = "ballerina", name = "http"},
 	{org = "ballerina", name = "io"},
@@ -386,16 +399,17 @@ modules = [
 
 [[package]]
 org = "wso2"
-name = "health.fhir.r4.carinbb200.relatedperson"
+name = "health.fhir.r4.relatedperson"
 version = "1.0.0"
 dependencies = [
 	{org = "ballerina", name = "http"},
 	{org = "ballerinax", name = "health.fhir.r4"},
 	{org = "ballerinax", name = "health.fhir.r4.carinbb200"},
 	{org = "ballerinax", name = "health.fhir.r4.parser"},
+	{org = "ballerinax", name = "health.fhir.r4.uscore700"},
 	{org = "ballerinax", name = "health.fhirr4"}
 ]
 modules = [
-	{org = "wso2", packageName = "health.fhir.r4.carinbb200.relatedperson", moduleName = "health.fhir.r4.carinbb200.relatedperson"}
+	{org = "wso2", packageName = "health.fhir.r4.relatedperson", moduleName = "health.fhir.r4.relatedperson"}
 ]
 

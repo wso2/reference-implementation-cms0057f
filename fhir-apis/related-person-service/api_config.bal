@@ -20,13 +20,14 @@ import ballerinax/health.fhir.r4;
 final r4:ResourceAPIConfig apiConfig = {
     resourceType: "RelatedPerson",
     profiles: [
-            "http://hl7.org/fhir/us/carin-bb/StructureDefinition/C4BB-RelatedPerson"        
+        "http://hl7.org/fhir/us/carin-bb/StructureDefinition/C4BB-RelatedPerson",
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-relatedperson"
     ],
     defaultProfile: (),
     searchParameters: [
-        ],
+    ],
     operations: [
-    
+
     ],
     serverConfig: (),
     authzConfig: ()

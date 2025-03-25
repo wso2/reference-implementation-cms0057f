@@ -2,7 +2,8 @@ openapi: 3.0.1
 info:
   title: RelatedPerson
   description: "A simplified version of the HL7 FHIR API for RelatedPerson resource.\n\
-    Supported Profiles: \nhttp://hl7.org/fhir/us/carin-bb/StructureDefinition/C4BB-RelatedPerson\n"
+    Supported Profiles: \nhttp://hl7.org/fhir/us/carin-bb/StructureDefinition/C4BB-RelatedPerson\n\
+    http://hl7.org/fhir/us/core/StructureDefinition/us-core-relatedperson\n"
   contact:
     name: API Support
     url: https://wso2.com/contact/`
@@ -10,6 +11,7 @@ info:
   version: 1.0.0
 tags:
 - name: http://hl7.org/fhir/us/carin-bb/StructureDefinition/C4BB-RelatedPerson
+- name: http://hl7.org/fhir/us/core/StructureDefinition/us-core-relatedperson
 - name: RelatedPerson
 - name: 4.0.1
 paths:
@@ -2299,3 +2301,4 @@ components:
 x-wso2-oh-fhir-resourceType: RelatedPerson
 x-wso2-oh-fhir-profile:
 - http://hl7.org/fhir/us/carin-bb/StructureDefinition/C4BB-RelatedPerson
+- http://hl7.org/fhir/us/core/StructureDefinition/us-core-relatedperson

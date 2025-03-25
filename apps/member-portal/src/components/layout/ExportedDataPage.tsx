@@ -338,7 +338,7 @@ export const ExportedDataPage = () => {
 
   return (
     <div style={{ margin: "20px" }}>
-      <h1>Exported Data</h1>
+      <h4>Exported Data</h4>
       <div style={{ flex: 1, marginTop: "10px" }}>
         <ToggleButtonGroup
           color="primary"

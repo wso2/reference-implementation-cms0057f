@@ -34,7 +34,7 @@ service / on new fhirr4:Listener(9090, apiConfig) {
 
     // Read the current state of single resource based on its id.
     isolated resource function get fhir/r4/RelatedPerson/[string id](r4:FHIRContext fhirContext) returns RelatedPerson|r4:OperationOutcome|r4:FHIRError {
-        return getById(id, ());
+        return getById(id);
     }
 
     // Read the state of a specific version of a resource based on its id.

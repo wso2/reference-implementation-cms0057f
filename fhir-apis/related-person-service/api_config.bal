@@ -30,5 +30,6 @@ final r4:ResourceAPIConfig apiConfig = {
 
     ],
     serverConfig: (),
-    authzConfig: ()
+    authzConfig: (),
+    paginationConfig: {enabled: false}
 };

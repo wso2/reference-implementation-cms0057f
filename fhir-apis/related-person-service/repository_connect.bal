@@ -7,6 +7,9 @@ import ballerinax/health.fhir.r4.uscore700;
 isolated RelatedPerson[] relatedPersons = [];
 isolated int createOperationNextId = 12345;
 
+// Use US Core RelatedPerson profile is the default profile
+final string DEFAULT_PROFILE = "http://hl7.org/fhir/us/core/StructureDefinition/us-core-relatedperson";
+
 public isolated function create(json payload) returns r4:FHIRError|RelatedPerson {
     RelatedPerson|error relatedPerson = parser:parse(payload, carinbb200:C4BBRelatedPerson).ensureType();
 
@@ -30,7 +33,7 @@ public isolated function create(json payload) returns r4:FHIRError|RelatedPerson
     }
 }
 
-public isolated function getById(string id, RelatedPerson[]? targetRelatedPersonArr) returns r4:FHIRError|RelatedPerson {
+public isolated function getById(string id, RelatedPerson[]? targetRelatedPersonArr = ()) returns r4:FHIRError|RelatedPerson {
     RelatedPerson[] relatedPersonArr;
     if targetRelatedPersonArr is RelatedPerson[] {
         relatedPersonArr = targetRelatedPersonArr;
@@ -52,7 +55,7 @@ public isolated function getById(string id, RelatedPerson[]? targetRelatedPerson
     return r4:createFHIRError(string `Cannot find a relatedPerson resource with id: ${id}`, r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_NOT_FOUND);
 }
 
-public isolated function getByProfile(string profile) returns r4:FHIRError|RelatedPerson[] {
+isolated function getByProfile(string profile) returns r4:FHIRError|RelatedPerson[] {
     lock {
         RelatedPerson[] items = [];
         foreach var item in relatedPersons {
@@ -71,9 +74,9 @@ public isolated function getByProfile(string profile) returns r4:FHIRError|Relat
     }
 }
 
-public isolated function search(map<string[]>? searchParameters = ()) returns r4:FHIRError|r4:Bundle {
+public isolated function search(map<string[]>? searchParameters = ()) returns r4:Bundle|error {
     r4:Bundle bundle = {
-        'type: "collection"
+        'type: "collection" 
     };
 
     if searchParameters is map<string[]> {
@@ -88,8 +91,12 @@ public isolated function search(map<string[]>? searchParameters = ()) returns r4
                 "_profile" => {
                     profile = searchParameters.get('key)[0];
                 }
-                _ => {
+                "_count" => {
+                    // pagination is not used in this service
                     continue;
+                }
+                _ => {
+                    return r4:createFHIRError(string `Not supported search parameter: ${'key}`, r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
                 }
             }
         }
@@ -104,6 +111,7 @@ public isolated function search(map<string[]>? searchParameters = ()) returns r4
                         'resource: byId
                     }
                 ];
+
                 return bundle;
             } else {
                 bundle.entry = [
@@ -111,10 +119,13 @@ public isolated function search(map<string[]>? searchParameters = ()) returns r4
                         'resource: byProfile
                     }
                 ];
+                
                 return bundle;
             }
         } else if id is string {
-            RelatedPerson byId = check getById(id, ());
+            RelatedPerson[] byProfile = check getByProfile(DEFAULT_PROFILE);
+
+            RelatedPerson byId = check getById(id, byProfile);
             bundle.entry = [
                 {
                     'resource: byId

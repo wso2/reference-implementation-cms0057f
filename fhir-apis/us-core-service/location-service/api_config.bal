@@ -20,13 +20,15 @@ import ballerinax/health.fhir.r4;
 final r4:ResourceAPIConfig apiConfig = {
     resourceType: "Location",
     profiles: [
-            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-location"        
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-location",
+        "http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/plannet-Location",
+        "http://hl7.org/fhir/us/davinci-drug-formulary/StructureDefinition/usdf-InsurancePlanLocation"
     ],
     defaultProfile: (),
     searchParameters: [
-        ],
+    ],
     operations: [
-    
+
     ],
     serverConfig: (),
     authzConfig: ()

@@ -2,7 +2,9 @@ openapi: 3.0.1
 info:
   title: Location
   description: "A simplified version of the HL7 FHIR API for Location resource.\n\
-    Supported Profiles: \nhttp://hl7.org/fhir/us/core/StructureDefinition/us-core-location\n"
+    Supported Profiles: \nhttp://hl7.org/fhir/us/core/StructureDefinition/us-core-location\n\
+    http://hl7.org/fhir/us/davinci-drug-formulary/StructureDefinition/usdf-InsurancePlanLocation\n\
+    http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/plannet-Location\n\"
   contact:
     name: API Support
     url: https://wso2.com/contact/`
@@ -10,6 +12,8 @@ info:
   version: 1.0.0
 tags:
 - name: http://hl7.org/fhir/us/core/StructureDefinition/us-core-location
+- name: http://hl7.org/fhir/us/davinci-drug-formulary/StructureDefinition/usdf-InsurancePlanLocation
+- name: http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/plannet-Location
 - name: Location
 - name: 4.0.1
 paths:
@@ -2403,3 +2407,5 @@ components:
 x-wso2-oh-fhir-resourceType: Location
 x-wso2-oh-fhir-profile:
 - http://hl7.org/fhir/us/core/StructureDefinition/us-core-location
+- http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/plannet-Location
+- http://hl7.org/fhir/us/davinci-drug-formulary/StructureDefinition/usdf-InsurancePlanLocation

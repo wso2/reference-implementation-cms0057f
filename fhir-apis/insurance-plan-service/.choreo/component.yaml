@@ -1,7 +1,7 @@
 schemaVersion: 1.1
 endpoints:
-  - name: davinciplannet-insuranceplan-api
-    displayName: davinciplannet InsurancePlan API
+  - name: insuranceplan-api
+    displayName: InsurancePlan API
     service:
       basePath: /
       port: 9090

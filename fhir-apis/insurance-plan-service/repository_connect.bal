@@ -33,18 +33,18 @@ public isolated function create(json payload) returns r4:FHIRError|InsurancePlan
     }
 }
 
-public isolated function getById(string id, InsurancePlan[]? targetRelatedPersonArr = ()) returns r4:FHIRError|InsurancePlan {
-    InsurancePlan[] relatedPersonArr;
-    if targetRelatedPersonArr is InsurancePlan[] {
-        relatedPersonArr = targetRelatedPersonArr;
+public isolated function getById(string id, InsurancePlan[]? targetInsurancePlanArr = ()) returns r4:FHIRError|InsurancePlan {
+    InsurancePlan[] insurancePlanArr;
+    if targetInsurancePlanArr is InsurancePlan[] {
+        insurancePlanArr = targetInsurancePlanArr;
     } else {
         lock {
-            relatedPersonArr = insurancePlans.clone();
+            insurancePlanArr = insurancePlans.clone();
         }
     }
     
     lock {
-        foreach var item in relatedPersonArr {
+        foreach var item in insurancePlanArr {
             if item.id == id {
                 return item.clone();
             }

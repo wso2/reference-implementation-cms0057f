@@ -18,12 +18,14 @@
 import ballerina/http;
 import ballerinax/health.fhir.r4;
 import ballerinax/health.fhirr4;
+import ballerinax/health.fhir.r4.davincidrugformulary210;
+import ballerinax/health.fhir.r4.davinciplannet120;
 import ballerinax/health.fhir.r4.uscore700;
 
 # Generic type to wrap all implemented profiles.
 # Add required profile types here.
 # public type Location r4:Location|<other_Location_Profile>;
-public type Location uscore700:USCoreLocationProfile;
+public type Location uscore700:USCoreLocationProfile|davinciplannet120:PlannetLocation|davincidrugformulary210:InsurancePlanLocation;
 
 # initialize source system endpoint here
 

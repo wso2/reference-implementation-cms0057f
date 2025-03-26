@@ -26,6 +26,7 @@ declare global {
   interface Window {
     Config: {
       baseUrl: string;
+      demoBaseUrl: string;
       medication_request: string;
       prescribe_medication: string;
       questionnaire_package: string;

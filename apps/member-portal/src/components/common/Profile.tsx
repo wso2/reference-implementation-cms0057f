@@ -93,7 +93,11 @@ const Profile = ({ userName, firstName, lastName, id }: any) => {
               systemActions: {},
             })
           );
-          setPatientDetails(response.data);
+          if (response.status === 200) {
+            setPatientDetails(response.data);
+            localStorage.setItem("patientResource", JSON.stringify(response.data));
+          }
+          
         });
       } catch (error) {
         console.error("Error fetching patient details:", error);

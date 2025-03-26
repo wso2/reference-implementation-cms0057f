@@ -45,6 +45,7 @@ import {
 import { updateCdsResponse, resetCdsResponse } from "../redux/cdsResponseSlice";
 import Profile from "../common/Profile";
 import { updateLoggedUser } from "../redux/loggedUserSlice";
+import { memberMatchPayload } from "../constants/data";
 
 interface Payer {
   id: number;
@@ -61,6 +62,7 @@ export const LandingPage = () => {
   const [payerList, setPayerList] = useState<Payer[]>([]);
   const [oldMemberId, setOldMemberId] = useState("");
   const [exportId, setExportId] = useState("");
+  const [coverageResource, setCoverageResource] = useState<any>({});
 
   const [error, setError] = useState("");
   const [isMemberIDFetched, setIsMemberIDFetched] = useState(false);
@@ -72,7 +74,7 @@ export const LandingPage = () => {
   const dispatch = useDispatch();
 
   // State to manage selected options
-  const [selectedOptions, setSelectedOptions] = useState([]);
+  const [selectedOrgId, setSelectedOrgId] = useState([]);
   const Config = window.Config;
 
   useEffect(() => {
@@ -117,28 +119,76 @@ export const LandingPage = () => {
 
     const loadOrganizations = async () => {
       const payers = await fetchOrganizations();
-      console.log(payers);
+      console.log("payers:", payers);
       setPayerList(payers);
     };
 
     loadOrganizations();
   }, []);
 
+  const handleCheckCoverage = () => {
+    console.log("Checking coverage...");
+
+    const coverageId = (
+      document.getElementById("coverage-id") as HTMLInputElement
+    )?.value;
+    console.log("Coverage ID:", coverageId);
+
+    if (coverageId === "") {
+      alert("Coverage ID is required.");
+      return;
+    } else {
+      dispatch(resetCdsRequest());
+      dispatch(resetCdsResponse());
+      dispatch(updateRequestMethod("GET"));
+      dispatch(
+        updateRequestUrl(
+          "/member-service/v1.0/previous" +
+            "/" +
+            selectedOrgId +
+            "/" +
+            coverageId
+        )
+      );
+
+      axios
+        .get<Response>(
+          Config.oldPayerCoverageGet + "/" + selectedOrgId + "/" + coverageId
+        )
+        .then<Response>((res) => {
+          if (res.status >= 200 && res.status < 300) {
+            setCoverageResource(res.data);
+          } else {
+            console.log("Error fetching payer requirements:", res);
+          }
+          dispatch(updateCdsResponse({ cards: res.data, systemActions: {} }));
+          return res.data;
+        })
+        .catch((err) => {
+          dispatch(updateCdsResponse({ cards: err, systemActions: {} }));
+        });
+    }
+  };
+
+
+  const selectOrgChange = (event: { target: { value: any } }) => {
+    const { value } = event.target;
+    console.log("Selected value:", value);
+    setSelectedOrgId(value); // Update selected options
+  };
   // Handle selection of options
-  const handleSelectChange = (event: { target: { value: any } }) => {
+  const handleFetchMemberID = () => {
+
+    // const orgId = (
+    //   document.getElementById("coverage-id") as HTMLInputElement
+    // )?.value;
+    console.log("Selected value:", selectedOrgId);
+    // setSelectedOrgId(value); // Update selected options
+
     setOldMemberId("");
     setExportButtonLabel("Export");
     setIsExportCompleted(false);
-    const { value } = event.target;
-    handlePayerSelection(value);
-    setSelectedOptions(value); // Update selected options
-  };
-
-  // Handle removal of a tag (chip)
-  const handleRemoveTag = (optionToRemove: any) => {
-    setSelectedOptions(
-      selectedOptions.filter((option) => option !== optionToRemove)
-    );
+    handlePayerSelection();
   };
 
   const handleSubmit = (e: { preventDefault: () => void }) => {
@@ -150,7 +200,7 @@ export const LandingPage = () => {
     setStatus("Exporting...");
 
     setIsExporting(true);
-    console.log("Submitted name:", selectedOptions);
+    console.log("Submitted name:", selectedOrgId);
 
     const postOrganizationId = async () => {
       const memberID = oldMemberId;
@@ -215,22 +265,34 @@ export const LandingPage = () => {
     postOrganizationId();
   };
 
-  const handlePayerSelection = (value: string) => {
-    console.log("Selected Payer", value);
-    // const matchUrl = "/member/" + memberId + "/matchPatient";
-    const matchUrl = "/3e2fa8c7-28d2-47e8-b739-1cf48a457983";
+  const handlePayerSelection = () => {
+    const payload = memberMatchPayload;
+    dispatch(updateRequestMethod("POST"));
+    dispatch(updateRequestUrl("/member-service/v1.0/match"));
+    dispatch(updateRequest(payload));
+    dispatch(resetCdsResponse());
     try {
       axios
-        .get("https://run.mocky.io/v3" + matchUrl)
+        .post(Config.memberMatch, payload, {
+          headers: {
+            "Content-Type": "application/fhir+json",
+          },
+        })
         .then((response) => {
-          // console.log(response);
-          if (response.status === 200) {
-            console.log("Member match trigger successful: ");
-            console.log(response);
-            console.log("----------");
-            // console.log("MemberID: ", response.data.resourceType);
-            // setOldMemberId(response.data.oldMemberId);
-            setOldMemberId("644d85af-aaf9-4068-ad23-1e55aedd5205");
+          console.log(response);
+          dispatch(
+            updateCdsResponse({
+              cards: response.data,
+              systemActions: {},
+            })
+          );
+          if (response.status === 201) {
+            console.log(
+              "MemberID: ",
+              response.data?.parameter?.valueIdentifier?.value
+            );
+            setOldMemberId(response.data?.parameter?.valueIdentifier?.value);
+            // setOldMemberId("644d85af-aaf9-4068-ad23-1e55aedd5205");
             setError("");
             setStatus("Ready");
           } else {
@@ -254,7 +316,13 @@ export const LandingPage = () => {
   const loggedUser = useSelector((state: any) => state.loggedUser);
 
   return isAuthenticated ? (
-    <Container>
+    <div
+      style={{
+        paddingLeft: "50px",
+        paddingRight: "50px",
+        paddingTop: "20px",
+      }}
+    >
       <Header
         userName={loggedUser.first_name}
         avatarUrl={avatarUrl}
@@ -298,9 +366,8 @@ export const LandingPage = () => {
                 <Select
                   labelId="select-payer-label"
                   id="select-payer"
-                  // multiple
-                  value={selectedOptions}
-                  onChange={handleSelectChange}
+                  value={selectedOrgId}
+                  onChange={selectOrgChange}
                   label="Select old payer to fetch Member ID"
                 >
                   {payerList.map((payer, index) => (
@@ -309,56 +376,54 @@ export const LandingPage = () => {
                     </MenuItem>
                   ))}
                 </Select>
-
-                {/* Display selected options as tags (chips) */}
-                {/* <div
+                <div
                   style={{
-                    marginTop: "20px",
-                    display: "grid",
-                    gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-                    gap: "20px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "15px",
+                    marginTop: "15px",
                   }}
                 >
-                  {selectedOptions.map((option) => (
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                      }}
-                    >
-                      <Box sx={{ width: "100%" }}>
-                        <Chip
-                          key={option}
-                          label={
-                            payerList.find((payer) => payer.id === option)?.name
-                          }
-                          onDelete={() => handleRemoveTag(option)} // Close icon removes the tag
-                          deleteIcon={<CloseIcon />}
-                        />
-                        <TextField
-                          label="Member ID"
-                          type="text"
-                          fullWidth
-                          variant="outlined"
-                          margin="normal"
-                          value={oldMemberId}
-                          onChange={(event: { target: { value: any } }) =>
-                            setOldMemberId(event.target.value)
-                          }
-                        />
-                      </Box>
-                    </div>
-                  ))}
-                </div> */}
-
-                <TextField
-                  required
-                  id="outlined-required"
-                  label="Member ID"
-                  style={{ marginTop: "15px" }}
-                  value={oldMemberId}
-                ></TextField>
+                  <TextField
+                    required
+                    id="coverage-id"
+                    label="Coverage ID"
+                    style={{ flex: 1 }}
+                    defaultValue="367"
+                  ></TextField>
+                  <Button
+                    variant="contained"
+                    style={{ height: "55px" }}
+                    color="primary"
+                    onClick={handleCheckCoverage}
+                  >
+                    Check Coverage
+                  </Button>
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "15px",
+                    marginTop: "15px",
+                  }}
+                >
+                  <TextField
+                    required
+                    id="member-id"
+                    label="Member ID"
+                    style={{ flex: 1 }}
+                    value={oldMemberId}
+                  ></TextField>
+                  <Button
+                    variant="contained"
+                    style={{ height: "55px" }}
+                    color="primary"
+                    onClick={handleFetchMemberID}
+                  >
+                    Fetch Member ID
+                  </Button>
+                </div>
 
                 <Box
                   sx={{
@@ -431,7 +496,7 @@ export const LandingPage = () => {
           <Typography variant="h6">Loading...</Typography>
         </div>
       )}
-    </Container>
+    </div>
   ) : (
     <Navigate to="/login" replace />
   );

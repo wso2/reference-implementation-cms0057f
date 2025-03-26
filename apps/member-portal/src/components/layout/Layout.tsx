@@ -51,7 +51,7 @@ export const Layout = ({ Component }: { Component: React.ComponentType }) => {
           <Component />
         </div>
 
-        <div style={{ width: "1.5vw", marginLeft: "2vw" }}>
+        <div style={{ width: "1.5vw"}}>
           <DevPortalExpandButton />
         </div>
 

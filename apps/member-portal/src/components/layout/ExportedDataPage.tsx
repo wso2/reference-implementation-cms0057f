@@ -161,32 +161,46 @@ export const ExportedDataPage = () => {
         },
       })
       .then((response) => {
-        console.log("Fetching data:\n", response);
+        console.log("Fetching data:\n", response.data);
+        console.log("type:", typeof response.data);
 
-        const newData = response.data.split("\n");
-        dispatch(
-          updateCdsResponse({
-            cards: newData,
-            systemActions: {},
-          })
-        );
+        if (typeof response.data === "string") {
+          const newData = response.data.split("\n");
+          dispatch(
+            updateCdsResponse({
+              cards: newData,
+              systemActions: {},
+            })
+          );
 
-        const jsonData = newData
-          .filter((row: string) => {
-            try {
-              JSON.parse(row);
-              return true;
-            } catch {
-              return false;
-            }
-          })
-          .map((row: string) => JSON.parse(row));
-        console.log("Parsed JSON Data:", jsonData);
-        setParsedData(jsonData);
-        if (jsonData.length > 0) {
-          setParsedDataKeys(Object.keys(jsonData[0]));
+          const jsonData = newData
+            .filter((row: string) => {
+              try {
+                JSON.parse(row);
+                return true;
+              } catch {
+                return false;
+              }
+            })
+            .map((row: string) => JSON.parse(row));
+          console.log("Parsed JSON Data:", jsonData);
+          setParsedData(jsonData);
+          if (jsonData.length > 0) {
+            setParsedDataKeys(Object.keys(jsonData[0]));
+          }
+          setIsLoaded(true);
+        } else {
+          console.log("Data is not a string");
+          dispatch(
+            updateCdsResponse({
+              cards: response.data,
+              systemActions: {},
+            })
+          );
+          setParsedData([response.data]);
+          setParsedDataKeys(Object.keys(response.data));
+          setIsLoaded(true);
         }
-        setIsLoaded(true);
       })
       .catch((error) => {
         console.log("error", error);

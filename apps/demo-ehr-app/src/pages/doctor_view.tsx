@@ -38,7 +38,7 @@ export function DoctorViewPage() {
         dispatch(resetCdsResponse());
         dispatch(updateRequestMethod("GET"));
         const req_url = Config.practitioner_new + "?name=" + loggedUser.username;
-        dispatch(updateRequestUrl("/fhir/r4/Practitioner?name=" + loggedUser.username));
+        dispatch(updateRequestUrl("https://unitedcare.com/fhir/r4/Practitioner?name=" + loggedUser.username));
 
         console.log("Fetching practitioner details...");
 

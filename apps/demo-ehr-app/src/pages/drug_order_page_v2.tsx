@@ -124,7 +124,7 @@ const PrescribeForm = ({
     setCdsCards([]);
     dispatch(updateCdsHook("order-sign"));
     dispatch(updateRequestMethod("POST"));
-    dispatch(updateRequestUrl("/cds-services/prescirbe-medication"));
+    dispatch(updateRequestUrl("https://unitedcare.com/cds-services/prescirbe-medication"));
     dispatch(updateRequest(payload));
 
     const Config = window.Config;
@@ -180,7 +180,7 @@ const PrescribeForm = ({
 
     const payload = CREATE_MEDICATION_REQUEST_BODY();
     dispatch(updateRequestMethod("POST"));
-    dispatch(updateRequestUrl("/fhir/r4/MedicationRequest"));
+    dispatch(updateRequestUrl("https://unitedcare.com/fhir/r4/MedicationRequest"));
     dispatch(updateRequest(payload));
 
     const Config = window.Config;

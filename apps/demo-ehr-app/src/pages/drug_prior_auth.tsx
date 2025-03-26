@@ -112,7 +112,7 @@ const QuestionnniarForm = ({
         );
 
         dispatch(
-          updateRequestUrl("/fhir/r4/Questionnaire/$questionnaire-package")
+          updateRequestUrl("https://unitedcare.com/fhir/r4/Questionnaire/$questionnaire-package")
         );
         dispatch(updateRequestMethod("POST"));
         dispatch(updateRequest(requestBody));
@@ -203,7 +203,7 @@ const QuestionnniarForm = ({
     dispatch(resetCdsRequest());
     dispatch(resetCdsResponse());
     dispatch(updateRequest(questionnaireResponse));
-    dispatch(updateRequestUrl("/fhir/r4/QuestionnaireResponse"));
+    dispatch(updateRequestUrl("https://unitedcare.com/fhir/r4/QuestionnaireResponse"));
     dispatch(updateRequestMethod("POST"));
 
     // Submit the questionnaire response to the API

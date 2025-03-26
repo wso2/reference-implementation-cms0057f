@@ -1,76 +1,61 @@
-// src/pages/LoginPage.js
-import { useState } from "react";
-import {
-  Button,
-  Typography,
-  Box,
-  Container,
-  Paper,
-  FormControl,
-} from "@mui/material";
-import { useNavigate } from "react-router-dom";
-import apiClient from "../../services/apiClient";
-import React from "react";
-import { ORGANIZATION_SERVICE_URL } from "../../configs/Constants";
+// Copyright (c) 2024-2025, WSO2 LLC. (http://www.wso2.com).
+//
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
+import { Button, Typography, Box, Container } from "@mui/material";
 
 const LoginPage = () => {
-  const [memberId, setMemberId] = useState("");
-  const [userName, setUserName] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const navigate = useNavigate(); // Initialize navigate hook
-  const [userList, setUserList] = useState([
-    { userId: "1", name: "Cortez Prohaska" },
-    { userId: "2", name: "Veola Rutherford" },
-    { userId: "3", name: "Eliana Jacobi" },
-  ]);
-
-  const handleLogin = (e: { preventDefault: () => void }) => {
-    e.preventDefault();
-
-    if (!memberId || !password) {
-      setError("Please enter both ID and password");
-      return;
-    }
-
-    // Simulate an API call that returns a 200 status
-    apiClient(ORGANIZATION_SERVICE_URL)
-      .post("/member/login", {
-        memberId: memberId,
-        password: password,
-        name: "",
-      })
-      .then((response) => {
-        console.log(response);
-        if (response.status === 201) {
-          console.log("Login successful:", { memberId: memberId, password });
-          setError("");
-          // Redirect to /home upon successful login
-          navigate("/dashboard", { state: { userName, memberId } });
-        } else {
-          setError("Login failed. Please check your credentials)");
-        }
-      })
-      .catch((error) => {
-        console.error("Error:", error);
-        setError("Login failed. Please check your credentials");
-      });
-  };
-
   return (
-    <Container maxWidth="lg">
+    <Container
+      sx={{
+        // backgroundImage: "url('/background-gray-med.svg')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+      }}
+    >
       <Box display="flex" height="100vh">
-        {/* Left 2/3 section - Text Area */}
         <Box
           flex={2}
           display="flex"
           justifyContent="center"
           alignItems="center"
           p={4}
-          sx={{ backgroundColor: "background.paper" }} // Background color for visual separation
+          sx={{ backgroundColor: "#fff" }}
+        >
+          <Box
+            component="img"
+            src="/welcome.png"
+            alt="Welcome"
+            sx={{
+              maxWidth: "100%",
+              height: "auto",
+              objectFit: "contain",
+            }}
+          />
+        </Box>
+        <Box
+          flex={2}
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
+          p={10}
+          sx={{ backgroundColor: "background.paper" }}
         >
           <Box display={"row"}>
-            <Typography variant="h2" align="center" padding={4}>
+            <Typography variant="h2" align="center" padding={4} gutterBottom>
               USPayer Member Portal
             </Typography>
             <Typography variant="h6" align="center">
@@ -82,93 +67,25 @@ const LoginPage = () => {
               demonstrates how DaVinci standards enable seamless, secure, and
               efficient exchange of clinical and administrative data.
             </Typography>
-          </Box>
-        </Box>
-
-        {/* Right 1/3 section - Login Form */}
-        <Box
-          flex={1}
-          display="flex"
-          justifyContent="center"
-          alignItems="center"
-          p={4}
-          sx={{ backgroundColor: "#fff" }}
-        >
-          <Paper
-            elevation={3}
-            sx={{ p: 4, width: "100%", maxWidth: "400px", borderRadius: "8px" }}
-          >
-            <Typography variant="h5" align="center" mb={3}>
-              Login
-            </Typography>
-
-            <Box component="form" onSubmit={handleLogin}>
-              <FormControl fullWidth>
-                {/* <InputLabel id="select-member-id-label">Select A Member</InputLabel>
-                <Select
-                  labelId="select-member-id-label"
-                  id="select-member-id"
-                  value={memberId}
-                  label="Select a Member"
-                  onChange={(e) => {
-                    setMemberId(e.target.value);
-                    setUserName(
-                      userList.find((user) => user.userId === e.target.value)
-                        ?.name || ""
-                    );
-                  }}
-                >
-                  {userList.map((user, index) => (
-                      <MenuItem value={user.userId} key={index}>{user.name}</MenuItem>
-                  ))}
-                </Select>
-                <TextField
-                  label="Password"
-                  type="password"
-                  fullWidth
-                  variant="outlined"
-                  margin="normal"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-
-                {error && (
-                  <Typography
-                    color="error"
-                    variant="body2"
-                    align="center"
-                    mt={2}
-                  >
-                    {error}
-                  </Typography>
-                )} */}
-
-                <Button
-                  type="submit"
-                  variant="contained"
-                  fullWidth
-                  sx={{ mt: 3, mb: 2 }}
-                  onClick={() => {
-                    window.location.href = "/auth/login";
-                  }}
-                >
-                  Login
-                </Button>
-
-                {/* Hyperlinked text */}
-                {/* <Typography align="center">
-                <Link to="#">Forgot password?</Link>
-              </Typography>
-
-              <Typography align="center" mt={2}>
-                Don't have an account?{" "}
-                <Link to="#" style={{ textDecoration: "underline" }}>
-                  Sign up
-                </Link>
-              </Typography> */}
-              </FormControl>
+            <Box
+              display="flex"
+              justifyContent="center"
+              alignItems="center"
+              mt={6}
+              mb={2}
+            >
+              <Button
+                type="submit"
+                variant="contained"
+                sx={{ px: 4, width: "200px" }}
+                onClick={() => {
+                  window.location.href = "/auth/login";
+                }}
+              >
+                Login
+              </Button>
             </Box>
-          </Paper>
+          </Box>
         </Box>
       </Box>
     </Container>

@@ -20,6 +20,7 @@ const initialState = {
   username: "",
   first_name: "",
   last_name: "",
+  id:"",
 };
 
 const loggedUserSlice = createSlice({
@@ -30,6 +31,7 @@ const loggedUserSlice = createSlice({
       state.username = action.payload.username;
       state.first_name = action.payload.first_name;
       state.last_name = action.payload.last_name;
+      state.id = action.payload.id;
     },
     resetLoggedUser() {
       return initialState;

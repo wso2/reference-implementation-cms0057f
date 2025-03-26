@@ -28,6 +28,7 @@ import { useAuth } from "../components/AuthProvider";
 import { Navigate, useNavigate } from "react-router-dom";
 import { Alert, Snackbar } from "@mui/material";
 import { resetCdsResponse } from "../redux/cdsResponseSlice";
+import { resetCdsRequest } from "../redux/cdsRequestSlice";
 
 function ServiceCardList({ services, expanded }: ServiceCardListProps) {
   return (
@@ -162,8 +163,8 @@ function PractitionerDashBoard() {
     currentPatient = PATIENT_DETAILS[0];
   }
 
-dispatch(resetCdsResponse());
-
+  dispatch(resetCdsResponse());
+  dispatch(resetCdsRequest());
 
   return isAuthenticated ? (
     <div style={{ marginLeft: 50, marginBottom: 50 }}>
@@ -177,7 +178,7 @@ dispatch(resetCdsResponse());
         }}
       ></div>
       <br />
-      <div className="page-heading">HealthCare HQ Services</div>
+      <div className="page-heading">E-Health Services</div>
       <div style={{ height: "5vh" }}>
         <ServiceCardList services={SERVICE_CARD_DETAILS} expanded={expanded} />
       </div>

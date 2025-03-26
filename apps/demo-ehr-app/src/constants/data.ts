@@ -23,19 +23,20 @@ export const SERVICE_CARD_DETAILS = [
     path: "/dashboard/patient",
   },
   {
-    serviceImagePath: "/appointment_book_service.png",
-    serviceName: "Book an Appointment",
-    serviceDescription:
-      "Easily schedule and manage appointments with healthcare providers.",
-    path: "/dashboard/appointment-schedule",
-  },
-  {
     serviceImagePath: "/drug_order_service.png",
     serviceName: "Order Drugs",
     serviceDescription:
       "Order and manage medications for patients, ensuring timely and accurate delivery.",
     path: "/dashboard/drug-order-v2",
   },
+  {
+    serviceImagePath: "/appointment_book_service.png",
+    serviceName: "Book an Appointment",
+    serviceDescription:
+      "Easily schedule and manage appointments with healthcare providers.",
+    path: "/dashboard/appointment-schedule",
+  },
+
   {
     serviceImagePath: "/order_device_service.png",
     serviceName: "Order Devices",

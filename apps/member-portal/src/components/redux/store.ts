@@ -15,30 +15,15 @@
 // under the License.
 
 import { configureStore } from "@reduxjs/toolkit";
-import { persistStore, persistReducer } from "redux-persist";
-import storage from "redux-persist/lib/storage";
-import patientReducer from "./patientSlice";
+import { persistStore } from "redux-persist";
 import cdsRequestSlice from "./cdsRequestSlice";
 import cdsResponseSlice from "./cdsResponseSlice";
-import medicationFormDataReducer from "./medicationFormDataSlice";
 import loggedUserSlice from "./loggedUserSlice";
-
-const persistConfig = {
-  key: "root",
-  storage,
-};
-
-const persistedReducer = persistReducer(
-  persistConfig,
-  medicationFormDataReducer
-);
 
 const store = configureStore({
   reducer: {
-    patient: patientReducer,
     cdsRequest: cdsRequestSlice,
     cdsResponse: cdsResponseSlice,
-    medicationFormData: persistedReducer,
     loggedUser: loggedUserSlice,
   },
 });

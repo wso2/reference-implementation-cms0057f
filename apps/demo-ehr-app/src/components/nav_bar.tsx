@@ -86,7 +86,17 @@ export default function NavBar() {
           alignItems={"center"}
           height="100%"
         >
-          <Box display="flex" alignItems="center" style={{ marginLeft: 1 }}>
+          <Box
+            display="flex"
+            alignItems="center"
+            style={{ marginLeft: 1 }}
+            onClick={() =>
+              currentPatient
+                ? (window.location.href = "/dashboard")
+                : (window.location.href = "/")
+            }
+            cursor="pointer"
+          >
             <Box
               borderRadius="100%"
               overflow="hidden"
@@ -97,14 +107,14 @@ export default function NavBar() {
               <img src="/demo.png" alt="Demo Logo" height={40} width={40} />
             </Box>
             <Box marginLeft={10} color="white" fontSize="16px" fontWeight={600}>
-              DEMO EHR
+              E-Health EHR
             </Box>
           </Box>
           <Box display="flex" alignItems="center">
             {currentPatient && (
               <>
                 <Button href="/dashboard" color="inherit">
-                Current Patient :
+                  Current Patient :
                   <div
                     style={{
                       backgroundColor: "black",
@@ -116,7 +126,6 @@ export default function NavBar() {
                       marginLeft: 10,
                     }}
                   >
-
                     {currentPatient?.name
                       .map((name) => name.given.join(" ") + " " + name.family)
                       .join(", ")}
@@ -132,9 +141,9 @@ export default function NavBar() {
             {isAuthenticated && loggedUser && (
               <Box display="flex" alignItems="center">
                 <Box marginRight={10} color="white" fontSize="16px">
-                  {loggedUser.first_name.toUpperCase() +
+                  {loggedUser?.first_name?.toUpperCase() +
                     " " +
-                    loggedUser.last_name.toUpperCase()}
+                    loggedUser?.last_name?.toUpperCase()}
                 </Box>
                 <Box position="relative">
                   <Box

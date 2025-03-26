@@ -63,11 +63,6 @@ isolated function connectDecisionSystemForPrescirbeMedication(cds:CdsRequest cds
                 ],
                 "links": [
                     {
-                        "label": "Check PA Status",
-                        "url": "https://xyzhealth.com/check-pa-status",
-                        "type": "absolute"
-                    },
-                    {
                         "label": "Launch SMART App for DTR",
                         "url": string `${EHR_DTR_APP_LINK}`,
                         "type": "smart"

@@ -4,7 +4,7 @@ info:
   description: "A simplified version of the HL7 FHIR API for Location resource.\n\
     Supported Profiles: \nhttp://hl7.org/fhir/us/core/StructureDefinition/us-core-location\n\
     http://hl7.org/fhir/us/davinci-drug-formulary/StructureDefinition/usdf-InsurancePlanLocation\n\
-    http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/plannet-Location\n\"
+    http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/plannet-Location\n"
   contact:
     name: API Support
     url: https://wso2.com/contact/`

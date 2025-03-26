@@ -24,7 +24,7 @@ export const DevPortalExpandButton = () => {
 
   return (
     <Box
-      sx={{ display: "flex", alignItems: "center", height: SCREEN_HEIGHT - 80 }}
+      sx={{ display: "flex", alignItems: "center", height: SCREEN_HEIGHT}}
     >
       <Button
         sx={{

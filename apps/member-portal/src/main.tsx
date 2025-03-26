@@ -9,6 +9,7 @@ import { AuthProvider } from "./components/common/AuthProvider";
 import { Provider } from "react-redux";
 import { store } from "./components/redux/store";
 import { ExpandedContextProvider } from "./components/layout/ExpandedContext";
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement

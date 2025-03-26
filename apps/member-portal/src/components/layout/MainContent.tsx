@@ -1,10 +1,25 @@
+// Copyright (c) 2024-2025, WSO2 LLC. (http://www.wso2.com).
+//
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
 import { Box } from "@mui/material";
 import { useLocation } from "react-router-dom";
 import LoginPage from "./LoginPage";
 import { LandingPage } from "./LandingPage";
-import React from "react";
-import DevConsole from "./DevConsole";
 import { Layout } from "./Layout";
+import { ExportedDataPage } from "./ExportedDataPage";
 
 declare global {
   interface Window {
@@ -19,35 +34,18 @@ export const MainContent = () => {
     return <LoginPage />;
   }
   if (location.pathname === "/") {
-    return (
-      <>
-        {/* <DevConsole></DevConsole>
-        <LandingPage /> */}
-        <Layout></Layout>
-      </>
-    );
+    return <Layout Component={LandingPage} />;
+  }
+  if (location.pathname.includes("/exported-data")) {
+    return <Layout Component={ExportedDataPage}/>;
   }
 
-  const Config = window.Config;
-  // const redirectBaseUrl = Config.APP_AUTH_REDIRECT_BASE_URL;
-  // const config = {
-  //   signInRedirectURL: redirectBaseUrl + location.pathname,
-  //   signOutRedirectURL: redirectBaseUrl + location.pathname,
-  //   clientID: Config.APP_AUTH_CLIENT_ID,
-  //   baseUrl: Config.APP_AUTH_BASE_URL,
-  //   scope: ["openid", "profile"],
-  //   resourceServerURLs: [Config.BFF_BASE_URL],
-  //   disableTrySignInSilently: false,
-  // };
-
   return (
-    //   <AuthProvider config={config}>
     <Box>
       <h1>This is the Header</h1>
       <Box id="main-container">
         <h4>This is the main content</h4>
       </Box>
     </Box>
-    //   </AuthProvider>
   );
 };

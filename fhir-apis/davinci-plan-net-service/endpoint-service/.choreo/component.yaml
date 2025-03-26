@@ -1,0 +1,12 @@
+schemaVersion: 1.1
+endpoints:
+  - name: davinciplannet-endpoint-api
+    displayName: davinciplannet Endpoint API
+    service:
+      basePath: /
+      port: 9090
+    type: REST
+    networkVisibilities:
+      - Project
+      - Public
+    schemaFilePath: oas/Endpoint.yaml

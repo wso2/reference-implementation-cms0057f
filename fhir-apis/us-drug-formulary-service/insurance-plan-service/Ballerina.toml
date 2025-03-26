@@ -1,8 +1,0 @@
-[package]
-org = "wso2"
-name = "health.fhir.r4.davincidrug.insuranceplan"
-version = "1.0.0"
-distribution = "2201.8.1"
-authors = ["Ballerina"]
-keywords = ["Healthcare", "FHIR", "InsurancePlan", "r4", "health.fhir.r4.davincidrug"]
-template = true

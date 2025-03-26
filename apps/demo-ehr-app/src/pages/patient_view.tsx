@@ -138,9 +138,6 @@ export function PatientViewPage() {
     currentPatient = PATIENT_DETAILS[0];
   }
 
-  const age =
-    new Date().getFullYear() - new Date(currentPatient.birthDate).getFullYear();
-
   const dispatch = useDispatch();
   const Config = window.Config;
 

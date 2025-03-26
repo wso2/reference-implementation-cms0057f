@@ -443,6 +443,7 @@ const PrescribedForm = () => {
 };
 
 const DetailsDiv = ({ questionnaireId }: { questionnaireId: string }) => {
+  console.log("questionnaireId: ", questionnaireId);
   const dispatch = useDispatch();
   const savedPatientId = localStorage.getItem("selectedPatientId");
   if (savedPatientId) {

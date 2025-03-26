@@ -3,14 +3,16 @@ info:
   title: InsurancePlan
   description:
     "A simplified version of the HL7 FHIR API for InsurancePlan resource.\n\
-    Supported Profiles: \nhttp://hl7.org/fhir/us/davinci-drug-formulary/StructureDefinition/usdf-Formulary\n\
-    http://hl7.org/fhir/us/davinci-drug-formulary/StructureDefinition/usdf-PayerInsurancePlan\n"
+    Supported Profiles: \nhttp://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/plannet-InsurancePlan\n\
+    http://hl7.org/fhir/us/davinci-drug-formulary/StructureDefinition/usdf-Formulary\n\
+    http://hl7.org/fhir/us/davinci-drug-formulary/StructureDefinition/usdf-PayerInsurancePlan\n\"
   contact:
     name: API Support
     url: https://wso2.com/contact/`
     email: user@email.com
   version: 1.0.0
 tags:
+  - name: http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/plannet-InsurancePlan
   - name: http://hl7.org/fhir/us/davinci-drug-formulary/StructureDefinition/usdf-Formulary
   - name: http://hl7.org/fhir/us/davinci-drug-formulary/StructureDefinition/usdf-PayerInsurancePlan
   - name: InsurancePlan
@@ -2254,12 +2256,14 @@ components:
             valueMeta:
               $ref: "#/components/schemas/Meta"
           example: null
-    GraphDefinition:
+    Organization:
       example: null
       allOf:
         - $ref: "#/components/schemas/DomainResource"
         - type: object
-          properties: {}
+          properties:
+            endpoint:
+              $ref: "#/components/schemas/Reference"
           example: null
     Location:
       example: null
@@ -2270,21 +2274,17 @@ components:
             endpoint:
               $ref: "#/components/schemas/Reference"
           example: null
-    MedicationKnowledge:
-      example: null
-      allOf:
-        - $ref: "#/components/schemas/DomainResource"
-        - type: object
-          properties: {}
-          example: null
-    Basic:
+    Endpoint:
       example: null
       allOf:
         - $ref: "#/components/schemas/DomainResource"
         - type: object
           properties:
-            author:
-              $ref: "#/components/schemas/Reference"
+            header:
+              pattern: "[ \\r\\n\\t\\S]+"
+              type: string
+              description: Additional headers / information to send as part of the notification.
+              example: null
           example: null
     InsurancePlan:
       example: null
@@ -2292,6 +2292,24 @@ components:
         - $ref: "#/components/schemas/DomainResource"
         - type: object
           properties: {}
+          example: null
+    HealthcareService:
+      example: null
+      allOf:
+        - $ref: "#/components/schemas/DomainResource"
+        - type: object
+          properties:
+            endpoint:
+              $ref: "#/components/schemas/Reference"
+          example: null
+    OrganizationAffiliation:
+      example: null
+      allOf:
+        - $ref: "#/components/schemas/DomainResource"
+        - type: object
+          properties:
+            endpoint:
+              $ref: "#/components/schemas/Reference"
           example: null
   parameters:
     _lastUpdatedParam:
@@ -2363,5 +2381,6 @@ components:
           scopes: {}
 x-wso2-oh-fhir-resourceType: InsurancePlan
 x-wso2-oh-fhir-profile:
+  - http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/plannet-InsurancePlan
   - http://hl7.org/fhir/us/davinci-drug-formulary/StructureDefinition/usdf-Formulary
   - http://hl7.org/fhir/us/davinci-drug-formulary/StructureDefinition/usdf-PayerInsurancePlan

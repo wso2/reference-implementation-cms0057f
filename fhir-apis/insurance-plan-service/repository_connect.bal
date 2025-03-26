@@ -1,69 +1,128 @@
 import ballerina/http;
-import ballerinax/health.fhir.r4;
+import ballerinax/health.fhir.r4 as r4;
+import ballerinax/health.fhir.r4.davinciplannet120;
 import ballerinax/health.fhir.r4.davincidrugformulary210;
 import ballerinax/health.fhir.r4.parser;
 
 isolated InsurancePlan[] insurancePlans = [];
-isolated int createOperationNextId = 12345;
+isolated int createinsurancePlanNextId = 9002;
+
+// Use davincidrugformulary210:Formulary profile is the default profile
+final string DEFAULT_PROFILE = "http://hl7.org/fhir/us/davinci-drug-formulary/StructureDefinition/usdf-Formulary";
 
 public isolated function create(json payload) returns r4:FHIRError|InsurancePlan {
-    InsurancePlan|error insurancePlan = parser:parse(payload, davincidrugformulary210:PayerInsurancePlan).ensureType();
-
+    InsurancePlan|error insurancePlan = parser:parse(payload, davincidrugformulary210:Formulary).ensureType();
     if insurancePlan is error {
-        insurancePlan = parser:parse(payload, davincidrugformulary210:Formulary).ensureType();
+        insurancePlan = parser:parse(payload, davincidrugformulary210:PayerInsurancePlan).ensureType();
+    }
+    if insurancePlan is error {
+        insurancePlan = parser:parse(payload, davinciplannet120:PlannetInsurancePlan).ensureType();
     }
 
     if insurancePlan is error {
         return r4:createFHIRError(insurancePlan.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
     } else {
         lock {
-            createOperationNextId += 1;
-            insurancePlan.id = (createOperationNextId).toBalString();
+            createinsurancePlanNextId += 1;
+            insurancePlan.id = (createinsurancePlanNextId).toBalString();
         }
-
         lock {
             insurancePlans.push(insurancePlan.clone());
         }
-
         return insurancePlan;
     }
 }
 
-public isolated function getById(string id) returns r4:FHIRError|InsurancePlan {
+public isolated function getById(string id, InsurancePlan[]? targetRelatedPersonArr = ()) returns r4:FHIRError|InsurancePlan {
+    InsurancePlan[] relatedPersonArr;
+    if targetRelatedPersonArr is InsurancePlan[] {
+        relatedPersonArr = targetRelatedPersonArr;
+    } else {
+        lock {
+            relatedPersonArr = insurancePlans.clone();
+        }
+    }
+    
     lock {
-        foreach var item in insurancePlans {
-            string result = item.id ?: "";
-
-            if result == id {
+        foreach var item in relatedPersonArr {
+            if item.id == id {
                 return item.clone();
             }
         }
     }
-    return r4:createFHIRError(string `Cannot find a Patient resource with id: ${id}`, r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_NOT_FOUND);
+    return r4:createFHIRError(string `Cannot find an insurancePlan resource with id: ${id}`, r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_NOT_FOUND);
+}
+
+isolated function getByProfile(string profile) returns r4:FHIRError|InsurancePlan[] {
+    lock {
+        InsurancePlan[] items = [];
+        
+        foreach var item in insurancePlans {
+            r4:Meta? itemMeta = item.meta;
+
+            if itemMeta is r4:Meta {
+                r4:canonical[]? profileArray = itemMeta.profile;
+
+                if profileArray is r4:canonical[] {
+                    string profileValue = profileArray[0].toString();
+
+                    if profileValue == profile {
+                        items.push(item.clone());
+                    }
+                }
+            }
+        }
+
+        return items.length() > 0 ? items.clone() : r4:createFHIRError(string `Cannot find a insurancePlans resource with profile: ${profile}`, r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_NOT_FOUND);
+    }
 }
 
 public isolated function search(map<string[]>? searchParameters = ()) returns r4:FHIRError|r4:Bundle {
     r4:Bundle bundle = {
         'type: "collection"
     };
+    if (searchParameters is map<string[]>) {
+        string? id = ();
+        string? profile = ();
 
-    if searchParameters is map<string[]> {
         foreach var 'key in searchParameters.keys() {
             match 'key {
                 "_id" => {
-                    InsurancePlan byId = check getById(searchParameters.get('key)[0]);
-                    bundle.entry = [
-                        {
-                            'resource: byId
-                        }
-                    ];
-                    return bundle;
+                    id = searchParameters.get('key)[0];
+                }
+                "_profile" => {
+                    profile = searchParameters.get('key)[0];
+                }
+                "_count" => {
+                    // pagination is not used in this service
+                    continue;
                 }
                 _ => {
                     return r4:createFHIRError(string `Not supported search parameter: ${'key}`, r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
                 }
             }
         }
+
+        InsurancePlan[] byProfile = check getByProfile(profile is string ? profile : DEFAULT_PROFILE);
+
+        if id is string {
+            InsurancePlan byId = check getById(id, byProfile);
+
+            bundle.entry = [
+                {
+                    'resource: byId
+                }
+            ];
+        } else {
+            bundle.entry = [
+                {
+                    'resource: byProfile
+                }
+            ];
+            bundle.total = byProfile.length();
+        }
+
+        return bundle;
     }
 
     lock {
@@ -82,9 +141,74 @@ public isolated function search(map<string[]>? searchParameters = ()) returns r4
 
 function init() returns error? {
     lock {
-        json insurancePlanJson = {
+        json insurancePlanJson1 = {
             "resourceType": "InsurancePlan",
-            "id": "12344",
+            "id": "9000",
+            "meta": {
+                "lastUpdated": "2020-07-07T13:26:22.0314215+00:00",
+                "profile": ["http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/plannet-InsurancePlan"]
+            },
+            "language": "en-US",
+            "text": {
+                "status": "generated",
+                "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en-US\" lang=\"en-US\"><p class=\"res-header-id\"><b>Generated Narrative: InsurancePlan AcmeQHPBronze</b></p><a name=\"AcmeQHPBronze\"> </a><a name=\"hcAcmeQHPBronze\"> </a><a name=\"AcmeQHPBronze-en-US\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Last updated: 2020-07-07 13:26:22+0000; Language: en-US</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"StructureDefinition-plannet-InsurancePlan.html\">Plan-Net InsurancePlan</a></p></div><p><b>status</b>: Active</p><p><b>type</b>: <span title=\"Codes:{http://hl7.org/fhir/us/davinci-pdex-plan-net/CodeSystem/InsuranceProductTypeCS qhp}\">Qualified Health Plan</span></p><p><b>name</b>: Acme of CT QHP Bronze</p><p><b>ownedBy</b>: <a href=\"Organization-Acme.html\">Organization Acme of CT</a></p><p><b>administeredBy</b>: <a href=\"Organization-Acme.html\">Organization Acme of CT</a></p><p><b>coverageArea</b>: <a href=\"Location-StateOfCTLocation.html\">Location State of CT Area</a></p><p><b>endpoint</b>: <a href=\"Endpoint-AcmeOfCTPortalEndpoint.html\">Endpoint Endpoint for Acme of CT Portal</a></p><p><b>network</b>: <a href=\"Organization-AcmeofCTStdNet.html\">Organization ACME CT Preferred Provider Network</a></p><h3>Plans</h3><table class=\"grid\"><tr><td style=\"display: none\">-</td><td><b>Type</b></td></tr><tr><td style=\"display: none\">*</td><td><span title=\"Codes:{http://hl7.org/fhir/us/davinci-pdex-plan-net/CodeSystem/InsurancePlanTypeCS bronze}\">Bronze-QHP</span></td></tr></table></div>"
+            },
+            "status": "active",
+            "type": [
+                {
+                    "coding": [
+                        {
+                            "system": "http://hl7.org/fhir/us/davinci-pdex-plan-net/CodeSystem/InsuranceProductTypeCS",
+                            "code": "qhp",
+                            "display": "Qualified Health Plan"
+                        }
+                    ]
+                }
+            ],
+            "name": "Acme of CT QHP Bronze",
+            "ownedBy": {
+                "reference": "Organization/Acme"
+            },
+            "administeredBy": {
+                "reference": "Organization/Acme"
+            },
+            "coverageArea": [
+                {
+                    "reference": "Location/StateOfCTLocation"
+                }
+            ],
+            "endpoint": [
+                {
+                    "reference": "Endpoint/AcmeOfCTPortalEndpoint"
+                }
+            ],
+            "network": [
+                {
+                    "reference": "Organization/AcmeofCTStdNet"
+                }
+            ],
+            "plan": [
+                {
+                    "type": {
+                        "coding": [
+                            {
+                                "system": "http://hl7.org/fhir/us/davinci-pdex-plan-net/CodeSystem/InsurancePlanTypeCS",
+                                "code": "bronze",
+                                "display": "Bronze-QHP"
+                            }
+                        ]
+                    }
+                }
+            ]
+        };
+
+        // for PayerInsurancePlan 1
+        InsurancePlan insurancePlan1 = check parser:parse(insurancePlanJson1).ensureType();
+        insurancePlans.push(insurancePlan1.clone());
+
+        json insurancePlanJson2 = {
+            "resourceType": "InsurancePlan",
+            "id": "9001",
             "meta": {
                 "lastUpdated": "2021-08-22T18:36:03.000+00:00",
                 "profile": ["http://hl7.org/fhir/us/davinci-drug-formulary/StructureDefinition/usdf-PayerInsurancePlan"]
@@ -325,13 +449,13 @@ function init() returns error? {
             ]
         };
 
-        // for PayerInsurancePlan
-        InsurancePlan insurancePlan = check parser:parse(insurancePlanJson, davincidrugformulary210:PayerInsurancePlan).ensureType();
-        insurancePlans.push(insurancePlan.clone());
+        // for PayerInsurancePlan 2
+        InsurancePlan insurancePlan2 = check parser:parse(insurancePlanJson2, davincidrugformulary210:PayerInsurancePlan).ensureType();
+        insurancePlans.push(insurancePlan2.clone());
 
         json formularyJson = {
             "resourceType": "InsurancePlan",
-            "id": "12345",
+            "id": "9002",
             "meta": {
                 "lastUpdated": "2021-08-22T18:36:03.000+00:00",
                 "profile": ["http://hl7.org/fhir/us/davinci-drug-formulary/StructureDefinition/usdf-Formulary"]
@@ -364,7 +488,7 @@ function init() returns error? {
         };
 
         // for Formulary
-        insurancePlan = check parser:parse(formularyJson, davincidrugformulary210:Formulary).ensureType();
+        InsurancePlan insurancePlan = check parser:parse(formularyJson, davincidrugformulary210:Formulary).ensureType();
         insurancePlans.push(insurancePlan.clone());
     }
 }

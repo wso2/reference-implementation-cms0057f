@@ -20,14 +20,15 @@ import ballerinax/health.fhir.r4;
 final r4:ResourceAPIConfig apiConfig = {
     resourceType: "InsurancePlan",
     profiles: [
-            "http://hl7.org/fhir/us/davinci-drug-formulary/StructureDefinition/usdf-Formulary",
-                            "http://hl7.org/fhir/us/davinci-drug-formulary/StructureDefinition/usdf-PayerInsurancePlan"        
+        "http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/plannet-InsurancePlan",
+        "http://hl7.org/fhir/us/davinci-drug-formulary/StructureDefinition/usdf-Formulary",
+        "http://hl7.org/fhir/us/davinci-drug-formulary/StructureDefinition/usdf-PayerInsurancePlan"
     ],
     defaultProfile: (),
     searchParameters: [
-        ],
+    ],
     operations: [
-    
+
     ],
     serverConfig: (),
     authzConfig: ()

@@ -18,12 +18,13 @@
 import ballerina/http;
 import ballerinax/health.fhir.r4;
 import ballerinax/health.fhirr4;
+import ballerinax/health.fhir.r4.davinciplannet120;
 import ballerinax/health.fhir.r4.davincidrugformulary210;
 
 # Generic type to wrap all implemented profiles.
 # Add required profile types here.
 # public type InsurancePlan r4:InsurancePlan|<other_InsurancePlan_Profile>;
-public type InsurancePlan davincidrugformulary210:Formulary|davincidrugformulary210:PayerInsurancePlan;
+public type InsurancePlan davinciplannet120:PlannetInsurancePlan|davincidrugformulary210:Formulary|davincidrugformulary210:PayerInsurancePlan;
 
 # initialize source system endpoint here
 

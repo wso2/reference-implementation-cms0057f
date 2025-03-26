@@ -58,14 +58,19 @@ public isolated function getById(string id, RelatedPerson[]? targetRelatedPerson
 isolated function getByProfile(string profile) returns r4:FHIRError|RelatedPerson[] {
     lock {
         RelatedPerson[] items = [];
+        
         foreach var item in relatedPersons {
-            json|error profileJson = item.meta.toJson().profile;
+            r4:Meta? itemMeta = item.meta;
 
-            if profileJson !is error {
-                string profileValue = (<json[]>profileJson)[0].toString();
+            if itemMeta is r4:Meta {
+                r4:canonical[]? profileArray = itemMeta.profile;
 
-                if profileValue == profile {
-                    items.push(item.clone());
+                if profileArray is r4:canonical[] {
+                    string profileValue = profileArray[0].toString();
+
+                    if profileValue == profile {
+                        items.push(item.clone());
+                    }
                 }
             }
         }
@@ -76,7 +81,7 @@ isolated function getByProfile(string profile) returns r4:FHIRError|RelatedPerso
 
 public isolated function search(map<string[]>? searchParameters = ()) returns r4:Bundle|error {
     r4:Bundle bundle = {
-        'type: "collection" 
+        'type: "collection"
     };
 
     if searchParameters is map<string[]> {
@@ -101,40 +106,26 @@ public isolated function search(map<string[]>? searchParameters = ()) returns r4
             }
         }
 
-        if profile is string {
-            RelatedPerson[] byProfile = check getByProfile(profile);
+        RelatedPerson[] byProfile = check getByProfile(profile is string ? profile : DEFAULT_PROFILE);
 
-            if id is string {
-                RelatedPerson byId = check getById(id, byProfile);
-                bundle.entry = [
-                    {
-                        'resource: byId
-                    }
-                ];
-
-                return bundle;
-            } else {
-                bundle.entry = [
-                    {
-                        'resource: byProfile
-                    }
-                ];
-                
-                return bundle;
-            }
-        } else if id is string {
-            RelatedPerson[] byProfile = check getByProfile(DEFAULT_PROFILE);
-
+        if id is string {
             RelatedPerson byId = check getById(id, byProfile);
+
             bundle.entry = [
                 {
                     'resource: byId
                 }
             ];
-            return bundle;
         } else {
-            return r4:createFHIRError("Invalid search parameters", r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+            bundle.entry = [
+                {
+                    'resource: byProfile
+                }
+            ];
+            bundle.total = byProfile.length();
         }
+
+        return bundle;
     }
 
     lock {

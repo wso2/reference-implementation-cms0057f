@@ -48,6 +48,8 @@ const ClaimForm = () => {
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
 
   const savedPatientId = localStorage.getItem("selectedPatientId");
+  const loggedUser = useSelector((state: any) => state.loggedUser);
+
   if (savedPatientId) {
     dispatch(selectPatient(savedPatientId));
   }
@@ -78,7 +80,7 @@ const ClaimForm = () => {
     quantity: medicationFormData.quantity,
     patient:
       currentPatient?.name[0].given[0] + " " + currentPatient?.name[0].family,
-    provider: "PractitionerRole/456",
+    provider: loggedUser?.first_name + " " + loggedUser?.last_name,
     insurer: "Organization/insurance-org",
     use: "preauthorization",
     supportingInfo: "QuestionnaireResponse/1122",
@@ -133,7 +135,6 @@ const ClaimForm = () => {
             setAlertMessage("Prior Authorization");
             setAlertSeverity("error");
           }
-
         } else {
           setAlertMessage("Error submitting claim");
           setAlertSeverity("error");
@@ -201,7 +202,7 @@ const ClaimForm = () => {
               controlId="provider"
               style={{ marginTop: "20px", flex: "1 1 100%" }}
             >
-              <Form.Label>Provider</Form.Label>
+              <Form.Label>Practitioner</Form.Label>
               <Form.Control
                 type="text"
                 value={formData.provider}
@@ -236,7 +237,7 @@ const ClaimForm = () => {
               <Form.Label>Use</Form.Label>
               <Form.Control
                 type="text"
-                value={formData.use}
+                value={formData.use.toLocaleUpperCase()}
                 onChange={handleChange}
                 disabled
               />
@@ -312,7 +313,7 @@ const ClaimForm = () => {
             <div style={{ textAlign: "center", marginTop: "50px" }}>
               <Lottie options={defaultOptions} height={70} width={70} />
               <br />
-              <h5>Prior Authorization completed.</h5>
+              <h5>Prior Authorization Approved.</h5>
             </div>
           )}
           {!showSuccessAnimation && (

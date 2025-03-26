@@ -178,7 +178,7 @@ function PractitionerDashBoard() {
         }}
       ></div>
       <br />
-      <div className="page-heading">HealthCare HQ Services</div>
+      <div className="page-heading">E-Health Services</div>
       <div style={{ height: "5vh" }}>
         <ServiceCardList services={SERVICE_CARD_DETAILS} expanded={expanded} />
       </div>

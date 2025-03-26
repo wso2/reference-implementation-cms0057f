@@ -121,13 +121,13 @@ const PrescribeForm = ({
       medicationFormData.medication as string,
       medicationFormData.quantity as number
     );
+    const Config = window.Config;
+
     setCdsCards([]);
     dispatch(updateCdsHook("order-sign"));
     dispatch(updateRequestMethod("POST"));
-    dispatch(updateRequestUrl("https://unitedcare.com/cds-services/prescirbe-medication"));
+    dispatch(updateRequestUrl(Config.demoBaseUrl + Config.prescribe_medication));
     dispatch(updateRequest(payload));
-
-    const Config = window.Config;
 
     axios
       .post<CdsResponse>(Config.prescribe_medication, payload)
@@ -179,11 +179,12 @@ const PrescribeForm = ({
     dispatch(resetCdsResponse());
 
     const payload = CREATE_MEDICATION_REQUEST_BODY();
+    const Config = window.Config;
+
     dispatch(updateRequestMethod("POST"));
-    dispatch(updateRequestUrl("https://unitedcare.com/fhir/r4/MedicationRequest"));
+    dispatch(updateRequestUrl(Config.demoBaseUrl + Config.medication_request));
     dispatch(updateRequest(payload));
 
-    const Config = window.Config;
     axios
       .post<CdsResponse>(Config.medication_request, payload, {
         headers: {
@@ -464,7 +465,9 @@ const RequirementCard = ({
                     <div key={index}>
                       <li>
                         <Card.Link
-                          href={`${window.location.origin}${new URL(link.url).pathname}`}
+                          href={`${window.location.origin}${
+                            new URL(link.url).pathname
+                          }`}
                           target="_blank"
                           style={{ color: "#4635B1" }}
                         >
@@ -492,7 +495,6 @@ export default function DrugOrderPageV2() {
   const currentPatient = PATIENT_DETAILS.find(
     (patient) => patient.id === selectedPatientId
   );
-
 
   return isAuthenticated ? (
     <div style={{ marginLeft: 50, marginBottom: 50 }}>

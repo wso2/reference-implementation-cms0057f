@@ -97,6 +97,7 @@ const ClaimForm = () => {
   };
 
   const handleSubmit = () => {
+    const Config = window.Config;
     const payload = CLAIM_REQUEST_BODY(
       formData.patient,
       formData.provider,
@@ -109,11 +110,14 @@ const ClaimForm = () => {
       formData.unitPrice
     );
     console.log("payload", payload);
-    dispatch(updateRequest(payload));
-    dispatch(updateRequestMethod("POST"));
-    dispatch(updateRequestUrl("https://unitedcare.com/fhir/r4/Claim/$submit"));
     dispatch(resetCdsResponse());
-    const Config = window.Config;
+
+    dispatch(updateRequestMethod("POST"));
+    dispatch(updateRequestUrl(Config.demoBaseUrl + Config.claim_submit));
+    dispatch(updateRequest(payload));
+
+    
+
     axios
       .post(Config.claim_submit, payload, {
         headers: {

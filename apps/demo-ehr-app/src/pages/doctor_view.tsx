@@ -33,12 +33,13 @@ export function DoctorViewPage() {
   const loggedUser = useSelector((state: any) => state.loggedUser);
 
   useEffect(() => {
+    dispatch(resetCdsResponse());
     const fetchPractitionerDetails = async () => {
       try {
-        dispatch(resetCdsResponse());
+        const loggedUser = await fetch("/auth/userinfo").then((response) => response.json());
         dispatch(updateRequestMethod("GET"));
         const req_url = Config.practitioner_new + "?name=" + loggedUser.username;
-        dispatch(updateRequestUrl("https://unitedcare.com/fhir/r4/Practitioner?name=" + loggedUser.username));
+        dispatch(updateRequestUrl(Config.demoBaseUrl + req_url));
 
         console.log("Fetching practitioner details...");
 
@@ -89,7 +90,7 @@ export function DoctorViewPage() {
     };
 
     fetchPractitionerDetails();
-  }, [dispatch, Config]);
+  }, [dispatch, Config, "loggedUser"]);
 
 
   return (

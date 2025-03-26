@@ -47,7 +47,7 @@ function PatientEncounter() {
     const fetchPatientDetails = async () => {
       dispatch(resetCdsResponse());
       dispatch(updateRequestMethod("GET"));
-      dispatch(updateRequestUrl("https://unitedcare.com/fhir/r4/Patient"));
+      dispatch(updateRequestUrl(Config.demoBaseUrl + Config.patient));
       try {
         const response = await axios.get(Config.patient);
         dispatch(

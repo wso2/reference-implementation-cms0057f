@@ -194,7 +194,7 @@ export function PatientViewPage() {
         dispatch(resetCdsResponse());
         const req_url = Config.patient + "/" + currentPatient.id;
         dispatch(updateRequestMethod("GET"));
-        dispatch(updateRequestUrl("https://unitedcare.com/fhir/r4/Patient/101"));
+        dispatch(updateRequestUrl("https://unitedcare.com/fhir/r4/Patient/" + currentPatient.id));
 
         axios.get(req_url).then((response) => {
           console.log("Patient details:", response.data);

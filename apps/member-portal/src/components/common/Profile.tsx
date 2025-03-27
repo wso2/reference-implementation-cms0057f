@@ -74,11 +74,9 @@ const Profile = ({ userName, firstName, lastName, id }: any) => {
   const [fetchedPatient, setPatientDetails] = useState<Patient | null>(null);
 
   useEffect(() => {
-    console.log("Current Patient ID:", id);
 
     const fetchPatientDetails = async () => {
       try {
-        console.log("Fetching patient details...");
         dispatch(resetCdsRequest());
         dispatch(resetCdsResponse());
         const req_url = Config.patient + "/" + id;
@@ -106,7 +104,6 @@ const Profile = ({ userName, firstName, lastName, id }: any) => {
     fetchPatientDetails();
   }, [Config, id, dispatch]);
 
-  console.log("Fetched Patient Details:", fetchedPatient);
 
   return (
     <div style={{ marginLeft: "10px", marginTop: "4vh", marginRight: "10px" }}>

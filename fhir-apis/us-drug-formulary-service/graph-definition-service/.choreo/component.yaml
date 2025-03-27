@@ -1,4 +1,4 @@
-schemaVersion: 1.1
+schemaVersion: 1.2
 endpoints:
   - name: davincidrug-graphdefinition-api
     displayName: davincidrug GraphDefinition API

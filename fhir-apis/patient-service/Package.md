@@ -14,7 +14,7 @@ This template provides a boilerplate code for rapid implementation of FHIR APIs 
 
 - ballerinax/health.fhir.r4
 - ballerinax/health.fhirr4
-- ballerinax/health.fhir.r4.uscore501
+- ballerinax/health.fhir.r4.uscore700
 
 This template includes a Ballerina service for Patient FHIR resource with following FHIR interactions.
 - READ
@@ -31,7 +31,7 @@ This template includes a Ballerina service for Patient FHIR resource with follow
 
 Pull the template from central
 
-    ` bal new -t healthcare/health.fhir.r4.uscore501.patient PatientAPI `
+    ` bal new -t healthcare/health.fhir.r4.uscore700.patient PatientAPI `
 
 ## Run the template
 

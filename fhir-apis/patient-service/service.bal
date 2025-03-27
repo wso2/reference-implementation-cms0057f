@@ -20,7 +20,7 @@ import ballerinax/health.fhir.r4;
 import ballerinax/health.fhirr4;
 import ballerinax/health.fhir.r4.international401;
 import ballerinax/health.fhir.r4.parser;
-import ballerinax/health.fhir.r4.uscore501;
+import ballerinax/health.fhir.r4.uscore700;
 
 // configurable string client_id = ?;
 // configurable string client_secret = ?;
@@ -29,7 +29,7 @@ configurable string exportServiceUrl = ?;
 # Generic type to wrap all implemented profiles.
 # Add required profile types here.
 # public type Patient r4:Patient|<other_Patient_Profile>;
-public type Patient uscore501:USCorePatientProfile|international401:Patient;
+public type Patient uscore700:USCorePatientProfile|international401:Patient;
 
 # initialize source system endpoint here
 
@@ -69,7 +69,7 @@ service / on new fhirr4:Listener(9090, apiConfig) {
     isolated resource function post fhir/r4/Patient/\$match(r4:FHIRContext fhirContext, international401:Parameters parameters) returns r4:FHIRError|r4:Bundle|error {
 
         // This is a dummy logic to test the connections. Todo: add relavant matching logic
-        uscore501:USCorePatientProfile matchedPatient = {
+        uscore700:USCorePatientProfile matchedPatient = {
             identifier: [
                 {
                     use: "usual",
@@ -106,8 +106,8 @@ service / on new fhirr4:Listener(9090, apiConfig) {
     }
 
     // Read the current state of single resource based on its id.
-    isolated resource function get fhir/r4/Patient/[string id](r4:FHIRContext fhirContext) returns r4:FHIRError|uscore501:USCorePatientProfile|error {
-        uscore501:USCorePatientProfile response = check getById(id);
+    isolated resource function get fhir/r4/Patient/[string id](r4:FHIRContext fhirContext) returns r4:FHIRError|uscore700:USCorePatientProfile|error {
+        uscore700:USCorePatientProfile response = check getById(id);
         return response;
     }
 
@@ -124,7 +124,7 @@ service / on new fhirr4:Listener(9090, apiConfig) {
 
     // Create a new resource.
     isolated resource function post fhir/r4/Patient(r4:FHIRContext fhirContext, Patient patient) returns Patient|error {
-        uscore501:USCorePatientProfile uSCorePatientProfile = check create(patient.toJson());
+        uscore700:USCorePatientProfile uSCorePatientProfile = check create(patient.toJson());
 
         return uSCorePatientProfile;
     }
@@ -134,7 +134,7 @@ service / on new fhirr4:Listener(9090, apiConfig) {
         fhir:FHIRResponse response = check update(patient.toJson());
 
         do {
-            return <uscore501:USCorePatientProfile>check parser:parse(response.'resource, uscore501:USCorePatientProfile);
+            return <uscore700:USCorePatientProfile>check parser:parse(response.'resource, uscore700:USCorePatientProfile);
         } on fail error parseError {
             log:printError(string `Error occurred while parsing : ${parseError.message()}`, parseError);
             return r4:createFHIRError(parseError.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_INTERNAL_SERVER_ERROR);
@@ -146,7 +146,7 @@ service / on new fhirr4:Listener(9090, apiConfig) {
         fhir:FHIRResponse response = check patchResource("Patient", id, patch);
 
         do {
-            return <uscore501:USCorePatientProfile>check parser:parse(response.'resource, uscore501:USCorePatientProfile);
+            return <uscore700:USCorePatientProfile>check parser:parse(response.'resource, uscore700:USCorePatientProfile);
         } on fail error parseError {
             log:printError(string `Error occurred while parsing : ${parseError.message()}`, parseError);
             return r4:createFHIRError(parseError.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_INTERNAL_SERVER_ERROR);
@@ -154,8 +154,8 @@ service / on new fhirr4:Listener(9090, apiConfig) {
     }
 
     // Delete a resource.
-    isolated resource function delete fhir/r4/Patient/[string id](r4:FHIRContext fhirContext) returns r4:OperationOutcome?|r4:FHIRError? {
-        _ = check delete("Patient", id);
+    isolated resource function delete fhir/r4/Patient/[string id](r4:FHIRContext fhirContext) returns error|fhir:FHIRResponse {
+        return check delete("Patient", id);
     }
 
     // Retrieve the update history for a particular resource.

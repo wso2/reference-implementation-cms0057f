@@ -18,12 +18,12 @@
 import ballerina/http;
 import ballerinax/health.fhir.r4;
 import ballerinax/health.fhirr4;
-import ballerinax/health.fhir.r4.uscore501;
+import ballerinax/health.fhir.r4.uscore700;
 
 # Generic type to wrap all implemented profiles.
 # Add required profile types here.
 # public type Practitioner r4:Practitioner|<other_Practitioner_Profile>;
-public type Practitioner uscore501:USCorePractitionerProfile;
+public type Practitioner uscore700:USCorePractitionerProfile;
 
 # initialize source system endpoint here
 

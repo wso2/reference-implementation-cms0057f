@@ -2,13 +2,13 @@ import ballerina/http;
 import ballerinax/health.clients.fhir;
 import ballerinax/health.fhir.r4;
 import ballerinax/health.fhir.r4.parser;
-import ballerinax/health.fhir.r4.uscore501;
+import ballerinax/health.fhir.r4.uscore700;
 
-isolated uscore501:USCorePatientProfile[] patients = [];
+isolated uscore700:USCorePatientProfile[] patients = [];
 isolated int createOperationNextId = 102;
 
-public isolated function create(json payload) returns r4:FHIRError|uscore501:USCorePatientProfile {
-    uscore501:USCorePatientProfile|error patient = parser:parse(payload, uscore501:USCorePatientProfile).ensureType();
+public isolated function create(json payload) returns r4:FHIRError|uscore700:USCorePatientProfile {
+    uscore700:USCorePatientProfile|error patient = parser:parse(payload, uscore700:USCorePatientProfile).ensureType();
 
     if patient is error {
         return r4:createFHIRError(patient.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
@@ -25,7 +25,7 @@ public isolated function create(json payload) returns r4:FHIRError|uscore501:USC
     }
 }
 
-public isolated function getById(string id) returns r4:FHIRError|uscore501:USCorePatientProfile {
+public isolated function getById(string id) returns r4:FHIRError|uscore700:USCorePatientProfile {
     lock {
         foreach var item in patients {
             string result = item.id ?: "";
@@ -62,7 +62,7 @@ public isolated function search(string 'resource, map<string[]>? searchParameter
         foreach var 'key in searchParameters.keys() {
             match 'key {
                 "_id" => {
-                    uscore501:USCorePatientProfile byId = check getById(searchParameters.get('key)[0]);
+                    uscore700:USCorePatientProfile byId = check getById(searchParameters.get('key)[0]);
                     bundle.entry = [
                         {
                             'resource: byId
@@ -138,7 +138,7 @@ function init() returns error? {
                 }
             ]
         };
-        uscore501:USCorePatientProfile patient = check parser:parse(patientJson, uscore501:USCorePatientProfile).ensureType();
+        uscore700:USCorePatientProfile patient = check parser:parse(patientJson, uscore700:USCorePatientProfile).ensureType();
         patients.push(patient);
     }
 

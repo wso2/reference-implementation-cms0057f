@@ -7,14 +7,14 @@ This template provides a boilerplate code for rapid implementation of FHIR APIs 
 | Module/Element       | Version |
 | -------------------- | ------- |
 | FHIR version         | r4 |
-| Implementation Guide | [http://hl7.org/fhir](http://hl7.org/fhir) |
-| Profile URL          |[http://hl7.org/fhir/StructureDefinition/QuestionnaireResponse](http://hl7.org/fhir/StructureDefinition/QuestionnaireResponse)|
+| Implementation Guide | [http://hl7.org/fhir/us/core](http://hl7.org/fhir/us/core) |
+| Profile URL          |[http://hl7.org/fhir/us/core/StructureDefinition/us-core-questionnaireresponse](http://hl7.org/fhir/us/core/StructureDefinition/us-core-questionnaireresponse)|
 
 ### Dependency List
 
 - ballerinax/health.fhir.r4
 - ballerinax/health.fhirr4
-- ballerinax/health.fhir.r4
+- ballerinax/health.fhir.r4.uscore700
 
 This template includes a Ballerina service for QuestionnaireResponse FHIR resource with following FHIR interactions.
 - READ
@@ -31,7 +31,7 @@ This template includes a Ballerina service for QuestionnaireResponse FHIR resour
 
 Pull the template from central
 
-    ` bal new -t healthcare/health.fhir.r4.questionnaireresponse QuestionnaireResponseAPI `
+    ` bal new -t healthcare/health.fhir.r4.uscore700.questionnaireresponse QuestionnaireResponseAPI `
 
 ## Run the template
 
@@ -45,4 +45,4 @@ Pull the template from central
 - Add profile type to the aggregated resource type. Eg: `public type QuestionnaireResponse r4:QuestionnaireResponse|<Other_QuestionnaireResponse_Profile>;`.
     - Add the new profile URL in `api_config.bal` file.
     - Add as a string inside the `profiles` array.
-    - Eg: `profiles: ["http://hl7.org/fhir/StructureDefinition/QuestionnaireResponse", "new_profile_url"]`
+    - Eg: `profiles: ["http://hl7.org/fhir/us/core/StructureDefinition/us-core-questionnaireresponse", "new_profile_url"]`

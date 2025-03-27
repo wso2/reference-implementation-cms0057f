@@ -20,13 +20,13 @@ import ballerinax/health.fhir.r4;
 final r4:ResourceAPIConfig apiConfig = {
     resourceType: "QuestionnaireResponse",
     profiles: [
-            "http://hl7.org/fhir/StructureDefinition/QuestionnaireResponse"        
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-questionnaireresponse"
     ],
     defaultProfile: (),
     searchParameters: [
-        ],
+    ],
     operations: [
-    
+
     ],
     serverConfig: (),
     authzConfig: ()

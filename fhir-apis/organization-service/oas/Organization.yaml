@@ -3,7 +3,8 @@ info:
   title: Organization
   description:
     "A simplified version of the HL7 FHIR API for Organization resource.\n\
-    Supported Profiles: \nhttp://hl7.org/fhir/us/core/StructureDefinition/us-core-organization\n"
+    Supported Profiles: \nhttp://hl7.org/fhir/us/core/StructureDefinition/us-core-organization\n\
+    http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/plannet-Network\n"
   contact:
     name: API Support
     url: https://wso2.com/contact/`
@@ -11,6 +12,7 @@ info:
   version: 1.0.0
 tags:
   - name: http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization
+  - name: http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/plannet-Network
   - name: Organization
   - name: 4.0.1
 paths:
@@ -2326,3 +2328,5 @@ components:
 x-wso2-oh-fhir-resourceType: Organization
 x-wso2-oh-fhir-profile:
   - http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization
+  - http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/plannet-Network
+

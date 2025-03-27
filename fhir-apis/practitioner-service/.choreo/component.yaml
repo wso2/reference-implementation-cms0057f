@@ -1,7 +1,7 @@
 schemaVersion: 1.1
 endpoints:
-  - name: uscore501-practitioner-api
-    displayName: uscore501 Practitioner API
+  - name: uscore700-practitioner-api
+    displayName: uscore700 Practitioner API
     service:
       basePath: /
       port: 9090

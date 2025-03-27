@@ -1,8 +1,0 @@
-[package]
-org = "wso2"
-name = "health.fhir.r4.uscore700.questionnaireresponse"
-version = "1.0.0"
-distribution = "2201.10.2"
-authors = ["Ballerina"]
-keywords = ["Healthcare", "FHIR", "QuestionnaireResponse", "r4", "health.fhir.r4.uscore700"]
-template = true

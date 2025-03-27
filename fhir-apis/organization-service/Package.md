@@ -7,8 +7,8 @@ This template provides a boilerplate code for rapid implementation of FHIR APIs 
 | Module/Element       | Version |
 | -------------------- | ------- |
 | FHIR version         | r4 |
-| Implementation Guide | [http://hl7.org/fhir/us/core](http://hl7.org/fhir/us/core) |
-| Profile URL          |[http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization](http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization)|
+| Implementation Guide | [http://hl7.org/fhir/us/core](http://hl7.org/fhir/us/core), [http://hl7.org/fhir/us/davinci-pdex-plan-net](http://hl7.org/fhir/us/davinci-pdex-plan-net) |
+| Profile URL          |[http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization](http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization), [http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/plannet-Network](http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/plannet-Network)|
 
 ### Dependency List
 

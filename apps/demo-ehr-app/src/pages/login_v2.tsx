@@ -61,7 +61,7 @@ function LoginV2() {
               style={{ width: "300px", marginBottom: "20px" }}
             />
             <h1 style={{ color: "#4C585B" }}>Welcome</h1>
-            <p style={{ color: "#4C585B" }}>to your E-Health EHR App</p>
+            <p style={{ color: "#4C585B" }}>to E-Health EHR App</p>
             <Button
               variant="success"
               style={{

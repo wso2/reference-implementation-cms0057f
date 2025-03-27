@@ -18,12 +18,12 @@
 import ballerina/http;
 import ballerinax/health.fhir.r4;
 import ballerinax/health.fhirr4;
-import ballerinax/health.fhir.r4.international401;
+import ballerinax/health.fhir.r4.uscore700;
 
 # Generic type to wrap all implemented profiles.
 # Add required profile types here.
 # public type QuestionnaireResponse r4:QuestionnaireResponse|<other_QuestionnaireResponse_Profile>;
-public type QuestionnaireResponse international401:QuestionnaireResponse;
+public type QuestionnaireResponse uscore700:USCoreQuestionnaireResponseProfile;
 
 # initialize source system endpoint here
 
@@ -43,12 +43,13 @@ service / on new fhirr4:Listener(9090, apiConfig) {
 
     // Search for resources based on a set of criteria.
     isolated resource function get fhir/r4/QuestionnaireResponse(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
-        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+        r4:Bundle searchResult = check search(getQueryParamsMap(fhirContext.getRequestSearchParameters()));
+        return searchResult;
     }
 
     // Create a new resource.
     isolated resource function post fhir/r4/QuestionnaireResponse(r4:FHIRContext fhirContext, QuestionnaireResponse procedure) returns QuestionnaireResponse|r4:OperationOutcome|r4:FHIRError {
-        return create(procedure);
+        return create(procedure.toJson());
     }
 
     // Update the current state of a resource completely.

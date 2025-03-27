@@ -80,7 +80,7 @@ const ClaimForm = () => {
     quantity: medicationFormData.quantity,
     patient:
       currentPatient?.name[0].given[0] + " " + currentPatient?.name[0].family,
-    provider: loggedUser?.first_name + " " + loggedUser?.last_name,
+    provider: "PractitionerRole/456",
     insurer: "Organization/insurance-org",
     use: "preauthorization",
     supportingInfo: "QuestionnaireResponse/1122",
@@ -97,6 +97,7 @@ const ClaimForm = () => {
   };
 
   const handleSubmit = () => {
+    const Config = window.Config;
     const payload = CLAIM_REQUEST_BODY(
       formData.patient,
       formData.provider,
@@ -109,11 +110,14 @@ const ClaimForm = () => {
       formData.unitPrice
     );
     console.log("payload", payload);
-    dispatch(updateRequest(payload));
-    dispatch(updateRequestMethod("POST"));
-    dispatch(updateRequestUrl("/fhir/r4/Claim/$submit"));
     dispatch(resetCdsResponse());
-    const Config = window.Config;
+
+    dispatch(updateRequestMethod("POST"));
+    dispatch(updateRequestUrl(Config.demoBaseUrl + Config.claim_submit));
+    dispatch(updateRequest(payload));
+
+    
+
     axios
       .post(Config.claim_submit, payload, {
         headers: {
@@ -205,7 +209,8 @@ const ClaimForm = () => {
               <Form.Label>Practitioner</Form.Label>
               <Form.Control
                 type="text"
-                value={formData.provider}
+                // value={formData.provider}
+                value={loggedUser?.first_name + " " + loggedUser?.last_name}
                 onChange={handleChange}
                 disabled
               />
@@ -217,7 +222,7 @@ const ClaimForm = () => {
               <Form.Label>Insurer</Form.Label>
               <Form.Control
                 type="text"
-                value={formData.insurer}
+                value="UnitedCare Health Insurance"
                 onChange={handleChange}
                 disabled
               />
@@ -231,6 +236,18 @@ const ClaimForm = () => {
             }}
           >
             <Form.Group
+              controlId="category"
+              style={{ marginTop: "20px", flex: "1 1 100%" }}
+            >
+              <Form.Label>Category</Form.Label>
+              <Form.Control
+                type="text"
+                value={formData.category}
+                onChange={handleChange}
+                disabled
+              />
+            </Form.Group>
+            <Form.Group
               controlId="use"
               style={{ marginTop: "20px", flex: "1 1 100%" }}
             >
@@ -243,7 +260,7 @@ const ClaimForm = () => {
               />
             </Form.Group>
 
-            <Form.Group
+            {/* <Form.Group
               controlId="supportingInfo"
               style={{ marginTop: "20px", flex: "1 1 100%" }}
             >
@@ -254,18 +271,8 @@ const ClaimForm = () => {
                 onChange={handleChange}
                 disabled
               />
-            </Form.Group>
+            </Form.Group> */}
           </div>
-
-          <Form.Group controlId="category" style={{ marginTop: "20px" }}>
-            <Form.Label>Category</Form.Label>
-            <Form.Control
-              type="text"
-              value={formData.category}
-              onChange={handleChange}
-              disabled
-            />
-          </Form.Group>
 
           <Form.Group controlId="medication" style={{ marginTop: "20px" }}>
             <Form.Label>Product/Service</Form.Label>

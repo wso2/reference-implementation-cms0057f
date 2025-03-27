@@ -18,12 +18,13 @@
 import ballerina/http;
 import ballerinax/health.fhir.r4;
 import ballerinax/health.fhirr4;
-import ballerinax/health.fhir.r4.uscore501;
+import ballerinax/health.fhir.r4.davinciplannet120;
+import ballerinax/health.fhir.r4.uscore700;
 
 # Generic type to wrap all implemented profiles.
 # Add required profile types here.
 # public type Organization r4:Organization|<other_Organization_Profile>;
-public type Organization uscore501:USCoreOrganizationProfile;
+public type Organization uscore700:USCoreOrganizationProfile|davinciplannet120:PlannetNetwork;
 
 # initialize source system endpoint here
 
@@ -48,8 +49,8 @@ service / on new fhirr4:Listener(9090, apiConfig) {
     }
 
     // Create a new resource.
-    isolated resource function post fhir/r4/Organization(r4:FHIRContext fhirContext, Organization organization) returns Organization|r4:OperationOutcome|r4:FHIRError {
-        return create(organization);
+    isolated resource function post fhir/r4/Organization(r4:FHIRContext fhirContext, Organization payload) returns Organization|r4:OperationOutcome|r4:FHIRError {
+        return create(payload.toJson());
     }
 
     // Update the current state of a resource completely.

@@ -20,7 +20,8 @@ import ballerinax/health.fhir.r4;
 final r4:ResourceAPIConfig apiConfig = {
     resourceType: "Organization",
     profiles: [
-        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization"
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization",
+        "http://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/plannet-Network"
     ],
     defaultProfile: (),
     searchParameters: [

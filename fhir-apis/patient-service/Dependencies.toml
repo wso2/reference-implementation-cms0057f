@@ -5,7 +5,7 @@
 
 [ballerina]
 dependencies-toml-version = "2"
-distribution-version = "2201.10.4"
+distribution-version = "2201.10.2"
 
 [[package]]
 org = "ballerina"
@@ -329,7 +329,7 @@ modules = [
 [[package]]
 org = "ballerinax"
 name = "health.fhir.r4"
-version = "5.2.1"
+version = "5.2.2"
 dependencies = [
 	{org = "ballerina", name = "constraint"},
 	{org = "ballerina", name = "http"},
@@ -378,21 +378,21 @@ modules = [
 
 [[package]]
 org = "ballerinax"
-name = "health.fhir.r4.uscore501"
-version = "1.4.0"
+name = "health.fhir.r4.uscore700"
+version = "1.0.2"
 dependencies = [
 	{org = "ballerina", name = "constraint"},
 	{org = "ballerina", name = "log"},
 	{org = "ballerinax", name = "health.fhir.r4"}
 ]
 modules = [
-	{org = "ballerinax", packageName = "health.fhir.r4.uscore501", moduleName = "health.fhir.r4.uscore501"}
+	{org = "ballerinax", packageName = "health.fhir.r4.uscore700", moduleName = "health.fhir.r4.uscore700"}
 ]
 
 [[package]]
 org = "ballerinax"
 name = "health.fhirr4"
-version = "1.4.1"
+version = "1.4.2"
 dependencies = [
 	{org = "ballerina", name = "http"},
 	{org = "ballerina", name = "io"},
@@ -421,7 +421,7 @@ dependencies = [
 	{org = "ballerinax", name = "health.fhir.r4"},
 	{org = "ballerinax", name = "health.fhir.r4.international401"},
 	{org = "ballerinax", name = "health.fhir.r4.parser"},
-	{org = "ballerinax", name = "health.fhir.r4.uscore501"},
+	{org = "ballerinax", name = "health.fhir.r4.uscore700"},
 	{org = "ballerinax", name = "health.fhirr4"}
 ]
 modules = [

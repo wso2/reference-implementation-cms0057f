@@ -3,7 +3,7 @@ import ballerina/regex;
 import ballerinax/health.clients.fhir;
 import ballerinax/health.fhir.r4;
 import ballerinax/health.fhir.r4.parser;
-import ballerinax/health.fhir.r4.uscore501;
+import ballerinax/health.fhir.r4.uscore700;
 
 // http:OAuth2ClientCredentialsGrantConfig ehrSystemAuthConfig = {
 //     tokenUrl: "https://login.microsoftonline.com/da76d684-740f-4d94-8717-9d5fb21dd1f9/oauth2/token",
@@ -23,11 +23,11 @@ import ballerinax/health.fhir.r4.uscore501;
 
 // isolated fhir:FHIRConnector fhirConnectorObj = check new (ehrSystemConfig);
 
-isolated uscore501:USCorePractitionerProfile[] practitioners = [];
+isolated uscore700:USCorePractitionerProfile[] practitioners = [];
 isolated int createOperationNextId = 457;
 
-public isolated function create(uscore501:USCorePractitionerProfile payload) returns r4:FHIRError|uscore501:USCorePractitionerProfile {
-    uscore501:USCorePractitionerProfile|error practitioner = parser:parseWithValidation(payload.toJson(), uscore501:USCorePractitionerProfile).ensureType();
+public isolated function create(uscore700:USCorePractitionerProfile payload) returns r4:FHIRError|uscore700:USCorePractitionerProfile {
+    uscore700:USCorePractitionerProfile|error practitioner = parser:parseWithValidation(payload.toJson(), uscore700:USCorePractitionerProfile).ensureType();
 
     if practitioner is error {
         return r4:createFHIRError(practitioner.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
@@ -44,7 +44,7 @@ public isolated function create(uscore501:USCorePractitionerProfile payload) ret
     }
 }
 
-public isolated function getById(string id) returns r4:FHIRError|uscore501:USCorePractitionerProfile {
+public isolated function getById(string id) returns r4:FHIRError|uscore700:USCorePractitionerProfile {
     lock {
         foreach var item in practitioners {
             string result = item.id ?: "";
@@ -95,7 +95,7 @@ public isolated function search(map<string[]>? searchParameters = ()) returns r4
         foreach var 'key in searchParameters.keys() {
             match 'key {
                 "_id" => {
-                    uscore501:USCorePractitionerProfile byId = check getById(searchParameters.get('key)[0]);
+                    uscore700:USCorePractitionerProfile byId = check getById(searchParameters.get('key)[0]);
                     bundle.entry = [
                         {
                             'resource: byId
@@ -108,7 +108,7 @@ public isolated function search(map<string[]>? searchParameters = ()) returns r4
                     lock {
                         foreach var item in practitioners {
 
-                            uscore501:USCorePractitionerProfileName nameRecord = item.name[0];
+                            uscore700:USCorePractitionerProfileName nameRecord = item.name[0];
                             string given = nameRecord.given is string[] ? (<string[]>nameRecord.given)[0] : "";
                             string fullName = string `${nameRecord.family} ${given}`;
 
@@ -209,7 +209,7 @@ function init() returns error? {
                 }
             ]
         };
-        uscore501:USCorePractitionerProfile practitioner = check parser:parse(practitionerJson, uscore501:USCorePractitionerProfile).ensureType();
+        uscore700:USCorePractitionerProfile practitioner = check parser:parse(practitionerJson, uscore700:USCorePractitionerProfile).ensureType();
         practitioners.push(practitioner);
     }
 

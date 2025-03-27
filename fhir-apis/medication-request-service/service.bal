@@ -18,12 +18,12 @@
 import ballerina/http;
 import ballerinax/health.fhir.r4;
 import ballerinax/health.fhirr4;
-import ballerinax/health.fhir.r4.uscore501;
+import ballerinax/health.fhir.r4.uscore700;
 
 # Generic type to wrap all implemented profiles.
 # Add required profile types here.
 # public type MedicationRequest r4:MedicationRequest|<other_MedicationRequest_Profile>;
-public type MedicationRequest uscore501:USCoreMedicationRequestProfile;
+public type MedicationRequest uscore700:USCoreMedicationRequestProfile;
 
 # initialize source system endpoint here
 
@@ -49,7 +49,7 @@ service / on new fhirr4:Listener(9090, apiConfig) {
 
     // Create a new resource.
     isolated resource function post fhir/r4/MedicationRequest(r4:FHIRContext fhirContext, MedicationRequest medicationRequest) returns error|http:Response {
-        uscore501:USCoreMedicationRequestProfile createResult = check create(medicationRequest);
+        uscore700:USCoreMedicationRequestProfile createResult = check create(medicationRequest);
         http:Response response = new;
         response.setJsonPayload(createResult.toJson());
         return response;

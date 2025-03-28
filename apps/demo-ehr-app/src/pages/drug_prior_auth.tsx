@@ -32,8 +32,7 @@ import {
 } from "../redux/cdsRequestSlice";
 import { updateCdsResponse, resetCdsResponse } from "../redux/cdsResponseSlice";
 import { useAuth } from "../components/AuthProvider";
-import { PATIENT_DETAILS } from "../constants/data";
-import { selectPatient } from "../redux/patientSlice";
+import PatientInfo from "../components/PatientInfo";
 
 const useQuery = () => {
   return new URLSearchParams(useLocation().search);
@@ -90,7 +89,9 @@ const QuestionnniarForm = ({
     dispatch(resetCdsResponse());
     // Fetch the questionnaire data from the API
     const Config = window.Config;
-    dispatch(updateRequestUrl(Config.demoBaseUrl + Config.questionnaire_package));
+    dispatch(
+      updateRequestUrl(Config.demoBaseUrl + Config.questionnaire_package)
+    );
     dispatch(updateRequestMethod("POST"));
     dispatch(updateRequest(requestBody));
 
@@ -443,51 +444,6 @@ const PrescribedForm = () => {
   );
 };
 
-const DetailsDiv = ({ questionnaireId }: { questionnaireId: string }) => {
-  console.log("questionnaireId: ", questionnaireId);
-  const dispatch = useDispatch();
-  const savedPatientId = localStorage.getItem("selectedPatientId");
-  if (savedPatientId) {
-    dispatch(selectPatient(savedPatientId));
-  }
-  const selectedPatientId = useSelector(
-    (state: any) => state.patient.selectedPatientId
-  );
-  const currentPatient = PATIENT_DETAILS.find(
-    (patient) => patient.id === selectedPatientId
-  );
-
-  return (
-    <div style={{ display: "flex", gap: "20px" }}>
-      <Form.Group
-        controlId="formPatientName"
-        style={{ marginTop: "20px", flex: "1 1 100%" }}
-      >
-        <Form.Label>Patient Name</Form.Label>
-        <Form.Control
-          type="text"
-          value={`${currentPatient?.name[0].given[0]} ${currentPatient?.name[0].family}`}
-          disabled
-        />
-      </Form.Group>
-      <Form.Group
-        controlId="formPatientID"
-        style={{ marginTop: "20px", flex: "1 1 100%" }}
-      >
-        <Form.Label>Patient ID</Form.Label>
-        <Form.Control type="text" value={currentPatient?.id} disabled />
-      </Form.Group>
-      {/* <Form.Group
-        controlId="formPatientName"
-        style={{ marginTop: "20px", flex: "1 1 100%" }}
-      >
-        <Form.Label>Questionnaire ID</Form.Label>
-        <Form.Control type="text" value={questionnaireId} disabled />
-      </Form.Group> */}
-    </div>
-  );
-};
-
 export default function DrugPiorAuthPage() {
   const { isAuthenticated } = useAuth();
   const query = useQuery();
@@ -501,7 +457,7 @@ export default function DrugPiorAuthPage() {
       <div className="page-heading">
         Send a Prior-Authorizing Request for Drugs
       </div>
-      <DetailsDiv questionnaireId={questionnaireId || ""} />
+      <PatientInfo />
       <PrescribedForm />
       <QuestionnniarForm
         questionnaireId={questionnaireId || ""}

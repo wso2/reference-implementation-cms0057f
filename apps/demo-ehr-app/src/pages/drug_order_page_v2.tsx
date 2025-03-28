@@ -36,6 +36,7 @@ import {
   updateMedicationFormData,
   resetMedicationFormData,
 } from "../redux/medicationFormDataSlice";
+import LogoutIcon from "@mui/icons-material/Logout";
 
 import {
   FREQUENCY_OPTIONS,
@@ -50,6 +51,7 @@ import axios from "axios";
 import { useAuth } from "../components/AuthProvider";
 import { Navigate } from "react-router-dom";
 import { Alert, Snackbar } from "@mui/material";
+import PatientInfo from "../components/PatientInfo";
 
 const PrescribeForm = ({
   setCdsCards,
@@ -126,7 +128,9 @@ const PrescribeForm = ({
     setCdsCards([]);
     dispatch(updateCdsHook("order-sign"));
     dispatch(updateRequestMethod("POST"));
-    dispatch(updateRequestUrl(Config.demoBaseUrl + Config.prescribe_medication));
+    dispatch(
+      updateRequestUrl(Config.demoBaseUrl + Config.prescribe_medication)
+    );
     dispatch(updateRequest(payload));
 
     axios
@@ -385,6 +389,7 @@ const PayerRequirementsCard = ({ cdsCards }: { cdsCards: CdsCard[] }) => {
         display: "grid",
         gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
         gap: "20px",
+        maxWidth: "400px",
       }}
     >
       {cdsCards.map((card, index) => (
@@ -401,41 +406,47 @@ const RequirementCard = ({
 }) => {
   return (
     <div>
-      <Card style={{ marginTop: "30px", padding: "20px" }}>
+      <Card style={{ marginTop: "30px", paddingLeft: "20px", paddingRight: "20px", paddingTop: "20px"}}>
         <Card.Body>
           <div
             style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: "10px",
+              // display: "flex",
+              // justifyContent: "space-between",
+              // alignItems: "center",
+              // marginBottom: "10px",
             }}
           >
-            <Card.Title>{requirementsResponsCard.summary}</Card.Title>
+            <h4 style={{marginBottom: "20px"}}>{requirementsResponsCard.summary}</h4>
             <div
               style={{
                 padding: "5px 10px",
-                backgroundColor: "#ffcccb",
-                color: "darkred",
+                backgroundColor: "#e3ae5e",
+                color: "black",
                 borderRadius: "30px",
                 fontSize: "12px",
+                textAlign: "center",
+                fontWeight: "bold",
+                width: "100px",
               }}
             >
-              Critical
+              {requirementsResponsCard.indicator}
             </div>
+            {/* <hr/> */}
           </div>
+          <br />
           <Card.Text>
             <p>{requirementsResponsCard.detail}</p>
-            <hr />
+
+            {/* <hr /> */}
             <div
               style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
+                // display: "flex",
+                // justifyContent: "space-between",
+                // alignItems: "center",
                 marginBottom: "10px",
               }}
             >
-              <Card.Title>Suggestions</Card.Title>
+              <h5>Suggestions</h5>
               {requirementsResponsCard.selectionBehavior && (
                 <div
                   style={{
@@ -459,21 +470,30 @@ const RequirementCard = ({
             {requirementsResponsCard.links &&
               requirementsResponsCard.links.length > 0 && (
                 <>
-                  <hr />
-                  <Card.Title>Links</Card.Title>
+                  {/* <hr /> */}
+                  <br />
+                  {/* <Card.Title>Links</Card.Title> */}
                   {requirementsResponsCard.links.map((link, index) => (
-                    <div key={index}>
-                      <li>
-                        <Card.Link
-                          href={`${window.location.origin}${
-                            new URL(link.url).pathname
-                          }`}
-                          target="_blank"
-                          style={{ color: "#4635B1" }}
-                        >
-                          {link.label}
-                        </Card.Link>
-                      </li>
+                    <div
+                      key={index}
+                      style={{
+                        display: "flex",
+                        justifyContent: "flex-end",
+                      }}
+                    >
+                      <Button
+                        variant="secondary"
+                        onClick={() =>
+                          window.open(
+                            `${window.location.origin}${
+                              new URL(link.url).pathname
+                            }`,
+                            "_blank"
+                          )
+                        }
+                      >
+                        {link.label}
+                      </Button>
                     </div>
                   ))}
                 </>
@@ -489,36 +509,10 @@ export default function DrugOrderPageV2() {
   const { isAuthenticated } = useAuth();
   const [cdsCards, setCdsCards] = useState<CdsCard[]>([]);
 
-  const selectedPatientId = useSelector(
-    (state: any) => state.patient.selectedPatientId
-  );
-  const currentPatient = PATIENT_DETAILS.find(
-    (patient) => patient.id === selectedPatientId
-  );
-
   return isAuthenticated ? (
     <div style={{ marginLeft: 50, marginBottom: 50 }}>
       <div className="page-heading">Order Drugs</div>
-      <div style={{ display: "flex", gap: "20px" }}>
-        <Form.Group
-          controlId="formPatientName"
-          style={{ marginTop: "20px", flex: "1 1 100%" }}
-        >
-          <Form.Label>Patient Name</Form.Label>
-          <Form.Control
-            type="text"
-            value={`${currentPatient?.name[0].given[0]} ${currentPatient?.name[0].family}`}
-            disabled
-          />
-        </Form.Group>
-        <Form.Group
-          controlId="formPatientID"
-          style={{ marginTop: "20px", flex: "1 1 100%" }}
-        >
-          <Form.Label>Patient ID</Form.Label>
-          <Form.Control type="text" value={currentPatient?.id} disabled />
-        </Form.Group>
-      </div>
+      <PatientInfo/>
       <div>
         <PrescribeMedicineCard setCdsCards={setCdsCards} />
       </div>

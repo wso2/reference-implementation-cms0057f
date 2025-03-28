@@ -33,6 +33,7 @@ import { Alert, Snackbar } from "@mui/material";
 import { selectPatient } from "../redux/patientSlice";
 import Lottie from "react-lottie";
 import successAnimation from "../animations/success-animation.json"; // Add your animation JSON file here
+import PatientInfo from "../components/PatientInfo";
 
 const ClaimForm = () => {
   const dispatch = useDispatch();
@@ -354,6 +355,7 @@ export default function DrugClaimPage() {
   return isAuthenticated ? (
     <div style={{ marginLeft: 50, marginBottom: 50 }}>
       <div className="page-heading">Claim Submission</div>
+      <PatientInfo />
       <ClaimForm />
       <style>{`
         .card {

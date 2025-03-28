@@ -17,7 +17,7 @@
 export const SERVICE_CARD_DETAILS = [
   {
     serviceImagePath: "/patient_view_service.png",
-    serviceName: "View Patient",
+    serviceName: "Patient Demographics",
     serviceDescription:
       "Access and manage patient records, including personal details, medical history, and treatment plans.",
     path: "/dashboard/patient",

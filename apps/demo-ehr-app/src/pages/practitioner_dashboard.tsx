@@ -29,6 +29,7 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { Alert, Snackbar } from "@mui/material";
 import { resetCdsResponse } from "../redux/cdsResponseSlice";
 import { resetCdsRequest } from "../redux/cdsRequestSlice";
+import PatientInfo from "../components/PatientInfo";
 
 function ServiceCardList({ services, expanded }: ServiceCardListProps) {
   return (
@@ -82,57 +83,8 @@ const DetailsDiv = () => {
   };
 
   return (
-    <div style={{ display: "flex", gap: "20px" }}>
-      <Form.Group
-        controlId="formPatientName"
-        style={{ marginTop: "20px", flex: "1 1 35%" }}
-      >
-        <Form.Label>Patient Name</Form.Label>
-        <Form.Control
-          type="text"
-          value={
-            currentPatient.name &&
-            currentPatient.name[0] &&
-            currentPatient.name[0].given &&
-            currentPatient.name[0].given[0] +
-              " " +
-              currentPatient.name[0].family
-          }
-          disabled
-        />
-      </Form.Group>
-      <Form.Group
-        controlId="formPatientID"
-        style={{ marginTop: "20px", flex: "1 1 35%" }}
-      >
-        <Form.Label>Patient ID</Form.Label>
-        <Form.Control type="text" value={currentPatient.id} disabled />
-      </Form.Group>
-      <div
-        style={{
-          flex: "1 1 10%",
-        }}
-      ></div>
-      <Button
-        onClick={() => {
-          dispatch(dismissPatient());
-          setAlertMessage("Patient Dismissed");
-          setAlertSeverity("success");
-          setOpenSnackbar(true);
-          navigate("/");
-        }}
-        variant="contained"
-        style={{
-          borderRadius: "50px",
-          backgroundColor: DARK_RED_COLOR,
-          height: "fit-content",
-          alignSelf: "center",
-          flex: "1 1 20%",
-          marginTop: "50px",
-        }}
-      >
-        Dismiss Patient
-      </Button>
+    <div>
+      <PatientInfo/>
       <Snackbar
         open={openSnackbar}
         autoHideDuration={6000}
@@ -178,7 +130,7 @@ function PractitionerDashBoard() {
         }}
       ></div>
       <br />
-      <div className="page-heading">E-Health Services</div>
+      <div className="page-heading" style={{marginTop : "10px" }}>E-Health Services</div>
       <div style={{ height: "5vh" }}>
         <ServiceCardList services={SERVICE_CARD_DETAILS} expanded={expanded} />
       </div>

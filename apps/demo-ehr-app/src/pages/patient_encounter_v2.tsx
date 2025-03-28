@@ -92,6 +92,7 @@ function PatientEncounter() {
   const handleBtnClick = () => {
     dispatch(selectPatient(selectedPatient));
     localStorage.setItem("selectedPatientId", selectedPatient);
+    localStorage.setItem("selectedPatientName", patients[selectedPatient].fullName);
     navigate("dashboard");
   };
 

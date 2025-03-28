@@ -22,7 +22,7 @@ import Button from "react-bootstrap/Button";
 import { Navigate, useLocation } from "react-router-dom";
 import Select from "react-select";
 import DatePicker from "react-datepicker";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { Alert, Snackbar } from "@mui/material";
 import {
   updateRequest,
@@ -496,13 +496,13 @@ const DetailsDiv = ({ patientId }: { patientId: string }) => {
   );
 };
 
-export default function DrugPiorAuthPage() {
+export default function DrugPiorAuthPage() {  
   const { isAuthenticated } = useAuth();
   const query = useQuery();
 
-  const coverageId = query.get("coverageId") || localStorage.getItem("coverageId") || "";
-  const medicationRequestId = query.get("medicationRequestId") || localStorage.getItem("medicationRequestId") || "";
-  const patientId = query.get("patientId") || localStorage.getItem("patientId") || "";
+  const coverageId = query.get("coverageId") || sessionStorage.getItem("coverageId") || "";
+  const medicationRequestId = query.get("medicationRequestId") || sessionStorage.getItem("medicationRequestId") || "";
+  const patientId = query.get("patientId") || sessionStorage.getItem("patientId") || "";
 
   const [isQuestionnaireResponseSubmited, setIsQuestionnaireResponseSubmited] =
     useState(false);

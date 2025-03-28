@@ -38,9 +38,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const medicationRequestId = query.get("medicationRequestId") || "";
       const patientId = query.get("patientId") || "";
 
-      localStorage.setItem("coverageId", coverageId);
-      localStorage.setItem("medicationRequestId", medicationRequestId);
-      localStorage.setItem("patientId", patientId);
+      sessionStorage.setItem("coverageId", coverageId);
+      sessionStorage.setItem("medicationRequestId", medicationRequestId);
+      sessionStorage.setItem("patientId", patientId);
 
       console.log("Patient ID (Auth): ", patientId);
 

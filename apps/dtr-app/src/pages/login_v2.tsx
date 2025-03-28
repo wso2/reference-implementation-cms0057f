@@ -31,10 +31,8 @@ function LoginV2() {
         style={{
           backgroundImage: `url('/background-gray-med.svg')`,
           backgroundSize: "cover",
-          height: "110vh",
-          width: "101.5vw",
-          marginLeft: "-20vw",
-          marginTop: "-20vh",
+          width: "100vw",
+          height: "100vh",
         }}
       >
         <div
@@ -60,10 +58,10 @@ function LoginV2() {
             <img
               src="/welcome-img.svg"
               alt="Doctor"
-              style={{ width: "300px", marginBottom: "20px" }}
+              style={{ width: "450px", marginBottom: "20px" }}
             />
             <h1 style={{ color: "#4C585B" }}>Welcome</h1>
-            <p style={{ color: "#4C585B" }}>to E-Health EHR App</p>
+            <p style={{ color: "#4C585B" }}>UnitedCare DTR App</p>
             <Button
               variant="success"
               style={{

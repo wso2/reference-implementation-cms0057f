@@ -38,17 +38,17 @@ import {
 } from "../redux/medicationFormDataSlice";
 
 import {
-  FREQUENCY_OPTIONS,
   MEDICATION_OPTIONS,
   CHECK_PAYER_REQUIREMENTS_REQUEST_BODY,
   TREATMENT_OPTIONS,
   CREATE_MEDICATION_REQUEST_BODY,
+  FREQUENCY_UNITS,
 } from "../constants/data";
 import { CdsCard, CdsResponse } from "../components/interfaces/cdsCard";
 import axios from "axios";
 import { useAuth } from "../components/AuthProvider";
 import { Navigate } from "react-router-dom";
-import { Alert, Snackbar } from "@mui/material";
+import { Alert, Snackbar, Typography } from "@mui/material";
 import PatientInfo from "../components/PatientInfo";
 
 const PrescribeForm = ({
@@ -73,21 +73,35 @@ const PrescribeForm = ({
       medicationFormData: {
         treatingSickness: string;
         medication: string;
-        quantity: number;
-        frequency: string;
-        duration: string;
+        frequency: number;
+        frequencyUnit: string;
+        period: number;
         startDate: Date;
       };
     }) => state.medicationFormData
   );
 
-  const [patientId] = useState("john-smith");
+  const patientId = localStorage.getItem("selectedPatientId") || "";
+  const loggedUserStr = localStorage.getItem("loggedUser");
+  const loggedUser = loggedUserStr ? JSON.parse(loggedUserStr) : null;
+
+  console.log("loggedUser", loggedUser);
   const [practionerId] = useState("456");
   const [isSubmited, setIsSubmited] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    dispatch(updateMedicationFormData({ [name]: value }));
+    dispatch(
+      updateMedicationFormData({
+        [name]:
+          name === "quantity" ||
+          name === "duration" ||
+          name === "frequency" ||
+          name === "period"
+            ? Number(value)
+            : value,
+      })
+    );
   };
 
   const handleSelectChange = (
@@ -118,8 +132,10 @@ const PrescribeForm = ({
     const payload = CHECK_PAYER_REQUIREMENTS_REQUEST_BODY(
       patientId,
       practionerId,
-      medicationFormData.medication as string,
-      medicationFormData.quantity as number
+      medicationFormData.medication,
+      medicationFormData.frequency,
+      medicationFormData.frequencyUnit,
+      medicationFormData.period
     );
     const Config = window.Config;
 
@@ -159,9 +175,9 @@ const PrescribeForm = ({
     const requiredFields: (keyof typeof medicationFormData)[] = [
       "treatingSickness",
       "medication",
-      "quantity",
       "frequency",
-      "duration",
+      "frequencyUnit",
+      "period",
       "startDate",
     ];
     let isValid = true;
@@ -179,8 +195,16 @@ const PrescribeForm = ({
     }
     dispatch(resetCdsRequest());
     dispatch(resetCdsResponse());
+    console.log("medicationFormData", medicationFormData);
 
-    const payload = CREATE_MEDICATION_REQUEST_BODY();
+    const payload = CREATE_MEDICATION_REQUEST_BODY(
+      patientId,
+      practionerId,
+      medicationFormData.medication,
+      medicationFormData.frequency,
+      medicationFormData.frequencyUnit,
+      medicationFormData.period
+    );
     const Config = window.Config;
 
     dispatch(updateRequestMethod("POST"));
@@ -247,7 +271,7 @@ const PrescribeForm = ({
 
             <Form.Group
               controlId="formMedication"
-              style={{ marginTop: "20px" }}
+              style={{ marginTop: "20px", flex: "1 1 40%" }}
             >
               <Form.Label>
                 Medication <span style={{ color: "red" }}>*</span>
@@ -261,7 +285,6 @@ const PrescribeForm = ({
                 required
               />
             </Form.Group>
-
             <div
               style={{
                 display: "flex",
@@ -269,31 +292,30 @@ const PrescribeForm = ({
               }}
             >
               <Form.Group
-                controlId="formQuantity"
-                style={{ marginTop: "20px", flex: "1 1 100%" }}
-              >
-                <Form.Label>
-                  Quantity <span style={{ color: "red" }}>*</span>
-                </Form.Label>
-                <Form.Control
-                  type="number"
-                  placeholder="Enter quantity"
-                  name="quantity"
-                  onChange={handleInputChange}
-                  required
-                />
-              </Form.Group>
-
-              <Form.Group
                 controlId="formFrequency"
                 style={{ marginTop: "20px", flex: "1 1 100%" }}
               >
                 <Form.Label>
                   Frequency <span style={{ color: "red" }}>*</span>
                 </Form.Label>
-                <Select
+                <Form.Control
+                  type="number"
+                  placeholder="Enter frequency"
                   name="frequency"
-                  options={FREQUENCY_OPTIONS}
+                  onChange={handleInputChange}
+                  required
+                />
+              </Form.Group>
+              <Form.Group
+                controlId="formFrequency"
+                style={{ marginTop: "20px", flex: "1 1 100%" }}
+              >
+                <Form.Label>
+                  Frequency Unit <span style={{ color: "red" }}>*</span>
+                </Form.Label>
+                <Select
+                  name="frequencyUnit"
+                  options={FREQUENCY_UNITS}
                   isSearchable
                   onChange={handleSelectChange}
                   menuPosition={"fixed"}
@@ -302,16 +324,16 @@ const PrescribeForm = ({
               </Form.Group>
 
               <Form.Group
-                controlId="formDuration"
+                controlId="formPeriod"
                 style={{ marginTop: "20px", flex: "1 1 100%" }}
               >
                 <Form.Label>
-                  Duration<span style={{ color: "red" }}>*</span>
+                  Period<span style={{ color: "red" }}>*</span>
                 </Form.Label>
                 <Form.Control
                   type="number"
-                  placeholder="Enter duration"
-                  name="duration"
+                  placeholder="Enter period"
+                  name="period"
                   onChange={handleInputChange}
                   required
                 />

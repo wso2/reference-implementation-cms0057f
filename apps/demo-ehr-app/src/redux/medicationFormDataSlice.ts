@@ -20,8 +20,10 @@ interface MedicationFormDataState {
   treatingSickness: string;
   medication: string;
   quantity: number;
-  duration: string;
-  frequency: string;
+  quantityUnit: string;
+  period: number;
+  frequency: number;
+  frequencyUnit: string;
   startDate: Date | null;
 }
 
@@ -29,8 +31,10 @@ const initialState: MedicationFormDataState = {
   treatingSickness: '',
   medication: '',
   quantity: 0,
-  duration: '',
-  frequency: '',
+  quantityUnit: '',
+  period: 0,
+  frequency: 0,
+  frequencyUnit: '',
   startDate: new Date() as Date | null,
 };
 

@@ -114,11 +114,14 @@ public isolated function search(map<string[]>? searchParameters = ()) returns r4
                 }
             ];
         } else {
-            bundle.entry = [
-                {
-                    'resource: byProfile
-                }
-            ];
+            // default to search by profile
+            r4:BundleEntry[] bundleEntries = [];
+            foreach var item in byProfile {
+                bundleEntries.push({
+                    'resource: item
+                });
+            }
+            bundle.entry = bundleEntries;
             bundle.total = byProfile.length();
         }
 

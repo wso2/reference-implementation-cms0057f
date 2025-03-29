@@ -5,7 +5,7 @@ info:
     "A simplified version of the HL7 FHIR API for InsurancePlan resource.\n\
     Supported Profiles: \nhttp://hl7.org/fhir/us/davinci-pdex-plan-net/StructureDefinition/plannet-InsurancePlan\n\
     http://hl7.org/fhir/us/davinci-drug-formulary/StructureDefinition/usdf-Formulary\n\
-    http://hl7.org/fhir/us/davinci-drug-formulary/StructureDefinition/usdf-PayerInsurancePlan\n\"
+    http://hl7.org/fhir/us/davinci-drug-formulary/StructureDefinition/usdf-PayerInsurancePlan\n"
   contact:
     name: API Support
     url: https://wso2.com/contact/`

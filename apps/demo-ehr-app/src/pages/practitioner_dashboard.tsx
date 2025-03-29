@@ -14,19 +14,15 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import { DARK_RED_COLOR } from "../constants/color";
 import { SERVICE_CARD_DETAILS, PATIENT_DETAILS } from "../constants/data";
-import Button from "@mui/material/Button";
 import { ServiceCardListProps } from "../components/interfaces/card";
 import MultiActionAreaCard from "../components/serviceCard";
-import { useContext, useState } from "react";
+import { useContext } from "react";
 import { ExpandedContext } from "../utils/expanded_context";
 import { useSelector, useDispatch } from "react-redux";
-import { dismissPatient, selectPatient } from "../redux/patientSlice";
-import Form from "react-bootstrap/Form";
+import { selectPatient } from "../redux/patientSlice";
 import { useAuth } from "../components/AuthProvider";
-import { Navigate, useNavigate } from "react-router-dom";
-import { Alert, Snackbar } from "@mui/material";
+import { Navigate } from "react-router-dom";
 import { resetCdsResponse } from "../redux/cdsResponseSlice";
 import { resetCdsRequest } from "../redux/cdsRequestSlice";
 import PatientInfo from "../components/PatientInfo";
@@ -55,12 +51,6 @@ function ServiceCardList({ services, expanded }: ServiceCardListProps) {
 
 const DetailsDiv = () => {
   const dispatch = useDispatch();
-  const [alertMessage, setAlertMessage] = useState<string | null>(null);
-  const [alertSeverity, setAlertSeverity] = useState<
-    "error" | "warning" | "info" | "success"
-  >("info");
-  const [openSnackbar, setOpenSnackbar] = useState(false);
-  const navigate = useNavigate();
 
   const savedPatientId = localStorage.getItem("selectedPatientId");
   console.log("savedPatientId", savedPatientId);
@@ -78,23 +68,10 @@ const DetailsDiv = () => {
   if (!currentPatient) {
     currentPatient = PATIENT_DETAILS[0];
   }
-  const handleCloseSnackbar = () => {
-    setOpenSnackbar(false);
-  };
 
   return (
     <div>
-      <PatientInfo/>
-      <Snackbar
-        open={openSnackbar}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-      >
-        <Alert onClose={handleCloseSnackbar} severity={alertSeverity}>
-          {alertMessage}
-        </Alert>
-      </Snackbar>
+      <PatientInfo />
     </div>
   );
 };
@@ -130,7 +107,9 @@ function PractitionerDashBoard() {
         }}
       ></div>
       <br />
-      <div className="page-heading" style={{marginTop : "10px" }}>E-Health Services</div>
+      <div className="page-heading" style={{ marginTop: "10px" }}>
+        E-Health Services
+      </div>
       <div style={{ height: "5vh" }}>
         <ServiceCardList services={SERVICE_CARD_DETAILS} expanded={expanded} />
       </div>

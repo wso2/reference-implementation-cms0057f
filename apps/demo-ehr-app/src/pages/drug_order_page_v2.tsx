@@ -48,7 +48,7 @@ import { CdsCard, CdsResponse } from "../components/interfaces/cdsCard";
 import axios from "axios";
 import { useAuth } from "../components/AuthProvider";
 import { Navigate } from "react-router-dom";
-import { Alert, Snackbar, Typography } from "@mui/material";
+import { Alert, Snackbar } from "@mui/material";
 import PatientInfo from "../components/PatientInfo";
 
 const PrescribeForm = ({

@@ -36,7 +36,6 @@ import {
   updateMedicationFormData,
   resetMedicationFormData,
 } from "../redux/medicationFormDataSlice";
-import LogoutIcon from "@mui/icons-material/Logout";
 
 import {
   FREQUENCY_OPTIONS,
@@ -44,7 +43,6 @@ import {
   CHECK_PAYER_REQUIREMENTS_REQUEST_BODY,
   TREATMENT_OPTIONS,
   CREATE_MEDICATION_REQUEST_BODY,
-  PATIENT_DETAILS,
 } from "../constants/data";
 import { CdsCard, CdsResponse } from "../components/interfaces/cdsCard";
 import axios from "axios";
@@ -221,163 +219,156 @@ const PrescribeForm = ({
   };
 
   return (
-    <Card style={{ marginTop: "30px", padding: "20px" }}>
-      <Card.Body>
-        <Card.Title>Prescribe Medicine</Card.Title>
-        <Form onSubmit={handleSubmit}>
-          <Form.Group
-            controlId="formTreatingSickness"
-            style={{ marginTop: "20px" }}
-          >
-            <Form.Label>
-              Treating <span style={{ color: "red" }}>*</span>
-            </Form.Label>
-            <Select
-              name="treatingSickness"
-              options={TREATMENT_OPTIONS}
-              isSearchable
-              onChange={handleSelectChange}
-              required
-            />
-          </Form.Group>
-
-          <Form.Group controlId="formMedication" style={{ marginTop: "20px" }}>
-            <Form.Label>
-              Medication <span style={{ color: "red" }}>*</span>
-            </Form.Label>
-            <Select
-              name="medication"
-              options={MEDICATION_OPTIONS}
-              isSearchable
-              onChange={handleSelectChange}
-              menuPosition="fixed"
-              required
-            />
-          </Form.Group>
-
-          <div
-            style={{
-              display: "flex",
-              gap: "20px",
-            }}
-          >
-            <Form.Group
-              controlId="formQuantity"
-              style={{ marginTop: "20px", flex: "1 1 100%" }}
-            >
-              <Form.Label>
-                Quantity <span style={{ color: "red" }}>*</span>
-              </Form.Label>
-              <Form.Control
-                type="number"
-                placeholder="Enter quantity"
-                name="quantity"
-                onChange={handleInputChange}
-                required
-              />
-            </Form.Group>
-
-            <Form.Group
-              controlId="formFrequency"
-              style={{ marginTop: "20px", flex: "1 1 100%" }}
-            >
-              <Form.Label>
-                Frequency <span style={{ color: "red" }}>*</span>
-              </Form.Label>
-              <Select
-                name="frequency"
-                options={FREQUENCY_OPTIONS}
-                isSearchable
-                onChange={handleSelectChange}
-                menuPosition={"fixed"}
-                required
-              />
-            </Form.Group>
-
-            <Form.Group
-              controlId="formDuration"
-              style={{ marginTop: "20px", flex: "1 1 100%" }}
-            >
-              <Form.Label>
-                Duration<span style={{ color: "red" }}>*</span>
-              </Form.Label>
-              <Form.Control
-                type="number"
-                placeholder="Enter duration"
-                name="duration"
-                onChange={handleInputChange}
-                required
-              />
-            </Form.Group>
-
-            <Form.Group
-              controlId="formStartDate"
-              style={{ marginTop: "20px", flex: "1 1 100%", width: "100%" }}
-            >
-              <Form.Label>Starting Date</Form.Label>
-              <br />
-              <DatePicker
-                selected={
-                  medicationFormData.startDate instanceof Date
-                    ? medicationFormData.startDate
-                    : null
-                }
-                onChange={handleDateSelectChange}
-                dateFormat="yyyy/MM/dd"
-                className="form-control"
-                wrapperClassName="date-picker-full-width"
-              />
-            </Form.Group>
-          </div>
-          <div style={{ marginTop: "30px", float: "right" }}>
-            {isSubmited && (
-              <Button
-                variant="primary"
-                type="submit"
-                onClick={handleCheckPayerRequirements}
-              >
-                Check Payer Requirements
-              </Button>
-            )}
-            <Button
-              variant="success"
-              // type="submit"
-              style={{ marginLeft: "30px", float: "right" }}
-              onClick={handleCreateMedicationOrder}
-              disabled={isSubmited || !validateForm() ? true : false}
-            >
-              Create Medication Order
-            </Button>
-          </div>
-        </Form>
-      </Card.Body>
-      <Snackbar
-        open={openSnackbar}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-      >
-        <Alert onClose={handleCloseSnackbar} severity={alertSeverity}>
-          {alertMessage}
-        </Alert>
-      </Snackbar>
-    </Card>
-  );
-};
-
-const PrescribeMedicineCard = ({
-  setCdsCards,
-}: {
-  setCdsCards: React.Dispatch<React.SetStateAction<CdsCard[]>>;
-}) => {
-  return (
     <div
       style={{
         color: "black",
         marginTop: "20px",
       }}
     >
-      <PrescribeForm setCdsCards={setCdsCards} />
+      <Card style={{ marginTop: "30px", padding: "20px" }}>
+        <Card.Body>
+          <Card.Title>Prescribe Medicine</Card.Title>
+          <Form onSubmit={handleSubmit}>
+            <Form.Group
+              controlId="formTreatingSickness"
+              style={{ marginTop: "20px" }}
+            >
+              <Form.Label>
+                Treating <span style={{ color: "red" }}>*</span>
+              </Form.Label>
+              <Select
+                name="treatingSickness"
+                options={TREATMENT_OPTIONS}
+                isSearchable
+                onChange={handleSelectChange}
+                required
+              />
+            </Form.Group>
+
+            <Form.Group
+              controlId="formMedication"
+              style={{ marginTop: "20px" }}
+            >
+              <Form.Label>
+                Medication <span style={{ color: "red" }}>*</span>
+              </Form.Label>
+              <Select
+                name="medication"
+                options={MEDICATION_OPTIONS}
+                isSearchable
+                onChange={handleSelectChange}
+                menuPosition="fixed"
+                required
+              />
+            </Form.Group>
+
+            <div
+              style={{
+                display: "flex",
+                gap: "20px",
+              }}
+            >
+              <Form.Group
+                controlId="formQuantity"
+                style={{ marginTop: "20px", flex: "1 1 100%" }}
+              >
+                <Form.Label>
+                  Quantity <span style={{ color: "red" }}>*</span>
+                </Form.Label>
+                <Form.Control
+                  type="number"
+                  placeholder="Enter quantity"
+                  name="quantity"
+                  onChange={handleInputChange}
+                  required
+                />
+              </Form.Group>
+
+              <Form.Group
+                controlId="formFrequency"
+                style={{ marginTop: "20px", flex: "1 1 100%" }}
+              >
+                <Form.Label>
+                  Frequency <span style={{ color: "red" }}>*</span>
+                </Form.Label>
+                <Select
+                  name="frequency"
+                  options={FREQUENCY_OPTIONS}
+                  isSearchable
+                  onChange={handleSelectChange}
+                  menuPosition={"fixed"}
+                  required
+                />
+              </Form.Group>
+
+              <Form.Group
+                controlId="formDuration"
+                style={{ marginTop: "20px", flex: "1 1 100%" }}
+              >
+                <Form.Label>
+                  Duration<span style={{ color: "red" }}>*</span>
+                </Form.Label>
+                <Form.Control
+                  type="number"
+                  placeholder="Enter duration"
+                  name="duration"
+                  onChange={handleInputChange}
+                  required
+                />
+              </Form.Group>
+
+              <Form.Group
+                controlId="formStartDate"
+                style={{ marginTop: "20px", flex: "1 1 100%", width: "100%" }}
+              >
+                <Form.Label>Starting Date</Form.Label>
+                <br />
+                <DatePicker
+                  selected={
+                    medicationFormData.startDate instanceof Date
+                      ? medicationFormData.startDate
+                      : null
+                  }
+                  onChange={handleDateSelectChange}
+                  dateFormat="yyyy/MM/dd"
+                  className="form-control"
+                  wrapperClassName="date-picker-full-width"
+                />
+              </Form.Group>
+            </div>
+            <div style={{ marginTop: "30px", float: "right" }}>
+              {isSubmited && (
+                <Button
+                  variant="primary"
+                  type="submit"
+                  onClick={handleCheckPayerRequirements}
+                >
+                  Check Payer Requirements
+                </Button>
+              )}
+              <Button
+                variant="success"
+                // type="submit"
+                style={{ marginLeft: "30px", float: "right" }}
+                onClick={handleCreateMedicationOrder}
+                disabled={isSubmited || !validateForm() ? true : false}
+              >
+                Create Medication Order
+              </Button>
+            </div>
+          </Form>
+        </Card.Body>
+        <Snackbar
+          open={openSnackbar}
+          autoHideDuration={6000}
+          onClose={handleCloseSnackbar}
+          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        >
+          <Alert onClose={handleCloseSnackbar} severity={alertSeverity}>
+            {alertMessage}
+          </Alert>
+        </Snackbar>
+      </Card>
     </div>
   );
 };
@@ -406,17 +397,28 @@ const RequirementCard = ({
 }) => {
   return (
     <div>
-      <Card style={{ marginTop: "30px", paddingLeft: "20px", paddingRight: "20px", paddingTop: "20px"}}>
+      <Card
+        style={{
+          marginTop: "30px",
+          paddingLeft: "20px",
+          paddingRight: "20px",
+          paddingTop: "20px",
+        }}
+      >
         <Card.Body>
           <div
-            style={{
-              // display: "flex",
-              // justifyContent: "space-between",
-              // alignItems: "center",
-              // marginBottom: "10px",
-            }}
+            style={
+              {
+                // display: "flex",
+                // justifyContent: "space-between",
+                // alignItems: "center",
+                // marginBottom: "10px",
+              }
+            }
           >
-            <h4 style={{marginBottom: "20px"}}>{requirementsResponsCard.summary}</h4>
+            <h4 style={{ marginBottom: "20px" }}>
+              {requirementsResponsCard.summary}
+            </h4>
             <div
               style={{
                 padding: "5px 10px",
@@ -512,28 +514,9 @@ export default function DrugOrderPageV2() {
   return isAuthenticated ? (
     <div style={{ marginLeft: 50, marginBottom: 50 }}>
       <div className="page-heading">Order Drugs</div>
-      <PatientInfo/>
-      <div>
-        <PrescribeMedicineCard setCdsCards={setCdsCards} />
-      </div>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-          gap: "20px",
-        }}
-      ></div>
+      <PatientInfo />
+      <PrescribeForm setCdsCards={setCdsCards} />
       <PayerRequirementsCard cdsCards={cdsCards} />
-      <style>{`
-        .card {
-          height: 100%;
-          display: flex;
-          flex-direction: column;
-        }
-        .card-body {
-          flex: 1;
-        }
-      `}</style>
     </div>
   ) : (
     <Navigate to="/" replace />

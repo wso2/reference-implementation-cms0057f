@@ -17,7 +17,7 @@
 import React from "react";
 import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
-import LogoutIcon from "@mui/icons-material/Logout";
+import CachedIcon from '@mui/icons-material/Cached';
 
 const PatientInfo: React.FC = () => {
 
@@ -46,7 +46,7 @@ const PatientInfo: React.FC = () => {
                     style={{ display: "block", width: "100%" }}
                     onClick={() => (window.location.href = "/")}
                 >
-                    <LogoutIcon />
+                    <CachedIcon />
                 </Button>
             </Form.Group>
         </div>

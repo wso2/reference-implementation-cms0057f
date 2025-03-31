@@ -1089,7 +1089,8 @@ export const CREATE_MEDICATION_REQUEST_BODY = (
   medication: string,
   frequency: number,
   frequencyUnit: string,
-  period: number
+  period: number,
+  startDate: string
 ) => {
   const selectedMedication = MEDICATION_OPTIONS.flatMap(
     (option) => option.options
@@ -1123,7 +1124,7 @@ export const CREATE_MEDICATION_REQUEST_BODY = (
     requester: {
       reference: `Practitioner/${practitionerId}`,
     },
-    authoredOn: "2025-03-02",
+    authoredOn: new Date().toISOString().split("T")[0],
     medicationCodeableConcept: {
       coding: [
         {
@@ -1140,7 +1141,7 @@ export const CREATE_MEDICATION_REQUEST_BODY = (
         timing: {
           repeat: {
             boundsPeriod: {
-              start: "2025-03-02",
+              start: startDate,
             },
             frequency: frequency,
             period: period,
@@ -1170,7 +1171,8 @@ export const CHECK_PAYER_REQUIREMENTS_REQUEST_BODY = (
   medication: string,
   frequency: number,
   frequencyUnit: string,
-  period: number
+  period: number,
+  startDate: string
 ) => {
   const selectedMedication = MEDICATION_OPTIONS.flatMap(
     (option) => option.options
@@ -1231,7 +1233,7 @@ export const CHECK_PAYER_REQUIREMENTS_REQUEST_BODY = (
                   timing: {
                     repeat: {
                       boundsPeriod: {
-                        start: "2025-03-02",
+                        start: startDate,
                       },
                       frequency: frequency,
                       period: period,
@@ -1251,7 +1253,7 @@ export const CHECK_PAYER_REQUIREMENTS_REQUEST_BODY = (
                 },
               ],
               meta: {
-                lastUpdated: "2025-03-02T10:00:00.000Z",
+                lasyUpdated: new Date().toISOString(),
               },
               status: "draft",
             },

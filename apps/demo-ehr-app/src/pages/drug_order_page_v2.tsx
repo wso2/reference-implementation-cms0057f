@@ -135,7 +135,8 @@ const PrescribeForm = ({
       medicationFormData.medication,
       medicationFormData.frequency,
       medicationFormData.frequencyUnit,
-      medicationFormData.period
+      medicationFormData.period,
+      medicationFormData.startDate.toISOString().split("T")[0]
     );
     const Config = window.Config;
 
@@ -171,7 +172,8 @@ const PrescribeForm = ({
         dispatch(updateCdsResponse({ cards: err, systemActions: {} }));
       });
   };
-  const validateForm = () => {
+
+  const validateFormRequiredFields = () => {
     const requiredFields: (keyof typeof medicationFormData)[] = [
       "treatingSickness",
       "medication",
@@ -189,6 +191,29 @@ const PrescribeForm = ({
     return isValid;
   };
 
+  const validateForm = () => {
+    if (!validateFormRequiredFields()) {
+      setAlertMessage("Please fill all required fields");
+      setAlertSeverity("error");
+      setOpenSnackbar(true);
+      return false;
+    }
+
+    if (medicationFormData.frequency <= 0) {
+      setAlertMessage("Frequency must be greater than 0");
+      setAlertSeverity("error");
+      setOpenSnackbar(true);
+      return false;
+    }
+    if (medicationFormData.period <= 0) {
+      setAlertMessage("Period must be greater than 0");
+      setAlertSeverity("error");
+      setOpenSnackbar(true);
+      return false;
+    }
+    return true;
+  };
+
   const handleCreateMedicationOrder = () => {
     if (!validateForm()) {
       return;
@@ -203,7 +228,8 @@ const PrescribeForm = ({
       medicationFormData.medication,
       medicationFormData.frequency,
       medicationFormData.frequencyUnit,
-      medicationFormData.period
+      medicationFormData.period,
+      medicationFormData.startDate.toISOString().split("T")[0]
     );
     const Config = window.Config;
 
@@ -373,7 +399,7 @@ const PrescribeForm = ({
                 // type="submit"
                 style={{ marginLeft: "30px", float: "right" }}
                 onClick={handleCreateMedicationOrder}
-                disabled={isSubmited || !validateForm() ? true : false}
+                disabled={isSubmited || !validateFormRequiredFields()}
               >
                 Create Medication Order
               </Button>

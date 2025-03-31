@@ -38,8 +38,13 @@ import PatientInfo from "../components/PatientInfo";
 const ClaimForm = () => {
   const dispatch = useDispatch();
   const medicationFormData = useSelector(
-    (state: { medicationFormData: { medication: string; quantity: string } }) =>
-      state.medicationFormData
+    (state: {
+      medicationFormData: {
+        medication: string;
+        frequency: number;
+        period: number;
+      };
+    }) => state.medicationFormData
   );
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const [alertSeverity, setAlertSeverity] = useState<
@@ -68,7 +73,7 @@ const ClaimForm = () => {
 
   const [formData, setFormData] = useState<{
     medication: string;
-    quantity: string;
+    quantity: number;
     patient: string;
     provider: string;
     insurer: string;
@@ -78,7 +83,7 @@ const ClaimForm = () => {
     unitPrice: string;
   }>({
     medication: medicationFormData.medication,
-    quantity: medicationFormData.quantity,
+    quantity: medicationFormData.frequency * medicationFormData.period,
     patient:
       currentPatient?.name[0].given[0] + " " + currentPatient?.name[0].family,
     provider: "PractitionerRole/456",
@@ -116,8 +121,6 @@ const ClaimForm = () => {
     dispatch(updateRequestMethod("POST"));
     dispatch(updateRequestUrl(Config.demoBaseUrl + Config.claim_submit));
     dispatch(updateRequest(payload));
-
-    
 
     axios
       .post(Config.claim_submit, payload, {

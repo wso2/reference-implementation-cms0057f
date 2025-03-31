@@ -33,6 +33,7 @@ import {
 import { updateCdsResponse, resetCdsResponse } from "../redux/cdsResponseSlice";
 import { useAuth } from "../components/AuthProvider";
 import PatientInfo from "../components/PatientInfo";
+import { FREQUENCY_UNITS } from "../constants/data";
 
 const useQuery = () => {
   return new URLSearchParams(useLocation().search);
@@ -362,18 +363,22 @@ const PrescribedForm = () => {
       medicationFormData: {
         treatingSickness: string;
         medication: string;
-        quantity: number;
         frequency: string;
+        frequencyUnit: string;
+        period: number;
         startDate: Date;
-        duration: string;
       };
     }) => state.medicationFormData
   );
   const treatingSickness = medicationFormData.treatingSickness;
   const medication = medicationFormData.medication;
-  const quantity = medicationFormData.quantity;
   const frequency = medicationFormData.frequency;
-  const duration = medicationFormData.duration;
+
+  const frequencyUnit =
+    FREQUENCY_UNITS.find(
+      (unit) => unit.value === medicationFormData.frequencyUnit
+    )?.label || medicationFormData.frequencyUnit;
+  const period = medicationFormData.period;
 
   return (
     <Card style={{ marginTop: "30px", padding: "20px" }}>
@@ -384,7 +389,7 @@ const PrescribedForm = () => {
             controlId="formTreatingSickness"
             style={{ marginTop: "20px" }}
           >
-            <Form.Label>Treating Sickness</Form.Label>
+            <Form.Label>Treating</Form.Label>
             <Form.Control type="text" value={treatingSickness || ""} disabled />
           </Form.Group>
 
@@ -400,14 +405,6 @@ const PrescribedForm = () => {
             }}
           >
             <Form.Group
-              controlId="formQuantity"
-              style={{ marginTop: "20px", flex: "1 1 100%" }}
-            >
-              <Form.Label>Quantity</Form.Label>
-              <Form.Control type="text" value={quantity || ""} disabled />
-            </Form.Group>
-
-            <Form.Group
               controlId="formFrequency"
               style={{ marginTop: "20px", flex: "1 1 100%" }}
             >
@@ -419,10 +416,17 @@ const PrescribedForm = () => {
               controlId="formDuration"
               style={{ marginTop: "20px", flex: "1 1 100%" }}
             >
-              <Form.Label>Duration (days)</Form.Label>
-              <Form.Control type="text" value={duration || ""} disabled />
+              <Form.Label>Frequency Unit</Form.Label>
+              <Form.Control type="text" value={frequencyUnit || ""} disabled />
             </Form.Group>
 
+            <Form.Group
+              controlId="formPeriod"
+              style={{ marginTop: "20px", flex: "1 1 100%" }}
+            >
+              <Form.Label>Period</Form.Label>
+              <Form.Control type="text" value={period || ""} disabled />
+            </Form.Group>
             <Form.Group
               controlId="formStartDate"
               style={{ marginTop: "20px", flex: "1 1 100%", width: "100%" }}

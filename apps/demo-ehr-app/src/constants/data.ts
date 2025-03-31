@@ -962,7 +962,7 @@ export const CLAIM_REQUEST_BODY = (
   supportingInfo: string,
   category: string,
   medication: string,
-  quantity: string,
+  quantity: number,
   unitPrice: string
 ) => {
   return {
@@ -1070,7 +1070,7 @@ export const CLAIM_REQUEST_BODY = (
                       currency: `${unitPrice}`.split(" ")[1],
                     },
                     quantity: {
-                      value: +`${quantity}`,
+                      value: quantity,
                     },
                   },
                 ],

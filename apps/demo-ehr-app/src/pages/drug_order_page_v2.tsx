@@ -99,12 +99,7 @@ const PrescribeForm = ({
     dispatch(
       updateMedicationFormData({
         [name]:
-          name === "quantity" ||
-          name === "duration" ||
-          name === "frequency" ||
-          name === "period"
-            ? Number(value)
-            : value,
+          name === "frequency" || name === "period" ? Number(value) : value,
       })
     );
   };
@@ -401,7 +396,6 @@ const PrescribeForm = ({
               )}
               <Button
                 variant="success"
-                // type="submit"
                 style={{ marginLeft: "30px", float: "right" }}
                 onClick={handleCreateMedicationOrder}
                 disabled={isSubmited || !validateFormRequiredFields()}

@@ -50,6 +50,11 @@ import { useAuth } from "../components/AuthProvider";
 import { Navigate } from "react-router-dom";
 import { Alert, Snackbar } from "@mui/material";
 import PatientInfo from "../components/PatientInfo";
+import {
+  CHIP_COLOR_CRITICAL,
+  CHIP_COLOR_INFO,
+  CHIP_COLOR_WARNING,
+} from "../constants/color";
 
 const PrescribeForm = ({
   setCdsCards,
@@ -454,23 +459,20 @@ const RequirementCard = ({
         }}
       >
         <Card.Body>
-          <div
-            style={
-              {
-                // display: "flex",
-                // justifyContent: "space-between",
-                // alignItems: "center",
-                // marginBottom: "10px",
-              }
-            }
-          >
+          <div>
             <h4 style={{ marginBottom: "20px" }}>
               {requirementsResponsCard.summary}
             </h4>
             <div
               style={{
                 padding: "5px 10px",
-                backgroundColor: "#e3ae5e",
+                marginTop: "10px",
+                backgroundColor:
+                  requirementsResponsCard.indicator === "warning"
+                    ? CHIP_COLOR_WARNING
+                    : requirementsResponsCard.indicator === "critical"
+                    ? CHIP_COLOR_CRITICAL
+                    : CHIP_COLOR_INFO,
                 color: "black",
                 borderRadius: "30px",
                 fontSize: "12px",
@@ -481,54 +483,39 @@ const RequirementCard = ({
             >
               {requirementsResponsCard.indicator}
             </div>
-            {/* <hr/> */}
           </div>
           <br />
           <Card.Text>
-            <p>{requirementsResponsCard.detail}</p>
+            <p style={{ textAlign: "justify" }}>
+              {requirementsResponsCard.detail}
+            </p>
 
-            {/* <hr /> */}
             <div
               style={{
-                // display: "flex",
-                // justifyContent: "space-between",
-                // alignItems: "center",
                 marginBottom: "10px",
+                marginTop: "30px",
               }}
             >
               <h5>Suggestions</h5>
-              {requirementsResponsCard.selectionBehavior && (
-                <div
-                  style={{
-                    padding: "5px 10px",
-                    backgroundColor: "#FFD580",
-                    color: "black",
-                    borderRadius: "30px",
-                    fontSize: "12px",
-                  }}
-                >
-                  {requirementsResponsCard.selectionBehavior}
-                </div>
-              )}
+              <ul>
+                {requirementsResponsCard.suggestions &&
+                  requirementsResponsCard.suggestions.map(
+                    (suggestion, index) => (
+                      <li key={index}>{suggestion.label}</li>
+                    )
+                  )}
+              </ul>
             </div>
-            <ul>
-              {requirementsResponsCard.suggestions &&
-                requirementsResponsCard.suggestions.map((suggestion, index) => (
-                  <li key={index}>{suggestion.label}</li>
-                ))}
-            </ul>
             {requirementsResponsCard.links &&
               requirementsResponsCard.links.length > 0 && (
                 <>
-                  {/* <hr /> */}
                   <br />
-                  {/* <Card.Title>Links</Card.Title> */}
                   {requirementsResponsCard.links.map((link, index) => (
                     <div
                       key={index}
                       style={{
                         display: "flex",
-                        justifyContent: "flex-end",
+                        justifyContent: "center",
                       }}
                     >
                       <Button

@@ -25,6 +25,7 @@ import {
   Select,
   TextField,
   LinearProgress,
+  FormGroup,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import Header from "../common/Header";
@@ -126,7 +127,6 @@ export const LandingPage = () => {
   }, []);
 
   const handleCheckCoverage = () => {
-
     const coverageId = (
       document.getElementById("coverage-id") as HTMLInputElement
     )?.value;
@@ -351,111 +351,135 @@ export const LandingPage = () => {
                 borderRadius: 2,
               }}
             >
-              <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
-                <InputLabel id="select-payer-label">
-                  Select old payer to fetch Member ID
-                </InputLabel>
-                <Select
-                  labelId="select-payer-label"
-                  id="select-payer"
-                  // displayEmpty
-                  value={selectedOrgId}
-                  // defaultValue={selectedOrgId}
-                  onChange={selectOrgChange}
-                  label="Select old payer to fetch Member ID"
-                >
-                  {payerList.map((payer, index) => (
-                    <MenuItem key={index} value={payer.id}>
-                      {payer.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "15px",
-                    marginTop: "15px",
-                  }}
-                >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "15px",
+                  marginTop: "15px",
+                }}
+              >
+                <FormGroup style={{ flex: "1 1 70%" }}>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel id="select-payer-label">
+                      Select old payer to fetch Member ID
+                    </InputLabel>
+                    <Select
+                      labelId="select-payer-label"
+                      id="select-payer"
+                      value={selectedOrgId}
+                      onChange={selectOrgChange}
+                      label="Select old payer to fetch Member ID"
+                    >
+                      {payerList.map((payer, index) => (
+                        <MenuItem key={index} value={payer.id}>
+                          {payer.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </FormGroup>
+                <FormGroup style={{ flex: "1 1 30%" }}>
                   <TextField
                     required
                     id="coverage-id"
                     label="Coverage ID"
-                    style={{ flex: 1 }}
+                    // style={{ flex: 1 }}
                     defaultValue="367"
                   ></TextField>
-                  <Button
-                    variant="contained"
-                    style={{ height: "55px" }}
-                    color="primary"
-                    onClick={handleCheckCoverage}
-                  >
-                    Check Coverage
-                  </Button>
-                </div>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "15px",
-                    marginTop: "15px",
-                  }}
+                </FormGroup>
+              </div>
+              {/* <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "15px",
+                  marginTop: "15px",
+                }}
+              >
+                <Button
+                  variant="contained"
+                  style={{ height: "55px" }}
+                  color="primary"
+                  onClick={handleCheckCoverage}
                 >
+                  Check Coverage
+                </Button>
+              </div> */}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "15px",
+                  marginTop: "15px",
+                }}
+              >
+                <FormGroup style={{ flex: "1 1 70%" }}>
                   <TextField
                     required
                     id="member-id"
                     label="Member ID"
-                    style={{ flex: 1 }}
+                    // style={{ flex: 1 }}
                     value={oldMemberId}
+                    disabled
                   ></TextField>
-                  <Button
-                    variant="contained"
-                    style={{ height: "55px" }}
-                    color="primary"
-                    onClick={handleFetchMemberID}
-                  >
-                    Fetch Member ID
-                  </Button>
-                </div>
-
-                <Box
-                  sx={{
-                    mt: 2,
-                    mb: 4,
-                    border: "1px solid lightGrey",
-                    padding: 2,
-                    borderRadius: 1,
-                  }}
+                </FormGroup>
+                <Button
+                  variant="contained"
+                  style={{ height: "55px" }}
+                  color="primary"
+                  onClick={handleFetchMemberID}
                 >
-                  <Typography variant="h5">Status: {status}</Typography>
-                  <Box sx={{ display: "flex", alignItems: "center" }}>
-                    <Box sx={{ width: "100%", mt: 2, height: 6 }}>
-                      <LinearProgress
-                        variant="determinate"
-                        value={+exportPercentage}
-                      />
-                    </Box>
-                    <Box sx={{ minWidth: 40, paddingLeft: 2, height: 10 }}>
-                      <Typography
-                        variant="body2"
-                        sx={{ color: "text.secondary" }}
-                      >{`${Math.round(+exportPercentage)}%`}</Typography>
-                    </Box>
+                  Fetch Member ID
+                </Button>
+              </div>
+
+              <Box
+                sx={{
+                  mt: 2,
+                  mb: 4,
+                  border: "1px solid lightGrey",
+                  padding: 2,
+                  borderRadius: 1,
+                }}
+              >
+                <Typography variant="h5">Status: {status}</Typography>
+                <Box sx={{ display: "flex", alignItems: "center" }}>
+                  <Box sx={{ width: "100%", mt: 2, height: 6 }}>
+                    <LinearProgress
+                      variant="determinate"
+                      value={+exportPercentage}
+                    />
                   </Box>
-                  {isExportCompleted && (
-                    <Typography variant="body1" sx={{ mt: 2, color: "black" }}>
-                      Export ID: {exportId}
-                    </Typography>
-                  )}
+                  <Box sx={{ minWidth: 40, paddingLeft: 2, height: 10 }}>
+                    <Typography
+                      variant="body2"
+                      sx={{ color: "text.secondary" }}
+                    >{`${Math.round(+exportPercentage)}%`}</Typography>
+                  </Box>
                 </Box>
+                {isExportCompleted && (
+                  <Typography variant="body1" sx={{ mt: 2, color: "black" }}>
+                    Export ID: {exportId}
+                  </Typography>
+                )}
+              </Box>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  gap: "15px",
+                  marginTop: "15px",
+                }}
+              >
                 {isExportCompleted || error != "" ? (
                   <>
                     <Button
                       variant="contained"
                       color="primary"
                       onClick={() => window.open("/exported-data", "_blank")}
-                      sx={{ mt: 2 }}
+                      // sx={{ mt: 2 }}
+                      style={{ height: "55px", width: "100%" }}
                     >
                       View Exported Data
                     </Button>
@@ -469,12 +493,13 @@ export const LandingPage = () => {
                       disabled={
                         isExporting || error != "" || oldMemberId === ""
                       }
+                      style={{ height: "55px", width: "100%" }}
                     >
                       {exportButtonLabel}
                     </Button>
                   </>
                 )}
-              </FormControl>
+              </div>
             </Box>
           </Box>
         </div>

@@ -31,8 +31,8 @@ function LoginV2() {
         style={{
           backgroundImage: `url('/background-gray-med.svg')`,
           backgroundSize: "cover",
-          width: "100vw",
-          height: "100vh",
+          width: "100%",
+          height: "100%",
         }}
       >
         <div

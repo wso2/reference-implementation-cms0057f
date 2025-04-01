@@ -77,6 +77,7 @@ export const LandingPage = () => {
   // State to manage selected options
   const [selectedOrgId, setSelectedOrgId] = useState<number | null>(null);
   const Config = window.Config;
+  const loggedUser = useSelector((state: any) => state.loggedUser);
 
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -126,62 +127,105 @@ export const LandingPage = () => {
     loadOrganizations();
   }, []);
 
-  const handleCheckCoverage = () => {
-    const coverageId = (
-      document.getElementById("coverage-id") as HTMLInputElement
-    )?.value;
-
-    if (coverageId === "") {
-      alert("Coverage ID is required.");
-      return;
-    } else {
-      dispatch(resetCdsRequest());
-      dispatch(resetCdsResponse());
-      dispatch(updateRequestMethod("GET"));
-      dispatch(
-        updateRequestUrl(
-          "/member-service/v1.0/previous" +
-            "/" +
-            selectedOrgId +
-            "/" +
-            coverageId
-        )
-      );
-
-      axios
-        .get<Response>(
-          Config.oldPayerCoverageGet + "/" + selectedOrgId + "/" + coverageId
-        )
-        .then<Response>((res) => {
-          if (res.status >= 200 && res.status < 300) {
-            setCoverageResource(res.data);
-          } else {
-            console.log("Error fetching payer requirements:", res);
-          }
-          dispatch(updateCdsResponse({ cards: res.data, systemActions: {} }));
-          return res.data;
-        })
-        .catch((err) => {
-          dispatch(updateCdsResponse({ cards: err, systemActions: {} }));
-        });
-    }
-  };
-
   const selectOrgChange = (event: { target: { value: any } }) => {
     const { value } = event.target;
-    setSelectedOrgId(value); // Update selected options
+    setSelectedOrgId(value);
   };
-  // Handle selection of options
-  const handleFetchMemberID = () => {
-    // const orgId = (
-    //   document.getElementById("coverage-id") as HTMLInputElement
-    // )?.value;
-    // setSelectedOrgId(value); // Update selected options
 
+  const handleFetchMemberID = () => {
     setOldMemberId("");
     setExportButtonLabel("Export");
     setIsExportCompleted(false);
-    handleExportKickOff();
+    handleMemberMatch();
+  };
+
+  const handleMemberMatch = () => {
+    const payload = memberMatchPayload;
+
+    const coverageId = (
+      document.getElementById("coverage-id") as HTMLInputElement
+    )?.value;
+    try {
+      axios
+        .get(
+          Config.oldPayerCoverageGet + "/" + selectedOrgId + "/" + coverageId
+        )
+        .then((res) => {
+          if (res.status >= 200 && res.status < 300) {
+            const coverageResource = res.data;
+
+            // Replace coverage resource in payload
+            payload.parameter = payload.parameter.map((param: any) => {
+              if (param.name === "CoverageToLink") {
+                return {
+                  ...param,
+                  resource: coverageResource,
+                };
+              }
+              return param;
+            });
+
+            // Replace patient resource in payload
+            const patientResource = JSON.parse(
+              localStorage.getItem("patientResource") || "{}"
+            );
+            payload.parameter = payload.parameter.map((param: any) => {
+              if (param.name === "MemberPatient") {
+                return {
+                  ...param,
+                  resource: patientResource,
+                };
+              }
+              return param;
+            });
+
+            dispatch(updateRequestMethod("POST"));
+            dispatch(updateRequestUrl("/member-service/v1.0/match"));
+            dispatch(updateRequest(payload));
+            dispatch(resetCdsResponse());
+
+            axios
+              .post(Config.memberMatch, payload, {
+                headers: {
+                  "Content-Type": "application/fhir+json",
+                },
+              })
+              .then((response) => {
+                dispatch(
+                  updateCdsResponse({
+                    cards: response.data,
+                    systemActions: {},
+                  })
+                );
+                if (response.status === 201) {
+                  setOldMemberId(
+                    response.data?.parameter?.valueIdentifier?.value
+                  );
+                  setError("");
+                  setStatus("Ready");
+                } else {
+                  setError("Match failed. Please retry");
+                }
+              })
+              .catch((error) => {
+                console.error("Error:", error);
+                setError("Match failed. Please retry");
+                setStatus("Member Not Resoved.");
+              })
+              .finally(() => {
+                setIsMemberIDFetched(true); // Turn off loading after API call completes
+              });
+          } else {
+            console.log("Error fetching coverage:", res);
+          }
+        })
+        .catch((err) => {
+          console.log("Error fetching coverage:", err);
+        });
+    } catch (error) {
+      console.error("Error:", error);
+      setError("Error fetching data");
+    }
   };
 
   const handleSubmit = (e: { preventDefault: () => void }) => {
@@ -253,59 +297,6 @@ export const LandingPage = () => {
 
     postOrganizationId();
   };
-
-  const handleExportKickOff = () => {
-    const payload = memberMatchPayload;
-    console.log("Payload:", payload);
-    const patientResource = JSON.parse(
-      localStorage.getItem("patientResource") || "{}"
-    );
-    console.log("coverageResource: ", coverageResource);
-    console.log("Patient Resource:", patientResource);
-    console.log("NEW Payload:", payload);
-
-    dispatch(updateRequestMethod("POST"));
-    dispatch(updateRequestUrl("/member-service/v1.0/match"));
-    dispatch(updateRequest(payload));
-    dispatch(resetCdsResponse());
-    try {
-      axios
-        .post(Config.memberMatch, payload, {
-          headers: {
-            "Content-Type": "application/fhir+json",
-          },
-        })
-        .then((response) => {
-          dispatch(
-            updateCdsResponse({
-              cards: response.data,
-              systemActions: {},
-            })
-          );
-          if (response.status === 201) {
-            setOldMemberId(response.data?.parameter?.valueIdentifier?.value);
-            // setOldMemberId("644d85af-aaf9-4068-ad23-1e55aedd5205");
-            setError("");
-            setStatus("Ready");
-          } else {
-            setError("Match failed. Please retry");
-          }
-        })
-        .catch((error) => {
-          console.error("Error:", error);
-          setError("Match failed. Please retry");
-          setStatus("Member Not Resoved.");
-        })
-        .finally(() => {
-          setIsMemberIDFetched(true); // Turn off loading after API call completes
-        });
-    } catch (error) {
-      console.error("Error:", error);
-      setError("Error fetching data");
-    }
-  };
-
-  const loggedUser = useSelector((state: any) => state.loggedUser);
 
   return isAuthenticated ? (
     <div
@@ -384,28 +375,10 @@ export const LandingPage = () => {
                     required
                     id="coverage-id"
                     label="Coverage ID"
-                    // style={{ flex: 1 }}
                     defaultValue="367"
                   ></TextField>
                 </FormGroup>
               </div>
-              {/* <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "15px",
-                  marginTop: "15px",
-                }}
-              >
-                <Button
-                  variant="contained"
-                  style={{ height: "55px" }}
-                  color="primary"
-                  onClick={handleCheckCoverage}
-                >
-                  Check Coverage
-                </Button>
-              </div> */}
               <div
                 style={{
                   display: "flex",
@@ -419,9 +392,8 @@ export const LandingPage = () => {
                     required
                     id="member-id"
                     label="Member ID"
-                    // style={{ flex: 1 }}
                     value={oldMemberId}
-                    disabled
+                    aria-readonly
                   ></TextField>
                 </FormGroup>
                 <Button

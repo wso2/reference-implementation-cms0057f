@@ -44,7 +44,7 @@ export default function MultiActionAreaCard({
               height: "100px",
               margin: "1vw",
               padding: "0.3vw",
-              backgroundColor: "white",
+              // backgroundColor: "white",
               borderRadius: 2,
             }}
           />

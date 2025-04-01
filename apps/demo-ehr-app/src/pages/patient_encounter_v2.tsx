@@ -47,7 +47,7 @@ function PatientEncounter() {
     const fetchPatientDetails = async () => {
       dispatch(resetCdsResponse());
       dispatch(updateRequestMethod("GET"));
-      dispatch(updateRequestUrl(Config.demoBaseUrl + Config.patient));
+      dispatch(updateRequestUrl(Config.demoHospitalUrl + Config.patient));
       try {
         const response = await axios.get(Config.patient);
         dispatch(
@@ -89,9 +89,17 @@ function PatientEncounter() {
     return selectedPatient.length > 0;
   };
 
-  const handleBtnClick = () => {
+  const handleBtnClick = async () => {
     dispatch(selectPatient(selectedPatient));
     localStorage.setItem("selectedPatientId", selectedPatient);
+    localStorage.setItem(
+      "selectedPatientName",
+      patients[selectedPatient].fullName
+    );
+    const loggedUser = await fetch("/auth/userinfo").then((response) =>
+      response.json()
+    );
+    localStorage.setItem("loggedUser", JSON.stringify(loggedUser));
     navigate("dashboard");
   };
 

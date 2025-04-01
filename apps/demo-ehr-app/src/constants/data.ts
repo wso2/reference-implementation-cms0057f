@@ -1,3 +1,5 @@
+import { v4 as uuidv4 } from "uuid";
+
 // Copyright (c) 2024-2025, WSO2 LLC. (http://www.wso2.com).
 //
 // WSO2 LLC. licenses this file to you under the Apache License,
@@ -17,7 +19,7 @@
 export const SERVICE_CARD_DETAILS = [
   {
     serviceImagePath: "/patient_view_service.png",
-    serviceName: "View Patient",
+    serviceName: "Patient Demographics",
     serviceDescription:
       "Access and manage patient records, including personal details, medical history, and treatment plans.",
     path: "/dashboard/patient",
@@ -960,7 +962,7 @@ export const CLAIM_REQUEST_BODY = (
   supportingInfo: string,
   category: string,
   medication: string,
-  quantity: string,
+  quantity: number,
   unitPrice: string
 ) => {
   return {
@@ -1068,7 +1070,7 @@ export const CLAIM_REQUEST_BODY = (
                       currency: `${unitPrice}`.split(" ")[1],
                     },
                     quantity: {
-                      value: +`${quantity}`,
+                      value: quantity,
                     },
                   },
                 ],
@@ -1081,42 +1083,57 @@ export const CLAIM_REQUEST_BODY = (
   };
 };
 
-export const CREATE_MEDICATION_REQUEST_BODY = () => {
+export const CREATE_MEDICATION_REQUEST_BODY = (
+  patientId: string,
+  practitionerId: string,
+  medication: string,
+  frequency: number,
+  frequencyUnit: string,
+  period: number,
+  startDate: string
+) => {
+  const selectedMedication = MEDICATION_OPTIONS.flatMap(
+    (option) => option.options
+  ).find((option) => option.value === medication);
+
+  const doseQuantity = selectedMedication?.doseQuantity || "";
+  const doseUnit = selectedMedication?.doseUnit || "";
+
   return {
     resourceType: "MedicationRequest",
     subject: {
-      reference: "Patient/101",
+      reference: `Patient/${patientId}`,
     },
     medicationReference: {
-      reference: "Medication/aimovig-70mg",
+      reference: `Medication/${medication}`,
     },
     dispenseRequest: {
       quantity: {
         value: 1.0,
-        unit: "injection",
+        unit: selectedMedication?.unit || "",
         system: "http://unitsofmeasure.org",
-        code: "injection",
+        code: selectedMedication?.unit || "",
       },
       expectedSupplyDuration: {
-        unit: "days",
+        unit: frequencyUnit,
         system: "http://unitsofmeasure.org",
-        code: "d",
-        value: 30.0,
+        code: frequencyUnit,
+        value: frequency,
       },
     },
     requester: {
-      reference: "Practitioner/456",
+      reference: `Practitioner/${practitionerId}`,
     },
-    authoredOn: "2025-03-02",
+    authoredOn: new Date().toISOString().split("T")[0],
     medicationCodeableConcept: {
       coding: [
         {
           system: "http://www.nlm.nih.gov/research/umls/rxnorm",
-          code: "1746007",
-          display: "Aimovig 70 mg Injection",
+          code: selectedMedication?.code || "",
+          display: medication,
         },
       ],
-      text: "Aimovig 70 mg Injection",
+      text: medication,
     },
     intent: "order",
     dosageInstruction: [
@@ -1124,24 +1141,24 @@ export const CREATE_MEDICATION_REQUEST_BODY = () => {
         timing: {
           repeat: {
             boundsPeriod: {
-              start: "2025-03-02",
+              start: startDate,
             },
-            frequency: 1,
-            period: 1.0,
-            periodUnit: "mo",
+            frequency: frequency,
+            period: period,
+            periodUnit: frequencyUnit,
           },
         },
         doseAndRate: [
           {
             doseQuantity: {
-              value: 70.0,
-              unit: "mg",
+              value: doseQuantity,
+              unit: doseUnit,
               system: "http://unitsofmeasure.org",
-              code: "mg",
+              code: doseUnit,
             },
           },
         ],
-        text: "Inject 70 mg subcutaneously once a month",
+        text: `${medication}, for ${frequency} times a ${frequencyUnit} for ${period} ${frequencyUnit}`,
       },
     ],
     status: "active",
@@ -1151,9 +1168,19 @@ export const CREATE_MEDICATION_REQUEST_BODY = () => {
 export const CHECK_PAYER_REQUIREMENTS_REQUEST_BODY = (
   patientId: string,
   practitionerId: string,
-  medicationName: string,
-  quantity: number
+  medication: string,
+  frequency: number,
+  frequencyUnit: string,
+  period: number,
+  startDate: string
 ) => {
+  const selectedMedication = MEDICATION_OPTIONS.flatMap(
+    (option) => option.options
+  ).find((option) => option.value === medication);
+
+  const doseQuantity = selectedMedication?.doseQuantity || "";
+  const doseUnit = selectedMedication?.doseUnit || "";
+
   return {
     hook: "order-sign",
     hookInstance: "98765-wxyz-43210-lmno",
@@ -1171,62 +1198,62 @@ export const CHECK_PAYER_REQUIREMENTS_REQUEST_BODY = (
             resource: {
               resourceType: "MedicationRequest",
               subject: {
-                reference: "Patient/john-smith",
+                reference: `Patient/${patientId}`,
               },
               medicationCodeableConcept: {
                 coding: [
                   {
                     system: "http://www.nlm.nih.gov/research/umls/rxnorm",
-                    code: "1746007",
-                    display: `${medicationName}`,
+                    code: selectedMedication?.code || "",
+                    display: `${medication}`,
                   },
                 ],
-                text: `${medicationName}`,
+                text: `${medication}`,
               },
               dispenseRequest: {
                 quantity: {
-                  value: quantity,
-                  unit: "mL",
+                  value: doseQuantity,
+                  unit: doseUnit,
                   system: "http://unitsofmeasure.org",
-                  code: "mL",
+                  code: doseUnit,
                 },
                 numberOfRepeatsAllowed: 1,
                 expectedSupplyDuration: {
-                  unit: "days",
+                  unit: frequencyUnit,
                   system: "http://unitsofmeasure.org",
-                  code: "d",
-                  value: 30.0,
+                  code: frequencyUnit,
+                  value: frequency,
                 },
               },
-              id: "medication-request-001",
+              id: `medication-request-${uuidv4()}`,
               intent: "order",
               dosageInstruction: [
                 {
-                  text: "Inject 70 mg once a month",
+                  text: `${medication}, for ${frequency} times a ${frequencyUnit} for ${period} ${frequencyUnit}`,
                   timing: {
                     repeat: {
                       boundsPeriod: {
-                        start: "2025-03-02",
+                        start: startDate,
                       },
-                      frequency: 1,
-                      period: 1.0,
-                      periodUnit: "mo",
+                      frequency: frequency,
+                      period: period,
+                      periodUnit: frequencyUnit,
                     },
                   },
                   doseAndRate: [
                     {
                       doseQuantity: {
-                        value: 70.0,
-                        unit: "mg",
+                        value: doseQuantity,
+                        unit: doseUnit,
                         system: "http://unitsofmeasure.org",
-                        code: "mg",
+                        code: doseUnit,
                       },
                     },
                   ],
                 },
               ],
               meta: {
-                lastUpdated: "2025-03-02T10:00:00.000Z",
+                lasyUpdated: new Date().toISOString(),
               },
               status: "draft",
             },
@@ -1483,29 +1510,15 @@ export const response = {
   ],
 };
 
-export const FREQUENCY_OPTIONS = [
-  {
-    label: "Daily",
-    options: [
-      { value: "Once a day", label: "Once a day" },
-      { value: "Twice a day", label: "Twice a day" },
-      { value: "Thrice a day", label: "Thrice a day" },
-    ],
-  },
-  {
-    label: "Weekly",
-    options: [
-      { value: "Once a week", label: "Once a week" },
-      { value: "Twice a week", label: "Twice a week" },
-    ],
-  },
-  {
-    label: "Monthly",
-    options: [
-      { value: "Once a month", label: "Once a month" },
-      { value: "Twice a month", label: "Twice a month" },
-    ],
-  },
+export const FREQUENCY_UNITS = [
+  { value: "mo", label: "Month(s)" },
+  { value: "wk", label: "Week(s)" },
+  { value: "d", label: "Day(s)" },
+];
+
+export const QUANTITY_UNITS = [
+  { value: "mg", label: "mg" },
+  { value: "ml", label: "ml" },
 ];
 
 export const TREATMENT_OPTIONS = [
@@ -1513,13 +1526,6 @@ export const TREATMENT_OPTIONS = [
     value: "Migraine Prevention",
     label: "Migraine Prevention",
   },
-  {
-    value: "Gastroesophageal Reflux Disease",
-    label: "Gastroesophageal Reflux Disease",
-  },
-  { value: "Vertigo", label: "Vertigo" },
-  { value: "Urinary tract Infection", label: "Urinary tract Infection" },
-  { value: "Mechanical Pain", label: "Mechanical Pain" },
 ];
 
 export const MEDICATION_OPTIONS = [
@@ -1527,51 +1533,21 @@ export const MEDICATION_OPTIONS = [
     label: "Aimovig",
     options: [
       {
-        code: "1746007",
         value: "Aimovig 70 mg Injection",
         label: "Aimovig 70 mg Injection",
+        code: "1746007",
+        doseQuantity: 70,
+        doseUnit: "mg",
+        unit: "injection",
       },
       {
-        code: "1746008",
         value: "Aimovig 140 mg Injection",
         label: "Aimovig 140 mg Injection",
+        code: "1746008",
+        doseQuantity: 140,
+        doseUnit: "mg",
+        unit: "injection",
       },
-    ],
-  },
-  {
-    label: "Omeprazole",
-    options: [
-      { value: "Omeprazole 10 mg", label: "Omeprazole 10 mg" },
-      { value: "Omeprazole 20 mg", label: "Omeprazole 20 mg" },
-      { value: "Omeprazole 40 mg", label: "Omeprazole 40 mg" },
-    ],
-  },
-  {
-    label: "Esmoprazole",
-    options: [
-      { value: "Esmoprazole 20 mg", label: "Esmoprazole 20 mg" },
-      { value: "Esmoprazole 40 mg", label: "Esmoprazole 40 mg" },
-    ],
-  },
-  {
-    label: "Stemetil",
-    options: [{ value: "Stemetil 5 mg", label: "Stemetil 5 mg" }],
-  },
-  {
-    label: "Ciprofloxacin",
-    options: [{ value: "Ciprofloxacin 500 mg", label: "Ciprofloxacin 500 mg" }],
-  },
-  {
-    label: "Nitrofurantion",
-    options: [
-      { value: "Nitrofurantion 50 mg", label: "Ciprofloxacin 50 mg" },
-      { value: "Nitrofurantion 100 mg", label: "Ciprofloxacin 100 mg" },
-    ],
-  },
-  {
-    label: "Diclofenac Sodium",
-    options: [
-      { value: "Diclofenac Sodium 50 mg", label: "Diclofenac Sodium 50 mg" },
     ],
   },
 ];

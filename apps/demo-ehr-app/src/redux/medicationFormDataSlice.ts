@@ -14,32 +14,35 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 interface MedicationFormDataState {
   treatingSickness: string;
   medication: string;
-  quantity: number;
-  duration: string;
-  frequency: string;
+  frequency: number;
+  frequencyUnit: string;
+  period: number;
   startDate: Date | null;
 }
 
 const initialState: MedicationFormDataState = {
-  treatingSickness: '',
-  medication: '',
-  quantity: 0,
-  duration: '',
-  frequency: '',
+  treatingSickness: "",
+  medication: "",
+  frequency: 0,
+  frequencyUnit: "",
+  period: 0,
   startDate: new Date() as Date | null,
 };
 
 const medicationFormDataSlice = createSlice({
-  name: 'medicationFormDataSlice',
+  name: "medicationFormDataSlice",
   initialState,
   reducers: {
-    updateMedicationFormData(state, action: PayloadAction<Partial<MedicationFormDataState>>) {
-        console.log("action.payload", action.payload);
+    updateMedicationFormData(
+      state,
+      action: PayloadAction<Partial<MedicationFormDataState>>
+    ) {
+      console.log("action.payload", action.payload);
       return { ...state, ...action.payload };
     },
     resetMedicationFormData() {
@@ -48,5 +51,6 @@ const medicationFormDataSlice = createSlice({
   },
 });
 
-export const { updateMedicationFormData, resetMedicationFormData } = medicationFormDataSlice.actions;
+export const { updateMedicationFormData, resetMedicationFormData } =
+  medicationFormDataSlice.actions;
 export default medicationFormDataSlice.reducer;

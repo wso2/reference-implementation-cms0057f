@@ -36,10 +36,13 @@ export function DoctorViewPage() {
     dispatch(resetCdsResponse());
     const fetchPractitionerDetails = async () => {
       try {
-        const loggedUser = await fetch("/auth/userinfo").then((response) => response.json());
+        const loggedUser = await fetch("/auth/userinfo").then((response) =>
+          response.json()
+        );
         dispatch(updateRequestMethod("GET"));
-        const req_url = Config.practitioner_new + "?name=" + loggedUser.username;
-        dispatch(updateRequestUrl(Config.demoBaseUrl + req_url));
+        const req_url =
+          Config.practitioner_new + "?name=" + loggedUser.username;
+        dispatch(updateRequestUrl(Config.demoHospitalUrl + req_url));
 
         console.log("Fetching practitioner details...");
 
@@ -91,7 +94,6 @@ export function DoctorViewPage() {
 
     fetchPractitionerDetails();
   }, [dispatch, Config, "loggedUser"]);
-
 
   return (
     <div className="profile-page">

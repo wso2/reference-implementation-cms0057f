@@ -38,18 +38,23 @@ import {
 } from "../redux/medicationFormDataSlice";
 
 import {
-  FREQUENCY_OPTIONS,
   MEDICATION_OPTIONS,
   CHECK_PAYER_REQUIREMENTS_REQUEST_BODY,
   TREATMENT_OPTIONS,
   CREATE_MEDICATION_REQUEST_BODY,
-  PATIENT_DETAILS,
+  FREQUENCY_UNITS,
 } from "../constants/data";
 import { CdsCard, CdsResponse } from "../components/interfaces/cdsCard";
 import axios from "axios";
 import { useAuth } from "../components/AuthProvider";
 import { Navigate } from "react-router-dom";
 import { Alert, Snackbar } from "@mui/material";
+import PatientInfo from "../components/PatientInfo";
+import {
+  CHIP_COLOR_CRITICAL,
+  CHIP_COLOR_INFO,
+  CHIP_COLOR_WARNING,
+} from "../constants/color";
 
 const PrescribeForm = ({
   setCdsCards,
@@ -73,21 +78,30 @@ const PrescribeForm = ({
       medicationFormData: {
         treatingSickness: string;
         medication: string;
-        quantity: number;
-        frequency: string;
-        duration: string;
+        frequency: number;
+        frequencyUnit: string;
+        period: number;
         startDate: Date;
       };
     }) => state.medicationFormData
   );
 
-  const [patientId] = useState("john-smith");
+  const patientId = localStorage.getItem("selectedPatientId") || "";
+  const loggedUserStr = localStorage.getItem("loggedUser");
+  const loggedUser = loggedUserStr ? JSON.parse(loggedUserStr) : null;
+
+  console.log("loggedUser", loggedUser);
   const [practionerId] = useState("456");
   const [isSubmited, setIsSubmited] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    dispatch(updateMedicationFormData({ [name]: value }));
+    dispatch(
+      updateMedicationFormData({
+        [name]:
+          name === "frequency" || name === "period" ? Number(value) : value,
+      })
+    );
   };
 
   const handleSelectChange = (
@@ -118,15 +132,20 @@ const PrescribeForm = ({
     const payload = CHECK_PAYER_REQUIREMENTS_REQUEST_BODY(
       patientId,
       practionerId,
-      medicationFormData.medication as string,
-      medicationFormData.quantity as number
+      medicationFormData.medication,
+      medicationFormData.frequency,
+      medicationFormData.frequencyUnit,
+      medicationFormData.period,
+      medicationFormData.startDate.toISOString().split("T")[0]
     );
     const Config = window.Config;
 
     setCdsCards([]);
     dispatch(updateCdsHook("order-sign"));
     dispatch(updateRequestMethod("POST"));
-    dispatch(updateRequestUrl(Config.demoBaseUrl + Config.prescribe_medication));
+    dispatch(
+      updateRequestUrl(Config.demoBaseUrl + Config.prescribe_medication)
+    );
     dispatch(updateRequest(payload));
 
     axios
@@ -153,13 +172,14 @@ const PrescribeForm = ({
         dispatch(updateCdsResponse({ cards: err, systemActions: {} }));
       });
   };
-  const validateForm = () => {
+
+  const validateFormRequiredFields = () => {
     const requiredFields: (keyof typeof medicationFormData)[] = [
       "treatingSickness",
       "medication",
-      "quantity",
       "frequency",
-      "duration",
+      "frequencyUnit",
+      "period",
       "startDate",
     ];
     let isValid = true;
@@ -171,14 +191,46 @@ const PrescribeForm = ({
     return isValid;
   };
 
+  const validateForm = () => {
+    if (!validateFormRequiredFields()) {
+      setAlertMessage("Please fill all required fields");
+      setAlertSeverity("error");
+      setOpenSnackbar(true);
+      return false;
+    }
+
+    if (medicationFormData.frequency <= 0) {
+      setAlertMessage("Frequency must be greater than 0");
+      setAlertSeverity("error");
+      setOpenSnackbar(true);
+      return false;
+    }
+    if (medicationFormData.period <= 0) {
+      setAlertMessage("Period must be greater than 0");
+      setAlertSeverity("error");
+      setOpenSnackbar(true);
+      return false;
+    }
+    return true;
+  };
+
   const handleCreateMedicationOrder = () => {
     if (!validateForm()) {
       return;
     }
     dispatch(resetCdsRequest());
     dispatch(resetCdsResponse());
+    console.log("medicationFormData", medicationFormData);
 
-    const payload = CREATE_MEDICATION_REQUEST_BODY();
+    const payload = CREATE_MEDICATION_REQUEST_BODY(
+      patientId,
+      practionerId,
+      medicationFormData.medication,
+      medicationFormData.frequency,
+      medicationFormData.frequencyUnit,
+      medicationFormData.period,
+      medicationFormData.startDate.toISOString().split("T")[0]
+    );
     const Config = window.Config;
 
     dispatch(updateRequestMethod("POST"));
@@ -217,163 +269,153 @@ const PrescribeForm = ({
   };
 
   return (
-    <Card style={{ marginTop: "30px", padding: "20px" }}>
-      <Card.Body>
-        <Card.Title>Prescribe Medicine</Card.Title>
-        <Form onSubmit={handleSubmit}>
-          <Form.Group
-            controlId="formTreatingSickness"
-            style={{ marginTop: "20px" }}
-          >
-            <Form.Label>
-              Treating <span style={{ color: "red" }}>*</span>
-            </Form.Label>
-            <Select
-              name="treatingSickness"
-              options={TREATMENT_OPTIONS}
-              isSearchable
-              onChange={handleSelectChange}
-              required
-            />
-          </Form.Group>
-
-          <Form.Group controlId="formMedication" style={{ marginTop: "20px" }}>
-            <Form.Label>
-              Medication <span style={{ color: "red" }}>*</span>
-            </Form.Label>
-            <Select
-              name="medication"
-              options={MEDICATION_OPTIONS}
-              isSearchable
-              onChange={handleSelectChange}
-              menuPosition="fixed"
-              required
-            />
-          </Form.Group>
-
-          <div
-            style={{
-              display: "flex",
-              gap: "20px",
-            }}
-          >
-            <Form.Group
-              controlId="formQuantity"
-              style={{ marginTop: "20px", flex: "1 1 100%" }}
-            >
-              <Form.Label>
-                Quantity <span style={{ color: "red" }}>*</span>
-              </Form.Label>
-              <Form.Control
-                type="number"
-                placeholder="Enter quantity"
-                name="quantity"
-                onChange={handleInputChange}
-                required
-              />
-            </Form.Group>
-
-            <Form.Group
-              controlId="formFrequency"
-              style={{ marginTop: "20px", flex: "1 1 100%" }}
-            >
-              <Form.Label>
-                Frequency <span style={{ color: "red" }}>*</span>
-              </Form.Label>
-              <Select
-                name="frequency"
-                options={FREQUENCY_OPTIONS}
-                isSearchable
-                onChange={handleSelectChange}
-                menuPosition={"fixed"}
-                required
-              />
-            </Form.Group>
-
-            <Form.Group
-              controlId="formDuration"
-              style={{ marginTop: "20px", flex: "1 1 100%" }}
-            >
-              <Form.Label>
-                Duration<span style={{ color: "red" }}>*</span>
-              </Form.Label>
-              <Form.Control
-                type="number"
-                placeholder="Enter duration"
-                name="duration"
-                onChange={handleInputChange}
-                required
-              />
-            </Form.Group>
-
-            <Form.Group
-              controlId="formStartDate"
-              style={{ marginTop: "20px", flex: "1 1 100%", width: "100%" }}
-            >
-              <Form.Label>Starting Date</Form.Label>
-              <br />
-              <DatePicker
-                selected={
-                  medicationFormData.startDate instanceof Date
-                    ? medicationFormData.startDate
-                    : null
-                }
-                onChange={handleDateSelectChange}
-                dateFormat="yyyy/MM/dd"
-                className="form-control"
-                wrapperClassName="date-picker-full-width"
-              />
-            </Form.Group>
-          </div>
-          <div style={{ marginTop: "30px", float: "right" }}>
-            {isSubmited && (
-              <Button
-                variant="primary"
-                type="submit"
-                onClick={handleCheckPayerRequirements}
-              >
-                Check Payer Requirements
-              </Button>
-            )}
-            <Button
-              variant="success"
-              // type="submit"
-              style={{ marginLeft: "30px", float: "right" }}
-              onClick={handleCreateMedicationOrder}
-              disabled={isSubmited || !validateForm() ? true : false}
-            >
-              Create Medication Order
-            </Button>
-          </div>
-        </Form>
-      </Card.Body>
-      <Snackbar
-        open={openSnackbar}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-      >
-        <Alert onClose={handleCloseSnackbar} severity={alertSeverity}>
-          {alertMessage}
-        </Alert>
-      </Snackbar>
-    </Card>
-  );
-};
-
-const PrescribeMedicineCard = ({
-  setCdsCards,
-}: {
-  setCdsCards: React.Dispatch<React.SetStateAction<CdsCard[]>>;
-}) => {
-  return (
     <div
       style={{
         color: "black",
         marginTop: "20px",
       }}
     >
-      <PrescribeForm setCdsCards={setCdsCards} />
+      <Card style={{ marginTop: "30px", padding: "20px" }}>
+        <Card.Body>
+          <Card.Title>Prescribe Medicine</Card.Title>
+          <Form onSubmit={handleSubmit}>
+            <Form.Group
+              controlId="formTreatingSickness"
+              style={{ marginTop: "20px" }}
+            >
+              <Form.Label>
+                Treating <span style={{ color: "red" }}>*</span>
+              </Form.Label>
+              <Select
+                name="treatingSickness"
+                options={TREATMENT_OPTIONS}
+                isSearchable
+                onChange={handleSelectChange}
+                required
+              />
+            </Form.Group>
+
+            <Form.Group
+              controlId="formMedication"
+              style={{ marginTop: "20px", flex: "1 1 40%" }}
+            >
+              <Form.Label>
+                Medication <span style={{ color: "red" }}>*</span>
+              </Form.Label>
+              <Select
+                name="medication"
+                options={MEDICATION_OPTIONS}
+                isSearchable
+                onChange={handleSelectChange}
+                menuPosition="fixed"
+                required
+              />
+            </Form.Group>
+            <div
+              style={{
+                display: "flex",
+                gap: "20px",
+              }}
+            >
+              <Form.Group
+                controlId="formFrequency"
+                style={{ marginTop: "20px", flex: "1 1 100%" }}
+              >
+                <Form.Label>
+                  Frequency <span style={{ color: "red" }}>*</span>
+                </Form.Label>
+                <Form.Control
+                  type="number"
+                  placeholder="Enter frequency"
+                  name="frequency"
+                  onChange={handleInputChange}
+                  required
+                />
+              </Form.Group>
+              <Form.Group
+                controlId="formFrequency"
+                style={{ marginTop: "20px", flex: "1 1 100%" }}
+              >
+                <Form.Label>
+                  Frequency Unit <span style={{ color: "red" }}>*</span>
+                </Form.Label>
+                <Select
+                  name="frequencyUnit"
+                  options={FREQUENCY_UNITS}
+                  isSearchable
+                  onChange={handleSelectChange}
+                  menuPosition={"fixed"}
+                  required
+                />
+              </Form.Group>
+
+              <Form.Group
+                controlId="formPeriod"
+                style={{ marginTop: "20px", flex: "1 1 100%" }}
+              >
+                <Form.Label>
+                  Period<span style={{ color: "red" }}>*</span>
+                </Form.Label>
+                <Form.Control
+                  type="number"
+                  placeholder="Enter period"
+                  name="period"
+                  onChange={handleInputChange}
+                  required
+                />
+              </Form.Group>
+
+              <Form.Group
+                controlId="formStartDate"
+                style={{ marginTop: "20px", flex: "1 1 100%", width: "100%" }}
+              >
+                <Form.Label>Starting Date</Form.Label>
+                <br />
+                <DatePicker
+                  selected={
+                    medicationFormData.startDate instanceof Date
+                      ? medicationFormData.startDate
+                      : null
+                  }
+                  onChange={handleDateSelectChange}
+                  dateFormat="yyyy/MM/dd"
+                  className="form-control"
+                  wrapperClassName="date-picker-full-width"
+                />
+              </Form.Group>
+            </div>
+            <div style={{ marginTop: "30px", float: "right" }}>
+              {isSubmited && (
+                <Button
+                  variant="primary"
+                  type="submit"
+                  onClick={handleCheckPayerRequirements}
+                >
+                  Check Payer Requirements
+                </Button>
+              )}
+              <Button
+                variant="success"
+                style={{ marginLeft: "30px", float: "right" }}
+                onClick={handleCreateMedicationOrder}
+                disabled={isSubmited || !validateFormRequiredFields()}
+              >
+                Create Medication Order
+              </Button>
+            </div>
+          </Form>
+        </Card.Body>
+        <Snackbar
+          open={openSnackbar}
+          autoHideDuration={6000}
+          onClose={handleCloseSnackbar}
+          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        >
+          <Alert onClose={handleCloseSnackbar} severity={alertSeverity}>
+            {alertMessage}
+          </Alert>
+        </Snackbar>
+      </Card>
     </div>
   );
 };
@@ -385,6 +427,7 @@ const PayerRequirementsCard = ({ cdsCards }: { cdsCards: CdsCard[] }) => {
         display: "grid",
         gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
         gap: "20px",
+        maxWidth: "400px",
       }}
     >
       {cdsCards.map((card, index) => (
@@ -401,79 +444,87 @@ const RequirementCard = ({
 }) => {
   return (
     <div>
-      <Card style={{ marginTop: "30px", padding: "20px" }}>
+      <Card
+        style={{
+          marginTop: "30px",
+          paddingLeft: "20px",
+          paddingRight: "20px",
+          paddingTop: "20px",
+        }}
+      >
         <Card.Body>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: "10px",
-            }}
-          >
-            <Card.Title>{requirementsResponsCard.summary}</Card.Title>
+          <div>
+            <h4 style={{ marginBottom: "20px" }}>
+              {requirementsResponsCard.summary}
+            </h4>
             <div
               style={{
                 padding: "5px 10px",
-                backgroundColor: "#ffcccb",
-                color: "darkred",
+                marginTop: "10px",
+                backgroundColor:
+                  requirementsResponsCard.indicator === "warning"
+                    ? CHIP_COLOR_WARNING
+                    : requirementsResponsCard.indicator === "critical"
+                    ? CHIP_COLOR_CRITICAL
+                    : CHIP_COLOR_INFO,
+                color: "black",
                 borderRadius: "30px",
                 fontSize: "12px",
+                textAlign: "center",
+                fontWeight: "bold",
+                width: "100px",
               }}
             >
-              Critical
+              {requirementsResponsCard.indicator}
             </div>
           </div>
+          <br />
           <Card.Text>
-            <p>{requirementsResponsCard.detail}</p>
-            <hr />
+            <p style={{ textAlign: "justify" }}>
+              {requirementsResponsCard.detail}
+            </p>
+
             <div
               style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
                 marginBottom: "10px",
+                marginTop: "30px",
               }}
             >
-              <Card.Title>Suggestions</Card.Title>
-              {requirementsResponsCard.selectionBehavior && (
-                <div
-                  style={{
-                    padding: "5px 10px",
-                    backgroundColor: "#FFD580",
-                    color: "black",
-                    borderRadius: "30px",
-                    fontSize: "12px",
-                  }}
-                >
-                  {requirementsResponsCard.selectionBehavior}
-                </div>
-              )}
+              <h5>Suggestions</h5>
+              <ul>
+                {requirementsResponsCard.suggestions &&
+                  requirementsResponsCard.suggestions.map(
+                    (suggestion, index) => (
+                      <li key={index}>{suggestion.label}</li>
+                    )
+                  )}
+              </ul>
             </div>
-            <ul>
-              {requirementsResponsCard.suggestions &&
-                requirementsResponsCard.suggestions.map((suggestion, index) => (
-                  <li key={index}>{suggestion.label}</li>
-                ))}
-            </ul>
             {requirementsResponsCard.links &&
               requirementsResponsCard.links.length > 0 && (
                 <>
-                  <hr />
-                  <Card.Title>Links</Card.Title>
+                  <br />
                   {requirementsResponsCard.links.map((link, index) => (
-                    <div key={index}>
-                      <li>
-                        <Card.Link
-                          href={`${window.location.origin}${
-                            new URL(link.url).pathname
-                          }`}
-                          target="_blank"
-                          style={{ color: "#4635B1" }}
-                        >
-                          {link.label}
-                        </Card.Link>
-                      </li>
+                    <div
+                      key={index}
+                      style={{
+                        display: "flex",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Button
+                        variant="secondary"
+                        onClick={() =>
+                          window.open(
+                            `${window.location.origin}${
+                              new URL(link.url).pathname
+                            }`,
+                            "_blank"
+                          )
+                        }
+                      >
+                        {link.label}
+                      </Button>
                     </div>
                   ))}
                 </>
@@ -489,57 +540,12 @@ export default function DrugOrderPageV2() {
   const { isAuthenticated } = useAuth();
   const [cdsCards, setCdsCards] = useState<CdsCard[]>([]);
 
-  const selectedPatientId = useSelector(
-    (state: any) => state.patient.selectedPatientId
-  );
-  const currentPatient = PATIENT_DETAILS.find(
-    (patient) => patient.id === selectedPatientId
-  );
-
   return isAuthenticated ? (
     <div style={{ marginLeft: 50, marginBottom: 50 }}>
       <div className="page-heading">Order Drugs</div>
-      <div style={{ display: "flex", gap: "20px" }}>
-        <Form.Group
-          controlId="formPatientName"
-          style={{ marginTop: "20px", flex: "1 1 100%" }}
-        >
-          <Form.Label>Patient Name</Form.Label>
-          <Form.Control
-            type="text"
-            value={`${currentPatient?.name[0].given[0]} ${currentPatient?.name[0].family}`}
-            disabled
-          />
-        </Form.Group>
-        <Form.Group
-          controlId="formPatientID"
-          style={{ marginTop: "20px", flex: "1 1 100%" }}
-        >
-          <Form.Label>Patient ID</Form.Label>
-          <Form.Control type="text" value={currentPatient?.id} disabled />
-        </Form.Group>
-      </div>
-      <div>
-        <PrescribeMedicineCard setCdsCards={setCdsCards} />
-      </div>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-          gap: "20px",
-        }}
-      ></div>
+      <PatientInfo />
+      <PrescribeForm setCdsCards={setCdsCards} />
       <PayerRequirementsCard cdsCards={cdsCards} />
-      <style>{`
-        .card {
-          height: 100%;
-          display: flex;
-          flex-direction: column;
-        }
-        .card-body {
-          flex: 1;
-        }
-      `}</style>
     </div>
   ) : (
     <Navigate to="/" replace />

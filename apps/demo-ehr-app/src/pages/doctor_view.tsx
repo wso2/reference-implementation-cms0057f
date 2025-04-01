@@ -72,7 +72,7 @@ export function DoctorViewPage() {
                   ", " +
                   user.resource.address[0].postalCode,
               })
-            );
+            );         
           })
           .catch((error) => {
             console.error("Error submitting claim:", error);

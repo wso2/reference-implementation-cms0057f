@@ -74,7 +74,7 @@ export const LandingPage = () => {
   const dispatch = useDispatch();
 
   // State to manage selected options
-  const [selectedOrgId, setSelectedOrgId] = useState([]);
+  const [selectedOrgId, setSelectedOrgId] = useState<number | null>(null);
   const Config = window.Config;
 
   useEffect(() => {
@@ -82,7 +82,6 @@ export const LandingPage = () => {
       const loggedUser = await fetch("/auth/userinfo")
         .then((response) => response.json())
         .then((data) => {
-          console.log("Logged User Info: ", data);
           setIsPatientDataLoaded(true);
           return data;
         });
@@ -119,20 +118,18 @@ export const LandingPage = () => {
 
     const loadOrganizations = async () => {
       const payers = await fetchOrganizations();
-      console.log("payers:", payers);
       setPayerList(payers);
+      setSelectedOrgId(payers[0]?.id || null);
     };
 
     loadOrganizations();
   }, []);
 
   const handleCheckCoverage = () => {
-    console.log("Checking coverage...");
 
     const coverageId = (
       document.getElementById("coverage-id") as HTMLInputElement
     )?.value;
-    console.log("Coverage ID:", coverageId);
 
     if (coverageId === "") {
       alert("Coverage ID is required.");
@@ -170,25 +167,21 @@ export const LandingPage = () => {
     }
   };
 
-
   const selectOrgChange = (event: { target: { value: any } }) => {
     const { value } = event.target;
-    console.log("Selected value:", value);
     setSelectedOrgId(value); // Update selected options
   };
   // Handle selection of options
   const handleFetchMemberID = () => {
-
     // const orgId = (
     //   document.getElementById("coverage-id") as HTMLInputElement
     // )?.value;
-    console.log("Selected value:", selectedOrgId);
     // setSelectedOrgId(value); // Update selected options
 
     setOldMemberId("");
     setExportButtonLabel("Export");
     setIsExportCompleted(false);
-    handlePayerSelection();
+    handleExportKickOff();
   };
 
   const handleSubmit = (e: { preventDefault: () => void }) => {
@@ -200,7 +193,6 @@ export const LandingPage = () => {
     setStatus("Exporting...");
 
     setIsExporting(true);
-    console.log("Submitted name:", selectedOrgId);
 
     const postOrganizationId = async () => {
       const memberID = oldMemberId;
@@ -215,7 +207,6 @@ export const LandingPage = () => {
             "Content-Type": "application/json",
           },
         });
-        console.log("POST response:", response.data);
         dispatch(
           updateCdsResponse({
             cards: response.data,
@@ -227,7 +218,6 @@ export const LandingPage = () => {
         const match = diagnostics.match(/ExportId:\s([\w-]+)/);
         if (match && match[1]) {
           setExportId(match[1]);
-          console.log("Export ID:", match[1]);
           localStorage.setItem("exportId", match[1]);
           checkStatusUntilDownloaded(match[1]);
         } else {
@@ -245,7 +235,6 @@ export const LandingPage = () => {
             params: { exportId: exportId },
           });
           const currentStatus = response.data.lastStatus;
-          console.log("Checking status:", currentStatus);
 
           setStatus(currentStatus);
 
@@ -265,8 +254,16 @@ export const LandingPage = () => {
     postOrganizationId();
   };
 
-  const handlePayerSelection = () => {
+  const handleExportKickOff = () => {
     const payload = memberMatchPayload;
+    console.log("Payload:", payload);
+    const patientResource = JSON.parse(
+      localStorage.getItem("patientResource") || "{}"
+    );
+    console.log("coverageResource: ", coverageResource);
+    console.log("Patient Resource:", patientResource);
+    console.log("NEW Payload:", payload);
+
     dispatch(updateRequestMethod("POST"));
     dispatch(updateRequestUrl("/member-service/v1.0/match"));
     dispatch(updateRequest(payload));
@@ -279,7 +276,6 @@ export const LandingPage = () => {
           },
         })
         .then((response) => {
-          console.log(response);
           dispatch(
             updateCdsResponse({
               cards: response.data,
@@ -287,10 +283,6 @@ export const LandingPage = () => {
             })
           );
           if (response.status === 201) {
-            console.log(
-              "MemberID: ",
-              response.data?.parameter?.valueIdentifier?.value
-            );
             setOldMemberId(response.data?.parameter?.valueIdentifier?.value);
             // setOldMemberId("644d85af-aaf9-4068-ad23-1e55aedd5205");
             setError("");
@@ -366,7 +358,9 @@ export const LandingPage = () => {
                 <Select
                   labelId="select-payer-label"
                   id="select-payer"
+                  // displayEmpty
                   value={selectedOrgId}
+                  // defaultValue={selectedOrgId}
                   onChange={selectOrgChange}
                   label="Select old payer to fetch Member ID"
                 >

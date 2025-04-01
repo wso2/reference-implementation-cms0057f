@@ -89,9 +89,12 @@ function PatientEncounter() {
     return selectedPatient.length > 0;
   };
 
-  const handleBtnClick = () => {
+  const handleBtnClick = async () => {
     dispatch(selectPatient(selectedPatient));
     localStorage.setItem("selectedPatientId", selectedPatient);
+    localStorage.setItem("selectedPatientName", patients[selectedPatient].fullName);
+    const loggedUser = await fetch("/auth/userinfo").then((response) => response.json());
+    localStorage.setItem("loggedUser", JSON.stringify(loggedUser));
     navigate("dashboard");
   };
 

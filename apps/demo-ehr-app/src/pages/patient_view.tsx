@@ -194,7 +194,7 @@ export function PatientViewPage() {
         dispatch(resetCdsResponse());
         const req_url = Config.patient + "/" + currentPatient.id;
         dispatch(updateRequestMethod("GET"));
-        dispatch(updateRequestUrl(Config.demoBaseUrl + req_url));
+        dispatch(updateRequestUrl(Config.demoHospitalUrl + req_url));
 
         axios.get(req_url).then((response) => {
           console.log("Patient details:", response.data);

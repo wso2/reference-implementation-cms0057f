@@ -234,7 +234,9 @@ const PrescribeForm = ({
     const Config = window.Config;
 
     dispatch(updateRequestMethod("POST"));
-    dispatch(updateRequestUrl(Config.demoBaseUrl + Config.medication_request));
+    dispatch(
+      updateRequestUrl(Config.demoHospitalUrl + Config.medication_request)
+    );
     dispatch(updateRequest(payload));
 
     axios

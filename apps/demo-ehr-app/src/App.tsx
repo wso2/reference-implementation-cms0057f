@@ -27,6 +27,7 @@ declare global {
     Config: {
       baseUrl: string;
       demoBaseUrl: string;
+      demoHospitalUrl: string;
       medication_request: string;
       prescribe_medication: string;
       questionnaire_package: string;

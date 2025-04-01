@@ -15,7 +15,6 @@
 // under the License.
 
 import {
-  Container,
   Typography,
   Button,
   Box,
@@ -26,6 +25,8 @@ import {
   TextField,
   LinearProgress,
   FormGroup,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import Header from "../common/Header";
@@ -63,14 +64,18 @@ export const LandingPage = () => {
   const [payerList, setPayerList] = useState<Payer[]>([]);
   const [oldMemberId, setOldMemberId] = useState("");
   const [exportId, setExportId] = useState("");
-  const [coverageResource, setCoverageResource] = useState<any>({});
 
   const [error, setError] = useState("");
-  const [isMemberIDFetched, setIsMemberIDFetched] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [exportPercentage, setExportPercentage] = useState("0");
   const [isExportCompleted, setIsExportCompleted] = useState(false);
   const [status, setStatus] = useState("Member Not Resolved.");
+
+  const [alertMessage, setAlertMessage] = useState<string | null>(null);
+  const [alertSeverity, setAlertSeverity] = useState<
+    "error" | "warning" | "info" | "success"
+  >("info");
+  const [openSnackbar, setOpenSnackbar] = useState(false);
 
   const dispatch = useDispatch();
 
@@ -78,6 +83,10 @@ export const LandingPage = () => {
   const [selectedOrgId, setSelectedOrgId] = useState<number | null>(null);
   const Config = window.Config;
   const loggedUser = useSelector((state: any) => state.loggedUser);
+
+  const handleCloseSnackbar = () => {
+    setOpenSnackbar(false);
+  };
 
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -140,11 +149,21 @@ export const LandingPage = () => {
   };
 
   const handleMemberMatch = () => {
+    setStatus("Matching Member ID...");
     const payload = memberMatchPayload;
 
     const coverageId = (
       document.getElementById("coverage-id") as HTMLInputElement
     )?.value;
+
+    if (!coverageId) {
+      setAlertMessage("Coverage ID cannot be empty!");
+      setAlertSeverity("error");
+      setStatus("Member Not Resolved.");
+      setOpenSnackbar(true);
+      return;
+    }
+
     try {
       axios
         .get(
@@ -202,29 +221,40 @@ export const LandingPage = () => {
                     response.data?.parameter?.valueIdentifier?.value
                   );
                   setError("");
-                  setStatus("Ready");
+                  setStatus("Ready to Export.");
                 } else {
                   setError("Match failed. Please retry");
+                  setAlertMessage("Match failed. Please retry!");
+                  setAlertSeverity("error");
+                  setOpenSnackbar(true);
                 }
               })
               .catch((error) => {
                 console.error("Error:", error);
                 setError("Match failed. Please retry");
                 setStatus("Member Not Resoved.");
+                setAlertMessage("Match failed. Please retry!");
+                setAlertSeverity("error");
+                setOpenSnackbar(true);
               })
-              .finally(() => {
-                setIsMemberIDFetched(true); // Turn off loading after API call completes
-              });
           } else {
-            console.log("Error fetching coverage:", res);
+            console.error("Error fetching coverage:", res);
+            setAlertMessage("Error fetching coverage!");
+            setAlertSeverity("error");
+            setOpenSnackbar(true);
           }
         })
         .catch((err) => {
           console.log("Error fetching coverage:", err);
+          setAlertMessage("Error fetching coverage!");
+          setAlertSeverity("error");
+          setOpenSnackbar(true);
         });
     } catch (error) {
       console.error("Error:", error);
-      setError("Error fetching data");
+      setAlertMessage("Error fetching coverage!");
+      setAlertSeverity("error");
+      setOpenSnackbar(true);
     }
   };
 
@@ -444,7 +474,7 @@ export const LandingPage = () => {
                   marginTop: "15px",
                 }}
               >
-                {isExportCompleted || error != "" ? (
+                {isExportCompleted ? (
                   <>
                     <Button
                       variant="contained"
@@ -487,6 +517,16 @@ export const LandingPage = () => {
           <Typography variant="h6">Loading...</Typography>
         </div>
       )}
+      <Snackbar
+        open={openSnackbar}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      >
+        <Alert onClose={handleCloseSnackbar} severity={alertSeverity}>
+          {alertMessage}
+        </Alert>
+      </Snackbar>
     </div>
   ) : (
     <Navigate to="/login" replace />

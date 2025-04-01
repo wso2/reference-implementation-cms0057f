@@ -24,7 +24,25 @@ final r4:ResourceAPIConfig apiConfig = {
     ],
     defaultProfile: (),
     searchParameters: [
-        ],
+        {
+            name: "subject",
+            active: true,
+            information: {
+                description: "A subject of the questionnaire response",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/QuestionnaireResponse-subject"
+            }
+        },
+        {
+            name: "author",
+            active: true,
+            information: {
+                description: "An author of the questionnaire response",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/QuestionnaireResponse-author"
+            }
+        }
+    ],
     operations: [
     
     ],

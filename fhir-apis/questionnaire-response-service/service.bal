@@ -18,12 +18,12 @@
 import ballerina/http;
 import ballerinax/health.fhir.r4;
 import ballerinax/health.fhirr4;
-import ballerinax/health.fhir.r4.international401;
+import ballerinax/health.fhir.r4.uscore700;
 
 # Generic type to wrap all implemented profiles.
 # Add required profile types here.
 # public type QuestionnaireResponse r4:QuestionnaireResponse|<other_QuestionnaireResponse_Profile>;
-public type QuestionnaireResponse international401:QuestionnaireResponse;
+public type QuestionnaireResponse uscore700:USCoreQuestionnaireResponseProfile;
 
 # initialize source system endpoint here
 

@@ -36,7 +36,7 @@ public isolated function getById(string id) returns r4:FHIRError|uscore700:USCor
             }
         }
     }
-    return r4:createFHIRError(string `Cannot find a Patient resource with id: ${id}`, r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_NOT_FOUND);
+    return r4:createFHIRError(string `Cannot find a QuestionnaireResponse resource with id: ${id}`, r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_NOT_FOUND);
 }
 
 public isolated function update(json payload) returns r4:FHIRError|fhir:FHIRResponse {

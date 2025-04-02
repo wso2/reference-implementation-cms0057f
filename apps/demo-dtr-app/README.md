@@ -1,54 +1,65 @@
-# React + TypeScript + Vite
+# WSO2 Demo DTR Application
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This project is a mock Document Template Retrieval (DTR) system built using React and TypeScript. It simulates key functionalities of modern DTR systems, such as managing prior authorization workflows and integrating with healthcare systems.
 
-Currently, two official plugins are available:
+**_Note_**: This system is intended only for demo purposes and is not suitable for production use.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Feel free to explore and use it as a foundation for understanding healthcare application development concepts!
 
-## Expanding the ESLint configuration
+# Run in Dev mode
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+> Run the following command to install all the dependencies listed in the project's `package.json`
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+```
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+> Run the following command to run in the development mode.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
 ```
+npm run dev
+```
+
+> By default, it will run the application on port `5173`. <http://localhost:5173/>
+
+# Production build
+
+> Run the following command to install all the dependencies listed in the project's `package.json`
+
+```
+npm install
+```
+
+> Run the following command to get the build artifacts.
+
+```
+npm run build
+```
+
+> You will find the build artifacts in the `/dist` directory.
+
+> The build script compiles your entire app into the build folder, ready to be statically served. However, actually serving it requires some kind of static file server. Run the following command to install it.
+
+```
+npm install -g serve
+```
+
+Then execute the following command to run the build in the production mode.
+
+```
+serve -s build
+```
+
+or if your build location is `/dist`
+
+```
+serve -s dist
+```
+
+> By default, it will run the application on port `3000`. <http://localhost:3000>
+
+# Key Features
+
+- **Drug Prior Authorization Workflow**: The `DrugPriorAuth` page provides a user-friendly interface for managing prior authorization requests.
+- **Responsive Design**: The application is designed to work seamlessly across different screen sizes.
+- **Integration Ready**: Built with modern web technologies, making it easy to integrate with other healthcare systems.

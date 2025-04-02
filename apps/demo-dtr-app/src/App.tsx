@@ -76,6 +76,9 @@ function App() {
                       <Route path="/" element={<DrugPiorAuthPage />} />
                       <Route path="/login" element={<LoginPage />} />
                       <Route path="/fetching" element={<FetchingParamPage />} />
+
+                      {/* In case of any error */}
+                      <Route path="*" element={<FetchingParamPage />} />
                     </Routes>
                   </div>
                 </div>

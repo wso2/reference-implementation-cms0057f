@@ -14,35 +14,53 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import DrugPiorAuth from "../components/DrugPriorAuth";
-import NavBar from "../components/NavBar";
+import { useState } from "react";
+import { Navigate } from "react-router-dom";
+import { useAuth } from "../components/AuthProvider";
+import DetailsDiv from "../components/DetailsDiv";
+import PrescribedForm from "../components/PrescribedForm";
+import QuestionnniarForm from "../components/QuestionnniarForm";
+
+const useQuery = () => {
+  return new URLSearchParams(window.location.search);
+};
 
 export default function DrugPiorAuthPage() {
-  return (
-    <div style={{ width: "100vw", height: "100vh", backgroundColor: "#f0f0f0" }}>
-      <NavBar />
-      <div
-        style={{
-          width: "80vw",
-          margin: "auto",
-          marginTop: "30px",
-          border: "1px solid #ccc",
-          borderRadius: "8px",
-          overflow: "hidden",
-          boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
-        }}
-      >
-        <div
-          style={{
-            width: "100%",
-            height: "85vh",
-            overflow: "auto",
-            backgroundColor: "#f9f9f9",
-          }}
-        >
-          <DrugPiorAuth />
-        </div>
+  const { isAuthenticated } = useAuth();
+  const query = useQuery();
+
+  const coverageId = query.get("coverageId") || sessionStorage.getItem("coverageId") || "";
+  const medicationRequestId = query.get("medicationRequestId") || sessionStorage.getItem("medicationRequestId") || "";
+  const patientId = query.get("patientId") || sessionStorage.getItem("patientId") || "";
+
+  const [isQuestionnaireResponseSubmited, setIsQuestionnaireResponseSubmited] =
+    useState(false);
+
+  return isAuthenticated ? (
+    <div style={{ padding: "30px" }}>
+      <div className="page-heading" style={{ fontSize: "24px", fontWeight: "bold", marginBottom: "20px" }}>
+        Send a Prior-Authorizing Request for Drugs
       </div>
+      <DetailsDiv patientId={patientId} />
+      <PrescribedForm medicationRequestId={medicationRequestId} />
+      <QuestionnniarForm
+        coverageId={coverageId}
+        medicationRequestId={medicationRequestId}
+        isQuestionnaireResponseSubmited={isQuestionnaireResponseSubmited}
+        setIsQuestionnaireResponseSubmited={setIsQuestionnaireResponseSubmited}
+      />
+      <style>{`
+        .card {
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+        }
+        .card-body {
+          flex: 1;
+        }
+      `}</style>
     </div>
+  ) : (
+    <Navigate to="/" replace />
   );
 }

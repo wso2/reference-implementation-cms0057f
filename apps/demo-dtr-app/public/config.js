@@ -25,4 +25,7 @@ const Config = {
     "/choreo-apis/cms-0057-f/questionnaire-response-fh/v1/fhir/r4/QuestionnaireResponse",
   patient: "/choreo-apis/cms-0057-f/patient-service/v1/fhir/r4/Patient/",
   medicationRequest: "/choreo-apis/cms-0057-f/medication-request-ser-tw/v1/fhir/r4/MedicationRequest",
+
+  ehr_baseUrl:
+    "https://d5a7a3a9-12e4-4949-9cf8-bb3e12517db4.e1-us-east-azure.choreoapps.dev",
 };

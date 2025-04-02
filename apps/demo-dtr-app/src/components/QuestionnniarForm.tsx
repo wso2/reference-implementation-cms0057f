@@ -1,3 +1,19 @@
+// Copyright (c) 2024-2025, WSO2 LLC. (http://www.wso2.com).
+//
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
 import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import axios from "axios";
@@ -40,6 +56,8 @@ export default function QuestionnniarForm({
   >("info");
   const [openSnackbar, setOpenSnackbar] = useState(false);
 
+  const Config = window.Config;
+
   const requestBody = {
     resourceType: "Parameters",
     id: "questionnaire-package-request",
@@ -64,7 +82,6 @@ export default function QuestionnniarForm({
   useEffect(() => {
     dispatch(resetCdsRequest());
     dispatch(resetCdsResponse());
-    const Config = window.Config;
     dispatch(updateRequestUrl(Config.questionnaire_package));
     dispatch(updateRequestMethod("POST"));
     dispatch(updateRequest(requestBody));
@@ -157,7 +174,6 @@ export default function QuestionnniarForm({
   };
 
   const submitQuestionnaireResponse = (questionnaireResponse: any) => {
-    const Config = window.Config;
     dispatch(resetCdsRequest());
     dispatch(resetCdsResponse());
     dispatch(updateRequest(questionnaireResponse));
@@ -286,7 +302,7 @@ export default function QuestionnniarForm({
             variant="success"
             style={{ marginTop: "30px", marginRight: "20px", float: "right" }}
             onClick={() =>
-              window.open("/dashboard/drug-order-v2/claim-submit", "_blank")
+              window.open(Config.ehr_baseUrl + "/dashboard/drug-order-v2/claim-submit", "_blank")
             }
             disabled={!isQuestionnaireResponseSubmited}
           >

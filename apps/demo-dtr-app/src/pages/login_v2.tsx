@@ -14,33 +14,69 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import LoginV2 from "../components/LoginV2";
-import NavBar from "../components/NavBar";
+import Button from "react-bootstrap/Button";
+import { PATIENT_DETAILS } from "../constants/data";
 
 function LoginPage() {
+  const patients: { [key: string]: string } = {};
+
+  PATIENT_DETAILS.forEach((patient) => {
+    const fullName = patient.name[0].given[0] + " " + patient.name[0].family;
+    patients[patient.id] = fullName;
+  });
+
   return (
-    <div style={{ width: "100vw", height: "100vh", backgroundColor: "#f0f0f0" }}>
-      <NavBar />
+    <div>
       <div
         style={{
-          width: "80vw",
-          margin: "auto",
-          marginTop: "30px",
-          border: "1px solid #ccc",
-          borderRadius: "8px",
-          overflow: "hidden",
-          boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+          backgroundImage: `url('/background-gray-med.svg')`,
+          backgroundSize: "cover",
+          width: "100%",
+          height: "100%",
         }}
       >
         <div
           style={{
-            width: "100%",
-            height: "85vh",
-            overflow: "auto",
-            backgroundColor: "#f9f9f9",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "100%",
+            fontSize: "3rem",
+            backgroundColor: "rgba(255, 255, 255, 0.8)",
           }}
         >
-          <LoginV2 />
+          <div
+            style={{
+              textAlign: "center",
+              padding: "20px",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <img
+              src="/welcome-img.svg"
+              alt="Doctor"
+              style={{ width: "450px", marginBottom: "20px" }}
+            />
+            <h1 style={{ color: "#4C585B" }}>Welcome</h1>
+            <p style={{ color: "#4C585B" }}>UnitedCare DTR App</p>
+            <Button
+              variant="success"
+              style={{
+                paddingLeft: "50px",
+                paddingRight: "50px",
+                marginTop: "20px",
+                fontSize: "1.5rem",
+              }}
+              onClick={() => {
+                window.location.href = "/auth/login";
+              }}
+            >
+              Sign In
+            </Button>
+          </div>
         </div>
       </div>
     </div>

@@ -3,14 +3,14 @@ info:
   title: QuestionnaireResponse
   description:
     "A simplified version of the HL7 FHIR API for QuestionnaireResponse\
-    \ resource.\nSupported Profiles: \nhttp://hl7.org/fhir/StructureDefinition/QuestionnaireResponse\n"
+    \ resource.\nSupported Profiles: \nhttp://hl7.org/fhir/us/core/StructureDefinition/us-core-questionnaireresponse\n"
   contact:
     name: API Support
     url: https://wso2.com/contact/`
     email: user@email.com
   version: 1.0.0
 tags:
-  - name: http://hl7.org/fhir/StructureDefinition/QuestionnaireResponse
+  - name: http://hl7.org/fhir/us/core/StructureDefinition/us-core-questionnaireresponse
   - name: QuestionnaireResponse
   - name: 4.0.1
 paths:
@@ -2298,4 +2298,4 @@ components:
           scopes: {}
 x-wso2-oh-fhir-resourceType: QuestionnaireResponse
 x-wso2-oh-fhir-profile:
-  - http://hl7.org/fhir/StructureDefinition/QuestionnaireResponse
+  - http://hl7.org/fhir/us/core/StructureDefinition/us-core-questionnaireresponse

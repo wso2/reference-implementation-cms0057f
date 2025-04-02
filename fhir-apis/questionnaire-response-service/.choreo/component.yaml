@@ -1,7 +1,7 @@
 schemaVersion: 1.1
 endpoints:
-  - name: r4-questionnaireresponse-api
-    displayName: r4 QuestionnaireResponse API
+  - name: questionnaireresponse-api
+    displayName: QuestionnaireResponse API
     service:
       basePath: /
       port: 9090

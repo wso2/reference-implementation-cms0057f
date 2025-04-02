@@ -20,11 +20,29 @@ import ballerinax/health.fhir.r4;
 final r4:ResourceAPIConfig apiConfig = {
     resourceType: "QuestionnaireResponse",
     profiles: [
-            "http://hl7.org/fhir/StructureDefinition/QuestionnaireResponse"        
+            "http://hl7.org/fhir/us/core/StructureDefinition/us-core-questionnaireresponse"        
     ],
     defaultProfile: (),
     searchParameters: [
-        ],
+        {
+            name: "subject",
+            active: true,
+            information: {
+                description: "A subject of the questionnaire response",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/QuestionnaireResponse-subject"
+            }
+        },
+        {
+            name: "author",
+            active: true,
+            information: {
+                description: "An author of the questionnaire response",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/QuestionnaireResponse-author"
+            }
+        }
+    ],
     operations: [
     
     ],

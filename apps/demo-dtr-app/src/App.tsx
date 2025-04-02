@@ -15,17 +15,8 @@ declare global {
       baseUrl: string;
       demoBaseUrl: string;
       medication_request: string;
-      prescribe_medication: string;
       questionnaire_package: string;
       questionnaire_response: string;
-      claim_submit: string;
-      radiology_order: string;
-      book_imaging_center: string;
-      practitioner: string;
-      practitioner_new: string;
-      slot: string;
-      location: string;
-      appointment: string;
       patient: string;
       medicationRequest: string;
     };

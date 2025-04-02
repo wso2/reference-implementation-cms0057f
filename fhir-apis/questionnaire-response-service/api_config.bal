@@ -41,6 +41,15 @@ final r4:ResourceAPIConfig apiConfig = {
                 builtin: false,
                 documentation: "http://hl7.org/fhir/SearchParameter/QuestionnaireResponse-author"
             }
+        },
+        {
+            name: "authored",
+            active: true,
+            information: {
+                description: "The date the questionnaire response was authored",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/QuestionnaireResponse-authored"
+            }
         }
     ],
     operations: [

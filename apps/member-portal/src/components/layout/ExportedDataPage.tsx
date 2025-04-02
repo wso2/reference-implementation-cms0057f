@@ -353,7 +353,7 @@ export const ExportedDataPage = () => {
   return (
     <div style={{ margin: "20px" }}>
       <h4>Exported Data</h4>
-      <div style={{ flex: 1, marginTop: "10px" }}>
+      {/* <div style={{ flex: 1, marginTop: "10px" }}>
         <ToggleButtonGroup
           color="primary"
           value={view}
@@ -365,7 +365,7 @@ export const ExportedDataPage = () => {
           <ToggleButton value="Simple">Simple</ToggleButton>
           <ToggleButton value="Full">Full</ToggleButton>
         </ToggleButtonGroup>
-      </div>
+      </div> */}
       <div
         style={{
           marginTop: "10px",

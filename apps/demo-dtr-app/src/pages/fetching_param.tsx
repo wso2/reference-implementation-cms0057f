@@ -16,7 +16,7 @@
 
 import React from "react";
 
-const MissingParamPage = () => {
+const FetchingParamPage = () => {
   return (
     <div
       style={{
@@ -28,9 +28,9 @@ const MissingParamPage = () => {
         justifyContent: "center",
       }}
     >
-      <h1 style={styles.header}>Invalid Request</h1>
+      <h1 style={styles.header}>Trying to Fetch Required Parameters...</h1>
       <p style={styles.message}>
-        Required query parameters: <strong>coverageId</strong>, <strong>medicationRequestId</strong>, and <strong>patientId</strong>.
+        Make sure to provide the required query parameters: <strong>coverageId</strong>, <strong>medicationRequestId</strong>, and <strong>patientId</strong>.
       </p>
     </div>
   );
@@ -47,4 +47,4 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
 };
 
-export default MissingParamPage;
+export default FetchingParamPage;

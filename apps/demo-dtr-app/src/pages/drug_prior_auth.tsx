@@ -15,7 +15,7 @@
 // under the License.
 
 import { useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../components/AuthProvider";
 import DetailsDiv from "../components/DetailsDiv";
 import PrescribedForm from "../components/PrescribedForm";
@@ -27,11 +27,17 @@ const useQuery = () => {
 
 export default function DrugPiorAuthPage() {
   const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   const query = useQuery();
 
-  const coverageId = query.get("coverageId") || sessionStorage.getItem("coverageId") || "";
-  const medicationRequestId = query.get("medicationRequestId") || sessionStorage.getItem("medicationRequestId") || "";
-  const patientId = query.get("patientId") || sessionStorage.getItem("patientId") || "";
+  const coverageId = query.get("coverageId") || sessionStorage.getItem("coverageId");
+  const medicationRequestId = query.get("medicationRequestId") || sessionStorage.getItem("medicationRequestId");
+  const patientId = query.get("patientId") || sessionStorage.getItem("patientId");
+
+  if (!coverageId || !medicationRequestId || !patientId) {
+    navigate("/fetching");
+    return;
+  }
 
   const [isQuestionnaireResponseSubmited, setIsQuestionnaireResponseSubmited] =
     useState(false);

@@ -44,28 +44,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const getAuthenticationIfo = async () => {
     const response = await fetch("/auth/userinfo");
 
+    saveQueryParamsToSessionStorage();
+
     if (response.status == 200) {
       setIsAuthenticated(true);
       const redirectTo = originalPath || "/";
       navigate(redirectTo, { replace: true });
     } else if (response.status == 401) {
-      setIsAuthenticated(false);
-      const coverageId = query.get("coverageId");
-      const medicationRequestId = query.get("medicationRequestId");
-      const patientId = query.get("patientId");
-
-      if (!coverageId || !medicationRequestId || !patientId) {
-        navigate("/invalid-req");
-        return;
-      }
-
-      sessionStorage.setItem("coverageId", coverageId);
-      sessionStorage.setItem("medicationRequestId", medicationRequestId);
-      sessionStorage.setItem("patientId", patientId);
-
+      setIsAuthenticated(false); 
       navigate("/login");
     }
   };
+
+  const saveQueryParamsToSessionStorage = () => {
+    const coverageId = query.get("coverageId");
+    const medicationRequestId = query.get("medicationRequestId");
+    const patientId = query.get("patientId");
+
+    if (!coverageId || !medicationRequestId || !patientId) {
+      navigate("/fetching");
+      return;
+    }
+
+    sessionStorage.setItem("coverageId", coverageId);
+    sessionStorage.setItem("medicationRequestId", medicationRequestId);
+    sessionStorage.setItem("patientId", patientId);
+  }
 
   useEffect(() => {
     getAuthenticationIfo();

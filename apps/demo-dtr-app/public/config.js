@@ -27,3 +27,5 @@ const Config = {
   ehr_baseUrl:
     "https://d5a7a3a9-12e4-4949-9cf8-bb3e12517db4.e1-us-east-azure.choreoapps.dev",
 };
+
+window.Config = Config;

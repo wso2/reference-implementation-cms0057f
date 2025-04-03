@@ -82,7 +82,7 @@ export const Layout = () => {
             overflowY: "auto",
             transition: "width 0.5s ease-in-out, opacity 0.5s ease-in-out",
             opacity: expanded ? 1 : 0,
-            backgroundColor: "	#4C585B",
+            backgroundColor: "#A7B6B8",
             paddingTop: "5px",
           }}
         >

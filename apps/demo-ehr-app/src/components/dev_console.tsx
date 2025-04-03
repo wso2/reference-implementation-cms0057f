@@ -26,6 +26,7 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { tomorrowNight } from "react-syntax-highlighter/dist/esm/styles/hljs";
 import { useSelector } from "react-redux";
 import "../assets/styles/code_theme.css";
+import Stepper from "./Stepper";
 
 const DevConsole = () => {
   const [stage, setStage] = useState("horizontal");
@@ -34,13 +35,14 @@ const DevConsole = () => {
     setStage((event.target as HTMLInputElement).value);
   };
 
-  const hook = useSelector((state: any) => state.cdsRequest.hook);
-  const requestState = useSelector((state: any) => state.cdsRequest.request);
-  const requestUrl = useSelector((state: any) => state.cdsRequest.requestUrl);
+  const hook = useSelector((state: any) => state.currentState.hook);
+  const requestState = useSelector((state: any) => state.currentState.request);
+  const requestUrl = useSelector((state: any) => state.currentState.requestUrl);
   const requestMethod = useSelector(
-    (state: any) => state.cdsRequest.requestMethod
+    (state: any) => state.currentState.requestMethod
   );
-  const response = useSelector((state: any) => state.cdsResponse.cards);
+  const response = useSelector((state: any) => state.currentState.response);
+  const isProcess = useSelector((state: any) => state.currentState.isProcess);
 
   const cdsRequest = requestState;
 
@@ -56,6 +58,7 @@ const DevConsole = () => {
       >
         Developer Console
       </Box>
+      {isProcess && <Stepper></Stepper>}
 
       {hook && (
         <div
@@ -81,7 +84,7 @@ const DevConsole = () => {
           style={{
             width: "80%",
             borderRadius: 10,
-            backgroundColor: "#D9D9D9",
+            backgroundColor: "#f5f0f0",
             textAlign: "center",
             alignSelf: "center",
             marginTop: 10,
@@ -116,10 +119,11 @@ const DevConsole = () => {
               value="horizontal"
               control={<Radio />}
               label="Horizontal"
+              style={{ color: "#FFFFFF" }}
             />
             <FormControlLabel
               value="vertical"
-              control={<Radio/>}
+              control={<Radio />}
               label="Vertical"
             />
           </RadioGroup>

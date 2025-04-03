@@ -17,15 +17,14 @@
 import { SERVICE_CARD_DETAILS, PATIENT_DETAILS } from "../constants/data";
 import { ServiceCardListProps } from "../components/interfaces/card";
 import MultiActionAreaCard from "../components/serviceCard";
-import { useContext } from "react";
+import { useContext, useEffect } from "react";
 import { ExpandedContext } from "../utils/expanded_context";
 import { useSelector, useDispatch } from "react-redux";
 import { selectPatient } from "../redux/patientSlice";
 import { useAuth } from "../components/AuthProvider";
 import { Navigate } from "react-router-dom";
-import { resetCdsResponse } from "../redux/cdsResponseSlice";
-import { resetCdsRequest } from "../redux/cdsRequestSlice";
 import PatientInfo from "../components/PatientInfo";
+import { updateIsProcess } from "../redux/currentStateSlice";
 
 function ServiceCardList({ services, expanded }: ServiceCardListProps) {
   return (
@@ -84,6 +83,10 @@ function PractitionerDashBoard() {
   );
   const dispatch = useDispatch();
 
+  useEffect(() => {
+    dispatch(updateIsProcess(false));
+  }, []);
+
   let currentPatient = PATIENT_DETAILS.find(
     (patient) => patient.id === selectedPatientId
   );
@@ -91,9 +94,6 @@ function PractitionerDashBoard() {
   if (!currentPatient) {
     currentPatient = PATIENT_DETAILS[0];
   }
-
-  dispatch(resetCdsResponse());
-  dispatch(resetCdsRequest());
 
   return isAuthenticated ? (
     <div style={{ marginLeft: 50, marginBottom: 50 }}>

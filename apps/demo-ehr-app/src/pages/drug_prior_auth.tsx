@@ -34,6 +34,7 @@ import { updateCdsResponse, resetCdsResponse } from "../redux/cdsResponseSlice";
 import { useAuth } from "../components/AuthProvider";
 import PatientInfo from "../components/PatientInfo";
 import { FREQUENCY_UNITS } from "../constants/data";
+import { updateIsProcess } from "../redux/currentStateSlice";
 
 const useQuery = () => {
   return new URLSearchParams(useLocation().search);
@@ -88,6 +89,7 @@ const QuestionnniarForm = ({
   useEffect(() => {
     dispatch(resetCdsRequest());
     dispatch(resetCdsResponse());
+    dispatch(updateIsProcess(true));
     // Fetch the questionnaire data from the API
     const Config = window.Config;
     dispatch(

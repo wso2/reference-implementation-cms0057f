@@ -22,13 +22,18 @@ import cdsRequestSlice from "./cdsRequestSlice";
 import cdsResponseSlice from "./cdsResponseSlice";
 import medicationFormDataReducer from "./medicationFormDataSlice";
 import loggedUserSlice from "./loggedUserSlice";
+import commonStoargeSlice from "./commonStoargeSlice";
+import currentStateSlice from "./currentStateSlice";
 
 const persistConfig = {
   key: "root",
   storage,
 };
 
-const persistedReducer = persistReducer(persistConfig, medicationFormDataReducer);
+const persistedReducer = persistReducer(
+  persistConfig,
+  medicationFormDataReducer
+);
 
 const store = configureStore({
   reducer: {
@@ -37,6 +42,8 @@ const store = configureStore({
     cdsResponse: cdsResponseSlice,
     medicationFormData: persistedReducer,
     loggedUser: loggedUserSlice,
+    currentState: currentStateSlice,
+    commonStoarge: commonStoargeSlice,
   },
 });
 

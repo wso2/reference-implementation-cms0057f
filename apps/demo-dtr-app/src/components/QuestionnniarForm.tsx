@@ -33,20 +33,25 @@ import { updateCdsResponse, resetCdsResponse } from "../redux/cdsResponseSlice";
 export default function QuestionnniarForm({
   coverageId,
   medicationRequestId,
+  patientId,
   isQuestionnaireResponseSubmited,
   setIsQuestionnaireResponseSubmited,
+  practitionerId,
 }: {
   coverageId: string;
   medicationRequestId: string;
+  patientId: string;
   isQuestionnaireResponseSubmited: boolean;
   setIsQuestionnaireResponseSubmited: React.Dispatch<
     React.SetStateAction<boolean>
   >;
+  practitionerId: string;
 }) {
   const dispatch = useDispatch();
   const [questions, setQuestions] = useState<
     { linkId: string; text: string; type: string }[]
   >([]);
+  const [questionnaireID, setQuestionnaireID] = useState<string | null>(null);
   const [formData, setFormData] = useState<{
     [key: string]: string | number | boolean;
   }>({});
@@ -58,7 +63,7 @@ export default function QuestionnniarForm({
 
   const Config = window.Config;
 
-  const requestBody = {
+  const questionnairePackageRequestBody = {
     resourceType: "Parameters",
     id: "questionnaire-package-request",
     parameter: [
@@ -84,10 +89,10 @@ export default function QuestionnniarForm({
     dispatch(resetCdsResponse());
     dispatch(updateRequestUrl(Config.questionnaire_package));
     dispatch(updateRequestMethod("POST"));
-    dispatch(updateRequest(requestBody));
+    dispatch(updateRequest(questionnairePackageRequestBody));
 
     axios
-      .post(Config.questionnaire_package, requestBody, {
+      .post(Config.questionnaire_package, questionnairePackageRequestBody, {
         headers: {
           "Content-Type": "application/fhir+json",
         },
@@ -106,6 +111,7 @@ export default function QuestionnniarForm({
         setQuestions(
           questionnaire.parameter[0].resource.entry[0].resource.item || []
         );
+        setQuestionnaireID(questionnaire.parameter[0].resource.entry[0].resource.id || null);
 
         dispatch(
           updateCdsResponse({
@@ -140,30 +146,48 @@ export default function QuestionnniarForm({
   };
 
   const generateQuestionnaireResponse = () => {
+    if (!patientId) {
+      throw new Error("Patient ID not found");
+    }
+
+    if (!questionnaireID) {
+      throw new Error("Questionnaire ID not found");
+    }
+
+    if (!practitionerId) {
+      throw new Error("Practitioner ID not found");
+    }
+
     return {
       resourceType: "QuestionnaireResponse",
-      questionnaire: "Questionnaire/" + "questionnaireId",
+      meta: {
+        profile: [
+          "http://hl7.org/fhir/us/core/StructureDefinition/us-core-questionnaireresponse",
+        ],
+      },
+      authored: new Date().toISOString(),
+      questionnaire: "Questionnaire/" + questionnaireID,
       status: "completed",
       subject: {
-        reference: "Patient/101",
+        reference: "Patient/" + patientId,
       },
       author: {
-        reference: "PractitionerRole/456",
+        reference: practitionerId,
       },
       item: questions.map((question) => ({
         linkId: question.linkId,
         text: question.text,
         answer: [
           {
-            valueQuestionnaireResponseBoolean:
+            valueBoolean:
               typeof formData[question.linkId] === "boolean"
                 ? (formData[question.linkId] as boolean)
                 : undefined,
-            valueQuestionnaireResponseInteger:
+            valueInteger:
               typeof formData[question.linkId] === "number"
                 ? (formData[question.linkId] as number)
                 : undefined,
-            valueQuestionnaireResponseString:
+            valueString:
               typeof formData[question.linkId] === "string"
                 ? (formData[question.linkId] as string)
                 : undefined,
@@ -178,10 +202,9 @@ export default function QuestionnniarForm({
     dispatch(resetCdsResponse());
     dispatch(updateRequest(questionnaireResponse));
     dispatch(
-      updateRequestUrl(Config.demoBaseUrl + Config.questionnaire_response)
+      updateRequestUrl(Config.questionnaire_response)
     );
     dispatch(updateRequestMethod("POST"));
-
     axios
       .post(Config.questionnaire_response, questionnaireResponse, {
         headers: {
@@ -204,6 +227,8 @@ export default function QuestionnniarForm({
       })
       .catch((error) => {
         console.error("Error submitting questionnaire response:", error);
+        setAlertMessage("Error submitting questionnaire response!");
+        setAlertSeverity("error");
         dispatch(
           updateCdsResponse({
             cards: error,
@@ -302,7 +327,7 @@ export default function QuestionnniarForm({
             variant="success"
             style={{ marginTop: "30px", marginRight: "20px", float: "right" }}
             onClick={() =>
-              window.open(Config.ehr_baseUrl + "/dashboard/drug-order-v2/claim-submit", "_blank")
+              window.open(Config.ehr_baseUrl + "/dashboard/drug-order-v2/claim-submit")
             }
             disabled={!isQuestionnaireResponseSubmited}
           >

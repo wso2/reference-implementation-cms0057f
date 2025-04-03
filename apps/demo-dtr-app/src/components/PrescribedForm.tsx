@@ -22,8 +22,10 @@ import DatePicker from "react-datepicker";
 
 export default function PrescribedForm({
   medicationRequestId,
+  setPractitionerIdCallback,
 }: {
   medicationRequestId: string;
+  setPractitionerIdCallback: (id: string) => void;
 }) {
   const [medicationData, setMedicationData] = useState<{
     medication: string;
@@ -48,6 +50,7 @@ export default function PrescribedForm({
         );
         if (response.status >= 200 && response.status < 300) {
           const data = response.data;
+          setPractitionerIdCallback(data.requester.reference || "");
           setMedicationData({
             medication: data.medicationCodeableConcept?.text || "",
             quantity: `${data.dispenseRequest?.quantity?.value || ""} ${
@@ -71,7 +74,7 @@ export default function PrescribedForm({
     };
 
     fetchMedicationRequest();
-  }, [medicationRequestId]);
+  }, [medicationRequestId, setPractitionerIdCallback]);
 
   return (
     <Card style={{ marginTop: "30px", padding: "20px" }}>

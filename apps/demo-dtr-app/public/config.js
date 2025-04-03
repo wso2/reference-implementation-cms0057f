@@ -23,7 +23,7 @@ const Config = {
     "/choreo-apis/cms-0057-f/questionnaire-package-wp/v1/fhir/r4/Questionnaire/questionnaire-package",
   questionnaire_response:
     "/choreo-apis/cms-0057-f/questionnaire-response-fh/v1/fhir/r4/QuestionnaireResponse",
-  patient: "/choreo-apis/cms-0057-f/patient-service/v1/fhir/r4/Patient/",
+  patient: "/choreo-apis/cms-0057-f/patient-service/v1/fhir/r4/Patient",
   medicationRequest: "/choreo-apis/cms-0057-f/medication-request-ser-tw/v1/fhir/r4/MedicationRequest",
 
   ehr_baseUrl:

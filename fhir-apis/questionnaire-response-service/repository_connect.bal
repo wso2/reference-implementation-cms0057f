@@ -3,6 +3,7 @@ import ballerinax/health.clients.fhir;
 import ballerinax/health.fhir.r4;
 import ballerinax/health.fhir.r4.parser;
 import ballerinax/health.fhir.r4.uscore700;
+import ballerina/time;
 
 isolated uscore700:USCoreQuestionnaireResponseProfile[] questionnaireResponses = [];
 isolated int createOperationNextId = 1123;
@@ -60,6 +61,7 @@ public isolated function search(map<string[]>? searchParameters = ()) returns r4
         string? id = ();
         string? subject = ();
         string? author = ();
+        string? authored = ();
 
         foreach var 'key in searchParameters.keys() {
             match 'key {
@@ -71,6 +73,9 @@ public isolated function search(map<string[]>? searchParameters = ()) returns r4
                 }
                 "author" => {
                     author = searchParameters.get('key)[0];
+                }
+                "authored" => {
+                    authored = searchParameters.get('key)[0];
                 }
                 "_count" => {
                     // pagination is not used in this service
@@ -108,9 +113,16 @@ public isolated function search(map<string[]>? searchParameters = ()) returns r4
             results = getByAuthor(author, results);
         }
 
+        if authored is string {
+            results = check getByAutheredDate(authored, results);
+        }
+
+        // reorder the results as decending order by Authored date
+        results = orderByAuthoredDate(results);
+
         r4:BundleEntry[] bundleEntries = [];
 
-        foreach var item in results {
+        foreach QuestionnaireResponse item in results {
             r4:BundleEntry bundleEntry = {
                 'resource: item
             };
@@ -123,8 +135,84 @@ public isolated function search(map<string[]>? searchParameters = ()) returns r4
     return bundle;
 }
 
+isolated function orderByAuthoredDate(QuestionnaireResponse[] targetArr) returns QuestionnaireResponse[] {
+    return from QuestionnaireResponse item in targetArr order by item.authored descending select item;
+}
+
+isolated function getByAutheredDate(string authored, QuestionnaireResponse[] targetArr) returns QuestionnaireResponse[]|r4:FHIRError {
+    string operator = authored.substring(0, 2);
+    string dateString = authored.substring(2);
+
+    time:Utc|time:Error dateTime = time:utcFromString(dateString);
+    if dateTime is time:Error {
+        return r4:createFHIRError(string `Invalid date format: ${dateString}`, r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+    }
+
+    time:Utc lowerBound = time:utcAddSeconds(dateTime, 86400);
+    time:Utc upperBound = time:utcAddSeconds(dateTime, -86400);
+
+    QuestionnaireResponse[] filteredResponses = [];
+    foreach QuestionnaireResponse response in targetArr {
+        time:Utc|time:Error responseDateTime = time:utcFromString(response.authored);
+        if responseDateTime is time:Error {
+            continue; // Skip invalid date formats
+        }
+        match operator {
+            "eq" => {
+                if responseDateTime == dateTime {
+                    filteredResponses.push(response.clone());
+                }
+            }
+            "ne" => {
+                if responseDateTime != dateTime {
+                    filteredResponses.push(response.clone());
+                }
+            }
+            "lt" => {
+                if responseDateTime < dateTime {
+                    filteredResponses.push(response.clone());
+                }
+            }
+            "gt" => {
+                if responseDateTime > dateTime {
+                    filteredResponses.push(response.clone());
+                }
+            }
+            "ge" => {
+                if responseDateTime >= dateTime {
+                    filteredResponses.push(response.clone());
+                }
+            }
+            "le" => {
+                if responseDateTime <= dateTime {
+                    filteredResponses.push(response.clone());
+                }
+            }
+            "sa" => {
+                if responseDateTime > dateTime {
+                    filteredResponses.push(response.clone());
+                }
+            }
+            "eb" => {
+                if responseDateTime < dateTime {
+                    filteredResponses.push(response.clone());
+                }
+            }
+            "ap" => {
+                // Approximation: Check if the response date is within 1 day of the given date
+                if responseDateTime >= lowerBound && responseDateTime <= upperBound {
+                    filteredResponses.push(response.clone());
+                }
+            }
+            _ => {
+                return r4:createFHIRError(string `Invalid operator: ${operator}`, r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+            }
+        }
+    }
+    return filteredResponses;
+}
+
 isolated function getBySubject(string subject, QuestionnaireResponse[] targetArr) returns QuestionnaireResponse[] {
-    // Implement the logic to filter QuestionnaireResponses by subject
     QuestionnaireResponse[] filteredResponses = [];
     foreach QuestionnaireResponse response in targetArr {
         if response.subject.reference == subject {
@@ -135,7 +223,6 @@ isolated function getBySubject(string subject, QuestionnaireResponse[] targetArr
 }
 
 isolated function getByAuthor(string author, QuestionnaireResponse[] targetArr) returns QuestionnaireResponse[] {
-    // Implement the logic to filter QuestionnaireResponses by author
     QuestionnaireResponse[] filteredResponses = [];
     foreach QuestionnaireResponse response in targetArr {
         if response.author?.reference == author {

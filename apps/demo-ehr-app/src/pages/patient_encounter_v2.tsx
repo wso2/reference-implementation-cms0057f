@@ -30,6 +30,13 @@ import {
   updateRequestUrl,
 } from "../redux/cdsRequestSlice";
 import { updateCdsResponse, resetCdsResponse } from "../redux/cdsResponseSlice";
+import {
+  resetCurrentRequest,
+  updateCurrentRequest,
+  updateCurrentRequestMethod,
+  updateCurrentRequestUrl,
+  updateCurrentResponse,
+} from "../redux/currentStateSlice";
 
 function PatientEncounter() {
   const { isAuthenticated } = useAuth();
@@ -45,17 +52,14 @@ function PatientEncounter() {
 
   useEffect(() => {
     const fetchPatientDetails = async () => {
-      dispatch(resetCdsResponse());
-      dispatch(updateRequestMethod("GET"));
-      dispatch(updateRequestUrl(Config.demoHospitalUrl + Config.patient));
+      dispatch(resetCurrentRequest());
+      dispatch(updateCurrentRequestMethod("GET"));
+      dispatch(
+        updateCurrentRequestUrl(Config.demoHospitalUrl + Config.patient)
+      );
       try {
         const response = await axios.get(Config.patient);
-        dispatch(
-          updateCdsResponse({
-            cards: response.data,
-            systemActions: {},
-          })
-        );
+        dispatch(updateCurrentResponse(response.data));
         const patientData = response.data.entry;
         console.log("Patients: ", patients);
         patientData.forEach((patient: any) => {

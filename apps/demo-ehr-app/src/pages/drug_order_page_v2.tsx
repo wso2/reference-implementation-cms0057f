@@ -24,14 +24,7 @@ import Select, { ActionMeta, SingleValue } from "react-select";
 import Card from "react-bootstrap/Card";
 import DatePicker from "react-datepicker";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  updateCdsHook,
-  updateRequest,
-  updateRequestUrl,
-  updateRequestMethod,
-  resetCdsRequest,
-} from "../redux/cdsRequestSlice";
-import { resetCdsResponse, updateCdsResponse } from "../redux/cdsResponseSlice";
+import { updateCdsResponse } from "../redux/cdsResponseSlice";
 import {
   updateMedicationFormData,
   resetMedicationFormData,
@@ -48,13 +41,35 @@ import { CdsCard, CdsResponse } from "../components/interfaces/cdsCard";
 import axios from "axios";
 import { useAuth } from "../components/AuthProvider";
 import { Navigate } from "react-router-dom";
-import { Alert, Snackbar } from "@mui/material";
+import { Alert, Box, Snackbar, Step, StepLabel, Stepper } from "@mui/material";
 import PatientInfo from "../components/PatientInfo";
 import {
   CHIP_COLOR_CRITICAL,
   CHIP_COLOR_INFO,
   CHIP_COLOR_WARNING,
 } from "../constants/color";
+import {
+  resetCurrentRequest,
+  updateCurrentRequest,
+  updateCurrentRequestMethod,
+  updateCurrentRequestUrl,
+  updateCurrentResponse,
+  updateIsProcess,
+} from "../redux/currentStateSlice";
+import {
+  StepStatus,
+  updateActiveStep,
+  updateSingleStep,
+} from "../redux/commonStoargeSlice";
+
+interface Operation {
+  name: string;
+  isCompleted: boolean;
+}
+
+const timeout = (delay: number) => {
+  return new Promise((res) => setTimeout(res, delay));
+};
 
 const PrescribeForm = ({
   setCdsCards,
@@ -62,9 +77,16 @@ const PrescribeForm = ({
   setCdsCards: React.Dispatch<React.SetStateAction<CdsCard[]>>;
 }) => {
   const dispatch = useDispatch();
+  const [activeOperation, setActiveOperation] = useState(-1);
+  const [operations, setOperations] = useState<Operation[]>([
+    { name: "Create medication request", isCompleted: false },
+    { name: "Check payer requirements", isCompleted: false },
+  ]);
+  const [buttonLoading, setButtonLoading] = useState(false);
 
   useEffect(() => {
     dispatch(resetMedicationFormData());
+    dispatch(updateIsProcess(true));
   }, [dispatch]);
 
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
@@ -126,8 +148,14 @@ const PrescribeForm = ({
   };
 
   const handleCheckPayerRequirements = () => {
-    dispatch(resetCdsRequest());
-    dispatch(resetCdsResponse());
+    dispatch(updateActiveStep(1));
+    setActiveOperation(1);
+    dispatch(
+      updateSingleStep({
+        stepName: "CDS Invocation",
+        newStatus: StepStatus.IN_PROGRESS,
+      })
+    );
 
     const payload = CHECK_PAYER_REQUIREMENTS_REQUEST_BODY(
       patientId,
@@ -141,12 +169,13 @@ const PrescribeForm = ({
     const Config = window.Config;
 
     setCdsCards([]);
-    dispatch(updateCdsHook("order-sign"));
-    dispatch(updateRequestMethod("POST"));
-    dispatch(
-      updateRequestUrl(Config.demoBaseUrl + Config.prescribe_medication)
+    localStorage.setItem("cdsHook", "order-sign");
+    localStorage.setItem("cdsRequestMethod", "POST");
+    localStorage.setItem(
+      "cdsRequestUrl",
+      Config.demoHospitalUrl + Config.prescribe_medication
     );
-    dispatch(updateRequest(payload));
+    localStorage.setItem("cdsRequest", JSON.stringify(payload));
 
     axios
       .post<CdsResponse>(Config.prescribe_medication, payload)
@@ -162,14 +191,40 @@ const PrescribeForm = ({
 
         setCdsCards(res.data.cards);
 
-        dispatch(updateCdsResponse({ cards: res.data, systemActions: {} }));
+        localStorage.setItem(
+          "cdsResponse",
+          JSON.stringify({ cards: res.data, systemActions: {} })
+        );
+        setOperations((prev) =>
+          prev.map((op) => {
+            if (op.name === "Check payer requirements") {
+              return {
+                name: op.name,
+                isCompleted: true,
+              };
+            }
+            return op;
+          })
+        );
+        setIsSubmited(true);
+        setButtonLoading(false);
+        dispatch(
+          updateSingleStep({
+            stepName: "CDS Invocation",
+            newStatus: StepStatus.COMPLETED,
+          })
+        );
         return res.data;
       })
       .catch((err) => {
         setAlertMessage("Error retrieving payer requirements!");
         setAlertSeverity("error");
         setOpenSnackbar(true);
-        dispatch(updateCdsResponse({ cards: err, systemActions: {} }));
+        localStorage.setItem(
+          "cdsResponse",
+          JSON.stringify({ cards: err, systemActions: {} })
+        );
+        setButtonLoading(false);
       });
   };
 
@@ -218,8 +273,17 @@ const PrescribeForm = ({
     if (!validateForm()) {
       return;
     }
-    dispatch(resetCdsRequest());
-    dispatch(resetCdsResponse());
+    dispatch(updateActiveStep(0));
+    dispatch(
+      updateSingleStep({
+        stepName: "Medication request",
+        newStatus: StepStatus.IN_PROGRESS,
+      })
+    );
+
+    setButtonLoading(true);
+    setActiveOperation(0);
+    dispatch(resetCurrentRequest());
     console.log("medicationFormData", medicationFormData);
 
     const payload = CREATE_MEDICATION_REQUEST_BODY(
@@ -233,11 +297,21 @@ const PrescribeForm = ({
     );
     const Config = window.Config;
 
-    dispatch(updateRequestMethod("POST"));
-    dispatch(
-      updateRequestUrl(Config.demoHospitalUrl + Config.medication_request)
+    localStorage.setItem("medicationRequestMethod", "POST");
+    localStorage.setItem(
+      "medicationRequestUrl",
+      Config.demoHospitalUrl + Config.medication_request
     );
-    dispatch(updateRequest(payload));
+    localStorage.setItem("medicationRequest", JSON.stringify(payload));
+
+    dispatch(updateIsProcess(true));
+    dispatch(updateCurrentRequestMethod("POST"));
+    dispatch(
+      updateCurrentRequestUrl(
+        Config.demoHospitalUrl + Config.medication_request
+      )
+    );
+    dispatch(updateCurrentRequest(payload));
 
     axios
       .post<CdsResponse>(Config.medication_request, payload, {
@@ -245,7 +319,7 @@ const PrescribeForm = ({
           "Content-Type": "application/fhir+json",
         },
       })
-      .then<CdsResponse>((res) => {
+      .then<CdsResponse>(async (res) => {
         if (res.status >= 200 && res.status < 300) {
           setAlertMessage("Medication order created successfully!");
           setAlertSeverity("success");
@@ -254,8 +328,27 @@ const PrescribeForm = ({
           setAlertSeverity("error");
         }
         setOpenSnackbar(true);
-        dispatch(updateCdsResponse({ cards: res.data, systemActions: {} }));
-        setIsSubmited(true);
+        localStorage.setItem("medicationResponse", JSON.stringify(res.data));
+        dispatch(updateCurrentResponse(res.data));
+        setOperations((prev) =>
+          prev.map((op) => {
+            if (op.name === "Create medication request") {
+              return {
+                name: op.name,
+                isCompleted: true,
+              };
+            }
+            return op;
+          })
+        );
+        await timeout(3000);
+        dispatch(
+          updateSingleStep({
+            stepName: "Medication request",
+            newStatus: StepStatus.COMPLETED,
+          })
+        );
+        handleCheckPayerRequirements();
         return res.data;
       })
       .catch((err) => {
@@ -263,6 +356,7 @@ const PrescribeForm = ({
         setAlertSeverity("error");
         setOpenSnackbar(true);
         dispatch(updateCdsResponse({ cards: err, systemActions: {} }));
+        setButtonLoading(false);
       });
   };
 
@@ -387,23 +481,37 @@ const PrescribeForm = ({
               </Form.Group>
             </div>
             <div style={{ marginTop: "30px", float: "right" }}>
-              {isSubmited && (
-                <Button
-                  variant="primary"
-                  type="submit"
-                  onClick={handleCheckPayerRequirements}
-                >
-                  Check Payer Requirements
-                </Button>
-              )}
-              <Button
-                variant="success"
-                style={{ marginLeft: "30px", float: "right" }}
-                onClick={handleCreateMedicationOrder}
-                disabled={isSubmited || !validateFormRequiredFields()}
+              <Box
+                sx={{ width: "100%" }}
+                display="flex"
+                flexDirection="row"
+                alignItems="center"
+                justifyContent="space-between"
+                gap={2}
               >
-                Create Medication Order
-              </Button>
+                <Stepper
+                  activeStep={activeOperation}
+                  alternativeLabel
+                  sx={{ marginTop: 6 }}
+                >
+                  {operations.map((operation) => (
+                    <Step
+                      key={operation.name}
+                      completed={operation.isCompleted}
+                    >
+                      <StepLabel>{operation.name}</StepLabel>
+                    </Step>
+                  ))}
+                </Stepper>
+                <Button
+                  variant="success"
+                  style={{ marginLeft: "30px", float: "right" }}
+                  onClick={handleCreateMedicationOrder}
+                  disabled={isSubmited || !validateFormRequiredFields()}
+                >
+                  Create Medication Order
+                </Button>
+              </Box>
             </div>
           </Form>
         </Card.Body>
@@ -444,6 +552,95 @@ const RequirementCard = ({
 }: {
   requirementsResponsCard: CdsCard;
 }) => {
+  const dispatch = useDispatch();
+
+  const requestBody = {
+    resourceType: "Parameters",
+    id: "questionnaire-package-request",
+    parameter: [
+      {
+        name: "coverage",
+        resource: {
+          resourceType: "Coverage",
+          reference: "Coverage/367",
+        },
+      },
+      {
+        name: "order",
+        resource: {
+          resourceType: "MedicationRequest",
+          reference: "MedicationRequest/111112",
+        },
+      },
+    ],
+  };
+  const Config = window.Config;
+
+  const loadQuestionnaires = () => {
+    localStorage.setItem("timestamp", new Date().toISOString());
+    dispatch(updateActiveStep(2));
+    dispatch(
+      updateSingleStep({
+        stepName: "Questionnaire package",
+        newStatus: StepStatus.IN_PROGRESS,
+      })
+    );
+
+    localStorage.setItem("questionnairePackageRequestMethod", "POST");
+    localStorage.setItem(
+      "questionnairePackageUrl",
+      Config.demoBaseUrl + Config.claim_submit
+    );
+
+    localStorage.setItem(
+      "questionnairePackageRequest",
+      JSON.stringify(requestBody)
+    );
+    axios
+      .post(Config.questionnaire_package, requestBody, {
+        headers: {
+          "Content-Type": "application/fhir+json",
+        },
+      })
+      .then(async (response) => {
+        if (response.status >= 200 && response.status < 300) {
+          console.log("Questionnaire fetched successfully!");
+        } else {
+          console.log("Failed to fetch questionnaire!");
+        }
+
+        const questionnaire = response.data;
+        localStorage.setItem(
+          "questionnairePackageResponse",
+          JSON.stringify(questionnaire)
+        );
+        dispatch(
+          updateSingleStep({
+            stepName: "Questionnaire package",
+            newStatus: StepStatus.COMPLETED,
+          })
+        );
+        await timeout(2000);
+        dispatch(updateActiveStep(3));
+        dispatch(
+          updateSingleStep({
+            stepName: "Questionnaire Response",
+            newStatus: StepStatus.IN_PROGRESS,
+          })
+        );
+        await timeout(5000);
+        dispatch(
+          updateSingleStep({
+            stepName: "Questionnaire Response",
+            newStatus: StepStatus.COMPLETED,
+          })
+        );
+      })
+      .catch((error) => {
+        console.error("Error fetching questionnaire:", error);
+      });
+  };
+
   return (
     <div>
       <Card
@@ -516,14 +713,15 @@ const RequirementCard = ({
                     >
                       <Button
                         variant="secondary"
-                        onClick={() =>
+                        onClick={() => {
+                          console.log(link.url);
+                          loadQuestionnaires();
                           window.open(
-                            `${window.location.origin}${
-                              new URL(link.url).pathname
-                            }`,
-                            "_blank"
-                          )
-                        }
+                            link.url,
+                            "_blank",
+                            "noopener,noreferrer"
+                          );
+                        }}
                       >
                         {link.label}
                       </Button>

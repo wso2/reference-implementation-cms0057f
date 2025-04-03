@@ -32,7 +32,6 @@ import NavBar from './components/NavBar';
 declare global {
   interface Window {
     Config: {
-      baseUrl: string;
       demoBaseUrl: string;
       medication_request: string;
       questionnaire_package: string;

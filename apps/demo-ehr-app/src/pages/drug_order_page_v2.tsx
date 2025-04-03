@@ -82,7 +82,6 @@ const PrescribeForm = ({
     { name: "Create medication request", isCompleted: false },
     { name: "Check payer requirements", isCompleted: false },
   ]);
-  const [buttonLoading, setButtonLoading] = useState(false);
 
   useEffect(() => {
     dispatch(resetMedicationFormData());
@@ -207,7 +206,6 @@ const PrescribeForm = ({
           })
         );
         setIsSubmited(true);
-        setButtonLoading(false);
         dispatch(
           updateSingleStep({
             stepName: "CDS Invocation",
@@ -224,7 +222,6 @@ const PrescribeForm = ({
           "cdsResponse",
           JSON.stringify({ cards: err, systemActions: {} })
         );
-        setButtonLoading(false);
       });
   };
 
@@ -281,7 +278,6 @@ const PrescribeForm = ({
       })
     );
 
-    setButtonLoading(true);
     setActiveOperation(0);
     dispatch(resetCurrentRequest());
     console.log("medicationFormData", medicationFormData);
@@ -356,7 +352,6 @@ const PrescribeForm = ({
         setAlertSeverity("error");
         setOpenSnackbar(true);
         dispatch(updateCdsResponse({ cards: err, systemActions: {} }));
-        setButtonLoading(false);
       });
   };
 

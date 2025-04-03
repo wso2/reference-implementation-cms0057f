@@ -15,8 +15,6 @@
 // under the License.
 
 const Config = {
-  baseUrl:
-    "https://c32618cf-389d-44f1-93ee-b67a3468aae3-dev.e1-us-east-azure.choreoapis.dev",
   demoBaseUrl: "https://unitedcare.com",
 
   questionnaire_package:
@@ -29,3 +27,5 @@ const Config = {
   ehr_baseUrl:
     "https://d5a7a3a9-12e4-4949-9cf8-bb3e12517db4.e1-us-east-azure.choreoapps.dev",
 };
+
+window.Config = Config;

@@ -71,12 +71,14 @@ export default function NavBar() {
     <div
       style={{
         padding: 14,
-        backgroundColor: expanded ? "#4C585B" : "#7E99A3",
+        paddingLeft: 20,
+        paddingRight: 20,
+        backgroundColor: expanded ? "#4C585B" : "#4C585B",
         transition: "background-color 0.5s ease",
       }}
     >
       <Box
-        bg={expanded ? "#7E99A3" : "#4C585B"}
+        bg={expanded ? "#7E99A3" : "#7E99A3"}
         height={60}
         borderRadius="40"
         transition="background-color 0.5s ease"
@@ -98,25 +100,19 @@ export default function NavBar() {
             cursor="pointer"
           >
             <Box
-              borderRadius="100%"
               overflow="hidden"
-              marginLeft={5}
-              backgroundColor={"white"}
-              padding={5}
+              marginLeft={10}
             >
-              <img src="/demo.png" alt="Demo Logo" height={40} width={40} />
-            </Box>
-            <Box marginLeft={10} color="white" fontSize="16px" fontWeight={600}>
-              E-Health EHR
+              <img src="/EHealthLogo.png" alt="Demo Logo" height={100} />
             </Box>
           </Box>
           <Box display="flex" alignItems="center" marginRight={5}>
             {isAuthenticated && loggedUser && (
               <Box display="flex" alignItems="center">
-                <Box marginRight={10} color="white" fontSize="16px">
-                  {loggedUser?.first_name?.toUpperCase() +
+                <Box marginRight={10} color="white" fontSize="22px" fontWeight={400} >
+                  {"Dr. " + loggedUser?.first_name +
                     " " +
-                    loggedUser?.last_name?.toUpperCase()}
+                    loggedUser?.last_name}
                 </Box>
                 <Box position="relative">
                   <Box

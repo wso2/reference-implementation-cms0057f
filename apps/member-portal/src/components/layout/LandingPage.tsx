@@ -15,7 +15,6 @@
 // under the License.
 
 import {
-  Container,
   Typography,
   Button,
   Box,
@@ -25,6 +24,9 @@ import {
   Select,
   TextField,
   LinearProgress,
+  FormGroup,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import Header from "../common/Header";
@@ -62,27 +64,35 @@ export const LandingPage = () => {
   const [payerList, setPayerList] = useState<Payer[]>([]);
   const [oldMemberId, setOldMemberId] = useState("");
   const [exportId, setExportId] = useState("");
-  const [coverageResource, setCoverageResource] = useState<any>({});
 
   const [error, setError] = useState("");
-  const [isMemberIDFetched, setIsMemberIDFetched] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [exportPercentage, setExportPercentage] = useState("0");
   const [isExportCompleted, setIsExportCompleted] = useState(false);
   const [status, setStatus] = useState("Member Not Resolved.");
 
+  const [alertMessage, setAlertMessage] = useState<string | null>(null);
+  const [alertSeverity, setAlertSeverity] = useState<
+    "error" | "warning" | "info" | "success"
+  >("info");
+  const [openSnackbar, setOpenSnackbar] = useState(false);
+
   const dispatch = useDispatch();
 
   // State to manage selected options
-  const [selectedOrgId, setSelectedOrgId] = useState([]);
+  const [selectedOrgId, setSelectedOrgId] = useState<number | null>(null);
   const Config = window.Config;
+  const loggedUser = useSelector((state: any) => state.loggedUser);
+
+  const handleCloseSnackbar = () => {
+    setOpenSnackbar(false);
+  };
 
   useEffect(() => {
     const fetchUserInfo = async () => {
       const loggedUser = await fetch("/auth/userinfo")
         .then((response) => response.json())
         .then((data) => {
-          console.log("Logged User Info: ", data);
           setIsPatientDataLoaded(true);
           return data;
         });
@@ -119,76 +129,133 @@ export const LandingPage = () => {
 
     const loadOrganizations = async () => {
       const payers = await fetchOrganizations();
-      console.log("payers:", payers);
       setPayerList(payers);
+      setSelectedOrgId(payers[0]?.id || null);
     };
 
     loadOrganizations();
   }, []);
 
-  const handleCheckCoverage = () => {
-    console.log("Checking coverage...");
+  const selectOrgChange = (event: { target: { value: any } }) => {
+    const { value } = event.target;
+    setSelectedOrgId(value);
+  };
+
+  const handleFetchMemberID = () => {
+    setOldMemberId("");
+    setExportButtonLabel("Export");
+    setIsExportCompleted(false);
+    handleMemberMatch();
+  };
+
+  const handleMemberMatch = () => {
+    setStatus("Matching Member ID...");
+    const payload = memberMatchPayload;
 
     const coverageId = (
       document.getElementById("coverage-id") as HTMLInputElement
     )?.value;
-    console.log("Coverage ID:", coverageId);
 
-    if (coverageId === "") {
-      alert("Coverage ID is required.");
+    if (!coverageId) {
+      setAlertMessage("Coverage ID cannot be empty!");
+      setAlertSeverity("error");
+      setStatus("Member Not Resolved.");
+      setOpenSnackbar(true);
       return;
-    } else {
-      dispatch(resetCdsRequest());
-      dispatch(resetCdsResponse());
-      dispatch(updateRequestMethod("GET"));
-      dispatch(
-        updateRequestUrl(
-          "/member-service/v1.0/previous" +
-            "/" +
-            selectedOrgId +
-            "/" +
-            coverageId
-        )
-      );
+    }
 
+    try {
       axios
-        .get<Response>(
+        .get(
           Config.oldPayerCoverageGet + "/" + selectedOrgId + "/" + coverageId
         )
-        .then<Response>((res) => {
+        .then((res) => {
           if (res.status >= 200 && res.status < 300) {
-            setCoverageResource(res.data);
+            const coverageResource = res.data;
+
+            // Replace coverage resource in payload
+            payload.parameter = payload.parameter.map((param: any) => {
+              if (param.name === "CoverageToLink") {
+                return {
+                  ...param,
+                  resource: coverageResource,
+                };
+              }
+              return param;
+            });
+
+            // Replace patient resource in payload
+            const patientResource = JSON.parse(
+              localStorage.getItem("patientResource") || "{}"
+            );
+            payload.parameter = payload.parameter.map((param: any) => {
+              if (param.name === "MemberPatient") {
+                return {
+                  ...param,
+                  resource: patientResource,
+                };
+              }
+              return param;
+            });
+
+            dispatch(updateRequestMethod("POST"));
+            dispatch(updateRequestUrl("/member-service/v1.0/match"));
+            dispatch(updateRequest(payload));
+            dispatch(resetCdsResponse());
+
+            axios
+              .post(Config.memberMatch, payload, {
+                headers: {
+                  "Content-Type": "application/fhir+json",
+                },
+              })
+              .then((response) => {
+                dispatch(
+                  updateCdsResponse({
+                    cards: response.data,
+                    systemActions: {},
+                  })
+                );
+                if (response.status === 201) {
+                  setOldMemberId(
+                    response.data?.parameter?.valueIdentifier?.value
+                  );
+                  setError("");
+                  setStatus("Ready to Export.");
+                } else {
+                  setError("Match failed. Please retry");
+                  setAlertMessage("Match failed. Please retry!");
+                  setAlertSeverity("error");
+                  setOpenSnackbar(true);
+                }
+              })
+              .catch((error) => {
+                console.error("Error:", error);
+                setError("Match failed. Please retry");
+                setStatus("Member Not Resoved.");
+                setAlertMessage("Match failed. Please retry!");
+                setAlertSeverity("error");
+                setOpenSnackbar(true);
+              })
           } else {
-            console.log("Error fetching payer requirements:", res);
+            console.error("Error fetching coverage:", res);
+            setAlertMessage("Error fetching coverage!");
+            setAlertSeverity("error");
+            setOpenSnackbar(true);
           }
-          dispatch(updateCdsResponse({ cards: res.data, systemActions: {} }));
-          return res.data;
         })
         .catch((err) => {
-          dispatch(updateCdsResponse({ cards: err, systemActions: {} }));
+          console.log("Error fetching coverage:", err);
+          setAlertMessage("Error fetching coverage!");
+          setAlertSeverity("error");
+          setOpenSnackbar(true);
         });
+    } catch (error) {
+      console.error("Error:", error);
+      setAlertMessage("Error fetching coverage!");
+      setAlertSeverity("error");
+      setOpenSnackbar(true);
     }
-  };
-
-
-  const selectOrgChange = (event: { target: { value: any } }) => {
-    const { value } = event.target;
-    console.log("Selected value:", value);
-    setSelectedOrgId(value); // Update selected options
-  };
-  // Handle selection of options
-  const handleFetchMemberID = () => {
-
-    // const orgId = (
-    //   document.getElementById("coverage-id") as HTMLInputElement
-    // )?.value;
-    console.log("Selected value:", selectedOrgId);
-    // setSelectedOrgId(value); // Update selected options
-
-    setOldMemberId("");
-    setExportButtonLabel("Export");
-    setIsExportCompleted(false);
-    handlePayerSelection();
   };
 
   const handleSubmit = (e: { preventDefault: () => void }) => {
@@ -200,7 +267,6 @@ export const LandingPage = () => {
     setStatus("Exporting...");
 
     setIsExporting(true);
-    console.log("Submitted name:", selectedOrgId);
 
     const postOrganizationId = async () => {
       const memberID = oldMemberId;
@@ -215,7 +281,6 @@ export const LandingPage = () => {
             "Content-Type": "application/json",
           },
         });
-        console.log("POST response:", response.data);
         dispatch(
           updateCdsResponse({
             cards: response.data,
@@ -227,7 +292,6 @@ export const LandingPage = () => {
         const match = diagnostics.match(/ExportId:\s([\w-]+)/);
         if (match && match[1]) {
           setExportId(match[1]);
-          console.log("Export ID:", match[1]);
           localStorage.setItem("exportId", match[1]);
           checkStatusUntilDownloaded(match[1]);
         } else {
@@ -245,7 +309,6 @@ export const LandingPage = () => {
             params: { exportId: exportId },
           });
           const currentStatus = response.data.lastStatus;
-          console.log("Checking status:", currentStatus);
 
           setStatus(currentStatus);
 
@@ -264,56 +327,6 @@ export const LandingPage = () => {
 
     postOrganizationId();
   };
-
-  const handlePayerSelection = () => {
-    const payload = memberMatchPayload;
-    dispatch(updateRequestMethod("POST"));
-    dispatch(updateRequestUrl("/member-service/v1.0/match"));
-    dispatch(updateRequest(payload));
-    dispatch(resetCdsResponse());
-    try {
-      axios
-        .post(Config.memberMatch, payload, {
-          headers: {
-            "Content-Type": "application/fhir+json",
-          },
-        })
-        .then((response) => {
-          console.log(response);
-          dispatch(
-            updateCdsResponse({
-              cards: response.data,
-              systemActions: {},
-            })
-          );
-          if (response.status === 201) {
-            console.log(
-              "MemberID: ",
-              response.data?.parameter?.valueIdentifier?.value
-            );
-            setOldMemberId(response.data?.parameter?.valueIdentifier?.value);
-            // setOldMemberId("644d85af-aaf9-4068-ad23-1e55aedd5205");
-            setError("");
-            setStatus("Ready");
-          } else {
-            setError("Match failed. Please retry");
-          }
-        })
-        .catch((error) => {
-          console.error("Error:", error);
-          setError("Match failed. Please retry");
-          setStatus("Member Not Resoved.");
-        })
-        .finally(() => {
-          setIsMemberIDFetched(true); // Turn off loading after API call completes
-        });
-    } catch (error) {
-      console.error("Error:", error);
-      setError("Error fetching data");
-    }
-  };
-
-  const loggedUser = useSelector((state: any) => state.loggedUser);
 
   return isAuthenticated ? (
     <div
@@ -359,109 +372,116 @@ export const LandingPage = () => {
                 borderRadius: 2,
               }}
             >
-              <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
-                <InputLabel id="select-payer-label">
-                  Select old payer to fetch Member ID
-                </InputLabel>
-                <Select
-                  labelId="select-payer-label"
-                  id="select-payer"
-                  value={selectedOrgId}
-                  onChange={selectOrgChange}
-                  label="Select old payer to fetch Member ID"
-                >
-                  {payerList.map((payer, index) => (
-                    <MenuItem key={index} value={payer.id}>
-                      {payer.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "15px",
-                    marginTop: "15px",
-                  }}
-                >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "15px",
+                  marginTop: "15px",
+                }}
+              >
+                <FormGroup style={{ flex: "1 1 70%" }}>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel id="select-payer-label">
+                      Select old payer to fetch Member ID
+                    </InputLabel>
+                    <Select
+                      labelId="select-payer-label"
+                      id="select-payer"
+                      value={selectedOrgId}
+                      onChange={selectOrgChange}
+                      label="Select old payer to fetch Member ID"
+                    >
+                      {payerList.map((payer, index) => (
+                        <MenuItem key={index} value={payer.id}>
+                          {payer.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </FormGroup>
+                <FormGroup style={{ flex: "1 1 30%" }}>
                   <TextField
                     required
                     id="coverage-id"
                     label="Coverage ID"
-                    style={{ flex: 1 }}
                     defaultValue="367"
                   ></TextField>
-                  <Button
-                    variant="contained"
-                    style={{ height: "55px" }}
-                    color="primary"
-                    onClick={handleCheckCoverage}
-                  >
-                    Check Coverage
-                  </Button>
-                </div>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "15px",
-                    marginTop: "15px",
-                  }}
-                >
+                </FormGroup>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "15px",
+                  marginTop: "15px",
+                }}
+              >
+                <FormGroup style={{ flex: "1 1 70%" }}>
                   <TextField
                     required
                     id="member-id"
                     label="Member ID"
-                    style={{ flex: 1 }}
                     value={oldMemberId}
+                    aria-readonly
                   ></TextField>
-                  <Button
-                    variant="contained"
-                    style={{ height: "55px" }}
-                    color="primary"
-                    onClick={handleFetchMemberID}
-                  >
-                    Fetch Member ID
-                  </Button>
-                </div>
-
-                <Box
-                  sx={{
-                    mt: 2,
-                    mb: 4,
-                    border: "1px solid lightGrey",
-                    padding: 2,
-                    borderRadius: 1,
-                  }}
+                </FormGroup>
+                <Button
+                  variant="contained"
+                  style={{ height: "55px" }}
+                  color="primary"
+                  onClick={handleFetchMemberID}
                 >
-                  <Typography variant="h5">Status: {status}</Typography>
-                  <Box sx={{ display: "flex", alignItems: "center" }}>
-                    <Box sx={{ width: "100%", mt: 2, height: 6 }}>
-                      <LinearProgress
-                        variant="determinate"
-                        value={+exportPercentage}
-                      />
-                    </Box>
-                    <Box sx={{ minWidth: 40, paddingLeft: 2, height: 10 }}>
-                      <Typography
-                        variant="body2"
-                        sx={{ color: "text.secondary" }}
-                      >{`${Math.round(+exportPercentage)}%`}</Typography>
-                    </Box>
+                  Fetch Member ID
+                </Button>
+              </div>
+
+              <Box
+                sx={{
+                  mt: 2,
+                  mb: 4,
+                  border: "1px solid lightGrey",
+                  padding: 2,
+                  borderRadius: 1,
+                }}
+              >
+                <Typography variant="h5">Status: {status}</Typography>
+                <Box sx={{ display: "flex", alignItems: "center" }}>
+                  <Box sx={{ width: "100%", mt: 2, height: 6 }}>
+                    <LinearProgress
+                      variant="determinate"
+                      value={+exportPercentage}
+                    />
                   </Box>
-                  {isExportCompleted && (
-                    <Typography variant="body1" sx={{ mt: 2, color: "black" }}>
-                      Export ID: {exportId}
-                    </Typography>
-                  )}
+                  <Box sx={{ minWidth: 40, paddingLeft: 2, height: 10 }}>
+                    <Typography
+                      variant="body2"
+                      sx={{ color: "text.secondary" }}
+                    >{`${Math.round(+exportPercentage)}%`}</Typography>
+                  </Box>
                 </Box>
-                {isExportCompleted || error != "" ? (
+                {isExportCompleted && (
+                  <Typography variant="body1" sx={{ mt: 2, color: "black" }}>
+                    Export ID: {exportId}
+                  </Typography>
+                )}
+              </Box>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  gap: "15px",
+                  marginTop: "15px",
+                }}
+              >
+                {isExportCompleted ? (
                   <>
                     <Button
                       variant="contained"
                       color="primary"
                       onClick={() => window.open("/exported-data", "_blank")}
-                      sx={{ mt: 2 }}
+                      // sx={{ mt: 2 }}
+                      style={{ height: "55px", width: "100%" }}
                     >
                       View Exported Data
                     </Button>
@@ -475,12 +495,13 @@ export const LandingPage = () => {
                       disabled={
                         isExporting || error != "" || oldMemberId === ""
                       }
+                      style={{ height: "55px", width: "100%" }}
                     >
                       {exportButtonLabel}
                     </Button>
                   </>
                 )}
-              </FormControl>
+              </div>
             </Box>
           </Box>
         </div>
@@ -496,6 +517,16 @@ export const LandingPage = () => {
           <Typography variant="h6">Loading...</Typography>
         </div>
       )}
+      <Snackbar
+        open={openSnackbar}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      >
+        <Alert onClose={handleCloseSnackbar} severity={alertSeverity}>
+          {alertMessage}
+        </Alert>
+      </Snackbar>
     </div>
   ) : (
     <Navigate to="/login" replace />

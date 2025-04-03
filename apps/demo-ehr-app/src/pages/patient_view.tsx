@@ -194,7 +194,7 @@ export function PatientViewPage() {
         dispatch(resetCdsResponse());
         const req_url = Config.patient + "/" + currentPatient.id;
         dispatch(updateRequestMethod("GET"));
-        dispatch(updateRequestUrl(Config.demoBaseUrl + req_url));
+        dispatch(updateRequestUrl(Config.demoHospitalUrl + req_url));
 
         axios.get(req_url).then((response) => {
           console.log("Patient details:", response.data);
@@ -383,15 +383,6 @@ export function PatientViewPage() {
               <Form.Control
                 type="text"
                 value="Today"
-                style={{ marginTop: 5 }}
-              />
-            </Form.Group>
-            <Form.Group style={{ marginTop: "20px", flex: "1 1 100%" }}>
-              <Form.Label>Blood Glucose Level</Form.Label>
-              <Form.Control type="text" value="120mg/dt" disabled />
-              <Form.Control
-                type="text"
-                value="After meal - 11/03/2024"
                 style={{ marginTop: 5 }}
               />
             </Form.Group>

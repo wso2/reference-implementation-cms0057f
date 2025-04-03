@@ -20,3 +20,7 @@ export const TERTIARY_COLOR = "#3F72AF";
 export const QUATERNARY_COLOR = "#112D4E";
 
 export const DARK_RED_COLOR = "#690B22";
+
+export const CHIP_COLOR_CRITICAL = "#cc3300";
+export const CHIP_COLOR_WARNING = "#ff9966";
+export const CHIP_COLOR_INFO = "#ffcc00";

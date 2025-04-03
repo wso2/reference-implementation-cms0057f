@@ -117,9 +117,12 @@ public isolated function search(map<string[]>? searchParameters = ()) returns r4
             results = check getByAutheredDate(authored, results);
         }
 
+        // reorder the results as decending order by Authored date
+        results = orderByAuthoredDate(results);
+
         r4:BundleEntry[] bundleEntries = [];
 
-        foreach var item in results {
+        foreach QuestionnaireResponse item in results {
             r4:BundleEntry bundleEntry = {
                 'resource: item
             };
@@ -130,6 +133,10 @@ public isolated function search(map<string[]>? searchParameters = ()) returns r4
     }
 
     return bundle;
+}
+
+isolated function orderByAuthoredDate(QuestionnaireResponse[] targetArr) returns QuestionnaireResponse[] {
+    return from QuestionnaireResponse item in targetArr order by item.authored descending select item;
 }
 
 isolated function getByAutheredDate(string authored, QuestionnaireResponse[] targetArr) returns QuestionnaireResponse[]|r4:FHIRError {

@@ -39,6 +39,7 @@ export default function DrugPiorAuthPage() {
 
   const [isQuestionnaireResponseSubmited, setIsQuestionnaireResponseSubmited] =
     useState(false);
+  const [practitionerId, setPractitionerId] = useState<string>("");
 
   return isAuthenticated ? (
     <div style={{ padding: "30px" }}>
@@ -46,12 +47,17 @@ export default function DrugPiorAuthPage() {
         Send a Prior-Authorizing Request for Drugs
       </div>
       <DetailsDiv patientId={patientId} />
-      <PrescribedForm medicationRequestId={medicationRequestId} />
+      <PrescribedForm
+        medicationRequestId={medicationRequestId}
+        setPractitionerIdCallback={setPractitionerId}
+      />
       <QuestionnniarForm
         coverageId={coverageId}
         medicationRequestId={medicationRequestId}
+        patientId={patientId}
         isQuestionnaireResponseSubmited={isQuestionnaireResponseSubmited}
         setIsQuestionnaireResponseSubmited={setIsQuestionnaireResponseSubmited}
+        practitionerId={practitionerId}
       />
       <style>{`
         .card {

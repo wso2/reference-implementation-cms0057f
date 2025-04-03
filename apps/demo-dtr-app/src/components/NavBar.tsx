@@ -149,14 +149,6 @@ export default function NavBar() {
                       alignItems="center"
                     >
                       <Button
-                        onClick={() => {
-                          window.location.href = "/dashboard/doctor";
-                        }}
-                        color="inherit"
-                      >
-                        Profile
-                      </Button>
-                      <Button
                         onClick={async () => {
                           window.location.href = `/auth/logout?session_hint=${Cookies.get(
                             "session_hint"

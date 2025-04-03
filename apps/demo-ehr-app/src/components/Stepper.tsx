@@ -37,7 +37,6 @@ export default function HorizontalNonLinearStepper() {
 
   const Config = window.Config;
 
-  const [activeStep, setActiveStep] = React.useState(-1);
   const patientId = localStorage.getItem("selectedPatientId");
   const timestamp = localStorage.getItem("timestamp");
 
@@ -108,8 +107,6 @@ export default function HorizontalNonLinearStepper() {
   };
 
   const handleStep = (step: number) => () => {
-    setActiveStep(step);
-
     switch (step) {
       case 0: {
         dispatch(resetCurrentRequest());

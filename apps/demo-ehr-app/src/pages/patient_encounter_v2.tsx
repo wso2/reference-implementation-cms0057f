@@ -26,13 +26,7 @@ import Button from "react-bootstrap/Button";
 import { useEffect } from "react";
 import axios from "axios";
 import {
-  updateRequestMethod,
-  updateRequestUrl,
-} from "../redux/cdsRequestSlice";
-import { updateCdsResponse, resetCdsResponse } from "../redux/cdsResponseSlice";
-import {
   resetCurrentRequest,
-  updateCurrentRequest,
   updateCurrentRequestMethod,
   updateCurrentRequestUrl,
   updateCurrentResponse,

@@ -167,7 +167,7 @@ const PrescribeForm = ({
     localStorage.setItem("cdsRequestMethod", "POST");
     localStorage.setItem(
       "cdsRequestUrl",
-      Config.demoHospitalUrl + Config.prescribe_medication
+      Config.demoBaseUrl + Config.prescribe_medication
     );
     localStorage.setItem("cdsRequest", JSON.stringify(payload));
 

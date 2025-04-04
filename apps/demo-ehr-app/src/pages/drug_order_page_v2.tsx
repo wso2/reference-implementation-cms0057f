@@ -579,7 +579,7 @@ const RequirementCard = ({
     localStorage.setItem("questionnairePackageRequestMethod", "POST");
     localStorage.setItem(
       "questionnairePackageUrl",
-      Config.demoBaseUrl + Config.claim_submit
+      Config.demoBaseUrl + Config.questionnaire_package
     );
 
     localStorage.setItem(

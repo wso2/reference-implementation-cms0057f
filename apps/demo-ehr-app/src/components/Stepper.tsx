@@ -85,7 +85,7 @@ export default function HorizontalNonLinearStepper() {
             localStorage.setItem("questionnaireResponseRequestMethod", "POST");
             localStorage.setItem(
               "questionnaireResponseUrl",
-              Config.questionnaire_response
+              Config.demoBaseUrl + Config.questionnaire_response
             );
             dispatch(
               updateSingleStep({

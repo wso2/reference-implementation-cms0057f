@@ -1,5 +1,3 @@
-import { v4 as uuidv4 } from "uuid";
-
 // Copyright (c) 2024-2025, WSO2 LLC. (http://www.wso2.com).
 //
 // WSO2 LLC. licenses this file to you under the Apache License,

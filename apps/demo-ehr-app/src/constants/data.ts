@@ -1167,20 +1167,8 @@ export const CREATE_MEDICATION_REQUEST_BODY = (
 
 export const CHECK_PAYER_REQUIREMENTS_REQUEST_BODY = (
   patientId: string,
-  practitionerId: string,
-  medication: string,
-  frequency: number,
-  frequencyUnit: string,
-  period: number,
-  startDate: string
+  practitionerId: string
 ) => {
-  const selectedMedication = MEDICATION_OPTIONS.flatMap(
-    (option) => option.options
-  ).find((option) => option.value === medication);
-
-  const doseQuantity = selectedMedication?.doseQuantity || "";
-  const doseUnit = selectedMedication?.doseUnit || "";
-
   return {
     hook: "order-sign",
     hookInstance: "98765-wxyz-43210-lmno",
@@ -1195,68 +1183,9 @@ export const CHECK_PAYER_REQUIREMENTS_REQUEST_BODY = (
         type: "collection",
         entry: [
           {
-            resource: {
-              resourceType: "MedicationRequest",
-              subject: {
-                reference: `Patient/${patientId}`,
-              },
-              medicationCodeableConcept: {
-                coding: [
-                  {
-                    system: "http://www.nlm.nih.gov/research/umls/rxnorm",
-                    code: selectedMedication?.code || "",
-                    display: `${medication}`,
-                  },
-                ],
-                text: `${medication}`,
-              },
-              dispenseRequest: {
-                quantity: {
-                  value: doseQuantity,
-                  unit: doseUnit,
-                  system: "http://unitsofmeasure.org",
-                  code: doseUnit,
-                },
-                numberOfRepeatsAllowed: 1,
-                expectedSupplyDuration: {
-                  unit: frequencyUnit,
-                  system: "http://unitsofmeasure.org",
-                  code: frequencyUnit,
-                  value: frequency,
-                },
-              },
-              id: `medication-request-${uuidv4()}`,
-              intent: "order",
-              dosageInstruction: [
-                {
-                  text: `${medication}, for ${frequency} times a ${frequencyUnit} for ${period} ${frequencyUnit}`,
-                  timing: {
-                    repeat: {
-                      boundsPeriod: {
-                        start: startDate,
-                      },
-                      frequency: frequency,
-                      period: period,
-                      periodUnit: frequencyUnit,
-                    },
-                  },
-                  doseAndRate: [
-                    {
-                      doseQuantity: {
-                        value: doseQuantity,
-                        unit: doseUnit,
-                        system: "http://unitsofmeasure.org",
-                        code: doseUnit,
-                      },
-                    },
-                  ],
-                },
-              ],
-              meta: {
-                lasyUpdated: new Date().toISOString(),
-              },
-              status: "draft",
-            },
+            resource: JSON.parse(
+              localStorage.getItem("medicationResponse") ?? "{}"
+            ),
           },
         ],
       },

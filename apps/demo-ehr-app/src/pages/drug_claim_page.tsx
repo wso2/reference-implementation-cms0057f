@@ -81,7 +81,7 @@ const ClaimForm = () => {
     );
     dispatch(
       updateSingleStep({
-        stepName: "CDS Invocation",
+        stepName: "Check Payer Requirements",
         newStatus: StepStatus.COMPLETED,
       })
     );
@@ -153,7 +153,7 @@ const ClaimForm = () => {
     );
     dispatch(
       updateSingleStep({
-        stepName: "CDS Invocation",
+        stepName: "Check Payer Requirements",
         newStatus: StepStatus.COMPLETED,
       })
     );

@@ -29,7 +29,7 @@ export interface Steps {
 
 const steps: Steps[] = [
   { name: "Medication request", status: StepStatus.NOT_STARTED },
-  { name: "CDS Invocation", status: StepStatus.NOT_STARTED },
+  { name: "Check Payer Requirements", status: StepStatus.NOT_STARTED },
   { name: "Questionnaire package", status: StepStatus.NOT_STARTED },
   { name: "Questionnaire Response", status: StepStatus.NOT_STARTED },
   { name: "Claim Submit", status: StepStatus.NOT_STARTED },

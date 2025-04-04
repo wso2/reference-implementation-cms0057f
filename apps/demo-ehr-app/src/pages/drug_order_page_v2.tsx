@@ -151,19 +151,14 @@ const PrescribeForm = ({
     setActiveOperation(1);
     dispatch(
       updateSingleStep({
-        stepName: "CDS Invocation",
+        stepName: "Check Payer Requirements",
         newStatus: StepStatus.IN_PROGRESS,
       })
     );
 
     const payload = CHECK_PAYER_REQUIREMENTS_REQUEST_BODY(
       patientId,
-      practionerId,
-      medicationFormData.medication,
-      medicationFormData.frequency,
-      medicationFormData.frequencyUnit,
-      medicationFormData.period,
-      medicationFormData.startDate.toISOString().split("T")[0]
+      practionerId
     );
     const Config = window.Config;
 
@@ -208,7 +203,7 @@ const PrescribeForm = ({
         setIsSubmited(true);
         dispatch(
           updateSingleStep({
-            stepName: "CDS Invocation",
+            stepName: "Check Payer Requirements",
             newStatus: StepStatus.COMPLETED,
           })
         );

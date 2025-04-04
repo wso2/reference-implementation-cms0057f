@@ -24,7 +24,10 @@ import { selectPatient } from "../redux/patientSlice";
 import { useAuth } from "../components/AuthProvider";
 import { Navigate } from "react-router-dom";
 import PatientInfo from "../components/PatientInfo";
-import { updateIsProcess } from "../redux/currentStateSlice";
+import {
+  resetCurrentRequest,
+  updateIsProcess,
+} from "../redux/currentStateSlice";
 
 function ServiceCardList({ services, expanded }: ServiceCardListProps) {
   return (
@@ -84,6 +87,7 @@ function PractitionerDashBoard() {
   const dispatch = useDispatch();
 
   useEffect(() => {
+    dispatch(resetCurrentRequest());
     dispatch(updateIsProcess(false));
   }, []);
 

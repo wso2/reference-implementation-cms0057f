@@ -1,4 +1,6 @@
 import ballerinax/health.fhir.cds;
+import ballerinax/health.fhir.r4;
+import ballerinax/health.fhir.r4.parser;
 
 # ====================================== Please do your implementations to the below methods ===========================
 #
@@ -19,15 +21,45 @@ import ballerinax/health.fhir.cds;
 # + hookId - ID of the hook being invoked.
 # + return - return CdsResponse or CdsError
 isolated function connectDecisionSystemForPrescirbeMedication(cds:CdsRequest cdsRequest, string hookId) returns cds:CdsResponse|cds:CdsError {
+    cds:OrderSignContext context = <cds:OrderSignContext>cdsRequest.context;
+    string patientId = context.patientId;
+    string coverageId = "";
+    string medicationRequestId = "111112";
+
+    match (patientId) {
+        "101" => {
+            coverageId = "367";
+        }
+        "102" => {
+            coverageId = "480";
+        }
+        _ => {
+            coverageId = "521";
+        }
+    }
+
+    r4:BundleEntry[]? entry = context.draftOrders.entry;
+    if entry is r4:BundleEntry[] {
+        foreach var item in entry {
+            r4:BundleEntry bundleEntry = item;
+            r4:Resource|error result = parser:parse(bundleEntry?.'resource.toJson()).ensureType(r4:Resource);
+            if result is r4:Resource {
+                if (result.resourceType is "MedicationRequest") {
+                    medicationRequestId = result.id is string ? <string>result.id : "111112";
+                }
+            }
+        }
+    }
+
     return {
         cards: [
             {
                 "summary": "Prior Authorization Required",
                 "indicator": "warning",
-                "detail": "This medication (Aimovig 70 mg) requires prior authorization from XYZ Health Insurance. Please complete the required documentation.",
+                "detail": "This medication (Aimovig) requires prior authorization from UnitedCare Health Insurance. Please complete the required documentation.",
                 "source": {
                     "label": "UnitedCare Health Insurance ePA Service",
-                    "url": "https://xyzhealth.com/prior-auth"
+                    "url": "https://unitedcare.com/prior-auth"
                 },
                 "suggestions": [
                     {
@@ -36,7 +68,7 @@ isolated function connectDecisionSystemForPrescirbeMedication(cds:CdsRequest cds
                         "actions": [
                             {
                                 "type": "create",
-                                "description": "Submit an electronic prior authorization request for Aimovig 70 mg.",
+                                "description": "Submit an electronic prior authorization request for Aimovig.",
                                 "resource": {
                                     "resourceType": "Task",
                                     "status": "requested",
@@ -51,7 +83,7 @@ isolated function connectDecisionSystemForPrescirbeMedication(cds:CdsRequest cds
                                         ]
                                     },
                                     "for": {
-                                        "reference": "Patient/101"
+                                        "reference": string `Patient/${patientId}`
                                     },
                                     "owner": {
                                         "reference": "Organization/50"
@@ -64,7 +96,7 @@ isolated function connectDecisionSystemForPrescirbeMedication(cds:CdsRequest cds
                 "links": [
                     {
                         "label": "Launch SMART App for DTR",
-                        "url": string `${EHR_DTR_APP_LINK}`,
+                        "url": string `${EHR_DTR_APP_LINK}?coverageId=${coverageId}&medicationRequestId=${medicationRequestId}&patientId=${patientId}`,
                         "type": "smart"
                     }
                 ]

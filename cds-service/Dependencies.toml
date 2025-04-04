@@ -321,7 +321,7 @@ modules = [
 [[package]]
 org = "ballerinax"
 name = "health.fhir.r4"
-version = "5.2.1"
+version = "5.2.2"
 dependencies = [
 	{org = "ballerina", name = "constraint"},
 	{org = "ballerina", name = "http"},
@@ -334,6 +334,9 @@ dependencies = [
 	{org = "ballerina", name = "url"},
 	{org = "ballerina", name = "uuid"},
 	{org = "ballerinax", name = "health.base"}
+]
+modules = [
+	{org = "ballerinax", packageName = "health.fhir.r4", moduleName = "health.fhir.r4"}
 ]
 
 [[package]]
@@ -358,6 +361,9 @@ dependencies = [
 	{org = "ballerinax", name = "health.fhir.r4"},
 	{org = "ballerinax", name = "health.fhir.r4.international401"}
 ]
+modules = [
+	{org = "ballerinax", packageName = "health.fhir.r4.parser", moduleName = "health.fhir.r4.parser"}
+]
 
 [[package]]
 org = "ballerinax"
@@ -381,7 +387,9 @@ dependencies = [
 	{org = "ballerina", name = "constraint"},
 	{org = "ballerina", name = "http"},
 	{org = "ballerina", name = "lang.regexp"},
-	{org = "ballerinax", name = "health.fhir.cds"}
+	{org = "ballerinax", name = "health.fhir.cds"},
+	{org = "ballerinax", name = "health.fhir.r4"},
+	{org = "ballerinax", name = "health.fhir.r4.parser"}
 ]
 modules = [
 	{org = "ballerinax", packageName = "health.fhir.templates.crd", moduleName = "health.fhir.templates.crd"}

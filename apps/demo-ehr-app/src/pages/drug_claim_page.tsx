@@ -34,6 +34,14 @@ import {
   updateSingleStep,
 } from "../redux/commonStoargeSlice";
 import PatientInfo from "../components/PatientInfo";
+import {
+  CLAIM_REQUEST,
+  CLAIM_REQUEST_METHOD,
+  CLAIM_REQUEST_URL,
+  CLAIM_RESPONSE,
+  SELECTED_PATIENT_ID,
+} from "../constants/localStorageVariables";
+import { HTTP_METHODS } from "../constants/enum";
 
 const ClaimForm = () => {
   const dispatch = useDispatch();
@@ -53,7 +61,7 @@ const ClaimForm = () => {
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
 
-  const savedPatientId = localStorage.getItem("selectedPatientId");
+  const savedPatientId = localStorage.getItem(SELECTED_PATIENT_ID);
   const loggedUser = useSelector((state: any) => state.loggedUser);
 
   if (savedPatientId) {
@@ -175,13 +183,13 @@ const ClaimForm = () => {
         newStatus: StepStatus.IN_PROGRESS,
       })
     );
-    localStorage.setItem("claimRequestMethod", "POST");
+    localStorage.setItem(CLAIM_REQUEST_METHOD, HTTP_METHODS.POST);
     localStorage.setItem(
-      "claimRequestUrl",
+      CLAIM_REQUEST_URL,
       Config.demoBaseUrl + Config.claim_submit
     );
 
-    localStorage.setItem("claimRequest", JSON.stringify(payload));
+    localStorage.setItem(CLAIM_REQUEST, JSON.stringify(payload));
 
     axios
       .post(Config.claim_submit, payload, {
@@ -210,7 +218,7 @@ const ClaimForm = () => {
         }
         setOpenSnackbar(true);
 
-        localStorage.setItem("claimResponse", JSON.stringify(response.data));
+        localStorage.setItem(CLAIM_RESPONSE, JSON.stringify(response.data));
         dispatch(
           updateSingleStep({
             stepName: "Claim Submit",

@@ -15,12 +15,14 @@
 // under the License.
 
 import { createSlice } from "@reduxjs/toolkit";
+import { IS_PROCESS } from "../constants/localStorageVariables";
 
 const initialState = {
   request: {},
   response: {},
   requestUrl: "",
   requestMethod: "",
+  hook: "",
   isProcess: false,
 };
 
@@ -40,9 +42,12 @@ const currentStateSlice = createSlice({
     updateCurrentRequestMethod(state, action) {
       state.requestMethod = action.payload;
     },
+    updateCurrentHook(state, action) {
+      state.hook = action.payload;
+    },
     updateIsProcess(state, action) {
       state.isProcess = action.payload;
-      localStorage.setItem("isProcess", action.payload);
+      localStorage.setItem(IS_PROCESS, action.payload);
     },
     resetCurrentRequest() {
       return initialState;
@@ -56,6 +61,7 @@ export const {
   updateCurrentResponse,
   updateCurrentRequestUrl,
   updateCurrentRequestMethod,
+  updateCurrentHook,
   updateIsProcess,
 } = currentStateSlice.actions;
 export default currentStateSlice.reducer;

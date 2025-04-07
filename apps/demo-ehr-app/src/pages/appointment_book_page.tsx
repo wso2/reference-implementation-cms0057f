@@ -24,6 +24,7 @@ import { useDispatch } from "react-redux";
 import { resetCdsResponse, updateCdsResponse } from "../redux/cdsResponseSlice";
 import { resetCdsRequest, updateRequest } from "../redux/cdsRequestSlice";
 import { useAuth } from "../components/AuthProvider";
+import { HTTP_METHODS } from "../constants/enum";
 
 // Define interfaces for Doctor, Slot, and Location objects
 interface Doctor {
@@ -96,7 +97,7 @@ function App() {
     const Config = window.Config;
     const url = `${Config.baseUrl}${Config.practitioner}?family=${lastName}&given=${firstName}`;
     dispatch(resetCdsRequest());
-    dispatch(updateRequest({ Method: "GET", URL: url }));
+    dispatch(updateRequest({ Method: HTTP_METHODS.GET, URL: url }));
     dispatch(resetCdsResponse());
     try {
       const res = await fetch(url);
@@ -143,7 +144,7 @@ function App() {
 
       const url = `${Config.baseUrl}${Config.slot}?startDate=${startDate}&endDate=${endDate}&practitioner=${practitionerId}`;
       dispatch(resetCdsRequest());
-      dispatch(updateRequest({ Method: "GET", URL: url }));
+      dispatch(updateRequest({ Method: HTTP_METHODS.GET, URL: url }));
       dispatch(resetCdsResponse());
 
       try {
@@ -273,7 +274,7 @@ function App() {
       dispatch(resetCdsRequest());
       dispatch(
         updateRequest({
-          Method: "POST",
+          Method: HTTP_METHODS.POST,
           URL: appointmentUrl,
           "Content-Type": "application/fhir+json",
           payload: appointmentData,

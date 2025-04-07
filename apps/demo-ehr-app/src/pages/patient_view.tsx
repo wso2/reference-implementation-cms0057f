@@ -32,6 +32,7 @@ import {
 } from "../redux/cdsRequestSlice";
 import { updateCdsResponse, resetCdsResponse } from "../redux/cdsResponseSlice";
 import axios from "axios";
+import { HTTP_METHODS } from "../constants/enum";
 
 function createData(
   date: string,
@@ -193,7 +194,7 @@ export function PatientViewPage() {
         dispatch(resetCdsRequest());
         dispatch(resetCdsResponse());
         const req_url = Config.patient + "/" + currentPatient.id;
-        dispatch(updateRequestMethod("GET"));
+        dispatch(updateRequestMethod(HTTP_METHODS.GET));
         dispatch(updateRequestUrl(Config.demoHospitalUrl + req_url));
 
         axios.get(req_url).then((response) => {

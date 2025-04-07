@@ -61,6 +61,23 @@ import {
   updateActiveStep,
   updateSingleStep,
 } from "../redux/commonStoargeSlice";
+import {
+  CDS_HOOK,
+  CDS_REQUEST,
+  CDS_REQUEST_METHOD,
+  CDS_REQUEST_URL,
+  CDS_RESPONSE,
+  MEDICATION_REQUEST,
+  MEDICATION_REQUEST_URL,
+  MEDICATION_RESPONSE,
+  QUESTIONNAIRE_PACKAGE_REQUEST,
+  QUESTIONNAIRE_PACKAGE_REQUEST_METHOD,
+  QUESTIONNAIRE_PACKAGE_RESPONSE,
+  QUESTIONNAIRE_PACKAGE_URL,
+  SELECTED_PATIENT_ID,
+  TIMESTAMP,
+} from "../constants/localStorageVariables";
+import { HTTP_METHODS } from "../constants/enum";
 
 interface Operation {
   name: string;
@@ -107,7 +124,7 @@ const PrescribeForm = ({
     }) => state.medicationFormData
   );
 
-  const patientId = localStorage.getItem("selectedPatientId") || "";
+  const patientId = localStorage.getItem(SELECTED_PATIENT_ID) || "";
   const loggedUserStr = localStorage.getItem("loggedUser");
   const loggedUser = loggedUserStr ? JSON.parse(loggedUserStr) : null;
 
@@ -163,13 +180,13 @@ const PrescribeForm = ({
     const Config = window.Config;
 
     setCdsCards([]);
-    localStorage.setItem("cdsHook", "order-sign");
-    localStorage.setItem("cdsRequestMethod", "POST");
+    localStorage.setItem(CDS_HOOK, "order-sign");
+    localStorage.setItem(CDS_REQUEST_METHOD, HTTP_METHODS.POST);
     localStorage.setItem(
-      "cdsRequestUrl",
+      CDS_REQUEST_URL,
       Config.demoBaseUrl + Config.prescribe_medication
     );
-    localStorage.setItem("cdsRequest", JSON.stringify(payload));
+    localStorage.setItem(CDS_REQUEST, JSON.stringify(payload));
 
     axios
       .post<CdsResponse>(Config.prescribe_medication, payload)
@@ -186,7 +203,7 @@ const PrescribeForm = ({
         setCdsCards(res.data.cards);
 
         localStorage.setItem(
-          "cdsResponse",
+          CDS_RESPONSE,
           JSON.stringify({ cards: res.data, systemActions: {} })
         );
         setOperations((prev) =>
@@ -214,7 +231,7 @@ const PrescribeForm = ({
         setAlertSeverity("error");
         setOpenSnackbar(true);
         localStorage.setItem(
-          "cdsResponse",
+          CDS_RESPONSE,
           JSON.stringify({ cards: err, systemActions: {} })
         );
       });
@@ -288,15 +305,15 @@ const PrescribeForm = ({
     );
     const Config = window.Config;
 
-    localStorage.setItem("medicationRequestMethod", "POST");
+    localStorage.setItem(MEDICATION_REQUEST, HTTP_METHODS.POST);
     localStorage.setItem(
-      "medicationRequestUrl",
+      MEDICATION_REQUEST_URL,
       Config.demoHospitalUrl + Config.medication_request
     );
-    localStorage.setItem("medicationRequest", JSON.stringify(payload));
+    localStorage.setItem(MEDICATION_REQUEST, JSON.stringify(payload));
 
     dispatch(updateIsProcess(true));
-    dispatch(updateCurrentRequestMethod("POST"));
+    dispatch(updateCurrentRequestMethod(HTTP_METHODS.POST));
     dispatch(
       updateCurrentRequestUrl(
         Config.demoHospitalUrl + Config.medication_request
@@ -319,7 +336,7 @@ const PrescribeForm = ({
           setAlertSeverity("error");
         }
         setOpenSnackbar(true);
-        localStorage.setItem("medicationResponse", JSON.stringify(res.data));
+        localStorage.setItem(MEDICATION_RESPONSE, JSON.stringify(res.data));
         dispatch(updateCurrentResponse(res.data));
         setOperations((prev) =>
           prev.map((op) => {
@@ -567,7 +584,7 @@ const RequirementCard = ({
   const Config = window.Config;
 
   const loadQuestionnaires = () => {
-    localStorage.setItem("timestamp", new Date().toISOString());
+    localStorage.setItem(TIMESTAMP, new Date().toISOString());
     dispatch(updateActiveStep(2));
     dispatch(
       updateSingleStep({
@@ -576,14 +593,17 @@ const RequirementCard = ({
       })
     );
 
-    localStorage.setItem("questionnairePackageRequestMethod", "POST");
     localStorage.setItem(
-      "questionnairePackageUrl",
+      QUESTIONNAIRE_PACKAGE_REQUEST_METHOD,
+      HTTP_METHODS.POST
+    );
+    localStorage.setItem(
+      QUESTIONNAIRE_PACKAGE_URL,
       Config.demoBaseUrl + Config.questionnaire_package
     );
 
     localStorage.setItem(
-      "questionnairePackageRequest",
+      QUESTIONNAIRE_PACKAGE_REQUEST,
       JSON.stringify(requestBody)
     );
     axios
@@ -601,7 +621,7 @@ const RequirementCard = ({
 
         const questionnaire = response.data;
         localStorage.setItem(
-          "questionnairePackageResponse",
+          QUESTIONNAIRE_PACKAGE_RESPONSE,
           JSON.stringify(questionnaire)
         );
         dispatch(

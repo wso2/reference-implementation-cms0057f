@@ -31,6 +31,12 @@ import {
   updateCurrentRequestUrl,
   updateCurrentResponse,
 } from "../redux/currentStateSlice";
+import {
+  SELECTED_PATIENT_ID,
+  SELECTED_PATIENT_NAME,
+} from "../constants/localStorageVariables";
+import { clearLocalStorageForPAPrococess } from "../utils/clearLocalStorage";
+import { HTTP_METHODS } from "../constants/enum";
 
 function PatientEncounter() {
   const { isAuthenticated } = useAuth();
@@ -47,7 +53,7 @@ function PatientEncounter() {
   useEffect(() => {
     const fetchPatientDetails = async () => {
       dispatch(resetCurrentRequest());
-      dispatch(updateCurrentRequestMethod("GET"));
+      dispatch(updateCurrentRequestMethod(HTTP_METHODS.GET));
       dispatch(
         updateCurrentRequestUrl(Config.demoHospitalUrl + Config.patient)
       );
@@ -71,6 +77,7 @@ function PatientEncounter() {
       }
     };
 
+    clearLocalStorageForPAPrococess();
     fetchPatientDetails();
   }, [Config, patients, dispatch]);
 
@@ -89,9 +96,9 @@ function PatientEncounter() {
 
   const handleBtnClick = async () => {
     dispatch(selectPatient(selectedPatient));
-    localStorage.setItem("selectedPatientId", selectedPatient);
+    localStorage.setItem(SELECTED_PATIENT_ID, selectedPatient);
     localStorage.setItem(
-      "selectedPatientName",
+      SELECTED_PATIENT_NAME,
       patients[selectedPatient].fullName
     );
     const loggedUser = await fetch("/auth/userinfo").then((response) =>

@@ -35,6 +35,7 @@ import { useAuth } from "../components/AuthProvider";
 import PatientInfo from "../components/PatientInfo";
 import { FREQUENCY_UNITS } from "../constants/data";
 import { updateIsProcess } from "../redux/currentStateSlice";
+import { HTTP_METHODS } from "../constants/enum";
 
 const useQuery = () => {
   return new URLSearchParams(useLocation().search);
@@ -95,7 +96,7 @@ const QuestionnniarForm = ({
     dispatch(
       updateRequestUrl(Config.demoBaseUrl + Config.questionnaire_package)
     );
-    dispatch(updateRequestMethod("POST"));
+    dispatch(updateRequestMethod(HTTP_METHODS.POST));
     dispatch(updateRequest(requestBody));
 
     axios
@@ -209,7 +210,7 @@ const QuestionnniarForm = ({
     dispatch(
       updateRequestUrl(Config.demoBaseUrl + Config.questionnaire_response)
     );
-    dispatch(updateRequestMethod("POST"));
+    dispatch(updateRequestMethod(HTTP_METHODS.POST));
 
     // Submit the questionnaire response to the API
 

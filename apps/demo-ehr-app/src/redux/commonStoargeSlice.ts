@@ -15,6 +15,7 @@
 // under the License.
 
 import { createSlice } from "@reduxjs/toolkit";
+import { ACTIVE_STEP, STEPS } from "../constants/localStorageVariables";
 
 export enum StepStatus {
   NOT_STARTED,
@@ -46,11 +47,11 @@ const commonStoargeSlice = createSlice({
   reducers: {
     updateActiveStep(state, action) {
       state.activeStep = action.payload;
-      localStorage.setItem("activeStep", action.payload);
+      localStorage.setItem(ACTIVE_STEP, action.payload);
     },
     updateStepsArray(state, action) {
       state.stepsArray = action.payload;
-      localStorage.setItem("steps", JSON.stringify(state.stepsArray));
+      localStorage.setItem(STEPS, JSON.stringify(state.stepsArray));
     },
     updateSingleStep(state, action) {
       state.stepsArray = state.stepsArray.map((step: Steps) =>
@@ -59,7 +60,7 @@ const commonStoargeSlice = createSlice({
           : step
       );
       console.log(state.stepsArray);
-      localStorage.setItem("steps", JSON.stringify(state.stepsArray));
+      localStorage.setItem(STEPS, JSON.stringify(state.stepsArray));
     },
     resetCommonStorage() {
       return initialState;

@@ -28,6 +28,8 @@ import {
   resetCurrentRequest,
   updateIsProcess,
 } from "../redux/currentStateSlice";
+import { SELECTED_PATIENT_ID } from "../constants/localStorageVariables";
+import { clearLocalStorageForPAPrococess } from "../utils/clearLocalStorage";
 
 function ServiceCardList({ services, expanded }: ServiceCardListProps) {
   return (
@@ -54,7 +56,7 @@ function ServiceCardList({ services, expanded }: ServiceCardListProps) {
 const DetailsDiv = () => {
   const dispatch = useDispatch();
 
-  const savedPatientId = localStorage.getItem("selectedPatientId");
+  const savedPatientId = localStorage.getItem(SELECTED_PATIENT_ID);
   console.log("savedPatientId", savedPatientId);
   if (savedPatientId) {
     dispatch(selectPatient(savedPatientId));
@@ -89,6 +91,7 @@ function PractitionerDashBoard() {
   useEffect(() => {
     dispatch(resetCurrentRequest());
     dispatch(updateIsProcess(false));
+    clearLocalStorageForPAPrococess();
   }, []);
 
   let currentPatient = PATIENT_DETAILS.find(

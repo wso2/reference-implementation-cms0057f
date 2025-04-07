@@ -26,6 +26,7 @@ import { useDispatch } from "react-redux";
 import { updateLoggedUser } from "../redux/loggedUserSlice";
 
 import { useEffect } from "react";
+import { clearLocalStorageFully } from "../utils/clearLocalStorage";
 
 export default function NavBar() {
   const dispatch = useDispatch();
@@ -142,8 +143,14 @@ export default function NavBar() {
           <Box display="flex" alignItems="center" marginRight={5}>
             {isAuthenticated && loggedUser && (
               <Box display="flex" alignItems="center">
-                <Box marginRight={10} color="white" fontSize="22px" fontWeight={400} >
-                  {"Dr. " + loggedUser?.first_name +
+                <Box
+                  marginRight={10}
+                  color="white"
+                  fontSize="22px"
+                  fontWeight={400}
+                >
+                  {"Dr. " +
+                    loggedUser?.first_name +
                     " " +
                     loggedUser?.last_name}
                 </Box>
@@ -187,6 +194,7 @@ export default function NavBar() {
                       </Button>
                       <Button
                         onClick={async () => {
+                          clearLocalStorageFully();
                           window.location.href = `/auth/logout?session_hint=${Cookies.get(
                             "session_hint"
                           )}`;

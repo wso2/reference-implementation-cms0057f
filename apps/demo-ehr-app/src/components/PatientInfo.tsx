@@ -17,40 +17,43 @@
 import React from "react";
 import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
-import CachedIcon from '@mui/icons-material/Cached';
+import CachedIcon from "@mui/icons-material/Cached";
+import {
+  SELECTED_PATIENT_ID,
+  SELECTED_PATIENT_NAME,
+} from "../constants/localStorageVariables";
 
 const PatientInfo: React.FC = () => {
-
-    const savedPatientId = localStorage.getItem("selectedPatientId");
-    const savedPatientName = localStorage.getItem("selectedPatientName");
-    return (
-        <div style={{ display: "flex", gap: "20px" }}>
-            <Form.Group
-                controlId="formPatientName"
-                style={{ marginTop: "20px", flex: "1 1 100%" }}
-            >
-                <Form.Label>Patient Name</Form.Label>
-                <Form.Control type="text" value={savedPatientName || ""} disabled />
-            </Form.Group>
-            <Form.Group
-                controlId="formPatientID"
-                style={{ marginTop: "20px", flex: "1 1 100%" }}
-            >
-                <Form.Label>Patient ID</Form.Label>
-                <Form.Control type="text" value={savedPatientId || ""} disabled />
-            </Form.Group>
-            <Form.Group controlId="formAddButton" style={{ marginTop: "20px" }}>
-                <Form.Label>&nbsp;</Form.Label>
-                <Button
-                    variant="danger"
-                    style={{ display: "block", width: "100%" }}
-                    onClick={() => (window.location.href = "/")}
-                >
-                    <CachedIcon />
-                </Button>
-            </Form.Group>
-        </div>
-    );
+  const savedPatientId = localStorage.getItem(SELECTED_PATIENT_ID);
+  const savedPatientName = localStorage.getItem(SELECTED_PATIENT_NAME);
+  return (
+    <div style={{ display: "flex", gap: "20px" }}>
+      <Form.Group
+        controlId="formPatientName"
+        style={{ marginTop: "20px", flex: "1 1 100%" }}
+      >
+        <Form.Label>Patient Name</Form.Label>
+        <Form.Control type="text" value={savedPatientName || ""} disabled />
+      </Form.Group>
+      <Form.Group
+        controlId="formPatientID"
+        style={{ marginTop: "20px", flex: "1 1 100%" }}
+      >
+        <Form.Label>Patient ID</Form.Label>
+        <Form.Control type="text" value={savedPatientId || ""} disabled />
+      </Form.Group>
+      <Form.Group controlId="formAddButton" style={{ marginTop: "20px" }}>
+        <Form.Label>&nbsp;</Form.Label>
+        <Button
+          variant="danger"
+          style={{ display: "block", width: "100%" }}
+          onClick={() => (window.location.href = "/")}
+        >
+          <CachedIcon />
+        </Button>
+      </Form.Group>
+    </div>
+  );
 };
 
 export default PatientInfo;

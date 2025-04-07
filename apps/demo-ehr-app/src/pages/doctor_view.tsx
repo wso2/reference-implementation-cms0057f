@@ -21,11 +21,13 @@ import Form from "react-bootstrap/Form";
 import { useEffect } from "react";
 import axios from "axios";
 import { updateLoggedUser } from "../redux/loggedUserSlice";
+import { updateCdsResponse } from "../redux/cdsResponseSlice";
 import {
-  updateRequestMethod,
-  updateRequestUrl,
-} from "../redux/cdsRequestSlice";
-import { updateCdsResponse, resetCdsResponse } from "../redux/cdsResponseSlice";
+  resetCurrentRequest,
+  updateCurrentRequestMethod,
+  updateCurrentRequestUrl,
+  updateCurrentResponse,
+} from "../redux/currentStateSlice";
 
 export function DoctorViewPage() {
   const Config = window.Config;
@@ -33,16 +35,16 @@ export function DoctorViewPage() {
   const loggedUser = useSelector((state: any) => state.loggedUser);
 
   useEffect(() => {
-    dispatch(resetCdsResponse());
+    dispatch(resetCurrentRequest());
     const fetchPractitionerDetails = async () => {
       try {
         const loggedUser = await fetch("/auth/userinfo").then((response) =>
           response.json()
         );
-        dispatch(updateRequestMethod("GET"));
+        dispatch(updateCurrentRequestMethod("GET"));
         const req_url =
           Config.practitioner_new + "?name=" + loggedUser.username;
-        dispatch(updateRequestUrl(Config.demoHospitalUrl + req_url));
+        dispatch(updateCurrentRequestUrl(Config.demoHospitalUrl + req_url));
 
         console.log("Fetching practitioner details...");
 
@@ -50,12 +52,7 @@ export function DoctorViewPage() {
           .get(req_url)
           .then((response) => {
             console.log("Practitioner details:", response.data);
-            dispatch(
-              updateCdsResponse({
-                cards: response.data,
-                systemActions: {},
-              })
-            );
+            dispatch(updateCurrentResponse(response.data));
             const user = response.data.entry[0];
             console.log("Practitioner details:", response.data);
             dispatch(

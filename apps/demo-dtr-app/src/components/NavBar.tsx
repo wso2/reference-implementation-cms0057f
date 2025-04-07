@@ -31,26 +31,19 @@ export default function NavBar() {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    const fetchUserInfo = async () => {
-      const loggedUser = await fetch("/auth/userinfo")
-        .then((response) => response.json())
-        .then((data) => {
-          console.log("Logged User Info: ", data);
-          return data;
-        });
+    const encodedUserInfo = Cookies.get("userinfo");
 
-      if (loggedUser) {
-        dispatch(
-          updateLoggedUser({
-            username: loggedUser.username,
-            first_name: loggedUser.first_name,
-            last_name: loggedUser.last_name,
-          })
-        );
-      }
-    };
-
-    fetchUserInfo();
+    if (encodedUserInfo) {
+      // Decode the value.
+      const loggedUser = JSON.parse(atob(encodedUserInfo));
+      dispatch(
+        updateLoggedUser({
+          username: loggedUser.username,
+          first_name: loggedUser.first_name,
+          last_name: loggedUser.last_name,
+        })
+      );
+    }
   }, [dispatch]);
 
   const loggedUser = useSelector((state: any) => state.loggedUser);
@@ -99,18 +92,21 @@ export default function NavBar() {
             }
             cursor="pointer"
           >
-            <Box
-              overflow="hidden"
-              marginLeft={10}
-            >
+            <Box overflow="hidden" marginLeft={10}>
               <img src="/EHealthLogo.png" alt="Demo Logo" height={100} />
             </Box>
           </Box>
           <Box display="flex" alignItems="center" marginRight={5}>
             {isAuthenticated && loggedUser && (
               <Box display="flex" alignItems="center">
-                <Box marginRight={10} color="white" fontSize="22px" fontWeight={400} >
-                  {"Dr. " + loggedUser?.first_name +
+                <Box
+                  marginRight={10}
+                  color="white"
+                  fontSize="22px"
+                  fontWeight={400}
+                >
+                  {"Dr. " +
+                    loggedUser?.first_name +
                     " " +
                     loggedUser?.last_name}
                 </Box>

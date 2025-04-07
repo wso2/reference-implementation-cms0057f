@@ -1,6 +1,6 @@
 export enum HTTP_METHODS {
-  GET,
-  POST,
+  GET = "GET",
+  POST = "POST",
 }
 
 export enum CDS_HOOKS {}

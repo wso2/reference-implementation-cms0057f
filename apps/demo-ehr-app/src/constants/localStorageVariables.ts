@@ -1,0 +1,30 @@
+export const ACTIVE_STEP = "activeStep";
+export const CDS_HOOK = "cdsHook";
+export const CDS_REQUEST = "cdsRequest";
+export const CDS_REQUEST_METHOD = "cdsRequestMethod";
+export const CDS_REQUEST_URL = "cdsRequestUrl";
+export const CDS_RESPONSE = "cdsResponse";
+export const CLAIM_REQUEST = "claimRequest";
+export const CLAIM_REQUEST_METHOD = "claimRequestMethod";
+export const CLAIM_REQUEST_URL = "claimRequestUrl";
+export const CLAIM_RESPONSE = "claimResponse";
+export const IS_PROCESS = "isProcess";
+export const LOGGEDIN_USER = "loggedUser";
+export const MEDICATION_REQUEST = "medicationRequest";
+export const MEDICATION_REQUEST_METHOD = "medicationRequestMethod";
+export const MEDICATION_REQUEST_URL = "medicationRequestUrl";
+export const MEDICATION_RESPONSE = "medicationResponse";
+export const QUESTIONNAIRE_PACKAGE_REQUEST = "questionnairePackageRequest";
+export const QUESTIONNAIRE_PACKAGE_REQUEST_METHOD =
+  "questionnairePackageRequestMethod";
+export const QUESTIONNAIRE_PACKAGE_RESPONSE = "questionnairePackageResponse";
+export const QUESTIONNAIRE_PACKAGE_URL = "questionnairePackageUrl";
+export const QUESTIONNAIRE_RESPONSE = "questionnaireResponse";
+export const QUESTIONNAIRE_RESPONSE_REQUEST = "questionnaireResponseRequest";
+export const QUESTIONNAIRE_RESPONSE_METHOD =
+  "questionnaireResponseRequestMethod";
+export const QUESTIONNAIRE_RESPONSE_URL = "questionnaireResponseUrl";
+export const SELECTED_PATIENT_ID = "selectedPatientId";
+export const SELECTED_PATIENT_NAME = "selectedPatientName";
+export const STEPS = "steps";
+export const TIMESTAMP = "timestamp";

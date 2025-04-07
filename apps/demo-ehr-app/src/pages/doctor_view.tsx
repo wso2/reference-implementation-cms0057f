@@ -28,6 +28,7 @@ import {
   updateCurrentRequestUrl,
   updateCurrentResponse,
 } from "../redux/currentStateSlice";
+import { HTTP_METHODS } from "../constants/enum";
 
 export function DoctorViewPage() {
   const Config = window.Config;
@@ -41,7 +42,7 @@ export function DoctorViewPage() {
         const loggedUser = await fetch("/auth/userinfo").then((response) =>
           response.json()
         );
-        dispatch(updateCurrentRequestMethod("GET"));
+        dispatch(updateCurrentRequestMethod(HTTP_METHODS.GET));
         const req_url =
           Config.practitioner_new + "?name=" + loggedUser.username;
         dispatch(updateCurrentRequestUrl(Config.demoHospitalUrl + req_url));

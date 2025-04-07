@@ -22,6 +22,7 @@ import StepButton from "@mui/material/StepButton";
 import { useDispatch, useSelector } from "react-redux";
 import {
   resetCurrentRequest,
+  updateCurrentHook,
   updateCurrentRequest,
   updateCurrentRequestMethod,
   updateCurrentRequestUrl,
@@ -36,12 +37,39 @@ import {
   updateStepsArray,
 } from "../redux/commonStoargeSlice";
 import axios from "axios";
+import {
+  CDS_HOOK,
+  CDS_REQUEST,
+  CDS_REQUEST_METHOD,
+  CDS_REQUEST_URL,
+  CDS_RESPONSE,
+  CLAIM_REQUEST,
+  CLAIM_REQUEST_METHOD,
+  CLAIM_REQUEST_URL,
+  CLAIM_RESPONSE,
+  MEDICATION_REQUEST,
+  MEDICATION_REQUEST_METHOD,
+  MEDICATION_REQUEST_URL,
+  MEDICATION_RESPONSE,
+  QUESTIONNAIRE_PACKAGE_REQUEST,
+  QUESTIONNAIRE_PACKAGE_REQUEST_METHOD,
+  QUESTIONNAIRE_PACKAGE_RESPONSE,
+  QUESTIONNAIRE_PACKAGE_URL,
+  QUESTIONNAIRE_RESPONSE,
+  QUESTIONNAIRE_RESPONSE_METHOD,
+  QUESTIONNAIRE_RESPONSE_REQUEST,
+  QUESTIONNAIRE_RESPONSE_URL,
+  SELECTED_PATIENT_ID,
+  STEPS,
+  TIMESTAMP,
+} from "../constants/localStorageVariables";
+import { HTTP_METHODS } from "../constants/enum";
 
 export default function HorizontalNonLinearStepper() {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    const stepsString = localStorage.getItem("steps");
+    const stepsString = localStorage.getItem(STEPS);
     if (stepsString) {
       updateStepsArray(JSON.parse(stepsString));
     }
@@ -53,8 +81,8 @@ export default function HorizontalNonLinearStepper() {
 
   const Config = window.Config;
 
-  const patientId = localStorage.getItem("selectedPatientId");
-  const timestamp = localStorage.getItem("timestamp");
+  const patientId = localStorage.getItem(SELECTED_PATIENT_ID);
+  const timestamp = localStorage.getItem(TIMESTAMP);
 
   const loadQuestionnaireResponse = () => {
     axios
@@ -64,13 +92,11 @@ export default function HorizontalNonLinearStepper() {
       )
       .then(async (response) => {
         if (response.data.entry.length > 0) {
-          console.log("IF");
           const questionnaireResponse = response.data.entry[0].resource;
           console.log(questionnaireResponse);
           if (questionnaireResponse) {
-            console.log("Called");
             localStorage.setItem(
-              "questionnaireResponse",
+              QUESTIONNAIRE_RESPONSE,
               JSON.stringify(questionnaireResponse)
             );
 
@@ -78,13 +104,16 @@ export default function HorizontalNonLinearStepper() {
             delete resource.id;
             delete resource.authored;
             localStorage.setItem(
-              "questionnaireResponseRequest",
+              QUESTIONNAIRE_RESPONSE_REQUEST,
               JSON.stringify(resource)
             );
 
-            localStorage.setItem("questionnaireResponseRequestMethod", "POST");
             localStorage.setItem(
-              "questionnaireResponseUrl",
+              QUESTIONNAIRE_RESPONSE_METHOD,
+              HTTP_METHODS.POST
+            );
+            localStorage.setItem(
+              QUESTIONNAIRE_RESPONSE_URL,
               Config.demoBaseUrl + Config.questionnaire_response
             );
             dispatch(
@@ -98,22 +127,22 @@ export default function HorizontalNonLinearStepper() {
         } else {
           console.log("Else");
           localStorage.setItem(
-            "questionnaireResponse",
+            QUESTIONNAIRE_RESPONSE,
             JSON.stringify({
               message:
                 "Cannot find a request payload. Make sure you submit the Answers to the questions",
             })
           );
           localStorage.setItem(
-            "questionnaireResponseRequest",
+            QUESTIONNAIRE_RESPONSE_REQUEST,
             JSON.stringify({
               message:
                 "Cannot find a request payload. Make sure you submit the Answers to the questions",
             })
           );
 
-          localStorage.setItem("questionnaireResponseRequestMethod", "");
-          localStorage.setItem("questionnaireResponseUrl", "");
+          localStorage.setItem(QUESTIONNAIRE_RESPONSE_METHOD, "");
+          localStorage.setItem(QUESTIONNAIRE_RESPONSE_URL, "");
           return;
         }
       })
@@ -129,26 +158,26 @@ export default function HorizontalNonLinearStepper() {
         dispatch(updateIsProcess(true));
 
         const medicationRequestString =
-          localStorage.getItem("medicationRequest");
+          localStorage.getItem(MEDICATION_REQUEST);
         const medicationRequest = medicationRequestString
           ? JSON.parse(medicationRequestString)
           : {};
         dispatch(updateCurrentRequest(medicationRequest));
 
         const medicationResponseString =
-          localStorage.getItem("medicationResponse");
+          localStorage.getItem(MEDICATION_RESPONSE);
         const medicationResponse = medicationResponseString
           ? JSON.parse(medicationResponseString)
           : {};
         dispatch(updateCurrentResponse(medicationResponse));
 
         dispatch(
-          updateCurrentRequestUrl(localStorage.getItem("medicationRequestUrl"))
+          updateCurrentRequestUrl(localStorage.getItem(MEDICATION_REQUEST_URL))
         );
 
         dispatch(
           updateCurrentRequestMethod(
-            localStorage.getItem("medicationRequestMethod")
+            localStorage.getItem(MEDICATION_REQUEST_METHOD)
           )
         );
         break;
@@ -157,23 +186,23 @@ export default function HorizontalNonLinearStepper() {
         dispatch(resetCurrentRequest());
         dispatch(updateIsProcess(true));
 
-        const cdsRequestString = localStorage.getItem("cdsRequest");
+        const cdsRequestString = localStorage.getItem(CDS_REQUEST);
         const cdsRequest = cdsRequestString ? JSON.parse(cdsRequestString) : {};
         dispatch(updateCurrentRequest(cdsRequest));
 
-        const cdsResponseString = localStorage.getItem("cdsResponse");
+        const cdsResponseString = localStorage.getItem(CDS_RESPONSE);
         const cdsResponse = cdsResponseString
           ? JSON.parse(cdsResponseString)
           : {};
         dispatch(updateCurrentResponse(cdsResponse));
 
         dispatch(
-          updateCurrentRequestUrl(localStorage.getItem("cdsRequestUrl"))
+          updateCurrentRequestUrl(localStorage.getItem(CDS_REQUEST_URL))
         );
         dispatch(
-          updateCurrentRequestMethod(localStorage.getItem("cdsRequestMethod"))
+          updateCurrentRequestMethod(localStorage.getItem(CDS_REQUEST_METHOD))
         );
-        dispatch(updateCurrentRequestMethod(localStorage.getItem("cdsHook")));
+        dispatch(updateCurrentHook(localStorage.getItem(CDS_HOOK)));
 
         break;
       }
@@ -182,7 +211,7 @@ export default function HorizontalNonLinearStepper() {
         dispatch(updateIsProcess(true));
 
         const questionnaireRequestString = localStorage.getItem(
-          "questionnairePackageRequest"
+          QUESTIONNAIRE_PACKAGE_REQUEST
         );
         const questionnaireRequest = questionnaireRequestString
           ? JSON.parse(questionnaireRequestString)
@@ -190,7 +219,7 @@ export default function HorizontalNonLinearStepper() {
         dispatch(updateCurrentRequest(questionnaireRequest));
 
         const questionnaireResponseString = localStorage.getItem(
-          "questionnairePackageResponse"
+          QUESTIONNAIRE_PACKAGE_RESPONSE
         );
         const questionnaireResponse = questionnaireResponseString
           ? JSON.parse(questionnaireResponseString)
@@ -199,12 +228,12 @@ export default function HorizontalNonLinearStepper() {
 
         dispatch(
           updateCurrentRequestUrl(
-            localStorage.getItem("questionnairePackageUrl")
+            localStorage.getItem(QUESTIONNAIRE_PACKAGE_URL)
           )
         );
         dispatch(
           updateCurrentRequestMethod(
-            localStorage.getItem("questionnairePackageRequestMethod")
+            localStorage.getItem(QUESTIONNAIRE_PACKAGE_REQUEST_METHOD)
           )
         );
         break;
@@ -215,7 +244,7 @@ export default function HorizontalNonLinearStepper() {
         dispatch(updateIsProcess(true));
 
         const questionnaireResponseRequestString = localStorage.getItem(
-          "questionnaireResponseRequest"
+          QUESTIONNAIRE_RESPONSE_REQUEST
         );
         const questionnaireRequest = questionnaireResponseRequestString
           ? JSON.parse(questionnaireResponseRequestString)
@@ -223,7 +252,7 @@ export default function HorizontalNonLinearStepper() {
         dispatch(updateCurrentRequest(questionnaireRequest));
 
         const questionnaireResponseString = localStorage.getItem(
-          "questionnaireResponse"
+          QUESTIONNAIRE_RESPONSE
         );
         const questionnaireResponse = questionnaireResponseString
           ? JSON.parse(questionnaireResponseString)
@@ -232,12 +261,12 @@ export default function HorizontalNonLinearStepper() {
 
         dispatch(
           updateCurrentRequestUrl(
-            localStorage.getItem("questionnaireResponseUrl")
+            localStorage.getItem(QUESTIONNAIRE_RESPONSE_URL)
           )
         );
         dispatch(
           updateCurrentRequestMethod(
-            localStorage.getItem("questionnaireResponseRequestMethod")
+            localStorage.getItem(QUESTIONNAIRE_RESPONSE_METHOD)
           )
         );
         break;
@@ -246,24 +275,24 @@ export default function HorizontalNonLinearStepper() {
         dispatch(resetCurrentRequest());
         dispatch(updateIsProcess(true));
 
-        const claimRequestString = localStorage.getItem("claimRequest");
+        const claimRequestString = localStorage.getItem(CLAIM_REQUEST);
         console.log(claimRequestString);
         const claimRequest = claimRequestString
           ? JSON.parse(claimRequestString)
           : {};
         dispatch(updateCurrentRequest(claimRequest));
 
-        const claimResponseString = localStorage.getItem("claimResponse");
+        const claimResponseString = localStorage.getItem(CLAIM_RESPONSE);
         const claimResponse = claimResponseString
           ? JSON.parse(claimResponseString)
           : {};
         dispatch(updateCurrentResponse(claimResponse));
 
         dispatch(
-          updateCurrentRequestUrl(localStorage.getItem("claimRequestUrl"))
+          updateCurrentRequestUrl(localStorage.getItem(CLAIM_REQUEST_URL))
         );
         dispatch(
-          updateCurrentRequestMethod(localStorage.getItem("claimRequestMethod"))
+          updateCurrentRequestMethod(localStorage.getItem(CLAIM_REQUEST_METHOD))
         );
         break;
       }

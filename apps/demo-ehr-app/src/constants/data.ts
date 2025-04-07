@@ -14,6 +14,8 @@
 // specific language governing permissions and limitations
 // under the License.
 
+import { MEDICATION_RESPONSE } from "./localStorageVariables";
+
 export const SERVICE_CARD_DETAILS = [
   {
     serviceImagePath: "/patient_view_service.png",
@@ -1182,7 +1184,7 @@ export const CHECK_PAYER_REQUIREMENTS_REQUEST_BODY = (
         entry: [
           {
             resource: JSON.parse(
-              localStorage.getItem("medicationResponse") ?? "{}"
+              localStorage.getItem(MEDICATION_RESPONSE) ?? "{}"
             ),
           },
         ],

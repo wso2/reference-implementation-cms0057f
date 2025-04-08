@@ -20,7 +20,7 @@ import ballerinax/health.fhir.r4.parser;
 # + cdsRequest - CdsRequest to sent to the backend.
 # + hookId - ID of the hook being invoked.
 # + return - return CdsResponse or CdsError
-isolated function connectDecisionSystemForPrescirbeMedication(cds:CdsRequest cdsRequest, string hookId) returns cds:CdsResponse|cds:CdsError {
+isolated function connectDecisionSystemForPrescribeMedication(cds:CdsRequest cdsRequest, string hookId) returns cds:CdsResponse|cds:CdsError {
     cds:OrderSignContext context = <cds:OrderSignContext>cdsRequest.context;
     string patientId = context.patientId;
     string coverageId = "";
@@ -110,7 +110,7 @@ isolated function connectDecisionSystemForPrescirbeMedication(cds:CdsRequest cds
 # + feedback - Feedback record to be processed.
 # + hookId - ID of the hook being invoked.
 # + return - return CdsError, if any.
-isolated function connectFeedbackSystemForPrescirbeMedication(cds:Feedbacks feedback, string hookId) returns cds:CdsError? {
+isolated function connectFeedbackSystemForPrescribeMedication(cds:Feedbacks feedback, string hookId) returns cds:CdsError? {
     return cds:createCdsError(string `Rule repository backend not implemented/ connected yet for ${hookId}`, 501);
 }
 

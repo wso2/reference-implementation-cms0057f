@@ -21,7 +21,7 @@ const Config = {
   demoHospitalUrl: "https://grace-memorial-hospital.com",
 
   medication_request:
-    "/choreo-apis/cms-0057-f/medication-request-ser-tw/v1/fhir/r4/MedicationRequest",
+    "/choreo-apis/cms-0057-f-provider/medication-request-servic/v1/fhir/r4/MedicationRequest",
   prescribe_medication:
     "/choreo-apis/cms-0057-f/cds-service-qn/v1/cds-services/prescirbe-medication",
   questionnaire_package:
@@ -31,8 +31,9 @@ const Config = {
   claim_submit:
     "/choreo-apis/cms-0057-f/claim-submission-servi-hk/v1/fhir/r4/Claim/submit",
   practitioner_new:
-    "/choreo-apis/cms-0057-f/practitioner-service-um/v1.0/fhir/r4/Practitioner",
-  patient: "/choreo-apis/cms-0057-f/patient-service/v1.0/fhir/r4/Patient",
+    "/choreo-apis/cms-0057-f-provider/practitioner-service/v1/fhir/r4/Practitioner",
+  patient:
+    "/choreo-apis/cms-0057-f-provider/patient-service/v1/fhir/r4/Patient",
 
   // old urls
   radiology_order:

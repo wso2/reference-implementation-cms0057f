@@ -59,8 +59,8 @@ service http:InterceptableService / on new http:Listener(8080) {
 # + return - return CdsResponse or CdsError.
 isolated function submitForDecision(string hookId, cds:CdsRequest cdsRequest) returns cds:CdsResponse|cds:CdsError {
     match (hookId) {
-        "prescirbe-medication" => {
-            return connectDecisionSystemForPrescirbeMedication(cdsRequest, hookId);
+        "prescribe-medication" => {
+            return connectDecisionSystemForPrescribeMedication(cdsRequest, hookId);
         }
         "radiology" => {
             return connectDecisionSystemForRadiology(cdsRequest, hookId);
@@ -84,8 +84,8 @@ isolated function submitForDecision(string hookId, cds:CdsRequest cdsRequest) re
 # + return - return CdsError, if any.
 isolated function submitFeedback(string hookId, cds:Feedbacks feedback) returns cds:CdsError? {
     match (hookId) {
-        "prescirbe-medication" => {
-            return connectFeedbackSystemForPrescirbeMedication(feedback, hookId);
+        "prescribe-medication" => {
+            return connectFeedbackSystemForPrescribeMedication(feedback, hookId);
         }
         "radiology" => {
             return connectFeedbackSystemForRadiology(feedback, hookId);

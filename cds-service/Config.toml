@@ -5,7 +5,7 @@
 EHR_DTR_APP_LINK = "http://localhost:10000"
 
 [[ballerinax.health.fhir.cds.cds_services]]
-id = "prescirbe-medication"
+id = "prescribe-medication"
 hook = "order-sign"
 title = "Prescribe a medication"
 description = "Automatically verifies the coverage requirements before signing the medication order."

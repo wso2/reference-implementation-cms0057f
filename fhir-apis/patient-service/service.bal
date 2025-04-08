@@ -24,7 +24,6 @@ import ballerinax/health.fhir.r4.uscore501;
 
 // configurable string client_id = ?;
 // configurable string client_secret = ?;
-configurable string exportServiceUrl = ?;
 
 # Generic type to wrap all implemented profiles.
 # Add required profile types here.
@@ -36,34 +35,6 @@ public type Patient uscore501:USCorePatientProfile|international401:Patient;
 # A service representing a network-accessible API
 # bound to port `9090`.
 service / on new fhirr4:Listener(9090, apiConfig) {
-
-    // Implementation of the $export operation
-    isolated resource function post fhir/r4/Patient/\$export(r4:FHIRContext fhirContext, international401:Parameters parameters) returns r4:FHIRError|r4:OperationOutcome|error {
-
-        http:Client httpClient = check new (exportServiceUrl);
-        http:Response response = check httpClient->post("/api/export/Patient", parameters, {"Content-Type": "application/json", "prefer": "respond-async", "accept": "application/fhir+json"});
-        string|http:HeaderNotFoundError contentLocation = response.getHeader("Content-Location");
-        string statusUrl = "";
-        if contentLocation is string {
-            statusUrl = contentLocation;
-        } else {
-            return r4:createFHIRError("An error has been occured in the kick-off request. Please retry the export.", r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_INTERNAL_SERVER_ERROR);
-        }
-        string diagnosticsText = string `Your request has been accepted. You can check its status at ${statusUrl}`;
-        r4:OperationOutcome kickoffResponse = {
-
-            issue: [
-                {
-                    severity: "information",
-                    code: "processing",
-                    diagnostics: diagnosticsText
-                }
-            ]
-        };
-        fhirContext.setProperty("$Header:Content-Location", statusUrl);
-
-        return kickoffResponse;
-    }
 
     // Implementation of the $match operation
     isolated resource function post fhir/r4/Patient/\$match(r4:FHIRContext fhirContext, international401:Parameters parameters) returns r4:FHIRError|r4:Bundle|error {

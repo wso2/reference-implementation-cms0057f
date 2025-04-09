@@ -87,7 +87,7 @@ export default function HorizontalNonLinearStepper() {
   const loadQuestionnaireResponse = () => {
     axios
       .get(
-        Config.questionnaire_response +
+        "/choreo-apis/cms-0057-f/questionnaire-response-fh/v1/fhir/r4/QuestionnaireResponse" +
           `?subject=Patient/${patientId}&authored=ge${timestamp}`
       )
       .then(async (response) => {

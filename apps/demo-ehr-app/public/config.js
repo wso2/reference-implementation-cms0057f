@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-const Config = {
+window.Config = {
   baseUrl:
     "https://c32618cf-389d-44f1-93ee-b67a3468aae3-dev.e1-us-east-azure.choreoapis.dev",
   demoBaseUrl: "https://unitedcare.com",
@@ -23,7 +23,7 @@ const Config = {
   medication_request:
     "/choreo-apis/cms-0057-f-provider/medication-request-servic/v1/fhir/r4/MedicationRequest",
   prescribe_medication:
-    "/choreo-apis/cms-0057-f/cds-service-qn/v1/cds-services/prescirbe-medication",
+    "/choreo-apis/cms-0057-f/cds-service-qn/v1/cds-services/prescribe-medication",
   questionnaire_package:
     "/choreo-apis/cms-0057-f/questionnaire-package-wp/v1/fhir/r4/Questionnaire/questionnaire-package",
   questionnaire_response:

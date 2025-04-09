@@ -14,18 +14,18 @@
 // specific language governing permissions and limitations
 // under the License.
 
-const Config = {
+window.Config = {
   demoBaseUrl: "https://unitedcare.com",
 
   questionnaire_package:
     "/choreo-apis/cms-0057-f/questionnaire-package-wp/v1/fhir/r4/Questionnaire/questionnaire-package",
   questionnaire_response:
     "/choreo-apis/cms-0057-f/questionnaire-response-fh/v1/fhir/r4/QuestionnaireResponse",
-  patient: "/choreo-apis/cms-0057-f/patient-service/v1/fhir/r4/Patient",
-  medicationRequest: "/choreo-apis/cms-0057-f/medication-request-ser-tw/v1/fhir/r4/MedicationRequest",
+  patient:
+    "/choreo-apis/cms-0057-f-provider/patient-service/v1/fhir/r4/Patient",
+  medicationRequest:
+    "/choreo-apis/cms-0057-f/medication-request-ser-tw/v1/fhir/r4/MedicationRequest",
 
-  ehr_baseUrl:
-    "https://d5a7a3a9-12e4-4949-9cf8-bb3e12517db4.e1-us-east-azure.choreoapps.dev",
+  ehr_baseUrl: "https://localhost:10000",
+  // ehr_baseUrl: "https://19e96b32-1bbb-4f56-9d2d-88d3a7e6d6e9.e1-us-east-azure.choreoapps.dev",
 };
-
-window.Config = Config;

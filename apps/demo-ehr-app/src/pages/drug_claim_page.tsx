@@ -186,7 +186,7 @@ const ClaimForm = () => {
     localStorage.setItem(CLAIM_REQUEST_METHOD, HTTP_METHODS.POST);
     localStorage.setItem(
       CLAIM_REQUEST_URL,
-      "https://grace-memorial-hospital.com" +
+      "https://unitedcare.com" +
         "/choreo-apis/cms-0057-f/claim-submission-servi-hk/v1/fhir/r4/Claim/submit"
     );
 

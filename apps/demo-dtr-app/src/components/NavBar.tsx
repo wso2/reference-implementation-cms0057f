@@ -66,12 +66,12 @@ export default function NavBar() {
         padding: 14,
         paddingLeft: 20,
         paddingRight: 20,
-        backgroundColor: expanded ? "#4C585B" : "#4C585B",
+        backgroundColor: expanded ? "#058790" : "#058790",
         transition: "background-color 0.5s ease",
       }}
     >
       <Box
-        bg={expanded ? "#7E99A3" : "#7E99A3"}
+        bg={expanded ? "#FFF" : "#FFF"}
         height={60}
         borderRadius="40"
         transition="background-color 0.5s ease"
@@ -93,7 +93,7 @@ export default function NavBar() {
             cursor="pointer"
           >
             <Box overflow="hidden" marginLeft={10}>
-              <img src="/EHealthLogo.png" alt="Demo Logo" height={100} />
+              <img src="/EHealthLogo.png" alt="Demo Logo" height={75} />
             </Box>
           </Box>
           <Box display="flex" alignItems="center" marginRight={5}>
@@ -101,7 +101,7 @@ export default function NavBar() {
               <Box display="flex" alignItems="center">
                 <Box
                   marginRight={10}
-                  color="white"
+                  color="#058790"
                   fontSize="22px"
                   fontWeight={400}
                 >

@@ -1,0 +1,101 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 24 94% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 25 80% 97%;
+    --secondary-foreground: 24 70% 40%;
+
+    --muted: 25 30% 96%;
+    --muted-foreground: 25 10% 40%;
+
+    --accent: 25 90% 95%;
+    --accent-foreground: 24 70% 40%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 25 30% 90%;
+    --input: 25 30% 90%;
+    --ring: 24 94% 50%;
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 25 25% 97%;
+    --sidebar-foreground: 24 5.3% 26.1%;
+    --sidebar-primary: 24 94% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 25 10% 95.9%;
+    --sidebar-accent-foreground: 24 70% 40%;
+    --sidebar-border: 25 13% 91%;
+    --sidebar-ring: 24 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 24 94% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 25 30% 17.5%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 25 30% 17.5%;
+    --muted-foreground: 24 10% 65.1%;
+
+    --accent: 25 30% 17.5%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 25 30% 17.5%;
+    --input: 25 30% 17.5%;
+    --ring: 24 70% 60%;
+    
+    --sidebar-background: 24 30% 15%;
+    --sidebar-foreground: 25 10% 95.9%;
+    --sidebar-primary: 24 70% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 25 20% 25%;
+    --sidebar-accent-foreground: 25 10% 95.9%;
+    --sidebar-border: 25 20% 25%;
+    --sidebar-ring: 24 70% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+.fhir-gradient-bg {
+  background: linear-gradient(to bottom right, #fff9f0, #fff5eb, #fff9f0);
+}

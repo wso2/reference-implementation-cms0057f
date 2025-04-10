@@ -27,7 +27,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ArrowRight, Link, Key, Globe, Shield, Loader2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/custom_hooks/use-toast";
 import * as uuid from "uuid";
 
 interface FormData {

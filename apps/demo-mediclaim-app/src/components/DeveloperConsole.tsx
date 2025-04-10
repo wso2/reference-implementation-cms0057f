@@ -26,7 +26,7 @@ import {
   ApiResponse,
 } from "@/store/apiConsoleStore";
 import JsonViewer from "@/components/JsonViewer";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/custom_hooks/use-toast";
 
 export const DeveloperConsoleButton = () => {
   const { isOpen, setIsOpen } = useApiConsoleStore();

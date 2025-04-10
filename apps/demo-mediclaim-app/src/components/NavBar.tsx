@@ -19,7 +19,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { LogOut, Database } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/custom_hooks/use-toast";
 
 interface NavBarProps {
   userName?: string;

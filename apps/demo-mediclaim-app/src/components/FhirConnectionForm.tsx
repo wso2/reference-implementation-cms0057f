@@ -48,7 +48,7 @@ const FhirConnectionForm: React.FC = () => {
   const { toast } = useToast();
   const [formData, setFormData] = useState<FormData>({
     baseUrl: "https://openhealthcare.testdmain.online/fhir/r4",
-    consumerKey: "W18lqgP3_UXGPXhhMFupu94AznUa",
+    consumerKey: "tB8I1tBZFYi5UxKfR_fc9kZmUqIa",
     consumerSecret: "",
     redirectUri: `${window.location.origin}/api-view`,
     practitionerMode: false,

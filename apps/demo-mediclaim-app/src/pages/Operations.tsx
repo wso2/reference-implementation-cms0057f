@@ -41,6 +41,7 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import {} from "react-syntax-highlighter/dist/esm/styles/prism";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { fhirOperationConfigs } from "@/utils/constants";
+import { jwtDecode } from "jwt-decode";
 
 // Define the FHIR operations with their required parameters
 
@@ -111,7 +112,6 @@ const Operations: React.FC = () => {
           navigate("/");
         }
 
-        console.log("Token response:", response);
         const tokenData: AuthToken = await response.json();
         sessionStorage.setItem("fhirAuthToken", JSON.stringify(tokenData));
 
@@ -149,25 +149,40 @@ const Operations: React.FC = () => {
     if (storedAuthToken) {
       setAuthToken(storedAuthToken);
       setConnectionData(storedConnection);
-      console.log("Auth token:", storedAuthToken);
-      if (storedAuthToken.patient) {
-        console.log("Patient ID:", storedAuthToken.patient);
-        setPatient(storedAuthToken.patient);
-        toast({
-          title: "User Authenticated",
-          description: "User is authenticated successfully.",
-          variant: "default",
-        });
-        console.log("Already authenticated, redirecting to API view...");
-        navigate("/api-view");
-        return;
+      if (storedAuthToken.access_token) {
+        try {
+          const decodedToken: any = jwtDecode(storedAuthToken.access_token);
+          if (decodedToken.patient) {
+            console.log("Decoded Patient ID:", decodedToken.patient);
+            setPatient(decodedToken.patient);
+            navigate("/api-view");
+            return;
+          } else {
+            toast({
+              title: "Patient Not found",
+              description: "Logged in user is not a registered patient",
+              variant: "destructive",
+            });
+            sessionStorage.clear();
+            navigate("/");
+          }
+        } catch (error) {
+          console.error("Error decoding token:", error);
+          toast({
+            title: "Authentication Failed",
+            description: "Could not retrieve access token",
+            variant: "destructive",
+          });
+          sessionStorage.clear();
+          navigate("/");
+        }
       } else {
+        console.log("No access token found");
         toast({
-          title: "Patient Not found",
-          description: "Logged in user is not a registered patient.",
+          title: "Authentication Failed",
+          description: "Could not retrieve access token",
           variant: "destructive",
         });
-        console.log("Logged in user is not a registered patient.");
         sessionStorage.clear();
         navigate("/");
       }

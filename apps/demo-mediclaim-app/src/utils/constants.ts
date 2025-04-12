@@ -16,14 +16,14 @@ export const fhirOperationConfigs = [
       { name: "given", label: "Given Name", type: "text", required: false },
       { name: "family", label: "Family Name", type: "text", required: false },
       {
-        name: "address-state",
-        label: "Address State",
+        name: "address-city",
+        label: "Address City",
         type: "text",
         required: false,
       },
       {
-        name: "address-city",
-        label: "Address City",
+        name: "address-country",
+        label: "Address Country",
         type: "text",
         required: false,
       },

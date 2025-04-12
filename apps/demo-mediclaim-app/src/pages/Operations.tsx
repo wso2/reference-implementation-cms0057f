@@ -55,6 +55,7 @@ interface ConnectionData {
 
 interface AuthToken {
   access_token: string;
+  id_token: string;
   token_type: string;
   expires_in: number;
   scope: string;
@@ -149,11 +150,11 @@ const Operations: React.FC = () => {
     if (storedAuthToken) {
       setAuthToken(storedAuthToken);
       setConnectionData(storedConnection);
-      if (storedAuthToken.access_token) {
+      if (storedAuthToken.id_token) {
         try {
-          const decodedToken: any = jwtDecode(storedAuthToken.access_token);
+          const decodedToken: any = jwtDecode(storedAuthToken.id_token);
           if (decodedToken.patient) {
-            console.log("Decoded Patient ID:", decodedToken.patient);
+            console.log("Patient ID:", decodedToken.patient);
             setPatient(decodedToken.patient);
             navigate("/api-view");
             return;
@@ -167,20 +168,20 @@ const Operations: React.FC = () => {
             navigate("/");
           }
         } catch (error) {
-          console.error("Error decoding token:", error);
+          console.error("Error decoding id_token:", error);
           toast({
             title: "Authentication Failed",
-            description: "Could not retrieve access token",
+            description: "Could not retrieve data from id_token",
             variant: "destructive",
           });
           sessionStorage.clear();
           navigate("/");
         }
       } else {
-        console.log("No access token found");
+        console.log("No id_token found");
         toast({
           title: "Authentication Failed",
-          description: "Could not retrieve access token",
+          description: "Could not retrieve id_token",
           variant: "destructive",
         });
         sessionStorage.clear();

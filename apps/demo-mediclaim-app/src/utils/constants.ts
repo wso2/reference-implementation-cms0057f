@@ -1,0 +1,85 @@
+export const fhirOperationConfigs = [
+  {
+    id: "patient-search",
+    name: "Patient Search",
+    endpoint: "/Patient",
+    showSearchButton: true,
+    params: [
+      {
+        name: "_id",
+        label: "Patient ID",
+        type: "text",
+        required: false,
+        disabled: true,
+        default: "2",
+      },
+      { name: "given", label: "Given Name", type: "text", required: false },
+      { name: "family", label: "Family Name", type: "text", required: false },
+      {
+        name: "address-city",
+        label: "Address City",
+        type: "text",
+        required: false,
+      },
+      {
+        name: "address-country",
+        label: "Address Country",
+        type: "text",
+        required: false,
+      },
+    ],
+  },
+  {
+    id: "explanation-of-benefits",
+    name: "Explanation of Benefits",
+    endpoint: "/ExplanationOfBenefit",
+    showSearchButton: true,
+    params: [
+      {
+        name: "patient",
+        label: "Patient ID",
+        type: "text",
+        required: false,
+        disabled: true,
+        default: "2",
+      },
+      {
+        name: "_id",
+        label: "Explanation of Benefits ID",
+        type: "text",
+        required: false,
+      },
+      { name: "_profile", label: "Profile", type: "text", required: false },
+      {
+        name: "_lastUpdated",
+        label: "Last Updated",
+        type: "date",
+        required: false,
+      },
+      {
+        name: "identifier",
+        label: "Identifier",
+        type: "text",
+        required: false,
+      },
+      { name: "created", label: "Created", type: "date", required: false },
+    ],
+  },
+  {
+    id: "coverage",
+    name: "Coverage",
+    endpoint: "/Coverage",
+    showSearchButton: true,
+    params: [
+      {
+        name: "patient",
+        label: "Patient ID",
+        type: "text",
+        required: false,
+        disabled: true,
+        default: "2",
+      },
+      { name: "_id", label: "Coverage ID", type: "text", required: false },
+    ],
+  },
+];

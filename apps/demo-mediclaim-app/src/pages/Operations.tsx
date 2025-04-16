@@ -38,89 +38,9 @@ import { Loader2, Database, SendHorizontal, ShieldAlert } from "lucide-react";
 import { useToast } from "@/custom_hooks/use-toast";
 import { useSearchParams } from "react-router-dom";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import {  } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-
-// Define the FHIR operations with their required parameters
-const fhirOperations = [
-  {
-    id: "patient-search",
-    name: "Patient Search",
-    endpoint: "/Patient",
-    params: [
-      {
-        name: "_id",
-        label: "Patient ID",
-        type: "text",
-        required: false,
-        default: "1",
-      },
-      { name: "given", label: "Given Name", type: "text", required: false },
-      { name: "family", label: "Family Name", type: "text", required: false },
-      {
-        name: "address-state",
-        label: "Address State",
-        type: "text",
-        required: false,
-      },
-      {
-        name: "address-city",
-        label: "Address City",
-        type: "text",
-        required: false,
-      },
-    ],
-  },
-  {
-    id: "explanation-of-benefits",
-    name: "Explanation of Benefits",
-    endpoint: "/ExplanationOfBenefit",
-    params: [
-      {
-        name: "patient",
-        label: "Patient ID",
-        type: "text",
-        required: false,
-        default: "1",
-      },
-      {
-        name: "_id",
-        label: "Explanation of Benefits ID",
-        type: "text",
-        required: false,
-      },
-      { name: "_profile", label: "Profile", type: "text", required: false },
-      {
-        name: "_lastUpdated",
-        label: "Last Updated",
-        type: "date",
-        required: false,
-      },
-      {
-        name: "identifier",
-        label: "Identifier",
-        type: "text",
-        required: false,
-      },
-      { name: "created", label: "Created", type: "date", required: false },
-    ],
-  },
-  {
-    id: "coverage",
-    name: "Coverage",
-    endpoint: "/Coverage",
-    params: [
-      {
-        name: "patient",
-        label: "Patient ID",
-        type: "text",
-        required: false,
-        default: "1",
-      },
-      { name: "_id", label: "Coverage ID", type: "text", required: false },
-    ],
-  },
-];
+import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { fhirOperationConfigs } from "@/utils/constants";
+import { jwtDecode } from "jwt-decode";
 
 interface ConnectionData {
   baseUrl: string;
@@ -132,6 +52,7 @@ interface ConnectionData {
 
 interface AuthToken {
   access_token: string;
+  id_token: string;
   token_type: string;
   expires_in: number;
   scope: string;
@@ -144,9 +65,11 @@ interface SmartConfiguration {
 }
 
 const Operations: React.FC = () => {
+  const fhirOperations = fhirOperationConfigs;
   const { toast } = useToast();
   const navigate = useNavigate();
   const [selectedOperation, setSelectedOperation] = useState<string>("");
+  const [patient, setPatient] = useState<string>("");
   const [paramValues, setParamValues] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [responseData, setResponseData] = useState<any>(null);
@@ -156,6 +79,14 @@ const Operations: React.FC = () => {
   const [authToken, setAuthToken] = useState<AuthToken | null>(null);
 
   const [searchParams] = useSearchParams();
+
+  // New state for patient details
+  const [patientDetails, setPatientDetails] = useState({
+    givenName: "",
+    familyName: "",
+    addressCity: "",
+    addressCountry: "",
+  });
 
   useEffect(() => {
     // Function to fetch the token
@@ -181,6 +112,7 @@ const Operations: React.FC = () => {
             description: "Could not retrieve access token",
             variant: "destructive",
           });
+          sessionStorage.clear();
           navigate("/");
         }
 
@@ -200,6 +132,7 @@ const Operations: React.FC = () => {
           description: "Could not retrieve access token",
           variant: "destructive",
         });
+        sessionStorage.clear();
         navigate("/");
       }
     };
@@ -220,20 +153,50 @@ const Operations: React.FC = () => {
     if (storedAuthToken) {
       setAuthToken(storedAuthToken);
       setConnectionData(storedConnection);
-      toast({
-        title: "User Authenticated",
-        description: "User is authenticated successfully.",
-        variant: "default",
-      });
-      console.log("Already authenticated, redirecting to API view...");
-      navigate("/api-view");
-      return;
+      if (storedAuthToken.id_token) {
+        try {
+          const decodedToken: any = jwtDecode(storedAuthToken.id_token);
+          if (decodedToken.patient) {
+            console.log("Patient ID:", decodedToken.patient);
+            setPatient(decodedToken.patient);
+            navigate("/api-view");
+            return;
+          } else {
+            toast({
+              title: "Patient Not found",
+              description: "Logged in user is not a registered patient",
+              variant: "destructive",
+            });
+            sessionStorage.clear();
+            navigate("/");
+          }
+        } catch (error) {
+          console.error("Error decoding id_token:", error);
+          toast({
+            title: "Authentication Failed",
+            description: "Could not retrieve data from id_token",
+            variant: "destructive",
+          });
+          sessionStorage.clear();
+          navigate("/");
+        }
+      } else {
+        console.log("No id_token found");
+        toast({
+          title: "Authentication Failed",
+          description: "Could not retrieve id_token",
+          variant: "destructive",
+        });
+        sessionStorage.clear();
+        navigate("/");
+      }
     }
 
     if (code && state && storedSmartConfig && storedConnection) {
       setConnectionData(storedConnection);
       fetchToken();
     } else {
+      sessionStorage.clear();
       navigate("/");
     }
   }, [searchParams, toast, navigate]);
@@ -248,15 +211,65 @@ const Operations: React.FC = () => {
         const initialParams: Record<string, string> = {};
         operation.params.forEach((param) => {
           if (param.default) {
-            initialParams[param.name] = param.default;
+            initialParams[param.name] = patient;
           } else {
             initialParams[param.name] = "";
           }
         });
         setParamValues(initialParams);
+
+        // Auto-execute API request if Patient Search is selected
+        if (selectedOperation === "patient-search") {
+          executeApiRequest(initialParams, operation);
+        }
       }
     }
   }, [selectedOperation]);
+
+  // Effect to extract patient details when response data changes
+  useEffect(() => {
+    if (
+      responseData &&
+      selectedOperation === "patient-search" &&
+      responseData.entry &&
+      responseData.entry.length > 0
+    ) {
+      const patient = responseData.entry[0].resource;
+
+      // Extract patient details
+      const givenName =
+        patient.name && patient.name[0]?.given
+          ? patient.name[0].given[0] || ""
+          : "";
+      const familyName = (patient.name && patient.name[0]?.family) || "";
+
+      // Extract address details if available
+      let addressCity = "";
+      let addressCountry = "";
+
+      if (patient.address && patient.address.length > 0) {
+        addressCity = patient.address[0].city || "";
+        addressCountry = patient.address[0].country || "";
+      }
+
+      // Set patient details
+      setPatientDetails({
+        givenName,
+        familyName,
+        addressCity,
+        addressCountry,
+      });
+
+      // Update param values with extracted details
+      setParamValues((prev) => ({
+        ...prev,
+        given: givenName,
+        family: familyName,
+        "address-city": addressCity,
+        "address-country": addressCountry,
+      }));
+    }
+  }, [responseData, selectedOperation]);
 
   const handleParamChange = (paramName: string, value: string) => {
     setParamValues((prev) => ({
@@ -265,34 +278,34 @@ const Operations: React.FC = () => {
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const executeApiRequest = async (
+    params: Record<string, string>,
+    operation: any
+  ) => {
     setIsLoading(true);
     setResponseData(null);
 
-    // Find the selected operation
-    const operation = fhirOperations.find((op) => op.id === selectedOperation);
-    if (!operation || !connectionData) {
+    if (!connectionData) {
       setIsLoading(false);
       return;
     }
 
     // Build the URL
     let url = `${connectionData.baseUrl}${operation.endpoint}`;
-    const hasParams = Object.values(paramValues).some((value) => value);
+    const hasParams = Object.values(params).some((value) => value);
     if (hasParams) {
       url += "?";
     }
 
     // Add parameters
-    const params = new URLSearchParams();
-    Object.entries(paramValues).forEach(([key, value]) => {
+    const urlParams = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
       if (value) {
-        params.append(key, value);
+        urlParams.append(key, value);
       }
     });
 
-    url += params.toString();
+    url += urlParams.toString();
 
     try {
       const response = await fetch(url, {
@@ -302,10 +315,6 @@ const Operations: React.FC = () => {
           Accept: "application/fhir+json",
         },
       });
-
-      // if (!response.ok) {
-      //   throw new Error(`HTTP error ${response.status}`);
-      // }
 
       const data = await response.json();
       setResponseData(data);
@@ -323,20 +332,32 @@ const Operations: React.FC = () => {
     }
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Find the selected operation
+    const operation = fhirOperations.find((op) => op.id === selectedOperation);
+    if (!operation) return;
+
+    executeApiRequest(paramValues, operation);
+  };
+
   const getCurrentOperation = () => {
     return fhirOperations.find((op) => op.id === selectedOperation);
   };
 
+  // Determine if we should disable the inputs and hide the button
+  const isPatientOperation = selectedOperation === "patient-search";
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-orange-50 to-white">
-      <div className="flex-grow py-6 px-2 sm:px-4 w-full">
+      <div className="flex-grow py-6 px-2 sm:px-6 lg:px-8 w-full">
         <div className="max-w-full mx-auto space-y-6">
           <div className="text-center mb-6">
-            <h1 className="text-3xl font-bold text-primary">
-              FHIR API Explorer
-            </h1>
+            <h1 className="text-3xl font-bold text-primary">Medical Info</h1>
             <p className="text-muted-foreground">
-              Select an operation and configure request parameters
+              Perform an operation to retrieve your relavant medical
+              information.
             </p>
           </div>
 
@@ -399,7 +420,9 @@ const Operations: React.FC = () => {
                 </CardTitle>
                 <CardDescription>
                   {selectedOperation
-                    ? "Configure the parameters for this request"
+                    ? isPatientOperation
+                      ? "Automatically retrieving patient data..."
+                      : "Configure the parameters for this request"
                     : "Select an operation to view parameters"}
                 </CardDescription>
               </CardHeader>
@@ -424,28 +447,32 @@ const Operations: React.FC = () => {
                             }
                             required={param.required}
                             placeholder={`Enter ${param.label.toLowerCase()}`}
+                            disabled={isPatientOperation || param.disabled}
+                            className={isPatientOperation ? "bg-gray-100" : ""}
                           />
                         </div>
                       ))}
                     </div>
 
-                    <Button
-                      type="submit"
-                      className="w-full mt-4 group"
-                      disabled={isLoading || !selectedOperation}
-                    >
-                      {isLoading ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Processing...
-                        </>
-                      ) : (
-                        <>
-                          Send Request
-                          <SendHorizontal className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                        </>
-                      )}
-                    </Button>
+                    {!isPatientOperation && (
+                      <Button
+                        type="submit"
+                        className="w-full mt-4 group"
+                        disabled={isLoading || !selectedOperation}
+                      >
+                        {isLoading ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Processing...
+                          </>
+                        ) : (
+                          <>
+                            Send Request
+                            <SendHorizontal className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                          </>
+                        )}
+                      </Button>
+                    )}
                   </form>
                 ) : (
                   <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
@@ -472,12 +499,11 @@ const Operations: React.FC = () => {
                       <span className="ml-2">Fetching data...</span>
                     </div>
                   ) : responseData ? (
-                    <div>
+                    <div className="rounded-md p-1 border border-border">
                       <SyntaxHighlighter
                         language="json"
                         style={vscDarkPlus}
                         showLineNumbers={true}
-                        // customStyle={{ margin: 0, backgroundColor: 'transparent' }}
                       >
                         {JSON.stringify(responseData, null, 2)}
                       </SyntaxHighlighter>

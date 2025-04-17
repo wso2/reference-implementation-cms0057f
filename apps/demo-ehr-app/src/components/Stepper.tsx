@@ -320,10 +320,11 @@ export default function HorizontalNonLinearStepper() {
         borderColor: "#000000",
       }}
     >
-      <Stepper alternativeLabel nonLinear activeStep={currentStep}>
+      <Stepper alternativeLabel activeStep={currentStep}>
         {stepsArray.map((step, index) => (
           <Step key={step.name} completed={step.status == StepStatus.COMPLETED}>
             <StepButton
+              sx={{ height: "70px" }}
               disabled={step.status == StepStatus.NOT_STARTED}
               onClick={handleStep(index)}
             >

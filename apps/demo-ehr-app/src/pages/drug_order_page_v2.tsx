@@ -68,6 +68,7 @@ import {
   CDS_REQUEST_URL,
   CDS_RESPONSE,
   MEDICATION_REQUEST,
+  MEDICATION_REQUEST_METHOD,
   MEDICATION_REQUEST_URL,
   MEDICATION_RESPONSE,
   QUESTIONNAIRE_PACKAGE_REQUEST,
@@ -307,7 +308,7 @@ const PrescribeForm = ({
     );
     const Config = window.Config;
 
-    localStorage.setItem(MEDICATION_REQUEST, HTTP_METHODS.POST);
+    localStorage.setItem(MEDICATION_REQUEST_METHOD, HTTP_METHODS.POST);
     localStorage.setItem(
       MEDICATION_REQUEST_URL,
       Config.demoHospitalUrl + Config.medication_request

@@ -78,6 +78,7 @@ import {
   TIMESTAMP,
 } from "../constants/localStorageVariables";
 import { HTTP_METHODS } from "../constants/enum";
+import { clearLocalStorageForPAPrococess } from "../utils/clearLocalStorage";
 
 interface Operation {
   name: string;
@@ -103,6 +104,7 @@ const PrescribeForm = ({
   useEffect(() => {
     dispatch(resetMedicationFormData());
     dispatch(updateIsProcess(true));
+    clearLocalStorageForPAPrococess();
   }, [dispatch]);
 
   const [alertMessage, setAlertMessage] = useState<string | null>(null);

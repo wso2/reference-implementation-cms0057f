@@ -418,13 +418,6 @@ const Operations: React.FC = () => {
                 <CardTitle className="text-xl">
                   {getCurrentOperation()?.name || "Operation Parameters"}
                 </CardTitle>
-                <CardDescription>
-                  {selectedOperation
-                    ? isPatientOperation
-                      ? "Automatically retrieving patient data..."
-                      : "Configure the parameters for this request"
-                    : "Select an operation to view parameters"}
-                </CardDescription>
               </CardHeader>
               <CardContent>
                 {selectedOperation ? (

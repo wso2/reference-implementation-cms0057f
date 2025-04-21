@@ -50,7 +50,7 @@ interface ConnectionData {
   practitionerMode: boolean;
 }
 
-interface AuthToken {
+export interface AuthToken {
   access_token: string;
   id_token: string;
   token_type: string;
@@ -117,6 +117,7 @@ const Operations: React.FC = () => {
         }
 
         const tokenData: AuthToken = await response.json();
+        console.log(tokenData);
         sessionStorage.setItem("fhirAuthToken", JSON.stringify(tokenData));
 
         toast({

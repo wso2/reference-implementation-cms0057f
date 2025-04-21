@@ -27,6 +27,7 @@ import {
 } from "@/store/apiConsoleStore";
 import JsonViewer from "@/components/JsonViewer";
 import { useToast } from "@/custom_hooks/use-toast";
+import { AuthToken } from "@/pages/Operations";
 
 export const DeveloperConsoleButton = () => {
   const { isOpen, setIsOpen } = useApiConsoleStore();
@@ -52,6 +53,8 @@ interface RequestCardProps {
 const RequestCard: React.FC<RequestCardProps> = ({ request, response }) => {
   const { toast } = useToast();
   const [expanded, setExpanded] = useState(false);
+  const [authToken, setAuthToken] = useState<AuthToken>(null);
+  const [smartConfig, setSmartConfig] = useState(null);
 
   const copyToClipboard = (data: any, type: string) => {
     navigator.clipboard.writeText(JSON.stringify(data, null, 2));
@@ -68,80 +71,157 @@ const RequestCard: React.FC<RequestCardProps> = ({ request, response }) => {
     return "text-gray-500";
   };
 
+  useEffect(() => {
+    const authTokenString = sessionStorage.getItem("fhirAuthToken");
+    if (authTokenString) {
+      const authToken: AuthToken = JSON.parse(authTokenString);
+      setAuthToken(authToken);
+    }
+
+    const storedSmartConfig = sessionStorage.getItem("fhirSmartConfig")
+      ? JSON.parse(sessionStorage.getItem("fhirSmartConfig")!)
+      : null;
+    setSmartConfig(storedSmartConfig);
+  }, []);
+
   return (
-    <div
-      className={`border rounded-md mb-2 p-2 ${
-        expanded ? "bg-accent/30" : "bg-background"
-      } hover:bg-accent/10 transition-all`}
-    >
+    <>
       <div
-        className="flex justify-between items-center cursor-pointer"
-        onClick={() => setExpanded(!expanded)}
+        className={`border rounded-md mb-2 p-2 ${
+          expanded ? "bg-accent/30" : "bg-background"
+        } hover:bg-accent/10 transition-all`}
       >
-        <div className="flex items-center space-x-2">
-          <span className="font-mono text-xs bg-primary/10 px-2 py-0.5 rounded">
-            {request.method}
-          </span>
-          <span className="text-sm font-semibold truncate max-w-[150px] sm:max-w-[250px]">
-            {new URL(request.url).pathname}
-          </span>
-        </div>
-
-        <div className="flex items-center space-x-2">
-          {response && (
-            <span
-              className={`text-xs font-mono ${getStatusColor(response.status)}`}
-            >
-              {response.status}
+        <div
+          className="flex justify-between items-center cursor-pointer"
+          onClick={() => setExpanded(!expanded)}
+        >
+          <div className="flex items-center space-x-2">
+            <span className="font-mono text-xs bg-primary/10 px-2 py-0.5 rounded">
+              POST
             </span>
-          )}
-          <span className="text-xs text-muted-foreground">
-            {new Date(request.timestamp).toLocaleTimeString()}
-          </span>
+            <span className="text-sm font-semibold truncate max-w-[150px] sm:max-w-[250px]">
+              {new URL(smartConfig.token_endpoint).pathname}
+            </span>
+          </div>
         </div>
-      </div>
 
-      {expanded && (
-        <div className="mt-6 space-y-2 text-xs">
-          <div className="flex justify-between">
-            <h4 className="font-semibold">Request</h4>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-6 w-6 p-0"
-              onClick={(e) => {
-                e.stopPropagation();
-                copyToClipboard(request, "Request");
-              }}
-            >
-              <Copy className="h-3 w-3" />
-            </Button>
-          </div>
-
-          <div className="font-mono break-all bg-muted p-1 rounded text-xs">
-            {request.url}
-          </div>
-
-          {request.body && (
-            <div className="border rounded bg-accent/10 p-2">
-              <JsonViewer data={request.body} />
+        {expanded && (
+          <div className="mt-6 space-y-2 text-xs">
+            <div className="flex justify-between">
+              <h4 className="font-semibold">Request</h4>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 w-6 p-0"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  copyToClipboard(request, "Request");
+                }}
+              >
+                <Copy className="h-3 w-3" />
+              </Button>
             </div>
-          )}
 
-          {response && (
-            <>
-              <div className="flex justify-between pt-4">
-                <h4 className="font-semibold">Response</h4>
-              </div>
+            <div className="font-mono break-all bg-muted p-1 rounded text-xs">
+              {smartConfig.token_endpoint}
+            </div>
 
+            {request.body && (
               <div className="border rounded bg-accent/10 p-2">
-                <JsonViewer data={JSON.parse(response.data)} />
+                <JsonViewer data={request.body} />
               </div>
-            </>
-          )}
+            )}
+
+            {response && (
+              <>
+                <div className="flex justify-between pt-4">
+                  <h4 className="font-semibold">Response</h4>
+                </div>
+
+                <div className="border rounded bg-accent/10 p-2">
+                  <JsonViewer data={authToken} />
+                </div>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+      <div
+        className={`border rounded-md mb-2 p-2 ${
+          expanded ? "bg-accent/30" : "bg-background"
+        } hover:bg-accent/10 transition-all`}
+      >
+        <div
+          className="flex justify-between items-center cursor-pointer"
+          onClick={() => setExpanded(!expanded)}
+        >
+          <div className="flex items-center space-x-2">
+            <span className="font-mono text-xs bg-primary/10 px-2 py-0.5 rounded">
+              {request.method}
+            </span>
+            <span className="text-sm font-semibold truncate max-w-[150px] sm:max-w-[250px]">
+              {new URL(request.url).pathname}
+            </span>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            {response && (
+              <span
+                className={`text-xs font-mono ${getStatusColor(
+                  response.status
+                )}`}
+              >
+                {response.status}
+              </span>
+            )}
+            <span className="text-xs text-muted-foreground">
+              {new Date(request.timestamp).toLocaleTimeString()}
+            </span>
+          </div>
         </div>
-      )}
-    </div>
+
+        {expanded && (
+          <div className="mt-6 space-y-2 text-xs">
+            <div className="flex justify-between">
+              <h4 className="font-semibold">Request</h4>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 w-6 p-0"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  copyToClipboard(request, "Request");
+                }}
+              >
+                <Copy className="h-3 w-3" />
+              </Button>
+            </div>
+
+            <div className="font-mono break-all bg-muted p-1 rounded text-xs">
+              {request.url}
+            </div>
+
+            {request.body && (
+              <div className="border rounded bg-accent/10 p-2">
+                <JsonViewer data={request.body} />
+              </div>
+            )}
+
+            {response && (
+              <>
+                <div className="flex justify-between pt-4">
+                  <h4 className="font-semibold">Response</h4>
+                </div>
+
+                <div className="border rounded bg-accent/10 p-2">
+                  <JsonViewer data={JSON.parse(response.data)} />
+                </div>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+    </>
   );
 };
 

@@ -4,9 +4,9 @@ import ballerinax/health.fhir.r4.davincipas;
 import ballerinax/health.fhir.r4.international401;
 import ballerinax/health.fhir.r4.parser;
 
-isolated davincipas:PASClaim[] claims = [];
-isolated davincipas:PASClaimResponse[] claimResponses = [];
-isolated int createOperationNextId = 12344;
+configurable string claimRepositoryServiceUrl = ?;
+
+isolated http:Client claimRepositoryServiceClient = check new (claimRepositoryServiceUrl);
 
 public isolated function submit(international401:Parameters payload) returns r4:FHIRError|international401:Parameters|error {
     international401:Parameters|error 'parameters = parser:parseWithValidation(payload.toJson(), international401:Parameters).ensureType();
@@ -28,154 +28,78 @@ public isolated function submit(international401:Parameters payload) returns r4:
                             anydata 'resource = bundleEntry?.'resource;
                             davincipas:PASClaim claim = check parser:parse('resource.toJson(), davincipas:PASClaim).ensureType();
 
-                            lock {
-                                claim.id = (++createOperationNextId).toBalString();
-                            }
+                            davincipas:PASClaim newClaimClone;
 
                             lock {
-                                claims.push(claim.clone());
+                                http:Response|error response = claimRepositoryServiceClient->/Claim.post(claim.clone());
+
+                                if response is http:Response {
+                                    if response.statusCode == http:STATUS_CREATED {
+                                        json|http:Error claimResponseJson = response.getJsonPayload();
+                                        if claimResponseJson is http:Error {
+                                            return r4:createFHIRError("Error: " + claimResponseJson.message(), r4:ERROR, r4:INVALID, httpStatusCode = response.statusCode);
+                                        }
+
+                                        davincipas:PASClaim|error newClaim = parser:parse(claimResponseJson, davincipas:PASClaim).ensureType();
+                                        if newClaim is error {
+                                            return r4:createFHIRError("Error: " + newClaim.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+                                        }
+
+                                        newClaimClone = newClaim.clone();
+                                    } else {
+                                        return r4:createFHIRError("Error occurred while creating the claim", r4:ERROR, r4:INVALID, httpStatusCode = response.statusCode);
+                                    }
+                                } else {
+                                    return r4:createFHIRError("Error: " + response.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_INTERNAL_SERVER_ERROR);
+                                }
                             }
 
-                            davincipas:PASClaimResponse claimResponse = {use: "claim", insurer: {}, patient: {}, created: "", 'type: {}, outcome: "partial", status: "entered-in-error"};
+                            davincipas:PASClaimResponse claimResponse;
                             lock {
                                 claimResponse = check parser:parse(claimResponseJson.clone(), davincipas:PASClaimResponse).ensureType();
                             }
+                            claimResponse.patient = newClaimClone.patient;
+                            claimResponse.insurer = newClaimClone.insurer;
+                            claimResponse.created = newClaimClone.created;
+                            claimResponse.request = {reference: "Claim/" + <string>newClaimClone.id};
 
                             lock {
-                                davincipas:PASClaimResponse claimResponseClone = claimResponse.clone();
-                                claimResponseClone.id = claim.id;
-                                claimResponseClone.patient = claim.clone().patient;
-                                claimResponseClone.insurer = claim.clone().insurer;
-                                claimResponseClone.created = claim.clone().created;
-                                claimResponses.push(claimResponseClone);
+                                http:Response|error response = claimRepositoryServiceClient->/ClaimResponse.post(claimResponse.clone());
 
-                                international401:ParametersParameter p = {
-                                    name: "return",
-                                    'resource: claimResponseClone.clone()
-                                };
+                                if response is http:Response {
+                                    if (response.statusCode == http:STATUS_CREATED) {
+                                        json|http:Error claimResponseJson = response.getJsonPayload();
+                                        if claimResponseJson is http:Error {
+                                            return r4:createFHIRError("Error: " + claimResponseJson.message(), r4:ERROR, r4:INVALID, httpStatusCode = response.statusCode);
+                                        }
 
-                                international401:Parameters response = {
-                                    'parameter: [p]
-                                };
-                                return response.clone();
+                                        davincipas:PASClaimResponse|error newClaimResponse = parser:parse(claimResponseJson, davincipas:PASClaimResponse).ensureType();
+                                        if newClaimResponse is error {
+                                            return r4:createFHIRError("Error: " + newClaimResponse.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+                                        }
+
+                                        international401:ParametersParameter p = {
+                                            name: "return",
+                                            'resource: newClaimResponse.clone()
+                                        };
+
+                                        international401:Parameters parameterResponse = {
+                                            'parameter: [p]
+                                        };
+                                        return parameterResponse.clone();
+                                    }
+                                    return r4:createFHIRError("Error: Invalid request or server error.", r4:ERROR, r4:INVALID, httpStatusCode = response.statusCode);
+                                } else {
+                                    return r4:createFHIRError("Error: " + response.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_INTERNAL_SERVER_ERROR);
+                                }
                             }
-
                         }
                     }
-
                 }
             }
         }
-
     }
     return r4:createFHIRError("Something went wrong", r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
-}
-
-function init() returns error? {
-    lock {
-        json patientJson = {
-            "resourceType": "Claim",
-            "id": "12344",
-            "identifier":
-                [
-                {
-                    "system": "http://hospital.org/claims",
-                    "value": "PA-20250302-001"
-                }
-            ]
-            ,
-            "status": "active",
-            "type": {
-                "coding": [
-                    {
-                        "system": "http://terminology.hl7.org/CodeSystem/claim-type",
-                        "code": "professional",
-                        "display": "Professional"
-                    }
-                ]
-            },
-            "use": "preauthorization",
-            "priority": {
-                "coding": [
-                    {
-                        "system": "http://terminology.hl7.org/CodeSystem/processpriority",
-                        "code": "stat",
-                        "display": "Immediate"
-                    }
-                ]
-            },
-            "patient": {
-                "reference": "Patient/102"
-            },
-            "created": "2025-03-02",
-            "insurer": {
-                "reference": "Organization/insurance-org"
-            },
-            "provider": {
-                "reference": "PractitionerRole/456"
-            },
-            "insurance": [
-                {
-                    "sequence": 1,
-                    "focal": true,
-                    "coverage": {
-                        "reference": "Coverage/insurance-coverage"
-                    }
-                }
-            ],
-            "supportingInfo": [
-                {
-                    "sequence": 1,
-                    "category": {
-                        "coding": [
-                            {
-                                "system": "http://terminology.hl7.org/CodeSystem/claiminformationcategory",
-                                "code": "info",
-                                "display": "Supporting Information"
-                            }
-                        ]
-                    },
-                    "valueReference": {
-                        "reference": "QuestionnaireResponse/1121"
-                    }
-                }
-            ],
-            "item": [
-                {
-                    "sequence": 1,
-                    "category": {
-                        "coding": [
-                            {
-                                "system": "http://terminology.hl7.org/CodeSystem/ex-benefitcategory",
-                                "code": "pharmacy",
-                                "display": "Pharmacy"
-                            }
-                        ]
-                    },
-                    "productOrService": {
-                        "coding": [
-                            {
-                                "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
-                                "code": "1746007",
-                                "display": "Aimovig 70 mg Injection"
-                            }
-                        ]
-                    },
-                    "servicedDate": "2025-03-02",
-                    "unitPrice": {
-                        "value": 600.00,
-                        "currency": "USD"
-                    },
-                    "quantity": {
-                        "value": 1
-                    }
-                }
-            ]
-        };
-        davincipas:PASClaim patient = check parser:parse(patientJson, davincipas:PASClaim).ensureType();
-        claims.push(patient);
-    }
-
 }
 
 isolated json claimResponseJson = {

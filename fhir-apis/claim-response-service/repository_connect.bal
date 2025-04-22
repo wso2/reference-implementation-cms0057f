@@ -4,52 +4,108 @@ import ballerinax/health.fhir.r4;
 import ballerinax/health.fhir.r4.davincipas;
 import ballerinax/health.fhir.r4.parser;
 
-isolated davincipas:PASClaimResponse[] claimResponses = [];
-isolated int createOperationNextId = 12343;
+// http client for claim repository service
+isolated http:Client claimRepositoryServiceClient = check new (claimRepositoryServiceUrl);
 
 public isolated function create(davincipas:PASClaimResponse payload) returns r4:FHIRError|davincipas:PASClaimResponse {
-    davincipas:PASClaimResponse|error claimResponse = parser:parseWithValidation(payload.toJson(), davincipas:PASClaimResponse).ensureType();
+    davincipas:PASClaimResponse|error claimResponse = parser:parse(payload.toJson(), davincipas:PASClaimResponse).ensureType();
 
     if claimResponse is error {
         return r4:createFHIRError(claimResponse.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
-    } else {
-        lock {
-            claimResponse.id = (++createOperationNextId).toBalString();
-        }
+    }
 
-        lock {
-            claimResponses.push(claimResponse.clone());
-        }
+    lock {
+        http:Response|error response = claimRepositoryServiceClient->/ClaimResponse.post(claimResponse.clone());
 
-        return claimResponse;
+        if response is http:Response {
+            if (response.statusCode == http:STATUS_CREATED) {
+                json|http:Error claimResponseJson = response.getJsonPayload();
+                if claimResponseJson is http:Error {
+                    return r4:createFHIRError("Error: " + claimResponseJson.message(), r4:ERROR, r4:INVALID, httpStatusCode = response.statusCode);
+                }  
+                
+                davincipas:PASClaimResponse|error newClaimResponse = parser:parse(claimResponseJson, davincipas:PASClaimResponse).ensureType();
+                if newClaimResponse is error {
+                    return r4:createFHIRError("Error: " + newClaimResponse.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+                }
+
+                return newClaimResponse.clone();
+            }
+            return r4:createFHIRError("Error: Invalid request or server error.", r4:ERROR, r4:INVALID, httpStatusCode = response.statusCode);
+        } else {
+            return r4:createFHIRError("Error: " + response.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_INTERNAL_SERVER_ERROR);
+        }
     }
 }
 
 public isolated function getById(string id) returns r4:FHIRError|davincipas:PASClaimResponse {
     lock {
-        foreach var item in claimResponses {
-            string result = item.id ?: "";
+        http:Response|error response = claimRepositoryServiceClient->/ClaimResponse/[id];
 
-            if result == id {
-                return item.clone();
-            }
+        if response is http:Response {
+            if response.statusCode == http:STATUS_OK {
+                json|http:Error claimResponseJson = response.getJsonPayload();
+                if claimResponseJson is http:Error {
+                    return r4:createFHIRError("Error: " + claimResponseJson.message(), r4:ERROR, r4:INVALID, httpStatusCode = response.statusCode);
+                }
+
+                davincipas:PASClaimResponse|error claimResponse = parser:parse(claimResponseJson, davincipas:PASClaimResponse).ensureType();
+                if claimResponse is error {
+                    return r4:createFHIRError("Error: " + claimResponse.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+                }
+
+                return claimResponse.clone();
+            } 
+            
+            return r4:createFHIRError(string `Cannot find a ClaimResponse resource with id: ${id}`, r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_NOT_FOUND);
+        } else {
+            return r4:createFHIRError("Error: " + response.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_INTERNAL_SERVER_ERROR);
         }
     }
-    return r4:createFHIRError(string `Cannot find a ClaimResponse resource with id: ${id}`, r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_NOT_FOUND);
+}
+
+public isolated function getAll() returns r4:FHIRError|davincipas:PASClaimResponse[] {
+    lock {
+        http:Response|error response = claimRepositoryServiceClient->/ClaimResponse;
+
+        if response is http:Response {
+            if response.statusCode == http:STATUS_OK {
+                json|http:Error claimsJson = response.getJsonPayload();
+                if claimsJson is http:Error {
+                    return r4:createFHIRError("Error: " + claimsJson.message(), r4:ERROR, r4:INVALID, httpStatusCode = response.statusCode);
+                }
+
+                if claimsJson is json[] {
+                    davincipas:PASClaimResponse[] claims = [];
+                    foreach json claimJsonObj in claimsJson {
+                        davincipas:PASClaimResponse|error claim = parser:parse(claimJsonObj, davincipas:PASClaimResponse).ensureType();
+
+                        if claim is error {
+                            return r4:createFHIRError("Error: " + claim.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_INTERNAL_SERVER_ERROR);
+                        }
+
+                        claims.push(claim);
+                    }
+                    
+                    return claims.clone();
+                } 
+            }
+        } 
+    }
+
+    return r4:createFHIRError("Error: Possible reason: Malformed response from server.", r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_INTERNAL_SERVER_ERROR);
 }
 
 public isolated function update(json payload) returns r4:FHIRError|fhir:FHIRResponse {
-    return r4:createFHIRError("Not implemented", r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
-
+    return r4:createFHIRError("Not implemented. This functionality is not yet supported.", r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
 }
 
 public isolated function patchResource(string 'resource, string id, json payload) returns r4:FHIRError|fhir:FHIRResponse {
-    return r4:createFHIRError("Not implemented", r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    return r4:createFHIRError("Not implemented. This functionality is not yet supported.", r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
 }
 
 public isolated function delete(string 'resource, string id) returns r4:FHIRError|fhir:FHIRResponse {
-    return r4:createFHIRError("Not implemented", r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
-
+    return r4:createFHIRError("Not implemented. This functionality is not yet supported.", r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
 }
 
 public isolated function search(map<string[]>? searchParameters = ()) returns r4:FHIRError|r4:Bundle {
@@ -58,21 +114,6 @@ public isolated function search(map<string[]>? searchParameters = ()) returns r4
     };
 
     if searchParameters is map<string[]> {
-        if searchParameters.keys().count() == 1 {
-            lock {
-                r4:BundleEntry[] bundleEntries = [];
-                foreach var item in claimResponses {
-                    r4:BundleEntry bundleEntry = {
-                        'resource: item
-                    };
-                    bundleEntries.push(bundleEntry);
-                }
-                r4:Bundle BundleClone = bundle.clone();
-                BundleClone.entry = bundleEntries;
-                return BundleClone.clone();
-            }
-        }
-
         foreach var 'key in searchParameters.keys() {
             match 'key {
                 "_id" => {
@@ -84,8 +125,22 @@ public isolated function search(map<string[]>? searchParameters = ()) returns r4
                     ];
                     return bundle;
                 }
+                "_count" => {
+                    davincipas:PASClaimResponse[] allClaims = check getAll();
+                    r4:BundleEntry[] entries = [];
+
+                    foreach davincipas:PASClaimResponse item in allClaims {
+                        entries.push({
+                            'resource: item
+                        });
+                    }
+
+                    bundle.total = entries.length();
+                    bundle.entry = entries;
+                    return bundle;
+                }
                 _ => {
-                    return r4:createFHIRError(string `Not supported search parameter: ${'key}`, r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+                    return r4:createFHIRError(string `Not supported search parameter: ${'key}. Possible reason: Unsupported query parameter.`, r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
                 }
             }
         }
@@ -155,7 +210,8 @@ function init() returns error? {
         };
 
         davincipas:PASClaimResponse claimResponse = check parser:parse(claimResponseJson, davincipas:PASClaimResponse).ensureType();
-        claimResponses.push(claimResponse);
+        
+        _ = check create(claimResponse);
     }
 
 }

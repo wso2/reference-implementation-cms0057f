@@ -282,15 +282,6 @@ dependencies = [
 ]
 
 [[package]]
-org = "ballerinai"
-name = "observe"
-version = "0.0.0"
-dependencies = [
-	{org = "ballerina", name = "jballerina.java"},
-	{org = "ballerina", name = "observe"}
-]
-
-[[package]]
 org = "ballerinax"
 name = "health.base"
 version = "1.1.0"
@@ -302,22 +293,6 @@ dependencies = [
 	{org = "ballerina", name = "mime"},
 	{org = "ballerina", name = "time"},
 	{org = "ballerina", name = "uuid"}
-]
-
-[[package]]
-org = "ballerinax"
-name = "health.clients.fhir"
-version = "2.1.0"
-dependencies = [
-	{org = "ballerina", name = "http"},
-	{org = "ballerina", name = "io"},
-	{org = "ballerina", name = "log"},
-	{org = "ballerina", name = "url"},
-	{org = "ballerinai", name = "observe"},
-	{org = "ballerinax", name = "health.base"}
-]
-modules = [
-	{org = "ballerinax", packageName = "health.clients.fhir", moduleName = "health.clients.fhir"}
 ]
 
 [[package]]
@@ -344,7 +319,7 @@ modules = [
 [[package]]
 org = "ballerinax"
 name = "health.fhir.r4.davincipas"
-version = "1.0.1"
+version = "1.1.0"
 dependencies = [
 	{org = "ballerina", name = "constraint"},
 	{org = "ballerina", name = "log"},
@@ -381,38 +356,16 @@ modules = [
 ]
 
 [[package]]
-org = "ballerinax"
-name = "health.fhirr4"
-version = "1.4.2"
-dependencies = [
-	{org = "ballerina", name = "http"},
-	{org = "ballerina", name = "io"},
-	{org = "ballerina", name = "jballerina.java"},
-	{org = "ballerina", name = "jwt"},
-	{org = "ballerina", name = "lang.regexp"},
-	{org = "ballerina", name = "log"},
-	{org = "ballerinai", name = "observe"},
-	{org = "ballerinax", name = "health.fhir.r4"},
-	{org = "ballerinax", name = "health.fhir.r4.international401"},
-	{org = "ballerinax", name = "health.fhir.r4.parser"}
-]
-modules = [
-	{org = "ballerinax", packageName = "health.fhirr4", moduleName = "health.fhirr4"}
-]
-
-[[package]]
-org = "wso2"
-name = "claimresponse.api"
+org = "healthcare"
+name = "claim.repository.api"
 version = "1.0.0"
 dependencies = [
 	{org = "ballerina", name = "http"},
-	{org = "ballerinax", name = "health.clients.fhir"},
 	{org = "ballerinax", name = "health.fhir.r4"},
 	{org = "ballerinax", name = "health.fhir.r4.davincipas"},
-	{org = "ballerinax", name = "health.fhir.r4.parser"},
-	{org = "ballerinax", name = "health.fhirr4"}
+	{org = "ballerinax", name = "health.fhir.r4.parser"}
 ]
 modules = [
-	{org = "wso2", packageName = "claimresponse.api", moduleName = "claimresponse.api"}
+	{org = "healthcare", packageName = "claim.repository.api", moduleName = "claim.repository.api"}
 ]
 

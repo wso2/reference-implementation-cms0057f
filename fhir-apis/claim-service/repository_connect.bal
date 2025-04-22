@@ -5,44 +5,76 @@ import ballerinax/health.fhir.r4;
 import ballerinax/health.fhir.r4.davincipas;
 import ballerinax/health.fhir.r4.parser;
 
-isolated davincipas:PASClaim[] claims = [];
-isolated int createOperationNextId = 12344;
+// http client for claim repository service
+isolated http:Client claimRepositoryServiceClient = check new (claimRepositoryServiceUrl);
 
-public isolated function create(davincipas:PASClaim payload) returns r4:FHIRError|davincipas:PASClaimResponse|r4:FHIRParseError|error {
-    davincipas:PASClaim|error claim = parser:parseWithValidation(payload.toJson(), davincipas:PASClaim).ensureType();
-
+public isolated function create(davincipas:PASClaim payload) returns r4:FHIRError|davincipas:PASClaimResponse|error {
+    davincipas:PASClaim|error claim = parser:parse(payload.toJson(), davincipas:PASClaim).ensureType();
     if claim is error {
         return r4:createFHIRError(claim.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
-    } else {
-        lock {
-            claim.id = (++createOperationNextId).toBalString();
-        }
+    }
 
-        lock {
-            claims.push(claim.clone());
-        }
+    davincipas:PASClaim newClaimClone;
 
-        lock {
-            davincipas:PASClaimResponse claimResponse = check parser:parse(claimResponseJson, davincipas:PASClaimResponse).ensureType();
-            claimResponse.patient = claim.clone().patient;
-            claimResponse.insurer = claim.clone().insurer;
-            claimResponse.created = claim.clone().created;
-            return claimResponse.clone();
+    lock {
+        http:Response|error response = claimRepositoryServiceClient->/Claim.post(claim.clone());
+
+        if response is http:Response {
+            if response.statusCode == http:STATUS_CREATED {
+                json|http:Error claimResponseJson = response.getJsonPayload();
+                if claimResponseJson is http:Error {
+                    return r4:createFHIRError("Error: " + claimResponseJson.message(), r4:ERROR, r4:INVALID, httpStatusCode = response.statusCode);
+                }  
+                
+                davincipas:PASClaim|error newClaim = parser:parse(claimResponseJson, davincipas:PASClaim).ensureType();
+                if newClaim is error {
+                    return r4:createFHIRError("Error: " + newClaim.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+                }
+
+                newClaimClone = newClaim.clone();
+            } else {
+                return r4:createFHIRError("Error occurred while creating the claim", r4:ERROR, r4:INVALID, httpStatusCode = response.statusCode);
+            }
+        } else {
+            return r4:createFHIRError("Error: " + response.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_INTERNAL_SERVER_ERROR);
         }
     }
+
+    davincipas:PASClaimResponse claimResponse;
+    lock {
+        claimResponse = check parser:parse(claimResponseJson.clone(), davincipas:PASClaimResponse).ensureType();
+    }
+    claimResponse.patient = newClaimClone.patient;
+    claimResponse.insurer = newClaimClone.insurer;
+    claimResponse.created = newClaimClone.created;
+    claimResponse.request = {reference: "Claim/" + <string>newClaimClone.id};
+    return claimResponse.clone();
 }
 
 public isolated function getById(string id) returns r4:FHIRError|davincipas:PASClaim {
     lock {
-        foreach var item in claims {
-            string result = item.id ?: "";
+        http:Response|error response = claimRepositoryServiceClient->/Claim/[id];
 
-            if result == id {
-                return item.clone();
-            }
+        if response is http:Response {
+            if response.statusCode == http:STATUS_OK {
+                json|http:Error claimJson = response.getJsonPayload();
+                if claimJson is http:Error {
+                    return r4:createFHIRError("Error occurred while retrieving the claim", r4:ERROR, r4:INVALID, httpStatusCode = response.statusCode);
+                }
+
+                davincipas:PASClaim|error claim = parser:parse(claimJson, davincipas:PASClaim).ensureType();
+                if claim is error {
+                    return r4:createFHIRError(claim.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+                }
+
+                return claim.clone();
+            } 
+            
+            return r4:createFHIRError(string `Cannot find a Patient resource with id: ${id}`, r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_NOT_FOUND);
+        } else {
+            return r4:createFHIRError("Error: " + response.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_INTERNAL_SERVER_ERROR);
         }
     }
-    return r4:createFHIRError(string `Cannot find a Patient resource with id: ${id}`, r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_NOT_FOUND);
 }
 
 public isolated function update(json payload) returns r4:FHIRError|fhir:FHIRResponse {
@@ -109,7 +141,36 @@ public isolated function search(map<string[]>? searchParameters = ()) returns r4
 
         davincipas:PASClaim[] results = [];
         lock {
-            results = claims.clone();
+            http:Response|error response = claimRepositoryServiceClient->/Claim;
+            if response is http:Response {
+                if response.statusCode == http:STATUS_OK {
+                    // convert response to json array and convert to PASClaim array
+                    json|http:Error claimsJson = response.getJsonPayload();
+                    if claimsJson is http:Error {
+                        return r4:createFHIRError("Error occurred while retrieving the claims", r4:ERROR, r4:INVALID, httpStatusCode = response.statusCode);
+                    }
+
+                    if claimsJson is json[] {
+                        davincipas:PASClaim[] claims = [];
+                        foreach json claimJson in claimsJson {
+                            davincipas:PASClaim|error claim = parser:parse(claimJson, davincipas:PASClaim).ensureType();
+                            if claim is error {
+                                return r4:createFHIRError(claim.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+                            }
+
+                            claims.push(claim);
+                        }
+
+                        results = claims.clone();
+                    } else {
+                        return r4:createFHIRError("Error: invalid response", r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+                    }
+                } else {
+                    return r4:createFHIRError(string `Error, StatusCode: ${response.statusCode}.`, r4:ERROR, r4:INVALID, httpStatusCode = response.statusCode);
+                }
+            } else {
+                return r4:createFHIRError("Error: " + response.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_INTERNAL_SERVER_ERROR);
+            }
         }
 
         if patient is string {
@@ -245,17 +306,14 @@ isolated function getByCreatedDate(string created, davincipas:PASClaim[] targetA
 
 function init() returns error? {
     lock {
-        json patientJson = {
+        json claimJson = {
             "resourceType": "Claim",
-            "id": "12344",
-            "identifier":
-                [
+            "identifier": [
                 {
                     "system": "http://hospital.org/claims",
                     "value": "PA-20250302-001"
                 }
-            ]
-            ,
+            ],
             "status": "active",
             "type": {
                 "coding": [
@@ -344,10 +402,10 @@ function init() returns error? {
                 }
             ]
         };
-        davincipas:PASClaim patient = check parser:parse(patientJson, davincipas:PASClaim).ensureType();
-        claims.push(patient);
-    }
+        davincipas:PASClaim claim = check parser:parse(claimJson, davincipas:PASClaim).ensureType();
 
+        _ = check create(claim);
+    }
 }
 
 isolated json claimResponseJson = {

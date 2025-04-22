@@ -19,7 +19,7 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Code, X, Trash2, Terminal, Copy, ExternalLink } from "lucide-react";
+import { Code, X, Trash2, Terminal, Copy, ExternalLink, Key } from "lucide-react";
 import {
   useApiConsoleStore,
   ApiRequest,
@@ -149,6 +149,14 @@ export const DeveloperConsole: React.FC = () => {
   const { isOpen, setIsOpen, requests, responses, clearLogs } =
     useApiConsoleStore();
   const [activeTab, setActiveTab] = useState("all");
+  const [authToken, setAuthToken] = useState<any>(null);
+
+  useEffect(() => {
+    const storedToken = sessionStorage.getItem("fhirAuthToken");
+    if (storedToken) {
+      setAuthToken(JSON.parse(storedToken));
+    }
+  }, [activeTab]);
 
   // Find matching responses for each request
   const getResponseForRequest = (requestId: string) => {
@@ -201,6 +209,9 @@ export const DeveloperConsole: React.FC = () => {
                 <TabsTrigger value="requests" className="flex-1">
                   Requests
                 </TabsTrigger>
+                <TabsTrigger value="auth" className="flex-1">
+                  Auth
+                </TabsTrigger>
               </TabsList>
             </div>
 
@@ -220,6 +231,38 @@ export const DeveloperConsole: React.FC = () => {
                         response={getResponseForRequest(request.id)}
                       />
                     ))
+                  )}
+                </ScrollArea>
+              </TabsContent>
+
+              <TabsContent value="auth" className="h-full m-0">
+                <ScrollArea className="h-full max-h-[calc(100vh-10rem)] px-4 py-2">
+                  {!authToken ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Key className="h-10 w-10 mx-auto mb-2 opacity-20" />
+                      <p>No authentication token available.</p>
+                    </div>
+                  ) : (
+                    <div className="border rounded-md p-4 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-sm font-semibold">Auth Token</h3>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            navigator.clipboard.writeText(
+                              JSON.stringify(authToken, null, 2)
+                            );
+                          }}
+                          className="h-6"
+                        >
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                      </div>
+                      <div className="border rounded bg-accent/10 p-2">
+                        <JsonViewer data={authToken} />
+                      </div>
+                    </div>
                   )}
                 </ScrollArea>
               </TabsContent>

@@ -140,6 +140,52 @@ function init() returns error? {
         };
         uscore501:USCorePatientProfile patient = check parser:parse(patientJson, uscore501:USCorePatientProfile).ensureType();
         patients.push(patient);
+
+        json patientJson2 = {
+            "resourceType": "Patient",
+            "id": "102",
+            "meta": {
+                "profile": ["http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient"]
+            },
+            "identifier": [
+                {
+                    "system": "http://hospital.org/patients",
+                    "value": "54321"
+                }
+            ],
+            "name": [
+                {
+                    "use": "official",
+                    "family": "Shaw",
+                    "given": ["Jax"]
+                }
+            ],
+            "gender": "female",
+            "birthDate": "1985-08-22",
+            "address": [
+                {
+                    "line": ["456 Elm Street"],
+                    "city": "Oaktown",
+                    "state": "NY",
+                    "postalCode": "10001",
+                    "country": "US"
+                }
+            ],
+            "telecom": [
+                {
+                    "system": "phone",
+                    "value": "+1 555-123-4567",
+                    "use": "mobile"
+                },
+                {
+                    "system": "email",
+                    "value": "jax.shaw@example.com"
+                }
+            ]
+        };
+        uscore501:USCorePatientProfile patient2 = check parser:parse(patientJson2, uscore501:USCorePatientProfile).ensureType();
+        patients.push(patient2);
+
     }
 
 }

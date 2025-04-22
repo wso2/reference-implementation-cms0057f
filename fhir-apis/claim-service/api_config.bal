@@ -24,7 +24,34 @@ final r4:ResourceAPIConfig apiConfig = {
     ],
     defaultProfile: (),
     searchParameters: [
-        ],
+        {
+            name: "patient",
+            active: true,
+            'type: r4:STRING,
+            information: {
+                description: "Patient receiving the products or services",
+                documentation: "https://hl7.org/fhir/R4/search.html#reference"
+            }
+        },
+        {
+            name: "use",
+            active: true,
+            'type: r4:TOKEN,
+            information: {
+                description: "The kind of financial resource",
+                documentation: "https://hl7.org/fhir/R4/search.html#token"
+            }
+        },
+        {
+            name: "created",
+            active: true,
+            'type: r4:DATE,
+            information: {
+                description: "  The creation date for the Claim",
+                documentation: "https://hl7.org/fhir/R4/search.html#date"
+            }
+        }
+    ],
     operations: [
     
     ],

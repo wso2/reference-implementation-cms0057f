@@ -68,7 +68,7 @@ const Operations: React.FC = () => {
   const fhirOperations = fhirOperationConfigs;
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [selectedOperation, setSelectedOperation] = useState<string>("");
+  const [selectedOperation, setSelectedOperation] = useState<string>("patient-search");
   const [patient, setPatient] = useState<string>("");
   const [paramValues, setParamValues] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -224,7 +224,7 @@ const Operations: React.FC = () => {
         }
       }
     }
-  }, [selectedOperation]);
+  }, [selectedOperation, authToken]);
 
   // Effect to extract patient details when response data changes
   useEffect(() => {

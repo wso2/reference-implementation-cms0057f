@@ -34,13 +34,29 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Database, SendHorizontal, ShieldAlert } from "lucide-react";
+import {
+  Loader2,
+  Database,
+  SendHorizontal,
+  ShieldAlert,
+  Table as TableIcon,
+  LayoutGrid,
+} from "lucide-react";
 import { useToast } from "@/custom_hooks/use-toast";
 import { useSearchParams } from "react-router-dom";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { fhirOperationConfigs } from "@/utils/constants";
 import { jwtDecode } from "jwt-decode";
+import { Switch } from "@/components/ui/switch";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface ConnectionData {
   baseUrl: string;
@@ -68,7 +84,8 @@ const Operations: React.FC = () => {
   const fhirOperations = fhirOperationConfigs;
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [selectedOperation, setSelectedOperation] = useState<string>("patient-search");
+  const [selectedOperation, setSelectedOperation] =
+    useState<string>("patient-search");
   const [patient, setPatient] = useState<string>("");
   const [paramValues, setParamValues] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -79,6 +96,7 @@ const Operations: React.FC = () => {
   const [authToken, setAuthToken] = useState<AuthToken | null>(null);
 
   const [searchParams] = useSearchParams();
+  const [viewMode, setViewMode] = useState<"json" | "table">("table");
 
   // New state for patient details
   const [patientDetails, setPatientDetails] = useState({
@@ -346,6 +364,192 @@ const Operations: React.FC = () => {
     return fhirOperations.find((op) => op.id === selectedOperation);
   };
 
+  // Function to render table based on resource type
+  const renderResourceTable = () => {
+    if (
+      !responseData ||
+      !responseData.entry ||
+      responseData.entry.length === 0
+    ) {
+      return (
+        <div className="text-center py-6 text-muted-foreground">
+          No data available to display in table view
+        </div>
+      );
+    }
+
+    // Get the resource type from the first entry
+    const resourceType = responseData.entry[0]?.resource?.resourceType;
+
+    switch (resourceType) {
+      case "Patient":
+        return renderPatientTable();
+      case "ExplanationOfBenefit":
+        return renderExplanationOfBenefitTable();
+      case "Coverage":
+        return renderCoverageTable();
+      default:
+        return (
+          <div className="text-center py-6 text-muted-foreground">
+            Table view not available for {resourceType} resources
+          </div>
+        );
+    }
+  };
+
+  // Function to render Patient table
+  const renderPatientTable = () => {
+    return (
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>ID</TableHead>
+            <TableHead>Family Name</TableHead>
+            <TableHead>Given Name</TableHead>
+            <TableHead>Address</TableHead>
+            <TableHead>Gender</TableHead>
+            <TableHead>Birthdate</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {responseData.entry.map((entry: any, index: number) => {
+            const patient = entry.resource;
+            const name =
+              patient.name && patient.name.length > 0 ? patient.name[0] : null;
+            const address =
+              patient.address && patient.address.length > 0
+                ? patient.address[0]
+                : null;
+
+            return (
+              <TableRow key={`patient-${index}`}>
+                <TableCell>{patient.id || "N/A"}</TableCell>
+                <TableCell>{name?.family || "N/A"}</TableCell>
+                <TableCell>{name?.given?.join(" ") || "N/A"}</TableCell>
+                <TableCell>
+                  {address
+                    ? `${address.line ? address.line.join(", ") : ""} 
+                     ${address.city || ""} 
+                     ${address.state || ""} 
+                     ${address.postalCode || ""}`.trim()
+                    : "N/A"}
+                </TableCell>
+                <TableCell>{patient?.gender.toUpperCase() || "N/A"}</TableCell>
+                <TableCell>{patient.birthDate || "N/A"}</TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
+    );
+  };
+
+  // Function to render ExplanationOfBenefit table
+  const renderExplanationOfBenefitTable = () => {
+    return (
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>ID</TableHead>
+            <TableHead>Created Date</TableHead>
+            <TableHead>Service Provider</TableHead>
+            <TableHead>Service Display</TableHead>
+            <TableHead>Diagnosis Code Display</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {responseData.entry.map((entry: any, index: number) => {
+            const eob = entry.resource;
+            const serviceProvider = eob?.serviceProvider;
+
+            // Find service display in items if available
+            const serviceDisplay =
+              eob.item && eob.item.length > 0
+                ? eob.item[0].service?.display || "N/A"
+                : "N/A";
+
+            // Find diagnosis code display if available
+            const diagnosisDisplay =
+              eob.diagnosis && eob.diagnosis.length > 0
+                ? eob.diagnosis[0].diagnosisCode?.display || "N/A"
+                : "N/A";
+
+            return (
+              <TableRow key={`eob-${index}`}>
+                <TableCell>{eob.id || "N/A"}</TableCell>
+                <TableCell>{eob.created || "N/A"}</TableCell>
+                <TableCell>{serviceProvider || "N/A"}</TableCell>
+                <TableCell>{serviceDisplay}</TableCell>
+                <TableCell>{diagnosisDisplay}</TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
+    );
+  };
+
+  // Function to render Coverage table
+  const renderCoverageTable = () => {
+    return (
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>ID</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Issued Date</TableHead>
+            <TableHead>Type</TableHead>
+            <TableHead>Effective Period</TableHead>
+            <TableHead>Payor</TableHead>
+            <TableHead>Class</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {responseData.entry.map((entry: any, index: number) => {
+            const coverage = entry.resource;
+
+            // Get type display
+            const typeDisplay =
+              coverage.type?.coding && coverage.type.coding.length > 0
+                ? coverage.type.coding[0].display || coverage.type.text || "N/A"
+                : "N/A";
+
+            // Get effective period
+            const effectiveStart = coverage.effectivePeriod?.start || "N/A";
+            const effectiveEnd = coverage.effectivePeriod?.end || "N/A";
+            const effectivePeriod = `${effectiveStart} to ${effectiveEnd}`;
+
+            // Get payor
+            const payor =
+              coverage.payor && coverage.payor.length > 0
+                ? coverage.payor[0].display ||
+                  coverage.payor[0].reference ||
+                  "N/A"
+                : "N/A";
+
+            // Get class display
+            const classDisplay =
+              coverage.class?.coding && coverage.class.coding.length > 0
+                ? coverage.class.coding[0].display || "N/A"
+                : "N/A";
+
+            return (
+              <TableRow key={`coverage-${index}`}>
+                <TableCell>{coverage.id || "N/A"}</TableCell>
+                <TableCell>{coverage.status || "N/A"}</TableCell>
+                <TableCell>{coverage.issued || "N/A"}</TableCell>
+                <TableCell>{typeDisplay}</TableCell>
+                <TableCell>{effectivePeriod}</TableCell>
+                <TableCell>{payor}</TableCell>
+                <TableCell>{classDisplay}</TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
+    );
+  };
+
   // Determine if we should disable the inputs and hide the button
   const isPatientOperation = selectedOperation === "patient-search";
 
@@ -488,9 +692,29 @@ const Operations: React.FC = () => {
             {/* Response Viewer */}
             {(responseData || isLoading) && (
               <Card className="lg:col-span-12">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-xl">Response</CardTitle>
-                  <CardDescription>FHIR API response data</CardDescription>
+                <CardHeader className="pb-3 flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle className="text-xl">Response</CardTitle>
+                    <CardDescription>FHIR API response data</CardDescription>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-2">
+                      {viewMode === "json" ? (
+                        <LayoutGrid className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <TableIcon className="h-4 w-4 text-muted-foreground" />
+                      )}
+                      <span className="text-sm text-muted-foreground mr-2">
+                        {viewMode === "json" ? "JSON" : "Table"} View
+                      </span>
+                    </div>
+                    <Switch
+                      checked={viewMode === "table"}
+                      onCheckedChange={(checked) =>
+                        setViewMode(checked ? "table" : "json")
+                      }
+                    />
+                  </div>
                 </CardHeader>
                 <CardContent>
                   {isLoading ? (
@@ -499,15 +723,21 @@ const Operations: React.FC = () => {
                       <span className="ml-2">Fetching data...</span>
                     </div>
                   ) : responseData ? (
-                    <div className="rounded-md p-1 border border-border">
-                      <SyntaxHighlighter
-                        language="json"
-                        style={vscDarkPlus}
-                        showLineNumbers={true}
-                      >
-                        {JSON.stringify(responseData, null, 2)}
-                      </SyntaxHighlighter>
-                    </div>
+                    viewMode === "json" ? (
+                      <div className="rounded-md p-1 border border-border">
+                        <SyntaxHighlighter
+                          language="json"
+                          style={vscDarkPlus}
+                          showLineNumbers={true}
+                        >
+                          {JSON.stringify(responseData, null, 2)}
+                        </SyntaxHighlighter>
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        {renderResourceTable()}
+                      </div>
+                    )
                   ) : null}
                 </CardContent>
                 <CardFooter className="text-xs text-muted-foreground">

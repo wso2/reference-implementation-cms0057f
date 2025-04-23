@@ -81,7 +81,7 @@ export const fhirOperationConfigs = [
   },
   {
     id: "claim-response",
-    name: "Claim Response",
+    name: "Prior Authorization Data",
     endpoint: "/claimresponse/fhir/r4/ClaimResponse",
     displayEndpoint: "/fhir/r4/ClaimResponse",
     showSearchButton: true,

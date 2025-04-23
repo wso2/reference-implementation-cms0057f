@@ -82,4 +82,23 @@ export const fhirOperationConfigs = [
       { name: "_id", label: "Coverage ID", type: "text", required: false },
     ],
   },
+  {
+    id: "claim",
+    name: "Claim",
+    endpoint: "/Claim",
+    showSearchButton: true,
+    params: [
+      {
+        name: "patient",
+        label: "Patient ID",
+        type: "text",
+        required: false,
+        disabled: true,
+        default: "2",
+      },
+      { name: "_id", label: "Coverage ID", type: "text", required: false },
+      { name: "created", label: "Created", type: "date", required: false },
+      { name: "use", label: "Use", type: "text", required: false },
+    ],
+  },
 ];

@@ -335,7 +335,18 @@ const Operations: React.FC = () => {
       });
 
       const data = await response.json();
+      console.log("Response data:", data);
       setResponseData(data);
+      if (response.status === 401) {
+        toast({
+          title: "Unauthorized",
+          description: "Access token invalid. Please loggin in again.",
+          variant: "destructive",
+        });
+        sessionStorage.clear();
+        navigate("/");
+        return;
+      }
     } catch (error) {
       console.error("Error fetching data:", error);
       toast({
@@ -343,8 +354,8 @@ const Operations: React.FC = () => {
         description: "Could not retrieve data from the FHIR server.",
         variant: "destructive",
       });
-      sessionStorage.clear();
-      navigate("/");
+      // sessionStorage.clear();
+      // navigate("/");
     } finally {
       setIsLoading(false);
     }

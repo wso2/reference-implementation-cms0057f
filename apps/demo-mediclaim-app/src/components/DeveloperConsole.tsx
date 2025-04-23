@@ -128,15 +128,21 @@ const RequestCard: React.FC<RequestCardProps> = ({ request, response }) => {
             </div>
           )}
 
-          {response && (
+          {response && response.data && (
             <>
               <div className="flex justify-between pt-4">
                 <h4 className="font-semibold">Response</h4>
               </div>
 
-              <div className="border rounded bg-accent/10 p-2">
-                <JsonViewer data={JSON.parse(response.data)} />
-              </div>
+                <div className="border rounded bg-accent/10 p-2">
+                <JsonViewer
+                  data={
+                  typeof response.data === "string"
+                    ? JSON.parse(response.data)
+                    : response.data
+                  }
+                />
+                </div>
             </>
           )}
         </div>

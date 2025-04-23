@@ -110,38 +110,28 @@ public isolated function delete(string 'resource, string id) returns r4:FHIRErro
 
 public isolated function search(map<string[]>? searchParameters = ()) returns r4:FHIRError|r4:Bundle {
     r4:Bundle bundle = {
-        'type: "collection"
+        'type: "collection",
+        entry: []
     };
-
+    
     if searchParameters is map<string[]> {
-        foreach var 'key in searchParameters.keys() {
-            match 'key {
-                "_id" => {
-                    davincipas:PASClaimResponse byId = check getById(searchParameters.get('key)[0]);
-                    bundle.entry = [
-                        {
-                            'resource: byId
-                        }
-                    ];
-                    return bundle;
-                }
-                "_count" => {
-                    davincipas:PASClaimResponse[] allClaims = check getAll();
-                    r4:BundleEntry[] entries = [];
+        lock {
+            http:Response|error response = claimRepositoryServiceClient->/ClaimResponse/Search.post(searchParameters.clone());
 
-                    foreach davincipas:PASClaimResponse item in allClaims {
-                        entries.push({
-                            'resource: item
-                        });
+            if response is http:Response {
+                if response.statusCode == http:STATUS_OK || response.statusCode == http:STATUS_CREATED {
+                    json|http:Error bunddleJson = response.getJsonPayload();
+                    if bunddleJson is http:Error {
+                        return r4:createFHIRError("Error occurred while retrieving the claims", r4:ERROR, r4:INVALID, httpStatusCode = response.statusCode);
                     }
 
-                    bundle.total = entries.length();
-                    bundle.entry = entries;
-                    return bundle;
-                }
-                _ => {
-                    return r4:createFHIRError(string `Not supported search parameter: ${'key}. Possible reason: Unsupported query parameter.`, r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
-                }
+                    r4:Bundle|error bundleResponse = parser:parse(bunddleJson).ensureType();
+                    if (bundleResponse is error) {
+                        return r4:createFHIRError("Parsing Error: " + bundleResponse.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+                    }
+
+                    bundle = bundleResponse.clone();
+                } 
             }
         }
     }

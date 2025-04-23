@@ -27,7 +27,7 @@ service / on new http:Listener(9089) {
 
     // Claim repository service
     isolated resource function post fhir/r4/ClaimRepo/Claim(davincipas:PASClaim payload) returns error|http:Response {
-        r4:FHIRError|davincipas:PASClaim|error result = check addNewPASClaim(payload);
+        r4:FHIRError|davincipas:PASClaimResponse|error result = check addNewPASClaim(payload);
 
         http:Response response = new;
         if (result is r4:FHIRError) {
@@ -36,7 +36,7 @@ service / on new http:Listener(9089) {
 
         } else if (result is error) {
             response.setJsonPayload("Error occurred while creating the claim");
-            response.statusCode = http:STATUS_BAD_REQUEST;
+            response.statusCode = http:STATUS_INTERNAL_SERVER_ERROR;
         } else {
             response.setJsonPayload(result.toJson());
             response.statusCode = http:STATUS_CREATED;
@@ -49,8 +49,16 @@ service / on new http:Listener(9089) {
         return getPASClaimByID(id);
     }
 
-    isolated resource function get fhir/r4/ClaimRepo/Claim() returns davincipas:PASClaim[]|error? {
-        return getAllPASClaims();
+    isolated resource function post fhir/r4/ClaimRepo/Claim/Search(map<string[]>? searchParameters) returns r4:FHIRError|http:Response|r4:Bundle {
+        r4:FHIRError|r4:Bundle result = check searchPASClaim(searchParameters);
+        if (result is r4:FHIRError) {
+            http:Response response = new;
+            response.setJsonPayload(result.message());
+            response.statusCode = http:STATUS_INTERNAL_SERVER_ERROR;
+            return response;
+        } else {
+            return result;
+        }
     }
 
     isolated resource function delete fhir/r4/ClaimRepo/Claim/[string id]() returns error? {
@@ -80,8 +88,8 @@ service / on new http:Listener(9089) {
         return getPASClaimResponseByID(id);
     }
 
-    isolated resource function get fhir/r4/ClaimRepo/ClaimResponse() returns davincipas:PASClaimResponse[]|error? {
-        return getAllPASClaimResponses();
+    isolated resource function post fhir/r4/ClaimRepo/ClaimResponse/Search(map<string[]>? searchParameters) returns r4:FHIRError|r4:Bundle {
+        return searchPASClaimResponse(searchParameters);
     }
 
     isolated resource function delete fhir/r4/ClaimRepo/ClaimResponse/[string id]() returns error? {

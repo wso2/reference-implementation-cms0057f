@@ -28,7 +28,7 @@ public isolated function submit(international401:Parameters payload) returns r4:
                             anydata 'resource = bundleEntry?.'resource;
                             davincipas:PASClaim claim = check parser:parse('resource.toJson(), davincipas:PASClaim).ensureType();
 
-                            davincipas:PASClaim newClaimClone;
+                            davincipas:PASClaimResponse claimResponse;
 
                             lock {
                                 http:Response|error response = claimRepositoryServiceClient->/Claim.post(claim.clone());
@@ -40,12 +40,9 @@ public isolated function submit(international401:Parameters payload) returns r4:
                                             return r4:createFHIRError("Error: " + claimResponseJson.message(), r4:ERROR, r4:INVALID, httpStatusCode = response.statusCode);
                                         }
 
-                                        davincipas:PASClaim|error newClaim = parser:parse(claimResponseJson, davincipas:PASClaim).ensureType();
-                                        if newClaim is error {
-                                            return r4:createFHIRError("Error: " + newClaim.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
-                                        }
+                                        davincipas:PASClaimResponse newClaimResponse = check parser:parse(claimResponseJson, davincipas:PASClaimResponse).ensureType();
 
-                                        newClaimClone = newClaim.clone();
+                                        claimResponse = newClaimResponse.clone();
                                     } else {
                                         return r4:createFHIRError("Error occurred while creating the claim", r4:ERROR, r4:INVALID, httpStatusCode = response.statusCode);
                                     }
@@ -53,15 +50,6 @@ public isolated function submit(international401:Parameters payload) returns r4:
                                     return r4:createFHIRError("Error: " + response.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_INTERNAL_SERVER_ERROR);
                                 }
                             }
-
-                            davincipas:PASClaimResponse claimResponse;
-                            lock {
-                                claimResponse = check parser:parse(claimResponseJson.clone(), davincipas:PASClaimResponse).ensureType();
-                            }
-                            claimResponse.patient = newClaimClone.patient;
-                            claimResponse.insurer = newClaimClone.insurer;
-                            claimResponse.created = newClaimClone.created;
-                            claimResponse.request = {reference: "Claim/" + <string>newClaimClone.id};
 
                             lock {
                                 http:Response|error response = claimRepositoryServiceClient->/ClaimResponse.post(claimResponse.clone());

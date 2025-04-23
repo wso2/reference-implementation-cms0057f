@@ -128,7 +128,7 @@ const RequestCard: React.FC<RequestCardProps> = ({ request, response }) => {
             </div>
           )}
 
-          {response && response.data && (
+          {(response.status !== 404) && response && response.data && (
             <>
               <div className="flex justify-between pt-4">
                 <h4 className="font-semibold">Response</h4>

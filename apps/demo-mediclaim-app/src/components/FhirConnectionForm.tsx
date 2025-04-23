@@ -47,7 +47,7 @@ interface SmartConfiguration {
 const FhirConnectionForm: React.FC = () => {
   const { toast } = useToast();
   const [formData, setFormData] = useState<FormData>({
-    baseUrl: "https://openhealthcare.testdmain.online/fhir/r4",
+    baseUrl: "https://openhealthcare.testdmain.online",
     consumerKey: "tB8I1tBZFYi5UxKfR_fc9kZmUqIa",
     consumerSecret: "",
     redirectUri: `${window.location.origin}/api-view`,
@@ -98,7 +98,7 @@ const FhirConnectionForm: React.FC = () => {
 
     setTimeout(() => {
       // Fetch SMART configuration from well-known endpoint
-      const smartConfigUrl = `${baseUrl}/.well-known/smart-configuration`;
+      const smartConfigUrl = `${baseUrl}/fhir/r4/.well-known/smart-configuration`;
       console.log(`Fetching SMART configuration from: ${smartConfigUrl}`);
       fetch(smartConfigUrl)
         .then((response) => {
@@ -134,7 +134,7 @@ const FhirConnectionForm: React.FC = () => {
           )}&redirect_uri=${encodeURIComponent(
             formData.redirectUri
           )}&scope=openid%20fhirUser%20launch/patient&state=
-            ${uuid.v4()}&aud=${encodeURIComponent(baseUrl)}`;
+            ${uuid.v4()}&aud=${encodeURIComponent(baseUrl + "/fhir/r4")}`;
 
           console.log("Redirecting to authorization URL:", authorizationUrl);
           window.location.href = authorizationUrl;

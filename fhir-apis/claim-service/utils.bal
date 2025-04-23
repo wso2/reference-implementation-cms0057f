@@ -17,5 +17,3 @@ isolated function getQueryParamsMap(map<r4:RequestSearchParameter[] & readonly> 
     }
     return queryParameters;
 }
-
-configurable string claimRepositoryServiceUrl = ?;

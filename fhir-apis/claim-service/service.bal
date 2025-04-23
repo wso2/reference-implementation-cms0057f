@@ -25,6 +25,9 @@ import ballerinax/health.fhir.r4.davincipas;
 # public type Claim r4:Claim|<other_Claim_Profile>;
 public type Claim davincipas:PASClaim;
 
+# To access the claim repository service, the client needs to be initialized with the endpoint URL.
+configurable string claimRepositoryServiceUrl = ?;
+
 # initialize source system endpoint here
 
 # A service representing a network-accessible API

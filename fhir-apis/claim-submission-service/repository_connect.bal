@@ -4,8 +4,6 @@ import ballerinax/health.fhir.r4.davincipas;
 import ballerinax/health.fhir.r4.international401;
 import ballerinax/health.fhir.r4.parser;
 
-configurable string claimRepositoryServiceUrl = ?;
-
 isolated http:Client claimRepositoryServiceClient = check new (claimRepositoryServiceUrl);
 
 public isolated function submit(international401:Parameters payload) returns r4:FHIRError|international401:Parameters|error {

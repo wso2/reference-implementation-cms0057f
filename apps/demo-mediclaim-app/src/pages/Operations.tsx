@@ -96,7 +96,7 @@ const Operations: React.FC = () => {
   const [authToken, setAuthToken] = useState<AuthToken | null>(null);
 
   const [searchParams] = useSearchParams();
-  const [viewMode, setViewMode] = useState<"json" | "table">("json");
+  const [viewMode, setViewMode] = useState<"json" | "table">("table");
 
   // New state for patient details
   const [patientDetails, setPatientDetails] = useState({

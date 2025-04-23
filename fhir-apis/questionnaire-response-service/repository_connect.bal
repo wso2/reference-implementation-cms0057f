@@ -141,66 +141,69 @@ isolated function orderByAuthoredDate(QuestionnaireResponse[] targetArr) returns
 
 isolated function getByAutheredDate(string authored, QuestionnaireResponse[] targetArr) returns QuestionnaireResponse[]|r4:FHIRError {
     string operator = authored.substring(0, 2);
-    string dateString = authored.substring(2);
+    r4:dateTime datetimeR4 = authored.substring(2);
 
-    time:Utc|time:Error dateTime = time:utcFromString(dateString);
-    if dateTime is time:Error {
-        return r4:createFHIRError(string `Invalid date format: ${dateString}`, r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+    // convert r4:dateTime to time:Utc
+    time:Utc|time:Error dateTimeUtc = time:utcFromString(datetimeR4.includes("T") ? datetimeR4 : datetimeR4 + "T00:00:00.000Z");
+    if dateTimeUtc is time:Error {
+        return r4:createFHIRError(string `Invalid date format: ${datetimeR4}`, r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
     }
 
-    time:Utc lowerBound = time:utcAddSeconds(dateTime, 86400);
-    time:Utc upperBound = time:utcAddSeconds(dateTime, -86400);
+    time:Utc lowerBound = time:utcAddSeconds(dateTimeUtc, 86400);
+    time:Utc upperBound = time:utcAddSeconds(dateTimeUtc, -86400);
 
     QuestionnaireResponse[] filteredResponses = [];
     foreach QuestionnaireResponse response in targetArr {
-        time:Utc|time:Error responseDateTime = time:utcFromString(response.authored);
-        if responseDateTime is time:Error {
+        // convert r4:dateTime to time:Utc to compare with the given date
+        r4:dateTime responseDateTimeR4 = response.authored;
+        time:Utc|time:Error responseDateTimeUtc = time:utcFromString(responseDateTimeR4.includes("T") ? responseDateTimeR4 : responseDateTimeR4 + "T00:00:00.000Z");
+        if responseDateTimeUtc is time:Error {
             continue; // Skip invalid date formats
         }
         match operator {
             "eq" => {
-                if responseDateTime == dateTime {
+                if responseDateTimeUtc == dateTimeUtc {
                     filteredResponses.push(response.clone());
                 }
             }
             "ne" => {
-                if responseDateTime != dateTime {
+                if responseDateTimeUtc != dateTimeUtc {
                     filteredResponses.push(response.clone());
                 }
             }
             "lt" => {
-                if responseDateTime < dateTime {
+                if responseDateTimeUtc < dateTimeUtc {
                     filteredResponses.push(response.clone());
                 }
             }
             "gt" => {
-                if responseDateTime > dateTime {
+                if responseDateTimeUtc > dateTimeUtc {
                     filteredResponses.push(response.clone());
                 }
             }
             "ge" => {
-                if responseDateTime >= dateTime {
+                if responseDateTimeUtc >= dateTimeUtc {
                     filteredResponses.push(response.clone());
                 }
             }
             "le" => {
-                if responseDateTime <= dateTime {
+                if responseDateTimeUtc <= dateTimeUtc {
                     filteredResponses.push(response.clone());
                 }
             }
             "sa" => {
-                if responseDateTime > dateTime {
+                if responseDateTimeUtc > dateTimeUtc {
                     filteredResponses.push(response.clone());
                 }
             }
             "eb" => {
-                if responseDateTime < dateTime {
+                if responseDateTimeUtc < dateTimeUtc {
                     filteredResponses.push(response.clone());
                 }
             }
             "ap" => {
                 // Approximation: Check if the response date is within 1 day of the given date
-                if responseDateTime >= lowerBound && responseDateTime <= upperBound {
+                if responseDateTimeUtc >= lowerBound && responseDateTimeUtc <= upperBound {
                     filteredResponses.push(response.clone());
                 }
             }
@@ -242,7 +245,7 @@ function init() returns error? {
             "id": "1121",
             "questionnaire": "Questionnaire/12",
             "status": "completed",
-            "authored": "2023-08-14T20:40:49.675Z",
+            "authored": "2023-08-14",
             "subject": {
                 "reference": "Patient/123"
             },

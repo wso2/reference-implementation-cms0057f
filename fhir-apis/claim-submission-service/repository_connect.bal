@@ -33,13 +33,7 @@ public isolated function submit(international401:Parameters payload) returns r4:
 
                                 if response is http:Response {
                                     if response.statusCode == http:STATUS_CREATED {
-                                        json|http:Error claimResponseJson = response.getJsonPayload();
-                                        if claimResponseJson is http:Error {
-                                            return r4:createFHIRError("Error: " + claimResponseJson.message(), r4:ERROR, r4:INVALID, httpStatusCode = response.statusCode);
-                                        }
-
-                                        davincipas:PASClaimResponse newClaimResponse = check parser:parse(claimResponseJson, davincipas:PASClaimResponse).ensureType();
-
+                                        davincipas:PASClaimResponse newClaimResponse = check parser:parse(check response.getJsonPayload(), davincipas:PASClaimResponse).ensureType();
                                         claimResponse = newClaimResponse.clone();
                                     } else {
                                         return r4:createFHIRError("Error occurred while creating the claim", r4:ERROR, r4:INVALID, httpStatusCode = response.statusCode);
@@ -54,19 +48,11 @@ public isolated function submit(international401:Parameters payload) returns r4:
 
                                 if response is http:Response {
                                     if (response.statusCode == http:STATUS_CREATED) {
-                                        json|http:Error claimResponseJson = response.getJsonPayload();
-                                        if claimResponseJson is http:Error {
-                                            return r4:createFHIRError("Error: " + claimResponseJson.message(), r4:ERROR, r4:INVALID, httpStatusCode = response.statusCode);
-                                        }
-
-                                        davincipas:PASClaimResponse|error newClaimResponse = parser:parse(claimResponseJson, davincipas:PASClaimResponse).ensureType();
-                                        if newClaimResponse is error {
-                                            return r4:createFHIRError("Error: " + newClaimResponse.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
-                                        }
+                                        davincipas:PASClaimResponse newClaimResponse = check parser:parse(check response.getJsonPayload(), davincipas:PASClaimResponse).ensureType();
 
                                         international401:ParametersParameter p = {
                                             name: "return",
-                                            'resource: newClaimResponse.clone()
+                                            'resource: newClaimResponse
                                         };
 
                                         international401:Parameters parameterResponse = {

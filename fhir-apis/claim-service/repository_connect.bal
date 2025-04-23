@@ -7,57 +7,36 @@ import ballerinax/health.fhir.r4.parser;
 // http client for claim repository service
 isolated http:Client claimRepositoryServiceClient = check new (claimRepositoryServiceUrl);
 
-public isolated function create(davincipas:PASClaim payload) returns r4:FHIRError|davincipas:PASClaimResponse|error {
-    davincipas:PASClaim|error claim = parser:parse(payload.toJson(), davincipas:PASClaim).ensureType();
-    if claim is error {
-        return r4:createFHIRError(claim.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
-    }
+public isolated function create(davincipas:PASClaim payload) returns r4:FHIRError|http:Error|davincipas:PASClaimResponse|error {
+    davincipas:PASClaim claim = check parser:parse(payload.toJson(), davincipas:PASClaim).ensureType();
 
     lock {
         http:Response|error response = claimRepositoryServiceClient->/Claim.post(claim.clone());
 
         if response is http:Response {
             if response.statusCode == http:STATUS_CREATED {
-                json|http:Error claimResponseJson = response.getJsonPayload();
-                if claimResponseJson is http:Error {
-                    return r4:createFHIRError("Error: " + claimResponseJson.message(), r4:ERROR, r4:INVALID, httpStatusCode = response.statusCode);
-                }  
-                
-                davincipas:PASClaimResponse|error claimResponse = parser:parse(claimResponseJson, davincipas:PASClaimResponse).ensureType();
-                if claimResponse is error {
-                    return r4:createFHIRError("Error: " + claimResponse.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
-                }
-
+                davincipas:PASClaimResponse claimResponse = check parser:parse(check response.getJsonPayload(), davincipas:PASClaimResponse).ensureType();
                 return claimResponse.clone();
-            } else {
-                return r4:createFHIRError("Error occurred while creating the claim", r4:ERROR, r4:INVALID, httpStatusCode = response.statusCode);
-            }
+            } 
+            
+            return r4:createFHIRError("Error occurred while creating the claim", r4:ERROR, r4:INVALID, httpStatusCode = response.statusCode);
         } else {
             return r4:createFHIRError("Error: " + response.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_INTERNAL_SERVER_ERROR);
         }
     }
 }
 
-public isolated function getById(string id) returns r4:FHIRError|davincipas:PASClaim {
+public isolated function getById(string id) returns r4:FHIRError|http:Error|davincipas:PASClaim|error {
     lock {
         http:Response|error response = claimRepositoryServiceClient->/Claim/[id];
 
         if response is http:Response {
             if response.statusCode == http:STATUS_OK {
-                json|http:Error claimJson = response.getJsonPayload();
-                if claimJson is http:Error {
-                    return r4:createFHIRError("Error occurred while retrieving the claim", r4:ERROR, r4:INVALID, httpStatusCode = response.statusCode);
-                }
-
-                davincipas:PASClaim|error claim = parser:parse(claimJson, davincipas:PASClaim).ensureType();
-                if claim is error {
-                    return r4:createFHIRError(claim.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
-                }
-
+                davincipas:PASClaim claim = check parser:parse(check response.getJsonPayload(), davincipas:PASClaim).ensureType();
                 return claim.clone();
             } 
             
-            return r4:createFHIRError(string `Cannot find a Patient resource with id: ${id}`, r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_NOT_FOUND);
+            return r4:createFHIRError(string `Not found resource with id: ${id}`, r4:ERROR, r4:INVALID, httpStatusCode = response.statusCode);
         } else {
             return r4:createFHIRError("Error: " + response.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_INTERNAL_SERVER_ERROR);
         }
@@ -78,7 +57,7 @@ public isolated function delete(string 'resource, string id) returns r4:FHIRErro
 
 }
 
-public isolated function search(map<string[]>? searchParameters = ()) returns r4:FHIRError|r4:Bundle {
+public isolated function search(map<string[]>? searchParameters = ()) returns r4:Bundle|r4:FHIRError|http:Error|error {
     r4:Bundle bundle = {
         'type: "collection",
         entry: []
@@ -90,18 +69,13 @@ public isolated function search(map<string[]>? searchParameters = ()) returns r4
 
             if response is http:Response {
                 if response.statusCode == http:STATUS_OK || response.statusCode == http:STATUS_CREATED {
-                    json|http:Error bunddleJson = response.getJsonPayload();
-                    if bunddleJson is http:Error {
-                        return r4:createFHIRError("Error occurred while retrieving the claims", r4:ERROR, r4:INVALID, httpStatusCode = response.statusCode);
-                    }
-
-                    r4:Bundle|error bundleResponse = parser:parse(bunddleJson).ensureType();
-                    if (bundleResponse is error) {
-                        return r4:createFHIRError("Parsing Error: " + bundleResponse.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
-                    }
-
+                    r4:Bundle bundleResponse = check parser:parse(check response.getJsonPayload()).ensureType();
                     bundle = bundleResponse.clone();
-                } 
+                } else {
+                    return r4:createFHIRError("Error occurred while retrieving the claims", r4:ERROR, r4:INVALID, httpStatusCode = response.statusCode);
+                }
+            } else {
+                return r4:createFHIRError("Error: " + response.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_INTERNAL_SERVER_ERROR);
             }
         }
     }

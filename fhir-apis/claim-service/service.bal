@@ -35,8 +35,11 @@ configurable string claimRepositoryServiceUrl = ?;
 service / on new fhirr4:Listener(9090, apiConfig) {
 
     // Read the current state of single resource based on its id.
-    isolated resource function get fhir/r4/Claim/[string id](r4:FHIRContext fhirContext) returns Claim|r4:OperationOutcome|r4:FHIRError {
-        return getById(id);
+    isolated resource function get fhir/r4/Claim/[string id](r4:FHIRContext fhirContext) returns error|http:Response {
+        davincipas:PASClaim claim = check getById(id);
+        http:Response response = new;
+        response.setJsonPayload(claim.toJson());
+        return response;
     }
 
     // Read the state of a specific version of a resource based on its id.
@@ -45,9 +48,13 @@ service / on new fhirr4:Listener(9090, apiConfig) {
     }
 
     // Search for resources based on a set of criteria.
-    isolated resource function get fhir/r4/Claim(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+    isolated resource function get fhir/r4/Claim(r4:FHIRContext fhirContext) returns error|http:Response {
         map<string[]> queryParamsMap = getQueryParamsMap(fhirContext.getRequestSearchParameters());
-        return search(queryParamsMap);
+        r4:Bundle bundle = check search(queryParamsMap);
+
+        http:Response response = new;
+        response.setJsonPayload(bundle.toJson());
+        return response;
     }
 
     // Create a new resource.

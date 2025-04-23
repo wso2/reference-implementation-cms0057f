@@ -35,8 +35,12 @@ configurable string claimRepositoryServiceUrl = ?;
 service / on new fhirr4:Listener(9090, apiConfig) {
 
     // Read the current state of single resource based on its id.
-    isolated resource function get fhir/r4/ClaimResponse/[string id](r4:FHIRContext fhirContext) returns ClaimResponse|r4:OperationOutcome|r4:FHIRError {
-        return getById(id);
+    isolated resource function get fhir/r4/ClaimResponse/[string id](r4:FHIRContext fhirContext) returns http:Response|r4:OperationOutcome|r4:FHIRError|error {
+        ClaimResponse claimResponse = check getById(id);
+        http:Response response = new;
+        response.setJsonPayload(claimResponse.toJson());
+        response.statusCode = http:STATUS_OK;
+        return response;
     }
 
     // Read the state of a specific version of a resource based on its id.
@@ -45,14 +49,23 @@ service / on new fhirr4:Listener(9090, apiConfig) {
     }
 
     // Search for resources based on a set of criteria.
-    isolated resource function get fhir/r4/ClaimResponse(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+    isolated resource function get fhir/r4/ClaimResponse(r4:FHIRContext fhirContext) returns http:Response|r4:OperationOutcome|r4:FHIRError|error {
         map<string[]> queryParamsMap = getQueryParamsMap(fhirContext.getRequestSearchParameters());
-        return search(queryParamsMap);
+
+        http:Response response = new;
+        r4:Bundle bundle = check search(queryParamsMap);
+        response.setJsonPayload(bundle.toJson());
+        response.statusCode = http:STATUS_OK;
+        return response;
     }
 
     // Create a new resource.
-    isolated resource function post fhir/r4/ClaimResponse(r4:FHIRContext fhirContext, ClaimResponse procedure) returns ClaimResponse|r4:OperationOutcome|r4:FHIRError {
-        return create(procedure);
+    isolated resource function post fhir/r4/ClaimResponse(r4:FHIRContext fhirContext, ClaimResponse procedure) returns error|http:Response {
+        http:Response response = new;
+        ClaimResponse result = check create(procedure);
+        response.setJsonPayload(result.toJson());
+        response.statusCode = http:STATUS_CREATED;
+        return response;
     }
 
     // Update the current state of a resource completely.

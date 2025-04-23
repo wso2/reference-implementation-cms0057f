@@ -228,10 +228,11 @@ const Operations: React.FC = () => {
       if (operation) {
         const initialParams: Record<string, string> = {};
         operation.params.forEach((param) => {
-          if (param.default) {
+          if (param.label === "Patient ID") {
             initialParams[param.name] = patient;
-          } else {
-            initialParams[param.name] = "";
+          }
+          if (param.defaultValue) {
+            initialParams[param.name] = param.defaultValue;
           }
         });
         setParamValues(initialParams);
@@ -335,7 +336,18 @@ const Operations: React.FC = () => {
       });
 
       const data = await response.json();
+      console.log("Response data:", data);
       setResponseData(data);
+      if (response.status === 401) {
+        toast({
+          title: "Session Expired",
+          description: "Please loggin in again.",
+          variant: "destructive",
+        });
+        sessionStorage.clear();
+        navigate("/");
+        return;
+      }
     } catch (error) {
       console.error("Error fetching data:", error);
       toast({
@@ -343,8 +355,8 @@ const Operations: React.FC = () => {
         description: "Could not retrieve data from the FHIR server.",
         variant: "destructive",
       });
-      sessionStorage.clear();
-      navigate("/");
+      // sessionStorage.clear();
+      // navigate("/");
     } finally {
       setIsLoading(false);
     }
@@ -388,6 +400,8 @@ const Operations: React.FC = () => {
         return renderExplanationOfBenefitTable();
       case "Coverage":
         return renderCoverageTable();
+      case "ClaimResponse":
+        return renderClaimResponseTable();
       default:
         return (
           <div className="text-center py-6 text-muted-foreground">
@@ -428,9 +442,9 @@ const Operations: React.FC = () => {
                 <TableCell>{name?.given?.join(" ") || "N/A"}</TableCell>
                 <TableCell>
                   {address
-                    ? `${address.line ? address.line.join(", ") : ""} 
-                     ${address.city || ""} 
-                     ${address.state || ""} 
+                    ? `${address.line ? address.line.join(", ") : ""}
+                     ${address.city || ""}
+                     ${address.state || ""}
                      ${address.postalCode || ""}`.trim()
                     : "N/A"}
                 </TableCell>
@@ -542,6 +556,46 @@ const Operations: React.FC = () => {
                 <TableCell>{effectivePeriod}</TableCell>
                 <TableCell>{payor}</TableCell>
                 <TableCell>{classDisplay}</TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
+    );
+  };
+
+  // Function to render ExplanationOfBenefit table
+  const renderClaimResponseTable = () => {
+    return (
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>ID</TableHead>
+            <TableHead>Created Date</TableHead>
+            <TableHead>Use</TableHead>
+            <TableHead>Insurer</TableHead>
+            <TableHead>Payment</TableHead>
+            <TableHead>Outcome</TableHead>
+            <TableHead>Disposition</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {responseData.entry.map((entry: any, index: number) => {
+            const eob = entry.resource;
+            const payment =
+              eob?.payment?.amount?.value +
+                " " +
+                eob?.payment?.amount?.currency || "N/A";
+
+            return (
+              <TableRow key={`eob-${index}`}>
+                <TableCell>{eob?.id || "N/A"}</TableCell>
+                <TableCell>{eob?.created || "N/A"}</TableCell>
+                <TableCell>{eob?.use || "N/A"}</TableCell>
+                <TableCell>{eob?.insurer?.reference || "N/A"}</TableCell>
+                <TableCell>{payment}</TableCell>
+                <TableCell>{eob?.outcome || "N/A"}</TableCell>
+                <TableCell>{eob?.disposition || "N/A"}</TableCell>
               </TableRow>
             );
           })}

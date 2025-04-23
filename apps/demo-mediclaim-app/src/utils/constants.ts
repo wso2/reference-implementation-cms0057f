@@ -2,7 +2,7 @@ export const fhirOperationConfigs = [
   {
     id: "patient-search",
     name: "Patient Search",
-    endpoint: "/Patient",
+    endpoint: "/fhir/r4/Patient",
     showSearchButton: true,
     params: [
       {
@@ -11,7 +11,6 @@ export const fhirOperationConfigs = [
         type: "text",
         required: false,
         disabled: true,
-        default: "2",
       },
       { name: "given", label: "Given Name", type: "text", required: false },
       { name: "family", label: "Family Name", type: "text", required: false },
@@ -32,7 +31,7 @@ export const fhirOperationConfigs = [
   {
     id: "explanation-of-benefits",
     name: "Explanation of Benefits",
-    endpoint: "/ExplanationOfBenefit",
+    endpoint: "/fhir/r4/ExplanationOfBenefit",
     showSearchButton: true,
     params: [
       {
@@ -41,7 +40,6 @@ export const fhirOperationConfigs = [
         type: "text",
         required: false,
         disabled: true,
-        default: "2",
       },
       {
         name: "_id",
@@ -68,7 +66,7 @@ export const fhirOperationConfigs = [
   {
     id: "coverage",
     name: "Coverage",
-    endpoint: "/Coverage",
+    endpoint: "/fhir/r4/Coverage",
     showSearchButton: true,
     params: [
       {
@@ -77,9 +75,27 @@ export const fhirOperationConfigs = [
         type: "text",
         required: false,
         disabled: true,
-        default: "2",
       },
       { name: "_id", label: "Coverage ID", type: "text", required: false },
+    ],
+  },
+  {
+    id: "claim-response",
+    name: "Prior Authorization Data",
+    endpoint: "/claimresponse/fhir/r4/ClaimResponse",
+    displayEndpoint: "/fhir/r4/ClaimResponse",
+    showSearchButton: true,
+    params: [
+      {
+        name: "patient",
+        label: "Patient ID (Coming Soon)",
+        type: "text",
+        required: false,
+        disabled: false,
+      },
+      { name: "_id", label: "Coverage ID", type: "text", required: false, defaultValue: "12344", },
+      { name: "created ", label: "Created (Coming Soon)", type: "date", required: false },
+      { name: "use", label: "Use (Coming Soon)", type: "text", required: false},
     ],
   },
 ];

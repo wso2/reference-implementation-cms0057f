@@ -442,9 +442,9 @@ const Operations: React.FC = () => {
                 <TableCell>{name?.given?.join(" ") || "N/A"}</TableCell>
                 <TableCell>
                   {address
-                    ? `${address.line ? address.line.join(", ") : ""} 
-                     ${address.city || ""} 
-                     ${address.state || ""} 
+                    ? `${address.line ? address.line.join(", ") : ""}
+                     ${address.city || ""}
+                     ${address.state || ""}
                      ${address.postalCode || ""}`.trim()
                     : "N/A"}
                 </TableCell>

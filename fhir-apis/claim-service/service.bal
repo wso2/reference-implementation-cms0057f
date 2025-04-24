@@ -25,6 +25,9 @@ import ballerinax/health.fhir.r4.davincipas;
 # public type Claim r4:Claim|<other_Claim_Profile>;
 public type Claim davincipas:PASClaim;
 
+# To access the claim repository service, the client needs to be initialized with the endpoint URL.
+configurable string claimRepositoryServiceUrl = ?;
+
 # initialize source system endpoint here
 
 # A service representing a network-accessible API
@@ -32,8 +35,11 @@ public type Claim davincipas:PASClaim;
 service / on new fhirr4:Listener(9090, apiConfig) {
 
     // Read the current state of single resource based on its id.
-    isolated resource function get fhir/r4/Claim/[string id](r4:FHIRContext fhirContext) returns Claim|r4:OperationOutcome|r4:FHIRError {
-        return getById(id);
+    isolated resource function get fhir/r4/Claim/[string id](r4:FHIRContext fhirContext) returns error|http:Response {
+        davincipas:PASClaim claim = check getById(id);
+        http:Response response = new;
+        response.setJsonPayload(claim.toJson());
+        return response;
     }
 
     // Read the state of a specific version of a resource based on its id.
@@ -42,14 +48,18 @@ service / on new fhirr4:Listener(9090, apiConfig) {
     }
 
     // Search for resources based on a set of criteria.
-    isolated resource function get fhir/r4/Claim(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+    isolated resource function get fhir/r4/Claim(r4:FHIRContext fhirContext) returns error|http:Response {
         map<string[]> queryParamsMap = getQueryParamsMap(fhirContext.getRequestSearchParameters());
-        return search(queryParamsMap);
+        r4:Bundle bundle = check search(queryParamsMap);
+
+        http:Response response = new;
+        response.setJsonPayload(bundle.toJson());
+        return response;
     }
 
     // Create a new resource.
     isolated resource function post fhir/r4/Claim(r4:FHIRContext fhirContext, Claim procedure) returns error|http:Response {
-        davincipas:PASClaimResponse createResult = check create(procedure);
+        davincipas:PASClaim createResult = check create(procedure);
         http:Response response = new;
         response.setJsonPayload(createResult.toJson());
         return response;

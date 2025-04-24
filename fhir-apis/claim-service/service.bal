@@ -59,7 +59,7 @@ service / on new fhirr4:Listener(9090, apiConfig) {
 
     // Create a new resource.
     isolated resource function post fhir/r4/Claim(r4:FHIRContext fhirContext, Claim procedure) returns error|http:Response {
-        davincipas:PASClaimResponse createResult = check create(procedure);
+        davincipas:PASClaim createResult = check create(procedure);
         http:Response response = new;
         response.setJsonPayload(createResult.toJson());
         return response;

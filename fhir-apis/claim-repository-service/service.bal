@@ -27,7 +27,7 @@ service / on new http:Listener(9089) {
 
     // Claim repository service
     isolated resource function post fhir/r4/ClaimRepo/Claim(davincipas:PASClaim payload) returns error|http:Response {
-        r4:FHIRError|davincipas:PASClaimResponse|error result = check addNewPASClaim(payload);
+        r4:FHIRError|davincipas:PASClaim|error result = check addNewPASClaim(payload);
 
         http:Response response = new;
         if (result is r4:FHIRError) {

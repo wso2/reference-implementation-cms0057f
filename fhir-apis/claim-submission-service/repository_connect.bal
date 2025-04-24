@@ -26,15 +26,14 @@ public isolated function submit(international401:Parameters payload) returns r4:
                             anydata 'resource = bundleEntry?.'resource;
                             davincipas:PASClaim claim = check parser:parse('resource.toJson(), davincipas:PASClaim).ensureType();
 
-                            davincipas:PASClaimResponse claimResponse;
-
+                            davincipas:PASClaim newClaim;
                             lock {
                                 http:Response|error response = claimRepositoryServiceClient->/Claim.post(claim.clone());
 
                                 if response is http:Response {
                                     if response.statusCode == http:STATUS_CREATED {
-                                        davincipas:PASClaimResponse newClaimResponse = check parser:parse(check response.getJsonPayload(), davincipas:PASClaimResponse).ensureType();
-                                        claimResponse = newClaimResponse.clone();
+                                        davincipas:PASClaim newCreatedClaim = check parser:parse(check response.getJsonPayload(), davincipas:PASClaim).ensureType();
+                                        newClaim = newCreatedClaim.clone();
                                     } else {
                                         return r4:createFHIRError("Error occurred while creating the claim", r4:ERROR, r4:INVALID, httpStatusCode = response.statusCode);
                                     }
@@ -42,6 +41,16 @@ public isolated function submit(international401:Parameters payload) returns r4:
                                     return r4:createFHIRError("Error: " + response.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_INTERNAL_SERVER_ERROR);
                                 }
                             }
+
+                            davincipas:PASClaimResponse claimResponse;
+                            lock {
+	                            claimResponse = check parser:parse(claimResponseJson.clone(), davincipas:PASClaimResponse).ensureType();
+                            }
+
+                            claimResponse.patient = newClaim.patient;
+                            claimResponse.insurer = newClaim.insurer;
+                            claimResponse.created = newClaim.created;
+                            claimResponse.request = {reference: "Claim/" + <string>newClaim.id};
 
                             lock {
                                 http:Response|error response = claimRepositoryServiceClient->/ClaimResponse.post(claimResponse.clone());
@@ -60,11 +69,22 @@ public isolated function submit(international401:Parameters payload) returns r4:
                                         };
                                         return parameterResponse.clone();
                                     }
-                                    return r4:createFHIRError("Error: Invalid request or server error.", r4:ERROR, r4:INVALID, httpStatusCode = response.statusCode);
-                                } else {
-                                    return r4:createFHIRError("Error: " + response.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_INTERNAL_SERVER_ERROR);
                                 }
                             }
+
+                            // claim submission failed
+                            // rollback the claim creation
+                            lock {
+                                http:Response|error response = claimRepositoryServiceClient->/Claim/[<string>newClaim.id].delete();
+                                if response is http:Response {
+                                    if response.statusCode == http:STATUS_OK {
+                                        // Successfully deleted the claim
+                                        return r4:createFHIRError("Claim submission failed. Claim has been deleted.", r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+                                    }
+                                } 
+                            }
+
+                            return r4:createFHIRError("Claim submission failed. Unable to delete the claim. Claim ID: " + <string>newClaim.id, r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
                         }
                     }
                 }

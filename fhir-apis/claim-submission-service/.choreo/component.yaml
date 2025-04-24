@@ -12,5 +12,5 @@ endpoints:
     schemaFilePath: oas/Parameters.yaml
 dependencies:
     connectionReferences:
-      - name: claim_submission_service_repository_connection
-        resourceRef: service:/cms-0057-f/claim-repository-service/v1/176f4/PUBLIC
+    - name: claim_submission_service_repository_connection
+      resourceRef: service:/cms-0057-f/claim-repository-service/v1/176f4/PUBLIC

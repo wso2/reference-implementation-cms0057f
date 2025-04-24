@@ -106,6 +106,10 @@ function init() returns error? {
                 {
                     "system": "http://hospital.org/patients",
                     "value": "12345"
+                },
+                {
+                    "system": "http://hospital.org/member-id",
+                    "value": "588675dc-e80e-4528-a78f-af10f9755f23"
                 }
             ],
             "name": [
@@ -151,6 +155,10 @@ function init() returns error? {
                 {
                     "system": "http://hospital.org/patients",
                     "value": "54321"
+                },
+                {
+                    "system": "http://hospital.org/member-id",
+                    "value": "644d85af-aaf9-4068-ad23-1e55aedd5205"
                 }
             ],
             "name": [

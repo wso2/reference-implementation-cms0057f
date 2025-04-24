@@ -4,14 +4,19 @@ import ballerinax/health.fhir.r4;
 import ballerinax/health.fhir.r4.davincipas;
 import ballerinax/health.fhir.r4.parser;
 
-// http client for claim repository service
-isolated http:Client claimRepositoryServiceClient = check new (claimRepositoryServiceUrl);
+isolated http:Client claimRepositoryServiceClient = check new (serviceURL,
+  auth = (tokenURL == "" || consumerKey == "" || consumerSecret == "") ? () : {
+    tokenUrl: tokenURL,
+    clientId: consumerKey,
+    clientSecret: consumerSecret
+  }
+);
 
 public isolated function create(davincipas:PASClaim payload) returns r4:FHIRError|http:Error|davincipas:PASClaim|error {
     davincipas:PASClaim claim = check parser:parse(payload.toJson(), davincipas:PASClaim).ensureType();
 
     lock {
-        http:Response|error response = claimRepositoryServiceClient->/Claim.post(claim.clone());
+        http:Response|error response = claimRepositoryServiceClient->post("/Claim", claim.clone(), {"Choreo-API-Key": choreoApiKey});
 
         if response is http:Response {
             if response.statusCode == http:STATUS_CREATED {
@@ -28,7 +33,7 @@ public isolated function create(davincipas:PASClaim payload) returns r4:FHIRErro
 
 public isolated function getById(string id) returns r4:FHIRError|http:Error|davincipas:PASClaim|error {
     lock {
-        http:Response|error response = claimRepositoryServiceClient->/Claim/[id];
+        http:Response|error response = claimRepositoryServiceClient->get("/Claim/" + id, {"Choreo-API-Key": choreoApiKey});
 
         if response is http:Response {
             if response.statusCode == http:STATUS_OK {
@@ -65,7 +70,7 @@ public isolated function search(map<string[]>? searchParameters = ()) returns r4
     
     if searchParameters is map<string[]> {
         lock {
-            http:Response|error response = claimRepositoryServiceClient->/Claim/Search.post(searchParameters.clone());
+            http:Response|error response = claimRepositoryServiceClient->post("/Claim/Search", searchParameters.clone(), {"Choreo-API-Key": choreoApiKey});
 
             if response is http:Response {
                 if response.statusCode == http:STATUS_OK || response.statusCode == http:STATUS_CREATED {

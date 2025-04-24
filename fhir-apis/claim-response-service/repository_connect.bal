@@ -4,14 +4,19 @@ import ballerinax/health.fhir.r4;
 import ballerinax/health.fhir.r4.davincipas;
 import ballerinax/health.fhir.r4.parser;
 
-// http client for claim repository service
-isolated http:Client claimRepositoryServiceClient = check new (claimRepositoryServiceUrl);
+isolated http:Client claimRepositoryServiceClient = check new (serviceURL,
+  auth = (tokenURL == "" || consumerKey == "" || consumerSecret == "") ? () : {
+    tokenUrl: tokenURL,
+    clientId: consumerKey,
+    clientSecret: consumerSecret
+  }
+);
 
 public isolated function create(davincipas:PASClaimResponse payload) returns r4:FHIRError|davincipas:PASClaimResponse|error {
     davincipas:PASClaimResponse claimResponse = check parser:parse(payload.toJson(), davincipas:PASClaimResponse).ensureType();
 
     lock {
-        http:Response|error response = claimRepositoryServiceClient->/ClaimResponse.post(claimResponse.clone());
+        http:Response|error response = claimRepositoryServiceClient->post("/ClaimResponse", claimResponse.clone(), {"Choreo-API-Key": choreoApiKey});
 
         if response is http:Response {
             if (response.statusCode == http:STATUS_CREATED) {
@@ -28,7 +33,7 @@ public isolated function create(davincipas:PASClaimResponse payload) returns r4:
 
 public isolated function getById(string id) returns r4:FHIRError|davincipas:PASClaimResponse|error {
     lock {
-        http:Response|error response = claimRepositoryServiceClient->/ClaimResponse/[id];
+        http:Response|error response = claimRepositoryServiceClient->get("/ClaimResponse/" + id, {"Choreo-API-Key": choreoApiKey});
 
         if response is http:Response {
             if response.statusCode == http:STATUS_OK {
@@ -63,7 +68,7 @@ public isolated function search(map<string[]>? searchParameters = ()) returns r4
     
     if searchParameters is map<string[]> {
         lock {
-            http:Response|error response = claimRepositoryServiceClient->/ClaimResponse/Search.post(searchParameters.clone());
+            http:Response|error response = claimRepositoryServiceClient->post("/ClaimResponse/Search", searchParameters.clone(), {"Choreo-API-Key": choreoApiKey});
 
             if response is http:Response {
                 if response.statusCode == http:STATUS_OK || response.statusCode == http:STATUS_CREATED {

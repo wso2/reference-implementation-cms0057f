@@ -4,7 +4,13 @@ import ballerinax/health.fhir.r4.davincipas;
 import ballerinax/health.fhir.r4.international401;
 import ballerinax/health.fhir.r4.parser;
 
-isolated http:Client claimRepositoryServiceClient = check new (claimRepositoryServiceUrl);
+isolated http:Client claimRepositoryServiceClient = check new (serviceURL,
+  auth = (tokenURL == "" || consumerKey == "" || consumerSecret == "") ? () : {
+    tokenUrl: tokenURL,
+    clientId: consumerKey,
+    clientSecret: consumerSecret
+  }
+);
 
 public isolated function submit(international401:Parameters payload) returns r4:FHIRError|international401:Parameters|error {
     international401:Parameters|error 'parameters = parser:parseWithValidation(payload.toJson(), international401:Parameters).ensureType();
@@ -28,7 +34,7 @@ public isolated function submit(international401:Parameters payload) returns r4:
 
                             davincipas:PASClaim newClaim;
                             lock {
-                                http:Response|error response = claimRepositoryServiceClient->/Claim.post(claim.clone());
+                                http:Response|error response = claimRepositoryServiceClient->post("/Claim", claim.clone(), {"Choreo-API-Key": choreoApiKey});
 
                                 if response is http:Response {
                                     if response.statusCode == http:STATUS_CREATED {
@@ -53,7 +59,7 @@ public isolated function submit(international401:Parameters payload) returns r4:
                             claimResponse.request = {reference: "Claim/" + <string>newClaim.id};
 
                             lock {
-                                http:Response|error response = claimRepositoryServiceClient->/ClaimResponse.post(claimResponse.clone());
+                                http:Response|error response = claimRepositoryServiceClient->post("/ClaimResponse", claimResponse.clone(), {"Choreo-API-Key": choreoApiKey});
 
                                 if response is http:Response {
                                     if (response.statusCode == http:STATUS_CREATED) {
@@ -75,7 +81,7 @@ public isolated function submit(international401:Parameters payload) returns r4:
                             // claim submission failed
                             // rollback the claim creation
                             lock {
-                                http:Response|error response = claimRepositoryServiceClient->/Claim/[<string>newClaim.id].delete();
+                                http:Response|error response = claimRepositoryServiceClient->delete("/Claim/" + <string>newClaim.id, {"Choreo-API-Key": choreoApiKey});
                                 if response is http:Response {
                                     if response.statusCode == http:STATUS_OK {
                                         // Successfully deleted the claim

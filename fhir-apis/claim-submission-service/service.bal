@@ -25,8 +25,12 @@ import ballerinax/health.fhir.r4.international401;
 # public type Parameters r4:Parameters|<other_Parameters_Profile>;
 public type Parameters international401:Parameters;
 
-# To access the claim repository service, the client needs to be initialized with the endpoint URL.
-configurable string claimRepositoryServiceUrl = ?;
+# Configurations for the claim repository service.
+configurable string serviceURL = ?;
+configurable string consumerKey = ?;
+configurable string consumerSecret = ?;
+configurable string tokenURL = ?;
+configurable string choreoApiKey = ?;
 
 # initialize source system endpoint here
 

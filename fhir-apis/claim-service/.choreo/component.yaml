@@ -10,3 +10,7 @@ endpoints:
       - Project
       - Public
     schemaFilePath: oas/Claim.yaml
+dependencies:
+    connectionReferences:
+      - name: claim_service_repo_connection
+        resourceRef: service:/cms-0057-f/claim-repository-service/v1/176f4/PUBLIC

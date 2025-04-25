@@ -18,8 +18,6 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import {
   Button,
-  ToggleButtonGroup,
-  ToggleButton,
   Table,
   TableHead,
   TableRow,
@@ -28,6 +26,8 @@ import {
   TableBody,
   Paper,
 } from "@mui/material";
+import Form from "react-bootstrap/Form";
+import Select, { SingleValue } from "react-select";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import React from "react";
 import { useDispatch } from "react-redux";
@@ -42,6 +42,7 @@ import { HTTP_METHODS } from "../constants/enum";
 import { SELECTED_PATIENT_ID } from "../constants/localStorageVariables";
 import { resetCdsResponse } from "../redux/cdsResponseSlice";
 import { ThreeDots } from "react-loader-spinner";
+import PatientInfo from "../components/PatientInfo";
 
 export const PatientHistoryPage = () => {
   const [currentType, setType] = React.useState("");
@@ -57,6 +58,17 @@ export const PatientHistoryPage = () => {
 
   const Config = window.Config;
   const dispatch = useDispatch();
+
+  const OPTIONS = [
+    {
+      label: "Encounter History",
+      value: "Encounter",
+    },
+    {
+      label: "Diagnostic Reports",
+      value: "DiagnosticReport",
+    },
+  ];
 
   const simpleMappings: {
     [key: string]: { tableHeadings: string[]; tableData: string[] };
@@ -211,12 +223,13 @@ export const PatientHistoryPage = () => {
   };
 
   const handleTypeChange = (
-    event: React.MouseEvent<HTMLElement>,
-    newValue: string
+    selectedOption: SingleValue<{ value: string | null }>
   ) => {
     setLoadingMessage("Loading, please wait...");
-    setType(newValue);
-    fetchDataAndParse(newValue);
+    if (selectedOption && selectedOption.value) {
+      setType(selectedOption.value);
+      fetchDataAndParse(selectedOption.value);
+    }
   };
 
   function fetchDataAndParse(resource: string) {
@@ -284,7 +297,7 @@ export const PatientHistoryPage = () => {
 
   function MappedTable({ type }: { type: string }) {
     return (
-      <div style={{ marginTop: "20px", marginBottom: "20px" }}>
+      <div style={{ marginTop: "30px", marginBottom: "20px" }}>
         <TableContainer component={Paper}>
           <Table sx={{ minWidth: 650 }} size="small" aria-label="a dense table">
             <TableHead>
@@ -363,7 +376,7 @@ export const PatientHistoryPage = () => {
         }}
       >
         <div style={{ flex: 1 }}>
-          <ToggleButtonGroup
+          {/* <ToggleButtonGroup
             color="primary"
             value={currentType}
             exclusive
@@ -375,15 +388,28 @@ export const PatientHistoryPage = () => {
             <ToggleButton value="DiagnosticReport">
               Diagnostic Reports
             </ToggleButton>
-          </ToggleButtonGroup>
+          </ToggleButtonGroup> */}
+          <Form>
+            <Form.Group>
+              <Select
+                name="treatingSickness"
+                options={OPTIONS}
+                value={OPTIONS.find((option) => option.value === currentType)}
+                isSearchable
+                onChange={handleTypeChange}
+                required
+              />
+            </Form.Group>
+          </Form>
         </div>
       </div>
     );
   }
 
   return (
-    <div style={{ margin: "20px" }}>
-      <h4>Patient History</h4>
+    <div style={{ marginLeft: "50px" }}>
+      <h4>Patient History Records</h4>
+      <PatientInfo />
 
       {alertMessage && openSnackbar ? (
         <div
@@ -445,11 +471,13 @@ export const PatientHistoryPage = () => {
         </div>
       ) : isLoaded && isExportCompleted ? (
         <>
+          <div style={{ marginTop: 20 }}>Select record type</div>
           <TableTabs />
           <SimpleTable />
         </>
       ) : (
         <>
+          <div style={{ marginTop: 20 }}>Select record type</div>
           <TableTabs />
           <div
             style={{

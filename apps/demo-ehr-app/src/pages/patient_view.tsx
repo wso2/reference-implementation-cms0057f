@@ -25,14 +25,11 @@ import TableRow from "@mui/material/TableRow";
 import Paper from "@mui/material/Paper";
 import Form from "react-bootstrap/Form";
 import { useEffect, useState } from "react";
-import {
-  updateRequestMethod,
-  updateRequestUrl,
-  resetCdsRequest,
-} from "../redux/cdsRequestSlice";
-import { updateCdsResponse, resetCdsResponse } from "../redux/cdsResponseSlice";
+import { resetCdsResponse } from "../redux/cdsResponseSlice";
 import axios from "axios";
 import { HTTP_METHODS } from "../constants/enum";
+import { resetCurrentRequest, updateCurrentRequestMethod, updateCurrentRequestUrl, updateCurrentResponse } from "../redux/currentStateSlice";
+import { Patient } from "../components/interfaces/patient";
 
 function createData(
   date: string,
@@ -142,47 +139,6 @@ export function PatientViewPage() {
   const dispatch = useDispatch();
   const Config = window.Config;
 
-  interface Patient {
-    resourceType: string;
-    gender: string;
-    telecom: Telecom[];
-    id: string;
-    identifier: Identifier[];
-    address: Address[];
-    birthDate: string;
-    meta: Meta;
-    name: Name[];
-  }
-
-  interface Telecom {
-    system: string;
-    use?: string;
-    value: string;
-  }
-
-  interface Identifier {
-    system: string;
-    value: string;
-  }
-
-  interface Address {
-    country: string;
-    city: string;
-    line: string[];
-    postalCode: string;
-    state: string;
-  }
-
-  interface Meta {
-    profile: string[];
-  }
-
-  interface Name {
-    given: string[];
-    use: string;
-    family: string;
-  }
-
   const [fetchedPatient, setPatientDetails] = useState<Patient | null>(null);
 
   useEffect(() => {
@@ -191,16 +147,16 @@ export function PatientViewPage() {
     const fetchPatientDetails = async () => {
       try {
         console.log("Fetching patient details...");
-        dispatch(resetCdsRequest());
+        dispatch(resetCurrentRequest());
         dispatch(resetCdsResponse());
         const req_url = Config.patient + "/" + currentPatient.id;
-        dispatch(updateRequestMethod(HTTP_METHODS.GET));
-        dispatch(updateRequestUrl(Config.demoHospitalUrl + req_url));
+        dispatch(updateCurrentRequestMethod(HTTP_METHODS.GET));
+        dispatch(updateCurrentRequestUrl(Config.demoHospitalUrl + req_url));
 
         axios.get(req_url).then((response) => {
           console.log("Patient details:", response.data);
           dispatch(
-            updateCdsResponse({
+            updateCurrentResponse({
               cards: response.data,
               systemActions: {},
             })

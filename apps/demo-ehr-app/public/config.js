@@ -34,6 +34,11 @@ window.Config = {
     "/choreo-apis/cms-0057-f-provider/practitioner-service/v1/fhir/r4/Practitioner",
   patient:
     "/choreo-apis/cms-0057-f-provider/patient-service/v1/fhir/r4/Patient",
+  bulkExportFetch:
+    "/choreo-apis/cms-0057-f/bulk-export-client/file-service/v1.0/fetch",
+  bulkExportKickoffUrl:
+    "/choreo-apis/cms-0057-f/bulk-export-client/v1.0/export",
+  bulkExportStatusUrl: "/choreo-apis/cms-0057-f/bulk-export-client/v1.0/status",
 
   // old urls
   radiology_order:

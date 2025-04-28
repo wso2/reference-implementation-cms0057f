@@ -44,6 +44,7 @@ import LoginV2 from "./pages/login_v2.tsx";
 import { AuthProvider } from "./components/AuthProvider.tsx";
 import PatientEncounterV2 from "./pages/patient_encounter_v2.tsx";
 import { DoctorViewPage } from "./pages/doctor_view.tsx";
+import { PatientHistoryPage } from "./pages/patient_history.tsx";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <Provider store={store}>
@@ -121,6 +122,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
                     element={<CoverageCardDisplayPage />}
                   />
                   <Route path="patient" element={<PatientViewPage />} />
+                  <Route path="patient-history" element={<PatientHistoryPage />} />
                 </Route>
 
                 <Route path="settings" element={<div>Not Implemented</div>} />

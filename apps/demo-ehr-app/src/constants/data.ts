@@ -25,6 +25,13 @@ export const SERVICE_CARD_DETAILS = [
     path: "/dashboard/patient",
   },
   {
+    serviceImagePath: "/patient_history.png",
+    serviceName: "Patient History",
+    serviceDescription:
+      "Access history records of the patient, including encounter and diagnostic reports.",
+    path: "/dashboard/patient-history",
+  },
+  {
     serviceImagePath: "/drug_order_service.png",
     serviceName: "Order Drugs",
     serviceDescription:

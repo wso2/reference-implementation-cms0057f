@@ -1,7 +1,7 @@
 export const fhirOperationConfigs = [
   {
     id: "patient-search",
-    name: "Patient Search",
+    name: "Patient Data",
     endpoint: "/fhir/r4/Patient",
     showSearchButton: true,
     params: [
@@ -65,7 +65,7 @@ export const fhirOperationConfigs = [
   },
   {
     id: "coverage",
-    name: "Coverage",
+    name: "Coverage Data",
     endpoint: "/fhir/r4/Coverage",
     showSearchButton: true,
     params: [

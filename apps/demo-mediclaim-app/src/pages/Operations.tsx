@@ -237,10 +237,8 @@ const Operations: React.FC = () => {
         });
         setParamValues(initialParams);
 
-        // Auto-execute API request if Patient Search is selected
-        if (selectedOperation === "patient-search") {
-          executeApiRequest(initialParams, operation);
-        }
+        // Auto-execute API request
+        executeApiRequest(initialParams, operation);
       }
     }
   }, [selectedOperation, authToken]);

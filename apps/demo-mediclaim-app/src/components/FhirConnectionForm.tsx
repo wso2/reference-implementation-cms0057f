@@ -47,7 +47,7 @@ interface SmartConfiguration {
 const FhirConnectionForm: React.FC = () => {
   const { toast } = useToast();
   const [formData, setFormData] = useState<FormData>({
-    baseUrl: "https://openhealthcare.testdmain.online",
+    baseUrl: "https://mediclaim.cms-wso2.publicvm.com",
     consumerKey: "tB8I1tBZFYi5UxKfR_fc9kZmUqIa",
     consumerSecret: "",
     redirectUri: `${window.location.origin}/api-view`,

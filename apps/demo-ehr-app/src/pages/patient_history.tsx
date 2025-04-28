@@ -114,7 +114,6 @@ export const PatientHistoryPage = () => {
   useEffect(() => {
     const fetchPatientDetails = async () => {
       try {
-        console.log("Fetching patient details...");
         setLoadingMessage("Loading patient details");
         dispatch(resetCurrentRequest());
         const req_url = Config.patient + "/" + currentPatientId;
@@ -130,11 +129,10 @@ export const PatientHistoryPage = () => {
           );
           setLoadingMessage("Getting member ID");
           const fetchedPatient_ = response.data;
-          console.log("2. Patient details: ", fetchedPatient_);
           const memberId = fetchedPatient_?.identifier?.find(
-            (id) => id.system === "urn:oid:wso2.healthcare.payer.memberID"
+            (id: { system: string; }) => id.system === "urn:oid:wso2.healthcare.payer.memberID"
           )?.value;
-          console.log("3. MemberId : ", memberId);
+          console.log("MemberId : ", memberId);
           fetchExportId(memberId);
         });
       } catch (error) {
@@ -183,7 +181,6 @@ export const PatientHistoryPage = () => {
         if (match && match[1]) {
           setExportId(match[1]);
           localStorage.setItem("exportId", match[1]);
-          console.log("Export ID:", match[1]);
           checkStatusUntilDownloaded(match[1]);
         } else {
           console.warn("Export ID not found in diagnostics message.");
@@ -241,7 +238,6 @@ export const PatientHistoryPage = () => {
       fetchedExportId && fetchedExportId.length > 0
         ? fetchedExportId
         : fallbackExportID;
-    console.log("Fetching data for:", exportId);
 
     dispatch(resetCurrentRequest());
     dispatch(updateCurrentRequestMethod(HTTP_METHODS.GET));
@@ -263,8 +259,6 @@ export const PatientHistoryPage = () => {
         },
       })
       .then((response) => {
-        // console.log("Fetching data:\n", response.data);
-        console.log("type:", typeof response.data);
 
         if (typeof response.data === "string") {
           const newData = response.data.split("\n");
@@ -280,7 +274,6 @@ export const PatientHistoryPage = () => {
               }
             })
             .map((row: string) => JSON.parse(row));
-          console.log("Parsed JSON Data:", jsonData);
           setParsedData(jsonData);
           setIsLoaded(true);
         } else {

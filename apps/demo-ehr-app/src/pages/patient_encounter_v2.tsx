@@ -35,7 +35,7 @@ import {
   SELECTED_PATIENT_ID,
   SELECTED_PATIENT_NAME,
 } from "../constants/localStorageVariables";
-import { clearLocalStorageForPAPrococess } from "../utils/clearLocalStorage";
+import { clearLocalStorageForPAPrococess, clearLocalStorageFully } from "../utils/clearLocalStorage";
 import { HTTP_METHODS } from "../constants/enum";
 
 function PatientEncounter() {
@@ -74,6 +74,8 @@ function PatientEncounter() {
         setIsLoaded(true);
       } catch (error) {
         console.error("Error fetching patient details:", error);
+        clearLocalStorageFully();
+        navigate("/login");
       }
     };
 

@@ -27,11 +27,11 @@ import ballerinax/health.fhir.r4.davincipas;
 public type Claim davincipas:PASClaim;
 
 # Configurations for the claim repository service.
-configurable string serviceURL = os:getEnv("CHOREO_CLAIM_RESPONSE_SERVICE_REPOSITORY_CONNECTION_SERVICEURL");
-configurable string consumerKey = os:getEnv("CHOREO_CLAIM_RESPONSE_SERVICE_REPOSITORY_CONNECTION_CONSUMERKEY");
-configurable string consumerSecret = os:getEnv("CHOREO_CLAIM_RESPONSE_SERVICE_REPOSITORY_CONNECTION_CONSUMERSECRET");
-configurable string tokenURL = os:getEnv("CHOREO_CLAIM_RESPONSE_SERVICE_REPOSITORY_CONNECTION_TOKENURL");
-configurable string choreoApiKey = os:getEnv("CHOREO_CLAIM_RESPONSE_SERVICE_REPOSITORY_CONNECTION_APIKEY");
+configurable string serviceURL = os:getEnv("CHOREO_CLAIM_SERVICE_REPO_CONNECTION_SERVICEURL");
+configurable string consumerKey = os:getEnv("CHOREO_CLAIM_SERVICE_REPO_CONNECTION_CONSUMERKEY");
+configurable string consumerSecret = os:getEnv("CHOREO_CLAIM_SERVICE_REPO_CONNECTION_CONSUMERSECRET");
+configurable string tokenURL = os:getEnv("CHOREO_CLAIM_SERVICE_REPO_CONNECTION_TOKENURL");
+configurable string choreoApiKey = os:getEnv("CHOREO_CLAIM_SERVICE_REPO_CONNECTION_CHOREOAPIKEY");
 
 # initialize source system endpoint here
 

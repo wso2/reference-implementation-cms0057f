@@ -26,7 +26,7 @@ import ballerinax/health.fhir.r4.davincipas;
 service / on new http:Listener(9089) {
 
     // Claim repository service
-    isolated resource function post fhir/r4/ClaimRepo/Claim(davincipas:PASClaim payload) returns error|http:Response {
+    isolated resource function post ClaimRepo/Claim(davincipas:PASClaim payload) returns error|http:Response {
         r4:FHIRError|davincipas:PASClaim|error result = check addNewPASClaim(payload);
 
         http:Response response = new;
@@ -45,11 +45,11 @@ service / on new http:Listener(9089) {
         return response;
     }
 
-    isolated resource function get fhir/r4/ClaimRepo/Claim/[string id]() returns davincipas:PASClaim|error? {
+    isolated resource function get ClaimRepo/Claim/[string id]() returns davincipas:PASClaim|error? {
         return getPASClaimByID(id);
     }
 
-    isolated resource function post fhir/r4/ClaimRepo/Claim/Search(map<string[]>? searchParameters) returns r4:FHIRError|http:Response|r4:Bundle {
+    isolated resource function post ClaimRepo/Claim/Search(map<string[]>? searchParameters) returns r4:FHIRError|http:Response|r4:Bundle {
         r4:FHIRError|r4:Bundle result = check searchPASClaim(searchParameters);
         if (result is r4:FHIRError) {
             http:Response response = new;
@@ -61,12 +61,12 @@ service / on new http:Listener(9089) {
         }
     }
 
-    isolated resource function delete fhir/r4/ClaimRepo/Claim/[string id]() returns error? {
+    isolated resource function delete ClaimRepo/Claim/[string id]() returns error? {
         return deletePASClaimByID(id);
     }
 
     // ClaimResponse repository service        
-    isolated resource function post fhir/r4/ClaimRepo/ClaimResponse(davincipas:PASClaimResponse payload) returns error|http:Response {
+    isolated resource function post ClaimRepo/ClaimResponse(davincipas:PASClaimResponse payload) returns error|http:Response {
         r4:FHIRError|davincipas:PASClaimResponse|error? result = check addNewPASClaimResponse(payload);
 
         http:Response response = new;
@@ -84,15 +84,15 @@ service / on new http:Listener(9089) {
         return response;
     }
 
-    isolated resource function get fhir/r4/ClaimRepo/ClaimResponse/[string id]() returns davincipas:PASClaimResponse|error? {
+    isolated resource function get ClaimRepo/ClaimResponse/[string id]() returns davincipas:PASClaimResponse|error? {
         return getPASClaimResponseByID(id);
     }
 
-    isolated resource function post fhir/r4/ClaimRepo/ClaimResponse/Search(map<string[]>? searchParameters) returns r4:FHIRError|r4:Bundle {
+    isolated resource function post ClaimRepo/ClaimResponse/Search(map<string[]>? searchParameters) returns r4:FHIRError|r4:Bundle {
         return searchPASClaimResponse(searchParameters);
     }
 
-    isolated resource function delete fhir/r4/ClaimRepo/ClaimResponse/[string id]() returns error? {
+    isolated resource function delete ClaimRepo/ClaimResponse/[string id]() returns error? {
         return deletePASClaimResponseByID(id);
     }
 }

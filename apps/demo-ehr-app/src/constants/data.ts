@@ -970,7 +970,8 @@ export const CLAIM_REQUEST_BODY = (
   category: string,
   medication: string,
   quantity: number,
-  unitPrice: string
+  unitPrice: string,
+  created: string
 ) => {
   return {
     resourceType: "Parameters",
@@ -1015,7 +1016,7 @@ export const CLAIM_REQUEST_BODY = (
                 patient: {
                   reference: `${patient}`,
                 },
-                created: "2025-03-02",
+                created: `${created}`,
                 insurer: {
                   reference: `${insurer}`,
                 },
@@ -1071,7 +1072,7 @@ export const CLAIM_REQUEST_BODY = (
                         },
                       ],
                     },
-                    servicedDate: "2025-03-02",
+                    servicedDate: `${created}`,
                     unitPrice: {
                       value: +`${unitPrice}`.split(" ")[0],
                       currency: `${unitPrice}`.split(" ")[1],

@@ -120,10 +120,9 @@ const ClaimForm = () => {
   }>({
     medication: medicationFormData.medication,
     quantity: medicationFormData.frequency * medicationFormData.period,
-    patient:
-      currentPatient?.name[0].given[0] + " " + currentPatient?.name[0].family,
+    patient: `Patient/${currentPatient.id}`,
     provider: "PractitionerRole/456",
-    insurer: "Organization/insurance-org",
+    insurer: "Organization/50",
     use: "preauthorization",
     supportingInfo: "QuestionnaireResponse/1122",
     category: "Pharmacy",
@@ -149,7 +148,8 @@ const ClaimForm = () => {
       formData.category,
       formData.medication,
       formData.quantity,
-      formData.unitPrice
+      formData.unitPrice,
+      new Date().toISOString().split("T")[0]
     );
 
     dispatch(updateActiveStep(4));

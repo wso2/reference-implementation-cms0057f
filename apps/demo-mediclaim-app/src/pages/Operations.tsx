@@ -87,6 +87,7 @@ const Operations: React.FC = () => {
   const [selectedOperation, setSelectedOperation] =
     useState<string>("patient-search");
   const [patient, setPatient] = useState<string>("");
+  const [fhirPatient, setFhirPatient] = useState<string>("");
   const [paramValues, setParamValues] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [responseData, setResponseData] = useState<any>(null);
@@ -174,9 +175,10 @@ const Operations: React.FC = () => {
       if (storedAuthToken.id_token) {
         try {
           const decodedToken: any = jwtDecode(storedAuthToken.id_token);
-          if (decodedToken.patient) {
+          if (decodedToken.patient && decodedToken.fhirUser){
             console.log("Patient ID:", decodedToken.patient);
             setPatient(decodedToken.patient);
+            setFhirPatient(decodedToken.fhirUser);
             navigate("/api-view");
             return;
           } else {
@@ -230,6 +232,9 @@ const Operations: React.FC = () => {
         operation.params.forEach((param) => {
           if (param.label === "Patient ID") {
             initialParams[param.name] = patient;
+          }
+          if (param.label === "Patient") {
+            initialParams[param.name] = fhirPatient;
           }
           if (param.defaultValue) {
             initialParams[param.name] = param.defaultValue;
@@ -318,10 +323,12 @@ const Operations: React.FC = () => {
     const urlParams = new URLSearchParams();
     Object.entries(params).forEach(([key, value]) => {
       if (value) {
+        if (key === "created" && operation.id === "claim-response") {
+          value = `ge${value}`;
+        }
         urlParams.append(key, value);
       }
     });
-
     url += urlParams.toString();
 
     try {

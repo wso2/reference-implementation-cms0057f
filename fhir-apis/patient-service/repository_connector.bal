@@ -44,7 +44,7 @@ public isolated function search(string 'resource, map<string[]>? searchParameter
     };
 
     if searchParameters is map<string[]> {
-        if searchParameters.keys().count() == 1 {
+        if searchParameters.keys().length() == 1 {
             lock {
                 r4:BundleEntry[] bundleEntries = [];
                 foreach var item in patients {

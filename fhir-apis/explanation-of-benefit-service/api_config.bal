@@ -20,15 +20,42 @@ import ballerinax/health.fhir.r4;
 final r4:ResourceAPIConfig apiConfig = {
     resourceType: "ExplanationOfBenefit",
     profiles: [
-            "http://hl7.org/fhir/us/carin-bb/StructureDefinition/C4BB-ExplanationOfBenefit-Outpatient-Institutional",
-                            "http://hl7.org/fhir/us/carin-bb/StructureDefinition/C4BB-ExplanationOfBenefit-Inpatient-Institutional",
-                            "http://hl7.org/fhir/us/carin-bb/StructureDefinition/C4BB-ExplanationOfBenefit-Pharmacy",
-                            "http://hl7.org/fhir/us/carin-bb/StructureDefinition/C4BB-ExplanationOfBenefit-Oral",
-                            "http://hl7.org/fhir/us/carin-bb/StructureDefinition/C4BB-ExplanationOfBenefit-Professional-NonClinician"        
+        "http://hl7.org/fhir/us/carin-bb/StructureDefinition/C4BB-ExplanationOfBenefit-Outpatient-Institutional",
+        "http://hl7.org/fhir/us/carin-bb/StructureDefinition/C4BB-ExplanationOfBenefit-Inpatient-Institutional",
+        "http://hl7.org/fhir/us/carin-bb/StructureDefinition/C4BB-ExplanationOfBenefit-Pharmacy",
+        "http://hl7.org/fhir/us/carin-bb/StructureDefinition/C4BB-ExplanationOfBenefit-Oral",
+        "http://hl7.org/fhir/us/carin-bb/StructureDefinition/C4BB-ExplanationOfBenefit-Professional-NonClinician"        
     ],
     defaultProfile: (),
     searchParameters: [
-        ],
+        {
+            name: "identifier",
+            active: true,
+            'type: r4:STRING,
+            information: {
+                description: "The business identifier for the instance",
+                documentation: "https://hl7.org/fhir/R4/search.html#token"
+            }
+        },
+        {
+            name: "patient",
+            active: true,
+            'type: r4:STRING,
+            information: {
+                description: "Patient receiving the products or services",
+                documentation: "https://hl7.org/fhir/R4/search.html#reference"
+            }
+        },
+        {
+            name: "created",
+            active: true,
+            'type: r4:DATE,
+            information: {
+                description: "  The creation date for the resource",
+                documentation: "https://hl7.org/fhir/R4/search.html#date"
+            }
+        }
+    ],
     operations: [
     
     ],

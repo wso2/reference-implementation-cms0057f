@@ -1,5 +1,4 @@
 import ballerinax/health.fhir.r4;
-import ballerina/io;
 
 isolated function getQueryParamsMap(map<r4:RequestSearchParameter[] & readonly> requestSearchParameters) returns map<string[]> {
     //TODO: Should provide ability to get the query parameters from the context as it is from the http request. 
@@ -16,6 +15,5 @@ isolated function getQueryParamsMap(map<r4:RequestSearchParameter[] & readonly> 
             }
         }
     }
-    io:println("Query Parameters: ", queryParameters);
     return queryParameters;
 }

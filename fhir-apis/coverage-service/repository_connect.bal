@@ -23,7 +23,7 @@ import ballerinax/health.fhir.r4.parser;
 // isolated fhir:FHIRConnector fhirConnectorObj = check new (ehrSystemConfig);
 
 isolated international401:Coverage[] coverages = [];
-isolated int createOperationNextId = 368;
+isolated int createOperationNextId = 367;
 
 public isolated function create(international401:Coverage payload) returns r4:FHIRError|international401:Coverage {
     international401:Coverage|error coverage = parser:parseWithValidation(payload.toJson(), international401:Coverage).ensureType();
@@ -32,7 +32,8 @@ public isolated function create(international401:Coverage payload) returns r4:FH
         return r4:createFHIRError(coverage.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
     } else {
         lock {
-            coverage.id = (++createOperationNextId).toBalString();
+            createOperationNextId += 1;
+            coverage.id = (createOperationNextId).toBalString();
         }
 
         lock {
@@ -76,40 +77,72 @@ public isolated function search(map<string[]>? searchParameters = ()) returns r4
     };
 
     if searchParameters is map<string[]> {
-        if searchParameters.keys().length() == 1 {
-            lock {
-                r4:BundleEntry[] bundleEntries = [];
-                foreach var item in coverages {
-                    r4:BundleEntry bundleEntry = {
-                        'resource: item
-                    };
-                    bundleEntries.push(bundleEntry);
-                }
-                r4:Bundle BundleClone = bundle.clone();
-                BundleClone.entry = bundleEntries;
-                return BundleClone.clone();
-            }
-        }
+        string? id = ();
+        string? patient = ();
 
         foreach var 'key in searchParameters.keys() {
             match 'key {
                 "_id" => {
-                    international401:Coverage byId = check getById(searchParameters.get('key)[0]);
-                    bundle.entry = [
-                        {
-                            'resource: byId
-                        }
-                    ];
-                    return bundle;
+                    id = searchParameters.get('key)[0];
+                }
+                "patient" => {
+                    patient = searchParameters.get('key)[0];
+                }
+                "_count" => {
+                    // pagination is not used in this service
+                    continue;
                 }
                 _ => {
                     return r4:createFHIRError(string `Not supported search parameter: ${'key}`, r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
                 }
             }
         }
+
+        if id is string {
+            international401:Coverage byId = check getById(id);
+
+            bundle.entry = [
+                {
+                    'resource: byId
+                }
+            ];
+
+            bundle.total = 1;
+            return bundle;
+        }
+
+        international401:Coverage[] results;
+        lock {
+            results = coverages.clone();
+        }
+
+        if patient is string {
+            results = getByPatient(patient, results);
+        }
+
+        r4:BundleEntry[] bundleEntries = [];
+
+        foreach international401:Coverage item in results {
+            r4:BundleEntry bundleEntry = {
+                'resource: item
+            };
+            bundleEntries.push(bundleEntry);
+        }
+        bundle.entry = bundleEntries;
+        bundle.total = results.length();
     }
 
     return bundle;
+}
+
+isolated function getByPatient(string patient, international401:Coverage[] targetArr) returns international401:Coverage[] {
+    international401:Coverage[] filteredcoverages = [];
+    foreach international401:Coverage coverage in targetArr {
+        if coverage.beneficiary.reference == patient {
+            filteredcoverages.push(coverage);
+        }
+    }
+    return filteredcoverages;
 }
 
 function init() returns error? {

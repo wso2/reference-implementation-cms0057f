@@ -1,6 +1,7 @@
 import ballerina/http;
 import ballerinax/health.fhir.r4 as r4;
 import ballerinax/health.fhir.r4.parser;
+import ballerina/time;
 
 isolated ExplanationOfBenefit[] eobs = [];
 isolated int createEOBNextId = 9000;
@@ -36,36 +37,241 @@ public isolated function search(map<string[]>? searchParameters = ()) returns r4
     r4:Bundle bundle = {
         'type: "collection"
     };
-    if (searchParameters is map<string[]>) {
-        foreach var key in searchParameters.keys() {
-            match key {
+
+    if searchParameters is map<string[]> {
+        string? id = ();
+        string? patient = ();
+        string? identifier = ();
+        string? created = ();
+        string? profile = ();
+        string? lastUpdated = ();
+
+        foreach var 'key in searchParameters.keys() {
+            match 'key {
                 "_id" => {
-                    ExplanationOfBenefit byId = check getById(searchParameters.get(key)[0]);
-                    bundle.entry = [
-                        {
-                            'resource: byId
-                        }
-                    ];
-                    return bundle;
+                    id = searchParameters.get('key)[0];
+                }
+                "_profile" => {
+                    profile = searchParameters.get('key)[0];
+                }
+                "_lastUpdated" => {
+                    lastUpdated = searchParameters.get('key)[0];
+                }
+                "patient" => {
+                    patient = searchParameters.get('key)[0];
+                }
+                "identifier" => {
+                    identifier = searchParameters.get('key)[0];
+                }
+                "created" => {
+                    created = searchParameters.get('key)[0];
+                }
+                "_count" => {
+                    // pagination is not used in this service
+                    continue;
                 }
                 _ => {
-                    return r4:createFHIRError(string `Not supported search parameter: ${key}`, r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+                    return r4:createFHIRError(string `Not supported search parameter: ${'key}`, r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
                 }
             }
         }
-    }
-    lock {
+
+        if id is string {
+            ExplanationOfBenefit byId = check getById(id);
+
+            bundle.entry = [
+                {
+                    'resource: byId
+                }
+            ];
+
+            bundle.total = 1;
+            return bundle;
+        }
+
+        ExplanationOfBenefit[] results;
+        lock {
+            results = eobs.clone();
+        }
+
+        if profile is string {
+            results = getByProfile(profile, results);
+        }
+
+        if lastUpdated is string {
+            results = check getByLastUpdatedDate(lastUpdated, results);
+        }
+
+        if patient is string {
+            results = getByPatient(patient, results);
+        }
+        
+        if identifier is string {
+            results = getByIdentifier(identifier, results);
+        }
+
+        if created is string {
+            results = check getByCreatedDate(created, results);
+        }
+
+        // reorder the results as decending order by Created date
+        results = orderByCreatedDate(results);
+
         r4:BundleEntry[] bundleEntries = [];
-        foreach var item in eobs {
+
+        foreach ExplanationOfBenefit item in results {
             r4:BundleEntry bundleEntry = {
                 'resource: item
             };
             bundleEntries.push(bundleEntry);
         }
-        r4:Bundle cloneBundle = bundle.clone();
-        cloneBundle.entry = bundleEntries;
-        return cloneBundle.clone();
+        bundle.entry = bundleEntries;
+        bundle.total = results.length();
     }
+
+    return bundle;
+}
+
+isolated function getByProfile(string profile, ExplanationOfBenefit[] targetArr) returns ExplanationOfBenefit[] {
+    ExplanationOfBenefit[] filteredEobs = [];
+    foreach ExplanationOfBenefit eob in targetArr {
+        r4:canonical[]? profiles = eob.meta.profile;
+        if profiles is () {
+            continue; // Skip if there are no profiles
+        }
+        foreach r4:canonical item in profiles {
+            if item == profile {
+                filteredEobs.push(eob);
+                break; // Break the inner loop if a match is found
+            }
+        }
+    }
+    return filteredEobs;
+}
+
+isolated function getByLastUpdatedDate(string lastUpdated, ExplanationOfBenefit[] targetArr) returns ExplanationOfBenefit[]|r4:FHIRError {
+    return getByDate(lastUpdated, targetArr, "lastUpdated");
+}
+
+isolated function getByPatient(string patient, ExplanationOfBenefit[] targetArr) returns ExplanationOfBenefit[] {
+    ExplanationOfBenefit[] filteredEobs = [];
+    foreach ExplanationOfBenefit eob in targetArr {
+        if eob.patient.reference == patient {
+            filteredEobs.push(eob);
+        }
+    }
+    return filteredEobs;
+}
+
+isolated function getByIdentifier(string identifier, ExplanationOfBenefit[] targetArr) returns ExplanationOfBenefit[] {
+    ExplanationOfBenefit[] filteredEobs = [];
+    foreach ExplanationOfBenefit eob in targetArr {
+        r4:Identifier[] identifiers = eob.identifier;
+        foreach r4:Identifier item in identifiers {
+            if item.system == identifier {
+                filteredEobs.push(eob);
+                break; // Break the inner loop if a match is found
+            }
+        }
+    }
+    return filteredEobs;
+}
+
+isolated function orderByCreatedDate(ExplanationOfBenefit[] targetArr) returns ExplanationOfBenefit[] {
+    return from ExplanationOfBenefit item in targetArr
+        order by item.created descending
+        select item;
+}
+
+isolated function getByCreatedDate(string created, ExplanationOfBenefit[] targetArr) returns ExplanationOfBenefit[]|r4:FHIRError {
+    return getByDate(created, targetArr, "created");
+}
+
+isolated function getByDate(string search_date_value, ExplanationOfBenefit[] targetArr, string search_date) returns ExplanationOfBenefit[]|r4:FHIRError {
+    string operator = search_date_value.substring(0, 2);
+    r4:dateTime datetimeR4 = search_date_value.substring(2);
+
+    // convert r4:dateTime to time:Utc
+    time:Utc|time:Error dateTimeUtc = time:utcFromString(datetimeR4.includes("T") ? datetimeR4 : datetimeR4 + "T00:00:00.000Z");
+    if dateTimeUtc is time:Error {
+        return r4:createFHIRError(string `Invalid date format: ${search_date_value}, ${dateTimeUtc.message()}`, r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+    }
+
+    time:Utc lowerBound = time:utcAddSeconds(dateTimeUtc, 86400);
+    time:Utc upperBound = time:utcAddSeconds(dateTimeUtc, -86400);
+
+    ExplanationOfBenefit[] filteredEobs = [];
+    foreach ExplanationOfBenefit eob in targetArr {
+        time:Utc|time:Error eobDateTimeUtc;
+
+        if search_date is "created" {
+            r4:dateTime eobDateTimeR4 = eob.created;
+            eobDateTimeUtc = time:utcFromString(eobDateTimeR4.includes("T") ? eobDateTimeR4 : eobDateTimeR4 + "T00:00:00.000Z");
+        } else if search_date is "lastUpdated" {
+            if eob.meta.lastUpdated is () {
+                continue; // Skip if there are no meta fields
+            }
+            eobDateTimeUtc = time:utcFromString(eob.meta.lastUpdated ?: "");
+        } else {
+            return r4:createFHIRError(string `Invalid date field: ${search_date}`, r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+        }
+        
+        if eobDateTimeUtc is time:Error {
+            continue; // Skip invalid date formats
+        }
+        match operator {
+            "eq" => {
+                if eobDateTimeUtc == dateTimeUtc {
+                    filteredEobs.push(eob.clone());
+                }
+            }
+            "ne" => {
+                if eobDateTimeUtc != dateTimeUtc {
+                    filteredEobs.push(eob.clone());
+                }
+            }
+            "lt" => {
+                if eobDateTimeUtc < dateTimeUtc {
+                    filteredEobs.push(eob.clone());
+                }
+            }
+            "gt" => {
+                if eobDateTimeUtc > dateTimeUtc {
+                    filteredEobs.push(eob.clone());
+                }
+            }
+            "ge" => {
+                if eobDateTimeUtc >= dateTimeUtc {
+                    filteredEobs.push(eob.clone());
+                }
+            }
+            "le" => {
+                if eobDateTimeUtc <= dateTimeUtc {
+                    filteredEobs.push(eob.clone());
+                }
+            }
+            "sa" => {
+                if eobDateTimeUtc > dateTimeUtc {
+                    filteredEobs.push(eob.clone());
+                }
+            }
+            "eb" => {
+                if eobDateTimeUtc < dateTimeUtc {
+                    filteredEobs.push(eob.clone());
+                }
+            }
+            "ap" => {
+                // Approximation: Check if the eob date is within 1 day of the given date
+                if eobDateTimeUtc >= lowerBound && eobDateTimeUtc <= upperBound {
+                    filteredEobs.push(eob.clone());
+                }
+            }
+            _ => {
+                return r4:createFHIRError(string `Invalid operator: ${operator}`, r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+            }
+        }
+    }
+    return filteredEobs;
 }
 
 function init() returns error? {

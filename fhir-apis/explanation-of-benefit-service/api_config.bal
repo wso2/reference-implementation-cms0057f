@@ -20,35 +20,39 @@ import ballerinax/health.fhir.r4;
 final r4:ResourceAPIConfig apiConfig = {
     resourceType: "ExplanationOfBenefit",
     profiles: [
-            "http://hl7.org/fhir/us/carin-bb/StructureDefinition/C4BB-ExplanationOfBenefit-Outpatient-Institutional",
-                            "http://hl7.org/fhir/us/carin-bb/StructureDefinition/C4BB-ExplanationOfBenefit-Inpatient-Institutional",
-                            "http://hl7.org/fhir/us/carin-bb/StructureDefinition/C4BB-ExplanationOfBenefit-Pharmacy",
-                            "http://hl7.org/fhir/us/carin-bb/StructureDefinition/C4BB-ExplanationOfBenefit-Oral",
-                            "http://hl7.org/fhir/us/carin-bb/StructureDefinition/C4BB-ExplanationOfBenefit-Professional-NonClinician"        
+        "http://hl7.org/fhir/us/carin-bb/StructureDefinition/C4BB-ExplanationOfBenefit-Outpatient-Institutional",
+        "http://hl7.org/fhir/us/carin-bb/StructureDefinition/C4BB-ExplanationOfBenefit-Inpatient-Institutional",
+        "http://hl7.org/fhir/us/carin-bb/StructureDefinition/C4BB-ExplanationOfBenefit-Pharmacy",
+        "http://hl7.org/fhir/us/carin-bb/StructureDefinition/C4BB-ExplanationOfBenefit-Oral",
+        "http://hl7.org/fhir/us/carin-bb/StructureDefinition/C4BB-ExplanationOfBenefit-Professional-NonClinician"        
     ],
     defaultProfile: (),
     searchParameters: [
         {
             name: "identifier",
             active: true,
+            'type: r4:STRING,
             information: {
-                description: "A patient identifier<br /><em>NOTE</em>: This US Core SearchParameter definition extends the usage context of<a href=http://hl7.org/fhir/R4/extension-capabilitystatement-expectation.html>capabilitystatement-expectation</a> extension to formally express implementer conformance expectations for these elements:<br /> - multipleAnd<br /> - multipleOr<br /> - comparator<br /> - modifier<br /> - chain<br />",
-                builtin: false,
-                documentation: "http://hl7.org/fhir/us/core/SearchParameter/us-core-patient-identifier"
+                description: "The business identifier for the instance",
+                documentation: "https://hl7.org/fhir/R4/search.html#token"
             }
         },
         {
             name: "patient",
             active: true,
+            'type: r4:STRING,
             information: {
-                description: ""
+                description: "Patient receiving the products or services",
+                documentation: "https://hl7.org/fhir/R4/search.html#reference"
             }
         },
         {
             name: "created",
             active: true,
+            'type: r4:DATE,
             information: {
-                description: ""
+                description: "  The creation date for the resource",
+                documentation: "https://hl7.org/fhir/R4/search.html#date"
             }
         }
     ],

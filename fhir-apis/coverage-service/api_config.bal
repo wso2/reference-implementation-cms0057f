@@ -24,7 +24,16 @@ final r4:ResourceAPIConfig apiConfig = {
     ],
     defaultProfile: (),
     searchParameters: [
-        ],
+        {
+            name: "patient",
+            active: true,
+            'type: r4:STRING,
+            information: {
+                description: "Patient receiving the products or services",
+                documentation: "https://hl7.org/fhir/R4/search.html#reference"
+            }
+        }
+    ],
     operations: [
     
     ],

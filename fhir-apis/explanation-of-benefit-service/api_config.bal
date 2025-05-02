@@ -28,7 +28,30 @@ final r4:ResourceAPIConfig apiConfig = {
     ],
     defaultProfile: (),
     searchParameters: [
-        ],
+        {
+            name: "identifier",
+            active: true,
+            information: {
+                description: "A patient identifier<br /><em>NOTE</em>: This US Core SearchParameter definition extends the usage context of<a href=http://hl7.org/fhir/R4/extension-capabilitystatement-expectation.html>capabilitystatement-expectation</a> extension to formally express implementer conformance expectations for these elements:<br /> - multipleAnd<br /> - multipleOr<br /> - comparator<br /> - modifier<br /> - chain<br />",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/us/core/SearchParameter/us-core-patient-identifier"
+            }
+        },
+        {
+            name: "patient",
+            active: true,
+            information: {
+                description: ""
+            }
+        },
+        {
+            name: "created",
+            active: true,
+            information: {
+                description: ""
+            }
+        }
+    ],
     operations: [
     
     ],

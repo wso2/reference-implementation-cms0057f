@@ -323,7 +323,7 @@ function init() returns error? {
             },
             "use": "claim",
             "patient": {
-                "reference": "Patient/Patient2"
+                "reference": "Patient/101"
             },
             "billablePeriod": {
                 "start": "2019-01-01",

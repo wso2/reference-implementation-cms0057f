@@ -58,10 +58,10 @@ const NavBar: React.FC<NavBarProps> = ({
   return (
     <nav className="w-full bg-gradient-to-r from-orange-700 to-orange-600 text-white border-b border-orange-800 shadow-md">
       <div className="container mx-auto px-4 py-2 flex justify-between items-center">
-        <Link to="/" className="flex items-center gap-2 no-underline text-white">
+        <div className="flex items-center gap-2 no-underline text-white">
           <Database className="h-6 w-6 text-white" />
           <h1 className="text-lg font-semibold">MediClaim</h1>
-        </Link>
+        </div>
 
         <div className="flex items-center gap-2">
           {isLoggedIn && (

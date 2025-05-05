@@ -175,7 +175,7 @@ const Operations: React.FC = () => {
       if (storedAuthToken.id_token) {
         try {
           const decodedToken: any = jwtDecode(storedAuthToken.id_token);
-          if (decodedToken.patient && decodedToken.fhirUser){
+          if (decodedToken.patient && decodedToken.fhirUser) {
             console.log("Patient ID:", decodedToken.patient);
             setPatient(decodedToken.patient);
             setFhirPatient(decodedToken.fhirUser);
@@ -232,9 +232,6 @@ const Operations: React.FC = () => {
         operation.params.forEach((param) => {
           if (param.label === "Patient ID") {
             initialParams[param.name] = patient;
-          }
-          if (param.label === "Patient") {
-            initialParams[param.name] = fhirPatient;
           }
           if (param.defaultValue) {
             initialParams[param.name] = param.defaultValue;
@@ -325,6 +322,14 @@ const Operations: React.FC = () => {
       if (value) {
         if (key === "created" && operation.id === "claim-response") {
           value = `ge${value}`;
+        }
+        if (
+          key === "patient" &&
+          (operation.id === "explanation-of-benefits" ||
+            operation.id === "coverage" ||
+            operation.id === "claim-response")
+        ) {
+          value = `Patient/${value}`;
         }
         urlParams.append(key, value);
       }

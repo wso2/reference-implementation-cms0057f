@@ -2,7 +2,7 @@ export const fhirOperationConfigs = [
   {
     id: "patient-search",
     name: "Patient Data",
-    endpoint: "/fhir/r4/Patient",
+    endpoint: "/patient-service/fhir/r4/Patient",
     showSearchButton: true,
     params: [
       {
@@ -31,7 +31,7 @@ export const fhirOperationConfigs = [
   {
     id: "explanation-of-benefits",
     name: "Explanation of Benefits",
-    endpoint: "/fhir/r4/ExplanationOfBenefit",
+    endpoint: "/eob-service/fhir/r4/ExplanationOfBenefit",
     showSearchButton: true,
     params: [
       {
@@ -66,7 +66,7 @@ export const fhirOperationConfigs = [
   {
     id: "coverage",
     name: "Coverage Data",
-    endpoint: "/fhir/r4/Coverage",
+    endpoint: "/coverage-service/fhir/r4/Coverage",
     showSearchButton: true,
     params: [
       {
@@ -82,13 +82,13 @@ export const fhirOperationConfigs = [
   {
     id: "claim-response",
     name: "Prior Authorization Data",
-    endpoint: "/claimresponse/fhir/r4/ClaimResponse",
+    endpoint: "/claimresponse-service/fhir/r4/ClaimResponse",
     displayEndpoint: "/fhir/r4/ClaimResponse",
     showSearchButton: true,
     params: [
       {
         name: "patient",
-        label: "Patient",
+        label: "Patient ID",
         type: "text",
         required: true,
         disabled: true,

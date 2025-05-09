@@ -476,34 +476,26 @@ const Operations: React.FC = () => {
           <TableRow>
             <TableHead>ID</TableHead>
             <TableHead>Created Date</TableHead>
-            <TableHead>Service Provider</TableHead>
-            <TableHead>Service Display</TableHead>
-            <TableHead>Diagnosis Code Display</TableHead>
+            <TableHead>Provider</TableHead>
+            <TableHead>Diagnosis</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {responseData.entry.map((entry: any, index: number) => {
             const eob = entry.resource;
-            const serviceProvider = eob?.serviceProvider;
-
-            // Find service display in items if available
-            const serviceDisplay =
-              eob.item && eob.item.length > 0
-                ? eob.item[0].service?.display || "N/A"
-                : "N/A";
+            const provider = eob?.provider?.display || "N/A";
 
             // Find diagnosis code display if available
             const diagnosisDisplay =
               eob.diagnosis && eob.diagnosis.length > 0
-                ? eob.diagnosis[0].diagnosisCode?.display || "N/A"
+                ? eob.diagnosis[0].diagnosisCodeableConcept?.coding[0]?.display || "N/A"
                 : "N/A";
 
             return (
               <TableRow key={`eob-${index}`}>
                 <TableCell>{eob.id || "N/A"}</TableCell>
                 <TableCell>{eob.created || "N/A"}</TableCell>
-                <TableCell>{serviceProvider || "N/A"}</TableCell>
-                <TableCell>{serviceDisplay}</TableCell>
+                <TableCell>{provider || "N/A"}</TableCell>
                 <TableCell>{diagnosisDisplay}</TableCell>
               </TableRow>
             );
@@ -521,51 +513,34 @@ const Operations: React.FC = () => {
           <TableRow>
             <TableHead>ID</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead>Issued Date</TableHead>
-            <TableHead>Type</TableHead>
             <TableHead>Effective Period</TableHead>
-            <TableHead>Payor</TableHead>
-            <TableHead>Class</TableHead>
+            <TableHead>Class Type</TableHead>
+            <TableHead>Class Name</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {responseData.entry.map((entry: any, index: number) => {
             const coverage = entry.resource;
 
-            // Get type display
-            const typeDisplay =
-              coverage.type?.coding && coverage.type.coding.length > 0
-                ? coverage.type.coding[0].display || coverage.type.text || "N/A"
-                : "N/A";
+            // Get class type display
+            const classTypeDisplay =
+              coverage?.class[0]?.type.coding[0]?.display;
+
+            // Get class name display
+            const classNameDisplay = coverage?.class[0]?.name;
 
             // Get effective period
-            const effectiveStart = coverage.effectivePeriod?.start || "N/A";
-            const effectiveEnd = coverage.effectivePeriod?.end || "N/A";
+            const effectiveStart = coverage.period?.start || "N/A";
+            const effectiveEnd = coverage.period?.end || "N/A";
             const effectivePeriod = `${effectiveStart} to ${effectiveEnd}`;
-
-            // Get payor
-            const payor =
-              coverage.payor && coverage.payor.length > 0
-                ? coverage.payor[0].display ||
-                  coverage.payor[0].reference ||
-                  "N/A"
-                : "N/A";
-
-            // Get class display
-            const classDisplay =
-              coverage.class?.coding && coverage.class.coding.length > 0
-                ? coverage.class.coding[0].display || "N/A"
-                : "N/A";
 
             return (
               <TableRow key={`coverage-${index}`}>
                 <TableCell>{coverage.id || "N/A"}</TableCell>
                 <TableCell>{coverage.status || "N/A"}</TableCell>
-                <TableCell>{coverage.issued || "N/A"}</TableCell>
-                <TableCell>{typeDisplay}</TableCell>
                 <TableCell>{effectivePeriod}</TableCell>
-                <TableCell>{payor}</TableCell>
-                <TableCell>{classDisplay}</TableCell>
+                <TableCell>{classTypeDisplay || "N/A"}</TableCell>
+                <TableCell>{classNameDisplay || "N/A"}</TableCell>
               </TableRow>
             );
           })}

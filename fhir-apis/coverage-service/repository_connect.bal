@@ -157,11 +157,11 @@ function init() returns error? {
             },
             "status": "active",
             "subscriber": {
-                "reference": "Patient/101"
+                "reference": "Patient/102"
             },
             "subscriberId": "UC-123456789",
             "beneficiary": {
-                "reference": "Patient/101"
+                "reference": "Patient/102"
             },
             "payor": [
                 {
@@ -184,8 +184,8 @@ function init() returns error? {
                 }
             ],
             "period": {
-                "start": "2025-01-01",
-                "end": "2025-12-31"
+                "start": "2022-01-01",
+                "end": "2026-12-31"
             },
             "network": "UC-Preferred-Network",
             "costToBeneficiary": [

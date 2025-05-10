@@ -67,6 +67,10 @@ import { HTTP_METHODS } from "../constants/enum";
 
 export default function HorizontalNonLinearStepper() {
   const dispatch = useDispatch();
+  const [currentStep, setCurrentStep] = React.useState(-1);
+  const globalActiveStep = useSelector(
+    (state: any) => state.commonStoarge.activeStep
+  );
 
   useEffect(() => {
     const stepsString = localStorage.getItem(STEPS);
@@ -74,6 +78,168 @@ export default function HorizontalNonLinearStepper() {
       updateStepsArray(JSON.parse(stepsString));
     }
   }, []);
+
+  const medicationResponseString = localStorage.getItem(MEDICATION_RESPONSE);
+  const cdsResponseString = localStorage.getItem(CDS_RESPONSE);
+  const questionnaireResponseString = localStorage.getItem(
+    QUESTIONNAIRE_PACKAGE_RESPONSE
+  );
+  const questionnaireResponseRequestString = localStorage.getItem(
+    QUESTIONNAIRE_RESPONSE_REQUEST
+  );
+  const claimResponseString = localStorage.getItem(CLAIM_RESPONSE);
+
+  useEffect(() => {
+    function handleStepLoading(step: number) {
+      switch (step) {
+        case 0: {
+          dispatch(resetCurrentRequest());
+          dispatch(updateIsProcess(true));
+
+          const medicationRequestString =
+            localStorage.getItem(MEDICATION_REQUEST);
+          const medicationRequest = medicationRequestString
+            ? JSON.parse(medicationRequestString)
+            : {};
+          dispatch(updateCurrentRequest(medicationRequest));
+
+          const medicationResponse = medicationResponseString
+            ? JSON.parse(medicationResponseString)
+            : {};
+          dispatch(updateCurrentResponse(medicationResponse));
+
+          dispatch(
+            updateCurrentRequestUrl(
+              localStorage.getItem(MEDICATION_REQUEST_URL)
+            )
+          );
+          dispatch(
+            updateCurrentRequestMethod(
+              localStorage.getItem(MEDICATION_REQUEST_METHOD)
+            )
+          );
+          break;
+        }
+        case 1: {
+          dispatch(resetCurrentRequest());
+          dispatch(updateIsProcess(true));
+
+          const cdsRequestString = localStorage.getItem(CDS_REQUEST);
+          const cdsRequest = cdsRequestString
+            ? JSON.parse(cdsRequestString)
+            : {};
+          dispatch(updateCurrentRequest(cdsRequest));
+
+          const cdsResponse = cdsResponseString
+            ? JSON.parse(cdsResponseString)
+            : {};
+          dispatch(updateCurrentResponse(cdsResponse));
+
+          dispatch(
+            updateCurrentRequestUrl(localStorage.getItem(CDS_REQUEST_URL))
+          );
+          dispatch(
+            updateCurrentRequestMethod(localStorage.getItem(CDS_REQUEST_METHOD))
+          );
+          dispatch(updateCurrentHook(localStorage.getItem(CDS_HOOK)));
+
+          break;
+        }
+        case 2: {
+          dispatch(resetCurrentRequest());
+          dispatch(updateIsProcess(true));
+
+          const questionnaireRequestString = localStorage.getItem(
+            QUESTIONNAIRE_PACKAGE_REQUEST
+          );
+          const questionnaireRequest = questionnaireRequestString
+            ? JSON.parse(questionnaireRequestString)
+            : {};
+          dispatch(updateCurrentRequest(questionnaireRequest));
+
+          const questionnaireResponse = questionnaireResponseString
+            ? JSON.parse(questionnaireResponseString)
+            : {};
+          dispatch(updateCurrentResponse(questionnaireResponse));
+
+          dispatch(
+            updateCurrentRequestUrl(
+              localStorage.getItem(QUESTIONNAIRE_PACKAGE_URL)
+            )
+          );
+          dispatch(
+            updateCurrentRequestMethod(
+              localStorage.getItem(QUESTIONNAIRE_PACKAGE_REQUEST_METHOD)
+            )
+          );
+          break;
+        }
+        case 3: {
+          loadQuestionnaireResponse();
+          dispatch(resetCurrentRequest());
+          dispatch(updateIsProcess(true));
+
+          const questionnaireRequest = questionnaireResponseRequestString
+            ? JSON.parse(questionnaireResponseRequestString)
+            : {};
+          dispatch(updateCurrentRequest(questionnaireRequest));
+
+          const questionnaireResponse = questionnaireResponseString
+            ? JSON.parse(questionnaireResponseString)
+            : {};
+          dispatch(updateCurrentResponse(questionnaireResponse));
+
+          dispatch(
+            updateCurrentRequestUrl(
+              localStorage.getItem(QUESTIONNAIRE_RESPONSE_URL)
+            )
+          );
+          dispatch(
+            updateCurrentRequestMethod(
+              localStorage.getItem(QUESTIONNAIRE_RESPONSE_METHOD)
+            )
+          );
+          break;
+        }
+        case 4: {
+          dispatch(resetCurrentRequest());
+          dispatch(updateIsProcess(true));
+
+          const claimRequestString = localStorage.getItem(CLAIM_REQUEST);
+          console.log(claimRequestString);
+          const claimRequest = claimRequestString
+            ? JSON.parse(claimRequestString)
+            : {};
+          dispatch(updateCurrentRequest(claimRequest));
+
+          const claimResponse = claimResponseString
+            ? JSON.parse(claimResponseString)
+            : {};
+          dispatch(updateCurrentResponse(claimResponse));
+
+          dispatch(
+            updateCurrentRequestUrl(localStorage.getItem(CLAIM_REQUEST_URL))
+          );
+          dispatch(
+            updateCurrentRequestMethod(
+              localStorage.getItem(CLAIM_REQUEST_METHOD)
+            )
+          );
+          break;
+        }
+        default: {
+          break;
+        }
+      }
+    }
+    handleStepLoading(globalActiveStep);
+  }, [
+    globalActiveStep,
+    cdsResponseString,
+    questionnaireResponseString,
+    questionnaireResponseRequestString,
+    claimResponseString,
+  ]);
 
   const stepsArray: Steps[] = useSelector(
     (state: any) => state.commonStoarge.stepsArray
@@ -87,7 +253,7 @@ export default function HorizontalNonLinearStepper() {
   const loadQuestionnaireResponse = () => {
     axios
       .get(
-        "/choreo-apis/cms-0057-f/questionnaire-response-fh/v1/fhir/r4/QuestionnaireResponse" +
+        Config.questionnaire_response +
           `?subject=Patient/${patientId}&authored=ge${timestamp}`
       )
       .then(async (response) => {
@@ -125,7 +291,6 @@ export default function HorizontalNonLinearStepper() {
           }
           return;
         } else {
-          console.log("Else");
           localStorage.setItem(
             QUESTIONNAIRE_RESPONSE,
             JSON.stringify({
@@ -302,13 +467,7 @@ export default function HorizontalNonLinearStepper() {
     }
   };
 
-  const [currentStep, setCurrentStep] = React.useState(-1);
-  const globalActiveStep = useSelector(
-    (state: any) => state.commonStoarge.activeStep
-  );
-
   useEffect(() => {
-    console.log(globalActiveStep);
     setCurrentStep(globalActiveStep);
   }, [globalActiveStep]);
 
@@ -321,10 +480,11 @@ export default function HorizontalNonLinearStepper() {
         borderColor: "#000000",
       }}
     >
-      <Stepper alternativeLabel nonLinear activeStep={currentStep}>
+      <Stepper alternativeLabel activeStep={currentStep}>
         {stepsArray.map((step, index) => (
           <Step key={step.name} completed={step.status == StepStatus.COMPLETED}>
             <StepButton
+              sx={{ height: "70px" }}
               disabled={step.status == StepStatus.NOT_STARTED}
               onClick={handleStep(index)}
             >

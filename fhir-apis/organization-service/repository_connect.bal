@@ -154,7 +154,7 @@ function init() returns error? {
                 }
             ],
             "active": true,
-            "name": "UnitedCare Health Insurance",
+            "name": "KindCover Health Insurance",
             "type": [
                 {
                     "coding": [
@@ -174,7 +174,7 @@ function init() returns error? {
                 },
                 {
                     "system": "email",
-                    "value": "support@unitedcare.com",
+                    "value": "support@kindcover.com",
                     "use": "work"
                 }
             ],
@@ -182,16 +182,16 @@ function init() returns error? {
                 {
                     "line": ["456 Insurance Ave"],
                     "city": "Insuretown",
-                    "state": "CA",
-                    "postalCode": "90310",
+                    "state": "OH",
+                    "postalCode": "43004",
                     "country": "US"
                 }
             ],
             "contact": [
                 {
                     "name": {
-                        "family": "Doe",
-                        "given": ["John"]
+                        "family": "Adam",
+                        "given": ["Nickman"]
                     },
                     "telecom": [
                         {
@@ -201,7 +201,7 @@ function init() returns error? {
                         },
                         {
                             "system": "email",
-                            "value": "johndoe@unitedcare.com",
+                            "value": "adam@kindcover.com",
                             "use": "work"
                         }
                     ],

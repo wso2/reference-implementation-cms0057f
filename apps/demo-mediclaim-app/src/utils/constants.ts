@@ -104,4 +104,19 @@ export const fhirOperationConfigs = [
       { name: "created", label: "Created After", type: "date", required: false },
     ],
   },
+  {
+    id: "diagnostic-report",
+    name: "Diagnostic Report",
+    endpoint: "/diag-report-service/fhir/r4/DiagnosticReport",
+    showSearchButton: false,
+    params: [
+      {
+        name: "patient",
+        label: "Patient ID",
+        type: "text",
+        required: true,
+        disabled: true,
+      }
+    ],
+  },
 ];

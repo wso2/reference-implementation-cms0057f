@@ -412,6 +412,8 @@ const Operations: React.FC = () => {
         return renderCoverageTable();
       case "ClaimResponse":
         return renderClaimResponseTable();
+      case "DiagnosticReport":
+        return renderDiagReportResponseTable();
       default:
         return (
           <div className="text-center py-6 text-muted-foreground">
@@ -581,6 +583,42 @@ const Operations: React.FC = () => {
                 <TableCell>{payment}</TableCell>
                 <TableCell>{eob?.outcome || "N/A"}</TableCell>
                 <TableCell>{eob?.disposition || "N/A"}</TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
+    );
+  };
+
+  // Function to render ExplanationOfBenefit table
+  const renderDiagReportResponseTable = () => {
+    return (
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>ID</TableHead>
+            <TableHead>Payer</TableHead>
+            <TableHead>Provider</TableHead>
+            <TableHead>Effective Date</TableHead>
+            <TableHead>Status</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {responseData.entry.map((entry: any, index: number) => {
+            const eob = entry.resource;
+            const identifier = eob?.identifier[0]?.id || eob?.id || "N/A";
+            const payer = eob?.basedOn?.display || "N/A";
+            const provider = eob?.performer?.display || "N/A";
+            const date = eob?.effectivePeriod?.start || eob?.effectiveDateTime || "N/A";
+
+            return (
+              <TableRow key={`eob-${index}`}>
+                <TableCell>{identifier || "N/A"}</TableCell>
+                <TableCell>{payer || "N/A"}</TableCell>
+                <TableCell>{provider || "N/A"}</TableCell>
+                <TableCell>{date || "N/A"}</TableCell>
+                <TableCell>{eob?.status || "N/A"}</TableCell>
               </TableRow>
             );
           })}

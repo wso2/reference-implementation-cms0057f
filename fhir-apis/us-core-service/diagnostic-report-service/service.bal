@@ -18,12 +18,13 @@
 import ballerina/http;
 import ballerinax/health.fhir.r4;
 import ballerinax/health.fhirr4;
-import ballerinax/health.fhir.r4.uscore700;
+import ballerinax/health.fhir.r4.international401;
 
 # Generic type to wrap all implemented profiles.
 # Add required profile types here.
 # public type DiagnosticReport r4:DiagnosticReport|<other_DiagnosticReport_Profile>;
-public type DiagnosticReport uscore700:USCoreDiagnosticReportProfileLaboratoryReporting;
+public type DiagnosticReport international401:DiagnosticReport;
+
 
 # initialize source system endpoint here
 
@@ -33,7 +34,7 @@ service / on new fhirr4:Listener(9090, apiConfig) {
 
     // Read the current state of single resource based on its id.
     isolated resource function get fhir/r4/DiagnosticReport/[string id] (r4:FHIRContext fhirContext) returns DiagnosticReport|r4:OperationOutcome|r4:FHIRError {
-        return getById(id);
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
     }
 
     // Read the state of a specific version of a resource based on its id.
@@ -42,14 +43,26 @@ service / on new fhirr4:Listener(9090, apiConfig) {
     }
 
     // Search for resources based on a set of criteria.
-    isolated resource function get fhir/r4/DiagnosticReport (r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
-        r4:Bundle searchResult = check search(getQueryParamsMap(fhirContext.getRequestSearchParameters()));
-        return searchResult;
+    isolated resource function get fhir/r4/DiagnosticReport (r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError|error {
+        r4:RequestSearchParameter[] & readonly patientId = fhirContext.getRequestSearchParameters().get("patient");
+        if patientId.length() > 0 {
+            // Call the database function to get the lab reports by patient ID
+            LabReport[] labReports = check getLabReportsByPatientId(patientId[0].value);
+            r4:BundleEntry[] entries = [];
+            r4:Bundle bundle = {resourceType: "Bundle", 'type: "searchset", total: labReports.length(), entry: entries};
+            foreach LabReport report in labReports {
+                DiagnosticReport diagnosticReport = mapLabReportToDiagnosticReport(report);
+                r4:BundleEntry entry = {'resource: diagnosticReport};
+                entries.push(entry);
+            }
+            return bundle;
+        }
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
     }
 
     // Create a new resource.
     isolated resource function post fhir/r4/DiagnosticReport (r4:FHIRContext fhirContext, DiagnosticReport procedure) returns DiagnosticReport|r4:OperationOutcome|r4:FHIRError {
-        return create(procedure.toJson());
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
     }
 
     // Update the current state of a resource completely.

@@ -608,8 +608,8 @@ const Operations: React.FC = () => {
           {responseData.entry.map((entry: any, index: number) => {
             const eob = entry.resource;
             const identifier = eob?.identifier[0]?.id || eob?.id || "N/A";
-            const payer = eob?.basedOn?.display || "N/A";
-            const provider = eob?.performer?.display || "N/A";
+            const payer = eob?.basedOn[0]?.display || "N/A";
+            const provider = eob?.performer[0]?.display || "N/A";
             const date = eob?.effectivePeriod?.start || eob?.effectiveDateTime || "N/A";
 
             return (

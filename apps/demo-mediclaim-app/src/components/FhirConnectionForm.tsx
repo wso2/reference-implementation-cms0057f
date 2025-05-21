@@ -44,12 +44,14 @@ interface SmartConfiguration {
   capabilities: string[];
 }
 
+const Config = window.Config;
+
 const FhirConnectionForm: React.FC = () => {
   const { toast } = useToast();
   const [formData, setFormData] = useState<FormData>({
-    baseUrl: "https://mediclaim.cms-wso2.publicvm.com",
-    consumerKey: "tB8I1tBZFYi5UxKfR_fc9kZmUqIa",
-    consumerSecret: "",
+    baseUrl: Config.baseUrl ||"https://mediclaim.cms-wso2.publicvm.com",
+    consumerKey: Config.consumerKey || "tB8I1tBZFYi5UxKfR_fc9kZmUqIa",
+    consumerSecret: Config.consumerSecret,
     redirectUri: `${window.location.origin}/api-view`,
     practitionerMode: false,
   });

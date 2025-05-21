@@ -27,6 +27,23 @@ import Layout from "./pages/Layout";
 
 const queryClient = new QueryClient();
 
+// Extend the Window interface to include the Config property
+declare global {
+  interface Window {
+    Config: {
+      baseUrl: string;
+      consumerKey: string;
+      consumerSecret: string;
+
+      patientEndpoint: string;
+      explanationOfBenefitsEndpoint: string;
+      coverageEndpoint: string;
+      claimResponseEndpoint: string;
+      diagnosticReportEndpoint: string;
+    };
+  }
+}
+
 const App = () => {
   return (
     <QueryClientProvider client={queryClient}>

@@ -34,6 +34,8 @@ declare global {
       baseUrl: string;
       consumerKey: string;
       consumerSecret: string;
+      wellKnownEndpoint: string;
+      audienceEndpoint: string;
 
       patientEndpoint: string;
       explanationOfBenefitsEndpoint: string;

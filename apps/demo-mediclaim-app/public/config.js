@@ -14,14 +14,51 @@
 // specific language governing permissions and limitations
 // under the License.
 
-window.Config = {
-  baseUrl: "https://mediclaim.cms-wso2.publicvm.com",
-  consumerKey: "tB8I1tBZFYi5UxKfR_fc9kZmUqIa",
-  consumerSecret: "",
+// 1. Connect to a standard FHIR server
 
-  patientEndpoint: "/patient-service/fhir/r4/Patient",
-  explanationOfBenefitsEndpoint: "/eob-service/fhir/r4/ExplanationOfBenefit",
-  coverageEndpoint: "/coverage-service/fhir/r4/Coverage",
-  claimResponseEndpoint: "/claimresponse-service/fhir/r4/ClaimResponse",
-  diagnosticReportEndpoint: "/diag-report-service/fhir/r4/DiagnosticReport",
+window.Config = {
+  baseUrl: "",
+  consumerKey: "",
+  consumerSecret: "",
+  wellKnownEndpoint: "/.well-known/smart-configuration",
+  audienceEndpoint: "",
+
+  patientEndpoint: "/Patient",
+  explanationOfBenefitsEndpoint: "/ExplanationOfBenefit",
+  coverageEndpoint: "/Coverage",
+  claimResponseEndpoint: "/ClaimResponse",
+  diagnosticReportEndpoint: "/DiagnosticReport",
 };
+
+// 2. Connect to launch.smarthealthit.org FHIR server
+
+// window.Config = {
+//   baseUrl:
+//     "https://launch.smarthealthit.org/v/r4/sim/WzMsIiIsIiIsIkFVVE8iLDAsMCwwLCIiLCIiLCIiLCIiLCIiLCIiLCIiLDEsMCwiIl0/fhir",
+//   consumerKey: "anything",
+//   consumerSecret: "anything",
+//   wellKnownEndpoint: "/.well-known/smart-configuration",
+//   audienceEndpoint: "",
+
+//   patientEndpoint: "/Patient",
+//   explanationOfBenefitsEndpoint: "/ExplanationOfBenefit",
+//   coverageEndpoint: "/Coverage",
+//   claimResponseEndpoint: "/ClaimResponse",
+//   diagnosticReportEndpoint: "/DiagnosticReport",
+// };
+
+// 3. Connect to WSO2 Choreo hosted FHIR server
+
+// window.Config = {
+//   baseUrl: "https://mediclaim.cms-wso2.publicvm.com",
+//   consumerKey: "tB8I1tBZFYi5UxKfR_fc9kZmUqIa",
+//   consumerSecret: "",
+//   wellKnownEndpoint: "/fhir/r4/.well-known/smart-configuration",
+//   audienceEndpoint: "/fhir/r4",
+
+//   patientEndpoint: "/patient-service/fhir/r4/Patient",
+//   explanationOfBenefitsEndpoint: "/eob-service/fhir/r4/ExplanationOfBenefit",
+//   coverageEndpoint: "/coverage-service/fhir/r4/Coverage",
+//   claimResponseEndpoint: "/claimresponse-service/fhir/r4/ClaimResponse",
+//   diagnosticReportEndpoint: "/diag-report-service/fhir/r4/DiagnosticReport",
+// };

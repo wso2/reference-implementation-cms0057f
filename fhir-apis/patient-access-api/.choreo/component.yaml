@@ -1,0 +1,12 @@
+schemaVersion: 1.2
+endpoints:
+    - name: fhir-patient-api
+      displayName: FHIR Patient API
+      service:
+        basePath: /fhir/r4/Patient
+        port: 9090
+      type: REST
+      networkVisibilities:
+        - Project
+        - Public
+      schemaFilePath: oas/PatientAPI.yaml

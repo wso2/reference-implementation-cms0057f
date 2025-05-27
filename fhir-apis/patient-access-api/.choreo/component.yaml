@@ -9,4 +9,92 @@ endpoints:
       networkVisibilities:
         - Project
         - Public
-      schemaFilePath: oas/PatientAPI.yaml
+      schemaFilePath: oas/Patient.yaml
+
+    - name: fhir-claim-api
+      displayName: FHIR Claim API
+      service:
+        basePath: /fhir/r4/Claim
+        port: 9091
+      type: REST
+      networkVisibilities:
+        - Project
+        - Public
+      schemaFilePath: oas/Claim.yaml
+
+    - name: fhir-claim-submission-api
+      displayName: FHIR Claim Submission API
+      service:
+        basePath: /fhir/r4/Claim/submit
+        port: 9091
+      type: REST
+      networkVisibilities:
+        - Project
+        - Public
+      schemaFilePath: oas/Parameters.yaml
+
+    - name: fhir-claim-response-api
+      displayName: FHIR ClaimResponse API
+      service:
+        basePath: /fhir/r4/ClaimResponse
+        port: 9092
+      type: REST
+      networkVisibilities:
+        - Project
+        - Public
+      schemaFilePath: oas/ClaimResponse.yaml
+    
+    - name: fhir-coverage-api
+      displayName: FHIR Coverage API
+      service:
+        basePath: /fhir/r4/Coverage
+        port: 9093
+      type: REST
+      networkVisibilities:
+        - Project
+        - Public
+      schemaFilePath: oas/Coverage.yaml
+    
+    - name: fhir-explanation-of-benefit-api
+      displayName: FHIR ExplanationOfBenefit API
+      service:
+        basePath: /fhir/r4/ExplanationOfBenefit
+        port: 9094
+      type: REST
+      networkVisibilities:
+        - Project
+        - Public
+      schemaFilePath: oas/ExplanationOfBenefit.yaml
+
+    - name: fhir-medication-request-api
+      displayName: FHIR MedicationRequest API
+      service:
+        basePath: /fhir/r4/MedicationRequest
+        port: 9095
+      type: REST
+      networkVisibilities:
+        - Project
+        - Public
+      schemaFilePath: oas/MedicationRequest.yaml
+
+    - name: fhir-organization-api
+      displayName: FHIR Organization API
+      service:
+        basePath: /fhir/r4/Organization
+        port: 9096
+      type: REST
+      networkVisibilities:
+        - Project
+        - Public
+      schemaFilePath: oas/Organization.yaml
+
+    - name: fhir-practitioner-api
+      displayName: FHIR Practitioner API
+      service:
+        basePath: /fhir/r4/Practitioner
+        port: 9097
+      type: REST
+      networkVisibilities:
+        - Project
+        - Public
+      schemaFilePath: oas/Practitioner.yaml

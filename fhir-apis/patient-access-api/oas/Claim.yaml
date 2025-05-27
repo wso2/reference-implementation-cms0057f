@@ -14,7 +14,7 @@ tags:
   - name: Claim
   - name: 4.0.1
 paths:
-  /fhir/r4/Claim:
+  /:
     get:
       tags:
         - GET
@@ -190,7 +190,7 @@ paths:
       responses:
         "201":
           description: Successfully created Claim
-  /fhir/r4/Claim/{id}:
+  /{id}:
     get:
       tags:
         - GET

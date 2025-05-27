@@ -21,7 +21,7 @@ tags:
 - name: ExplanationOfBenefit
 - name: 4.0.1
 paths:
-  /fhir/r4/ExplanationOfBenefit:
+  /:
     get:
       tags:
       - GET
@@ -193,7 +193,7 @@ paths:
       responses:
         "201":
           description: Successfully created ExplanationOfBenefit
-  /fhir/r4/ExplanationOfBenefit/{id}:
+  /{id}:
     get:
       tags:
       - GET

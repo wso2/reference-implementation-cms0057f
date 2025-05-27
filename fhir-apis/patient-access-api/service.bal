@@ -137,87 +137,7 @@ service /fhir/r4/Patient on new fhirr4:Listener(9090, patientApiConfig) {
 }
 
 // ######################################################################################################################
-// # ClaimResponse API                                                                                                  #
-// ###################################################################################################################### 
-
-public type ClaimResponse davincipas:PASClaimResponse;
-
-# Configurations for the claim repository service.
-// configurable string serviceURL = os:getEnv("CHOREO_CLAIM_RESPONSE_SERVICE_REPOSITORY_CONNECTION_SERVICEURL");
-// configurable string consumerKey = os:getEnv("CHOREO_CLAIM_RESPONSE_SERVICE_REPOSITORY_CONNECTION_CONSUMERKEY");
-// configurable string consumerSecret = os:getEnv("CHOREO_CLAIM_RESPONSE_SERVICE_REPOSITORY_CONNECTION_CONSUMERSECRET");
-// configurable string tokenURL = os:getEnv("CHOREO_CLAIM_RESPONSE_SERVICE_REPOSITORY_CONNECTION_TOKENURL");
-// configurable string choreoApiKey = os:getEnv("CHOREO_CLAIM_RESPONSE_SERVICE_REPOSITORY_CONNECTION_APIKEY");
-configurable string serviceURL = "https://www.google.com";
-configurable string consumerKey = "";
-configurable string consumerSecret = "";
-configurable string tokenURL = "";
-configurable string choreoApiKey = "";
-
-service /fhir/r4/ClaimResponse on new fhirr4:Listener(9091, claimResponseApiConfig) {
-
-    // Read the current state of single resource based on its id.
-    isolated resource function get [string id](r4:FHIRContext fhirContext) returns http:Response|r4:OperationOutcome|r4:FHIRError|error {
-        ClaimResponse claimResponse = check getByIdClaimResponse(id);
-        http:Response response = new;
-        response.setJsonPayload(claimResponse.toJson());
-        response.statusCode = http:STATUS_OK;
-        return response;
-    }
-
-    // Read the state of a specific version of a resource based on its id.
-    isolated resource function get [string id]/_history/[string vid](r4:FHIRContext fhirContext) returns ClaimResponse|r4:OperationOutcome|r4:FHIRError {
-        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
-    }
-
-    // Search for resources based on a set of criteria.
-    isolated resource function get .(r4:FHIRContext fhirContext) returns http:Response|r4:OperationOutcome|r4:FHIRError|error {
-        map<string[]> queryParamsMap = getQueryParamsMap(fhirContext.getRequestSearchParameters());
-
-        http:Response response = new;
-        r4:Bundle bundle = check searchClaimResponse(queryParamsMap);
-        response.setJsonPayload(bundle.toJson());
-        response.statusCode = http:STATUS_OK;
-        return response;
-    }
-
-    // Create a new resource.
-    isolated resource function post .(r4:FHIRContext fhirContext, ClaimResponse procedure) returns error|http:Response {
-        http:Response response = new;
-        ClaimResponse result = check createClaimResponse(procedure);
-        response.setJsonPayload(result.toJson());
-        response.statusCode = http:STATUS_CREATED;
-        return response;
-    }
-
-    // Update the current state of a resource completely.
-    isolated resource function put [string id](r4:FHIRContext fhirContext, ClaimResponse claimresponse) returns ClaimResponse|r4:OperationOutcome|r4:FHIRError {
-        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
-    }
-
-    // Update the current state of a resource partially.
-    isolated resource function patch [string id](r4:FHIRContext fhirContext, json patch) returns ClaimResponse|r4:OperationOutcome|r4:FHIRError {
-        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
-    }
-
-    // Delete a resource.
-    isolated resource function delete [string id](r4:FHIRContext fhirContext) returns r4:OperationOutcome|r4:FHIRError {
-        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
-    }
-
-    // Retrieve the update history for a particular resource.
-    isolated resource function get [string id]/_history(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
-        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
-    }
-
-    // Retrieve the update history for all resources.
-    isolated resource function get _history(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
-        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
-    }
-}
-
-// ######################################################################################################################
-// # ClaimResponse API                                                                                                  #
+// # Claim API                                                                                                  #
 // ###################################################################################################################### 
 
 public type Claim davincipas:PASClaim;
@@ -226,7 +146,7 @@ public type Claim davincipas:PASClaim;
 
 # A service representing a network-accessible API
 # bound to port `9090`.
-service /fhir/r4/Claim on new fhirr4:Listener(9092, ClaimApiConfig) {
+service /fhir/r4/Claim on new fhirr4:Listener(9091, ClaimApiConfig) {
 
     // Read the current state of single resource based on its id.
     isolated resource function get [string id](r4:FHIRContext fhirContext) returns error|http:Response {
@@ -291,14 +211,94 @@ service /fhir/r4/Claim on new fhirr4:Listener(9092, ClaimApiConfig) {
 
 public type Parameters international401:Parameters;
 
-service /fhir/r4/Claim on new fhirr4:Listener(9130, claimSubmissionApiConfig) {
+service /fhir/r4/Claim/submit on new fhirr4:Listener(9130, claimSubmissionApiConfig) {
 
     // Create a new resource.
-    isolated resource function post submit(r4:FHIRContext fhirContext, Parameters parameters) returns error|http:Response {
+    isolated resource function post .(r4:FHIRContext fhirContext, Parameters parameters) returns error|http:Response {
         international401:Parameters submitResult = check claimSubmit(parameters);
         http:Response response = new;
         response.setJsonPayload(submitResult.toJson());
         return response;
+    }
+}
+
+// ######################################################################################################################
+// # ClaimResponse API                                                                                                  #
+// ###################################################################################################################### 
+
+public type ClaimResponse davincipas:PASClaimResponse;
+
+# Configurations for the claim repository service.
+// configurable string serviceURL = os:getEnv("CHOREO_CLAIM_RESPONSE_SERVICE_REPOSITORY_CONNECTION_SERVICEURL");
+// configurable string consumerKey = os:getEnv("CHOREO_CLAIM_RESPONSE_SERVICE_REPOSITORY_CONNECTION_CONSUMERKEY");
+// configurable string consumerSecret = os:getEnv("CHOREO_CLAIM_RESPONSE_SERVICE_REPOSITORY_CONNECTION_CONSUMERSECRET");
+// configurable string tokenURL = os:getEnv("CHOREO_CLAIM_RESPONSE_SERVICE_REPOSITORY_CONNECTION_TOKENURL");
+// configurable string choreoApiKey = os:getEnv("CHOREO_CLAIM_RESPONSE_SERVICE_REPOSITORY_CONNECTION_APIKEY");
+configurable string serviceURL = "https://www.google.com";
+configurable string consumerKey = "";
+configurable string consumerSecret = "";
+configurable string tokenURL = "";
+configurable string choreoApiKey = "";
+
+service /fhir/r4/ClaimResponse on new fhirr4:Listener(9092, claimResponseApiConfig) {
+
+    // Read the current state of single resource based on its id.
+    isolated resource function get [string id](r4:FHIRContext fhirContext) returns http:Response|r4:OperationOutcome|r4:FHIRError|error {
+        ClaimResponse claimResponse = check getByIdClaimResponse(id);
+        http:Response response = new;
+        response.setJsonPayload(claimResponse.toJson());
+        response.statusCode = http:STATUS_OK;
+        return response;
+    }
+
+    // Read the state of a specific version of a resource based on its id.
+    isolated resource function get [string id]/_history/[string vid](r4:FHIRContext fhirContext) returns ClaimResponse|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    // Search for resources based on a set of criteria.
+    isolated resource function get .(r4:FHIRContext fhirContext) returns http:Response|r4:OperationOutcome|r4:FHIRError|error {
+        map<string[]> queryParamsMap = getQueryParamsMap(fhirContext.getRequestSearchParameters());
+
+        http:Response response = new;
+        r4:Bundle bundle = check searchClaimResponse(queryParamsMap);
+        response.setJsonPayload(bundle.toJson());
+        response.statusCode = http:STATUS_OK;
+        return response;
+    }
+
+    // Create a new resource.
+    isolated resource function post .(r4:FHIRContext fhirContext, ClaimResponse procedure) returns error|http:Response {
+        http:Response response = new;
+        ClaimResponse result = check createClaimResponse(procedure);
+        response.setJsonPayload(result.toJson());
+        response.statusCode = http:STATUS_CREATED;
+        return response;
+    }
+
+    // Update the current state of a resource completely.
+    isolated resource function put [string id](r4:FHIRContext fhirContext, ClaimResponse claimresponse) returns ClaimResponse|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    // Update the current state of a resource partially.
+    isolated resource function patch [string id](r4:FHIRContext fhirContext, json patch) returns ClaimResponse|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    // Delete a resource.
+    isolated resource function delete [string id](r4:FHIRContext fhirContext) returns r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    // Retrieve the update history for a particular resource.
+    isolated resource function get [string id]/_history(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    // Retrieve the update history for all resources.
+    isolated resource function get _history(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
     }
 }
 
@@ -494,51 +494,51 @@ public type Organization uscore501:USCoreOrganizationProfile;
 
 # A service representing a network-accessible API
 # bound to port `9090`.
-service / on new fhirr4:Listener(9096, organizationApiConfig) {
+service /fhir/r4/Organization on new fhirr4:Listener(9096, organizationApiConfig) {
 
     // Read the current state of single resource based on its id.
-    isolated resource function get fhir/r4/Organization/[string id](r4:FHIRContext fhirContext) returns Organization|r4:OperationOutcome|r4:FHIRError {
+    isolated resource function get [string id](r4:FHIRContext fhirContext) returns Organization|r4:OperationOutcome|r4:FHIRError {
         return getByIdOrganization(id);
     }
 
     // Read the state of a specific version of a resource based on its id.
-    isolated resource function get fhir/r4/Organization/[string id]/_history/[string vid](r4:FHIRContext fhirContext) returns Organization|r4:OperationOutcome|r4:FHIRError {
+    isolated resource function get [string id]/_history/[string vid](r4:FHIRContext fhirContext) returns Organization|r4:OperationOutcome|r4:FHIRError {
         return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
     }
 
     // Search for resources based on a set of criteria.
-    isolated resource function get fhir/r4/Organization(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+    isolated resource function get .(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
         map<string[]> queryParamsMap = getQueryParamsMap(fhirContext.getRequestSearchParameters());
         return searchOrganization(queryParamsMap);
     }
 
     // Create a new resource.
-    isolated resource function post fhir/r4/Organization(r4:FHIRContext fhirContext, Organization organization) returns Organization|r4:OperationOutcome|r4:FHIRError {
+    isolated resource function post .(r4:FHIRContext fhirContext, Organization organization) returns Organization|r4:OperationOutcome|r4:FHIRError {
         return createOrganization(organization);
     }
 
     // Update the current state of a resource completely.
-    isolated resource function put fhir/r4/Organization/[string id](r4:FHIRContext fhirContext, Organization organization) returns Organization|r4:OperationOutcome|r4:FHIRError {
+    isolated resource function put [string id](r4:FHIRContext fhirContext, Organization organization) returns Organization|r4:OperationOutcome|r4:FHIRError {
         return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
     }
 
     // Update the current state of a resource partially.
-    isolated resource function patch fhir/r4/Organization/[string id](r4:FHIRContext fhirContext, json patch) returns Organization|r4:OperationOutcome|r4:FHIRError {
+    isolated resource function patch [string id](r4:FHIRContext fhirContext, json patch) returns Organization|r4:OperationOutcome|r4:FHIRError {
         return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
     }
 
     // Delete a resource.
-    isolated resource function delete fhir/r4/Organization/[string id](r4:FHIRContext fhirContext) returns r4:OperationOutcome|r4:FHIRError {
+    isolated resource function delete [string id](r4:FHIRContext fhirContext) returns r4:OperationOutcome|r4:FHIRError {
         return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
     }
 
     // Retrieve the update history for a particular resource.
-    isolated resource function get fhir/r4/Organization/[string id]/_history(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+    isolated resource function get [string id]/_history(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
         return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
     }
 
     // Retrieve the update history for all resources.
-    isolated resource function get fhir/r4/Organization/_history(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+    isolated resource function get _history(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
         return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
     }
 }
@@ -553,36 +553,36 @@ public type Practitioner uscore501:USCorePractitionerProfile;
 
 # A service representing a network-accessible API
 # bound to port `9090`.
-service / on new fhirr4:Listener(9097, practitionerApiConfig) {
+service /fhir/r4/Practitioner on new fhirr4:Listener(9097, practitionerApiConfig) {
 
     // Read the current state of single resource based on its id.
-    isolated resource function get fhir/r4/Practitioner/[string id](r4:FHIRContext fhirContext) returns Practitioner|r4:OperationOutcome|r4:FHIRError {
+    isolated resource function get [string id](r4:FHIRContext fhirContext) returns Practitioner|r4:OperationOutcome|r4:FHIRError {
         return getByIdPractitioner(id);
     }
 
     // Read the state of a specific version of a resource based on its id.
-    isolated resource function get fhir/r4/Practitioner/[string id]/_history/[string vid](r4:FHIRContext fhirContext) returns Practitioner|r4:OperationOutcome|r4:FHIRError {
+    isolated resource function get [string id]/_history/[string vid](r4:FHIRContext fhirContext) returns Practitioner|r4:OperationOutcome|r4:FHIRError {
         return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
     }
 
     // Search for resources based on a set of criteria.
-    isolated resource function get fhir/r4/Practitioner(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+    isolated resource function get .(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
         map<string[]> queryParamsMap = getQueryParamsMap(fhirContext.getRequestSearchParameters());
         return searchPractitioner(queryParamsMap);
     }
 
     // Create a new resource.
-    isolated resource function post fhir/r4/Practitioner(r4:FHIRContext fhirContext, Practitioner practitioner) returns Practitioner|r4:OperationOutcome|r4:FHIRError {
+    isolated resource function post .(r4:FHIRContext fhirContext, Practitioner practitioner) returns Practitioner|r4:OperationOutcome|r4:FHIRError {
         return createPractitioner(practitioner);
     }
 
     // Update the current state of a resource completely.
-    isolated resource function put fhir/r4/Practitioner/[string id](r4:FHIRContext fhirContext, Practitioner practitioner) returns Practitioner|r4:OperationOutcome|r4:FHIRError {
+    isolated resource function put [string id](r4:FHIRContext fhirContext, Practitioner practitioner) returns Practitioner|r4:OperationOutcome|r4:FHIRError {
         return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
     }
 
     // Update the current state of a resource partially.
-    isolated resource function patch fhir/r4/Practitioner/[string id](r4:FHIRContext fhirContext, json patch) returns Practitioner|r4:OperationOutcome|r4:FHIRError {
+    isolated resource function patch [string id](r4:FHIRContext fhirContext, json patch) returns Practitioner|r4:OperationOutcome|r4:FHIRError {
         return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
     }
 

@@ -14,7 +14,7 @@ tags:
   - name: Coverage
   - name: 4.0.1
 paths:
-  /fhir/r4/Coverage:
+  /:
     get:
       tags:
         - GET
@@ -138,7 +138,7 @@ paths:
       responses:
         "201":
           description: Successfully created Coverage
-  /fhir/r4/Coverage/{id}:
+  /{id}:
     get:
       tags:
         - GET

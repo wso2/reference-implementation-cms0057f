@@ -14,7 +14,7 @@ tags:
   - name: Organization
   - name: 4.0.1
 paths:
-  /fhir/r4/Organization:
+  /:
     get:
       tags:
         - GET
@@ -163,7 +163,7 @@ paths:
       responses:
         "201":
           description: Successfully created Organization
-  /fhir/r4/Organization/{id}:
+  /{id}:
     get:
       tags:
         - GET

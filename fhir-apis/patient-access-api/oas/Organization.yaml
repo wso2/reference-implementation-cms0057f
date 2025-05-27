@@ -157,7 +157,7 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
+          application/fhir+json:
             schema:
               $ref: "#/components/schemas/Organization"
       responses:

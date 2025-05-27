@@ -40,6 +40,12 @@ paths:
       tags:
       - POST
       - Patient
+      requestBody:
+        required: true
+        content:
+          application/fhir+json:
+            schema:
+              $ref: "#/components/schemas/Patient"
       responses:
         "201":
           description: create Patient operation successful

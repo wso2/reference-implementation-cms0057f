@@ -98,3 +98,8 @@ endpoints:
         - Project
         - Public
       schemaFilePath: oas/Practitioner.yaml
+
+dependencies:
+    connectionReferences:
+    - name: patient-access-api-claim-repo
+      resourceRef: service:/cms-0057-f/claim-repository-service/v1/176f4/PUBLIC

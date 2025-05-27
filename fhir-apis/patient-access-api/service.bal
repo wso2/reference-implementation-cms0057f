@@ -15,6 +15,7 @@
 // Developers are allowed to modify this file as per the requirement.
 import ballerina/http;
 import ballerina/log;
+import ballerina/os;
 import ballerinax/health.clients.fhir;
 import ballerinax/health.fhir.r4;
 import ballerinax/health.fhirr4;
@@ -229,16 +230,11 @@ service /fhir/r4/Claim/submit on new fhirr4:Listener(9130, claimSubmissionApiCon
 public type ClaimResponse davincipas:PASClaimResponse;
 
 # Configurations for the claim repository service.
-// configurable string serviceURL = os:getEnv("CHOREO_CLAIM_RESPONSE_SERVICE_REPOSITORY_CONNECTION_SERVICEURL");
-// configurable string consumerKey = os:getEnv("CHOREO_CLAIM_RESPONSE_SERVICE_REPOSITORY_CONNECTION_CONSUMERKEY");
-// configurable string consumerSecret = os:getEnv("CHOREO_CLAIM_RESPONSE_SERVICE_REPOSITORY_CONNECTION_CONSUMERSECRET");
-// configurable string tokenURL = os:getEnv("CHOREO_CLAIM_RESPONSE_SERVICE_REPOSITORY_CONNECTION_TOKENURL");
-// configurable string choreoApiKey = os:getEnv("CHOREO_CLAIM_RESPONSE_SERVICE_REPOSITORY_CONNECTION_APIKEY");
-configurable string serviceURL = "https://www.google.com";
-configurable string consumerKey = "";
-configurable string consumerSecret = "";
-configurable string tokenURL = "";
-configurable string choreoApiKey = "";
+configurable string serviceURL = os:getEnv("CHOREO_PATIENT_ACCESS_API_CLAIM_REPO_SERVICEURL");
+configurable string consumerKey = os:getEnv("CHOREO_PATIENT_ACCESS_API_CLAIM_REPO_CONSUMERKEY");
+configurable string consumerSecret = os:getEnv("CHOREO_PATIENT_ACCESS_API_CLAIM_REPO_CONSUMERSECRET");
+configurable string tokenURL = os:getEnv("CHOREO_PATIENT_ACCESS_API_CLAIM_REPO_TOKENURL");
+configurable string choreoApiKey = os:getEnv("CHOREO_PATIENT_ACCESS_API_CLAIM_REPO_CHOREOAPIKEY");
 
 service /fhir/r4/ClaimResponse on new fhirr4:Listener(9092, claimResponseApiConfig) {
 

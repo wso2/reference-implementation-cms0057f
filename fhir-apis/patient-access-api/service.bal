@@ -212,7 +212,7 @@ service /fhir/r4/Claim on new fhirr4:Listener(9091, ClaimApiConfig) {
 
 public type Parameters international401:Parameters;
 
-service /fhir/r4/Claim/submit on new fhirr4:Listener(9130, claimSubmissionApiConfig) {
+service /fhir/r4/Claim/submit on new fhirr4:Listener(9030, claimSubmissionApiConfig) {
 
     // Create a new resource.
     isolated resource function post .(r4:FHIRContext fhirContext, Parameters parameters) returns error|http:Response {

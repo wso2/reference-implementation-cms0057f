@@ -16,7 +16,6 @@
 
 import ballerina/http;
 import ballerina/log;
-import ballerina/os;
 import ballerinax/health.clients.fhir;
 import ballerinax/health.fhir.r4;
 import ballerinax/health.fhirr4;
@@ -213,13 +212,6 @@ service /prv/fhir/r4/Claim on new fhirr4:Listener(9091, ClaimApiConfig) {
 // ###################################################################################################################### 
 
 public type ClaimResponse davincipas:PASClaimResponse;
-
-# Configurations for the claim repository service.
-configurable string serviceURL = os:getEnv("CHOREO_PROVIDER_ACCESS_API_CLAIM_REPO_SERVICEURL");
-configurable string consumerKey = os:getEnv("CHOREO_PROVIDER_ACCESS_API_CLAIM_REPO_CONSUMERKEY");
-configurable string consumerSecret = os:getEnv("CHOREO_PROVIDER_ACCESS_API_CLAIM_REPO_CONSUMERSECRET");
-configurable string tokenURL = os:getEnv("CHOREO_PROVIDER_ACCESS_API_CLAIM_REPO_TOKENURL");
-configurable string choreoApiKey = os:getEnv("CHOREO_PROVIDER_ACCESS_API_CLAIM_REPO_CHOREOAPIKEY");
 
 service /prv/fhir/r4/ClaimResponse on new fhirr4:Listener(9092, claimResponseApiConfig) {
 

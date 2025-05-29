@@ -283,6 +283,21 @@ paths:
       security:
         - default: []
       x-auth-type: Application & Application User
+  /$submit:
+    post:
+      summary: Create a new Claim
+      tags:
+        - POST
+        - Claim
+      requestBody:
+        required: true
+        content:
+          application/fhir+json:
+            schema:
+              $ref: "#/components/schemas/Parameters"
+      responses:
+        "201":
+          description: Successfully created Claim
 components:
   schemas:
     Resource:
@@ -2297,6 +2312,13 @@ components:
           properties:
             total:
               $ref: "#/components/schemas/Money"
+          example: null
+    Parameters:
+      example: null
+      allOf:
+        - $ref: "#/components/schemas/DomainResource"
+        - type: object
+          properties: {}
           example: null
   parameters:
     _lastUpdatedParam:

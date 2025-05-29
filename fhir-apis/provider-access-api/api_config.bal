@@ -183,7 +183,7 @@ final r4:ResourceAPIConfig patientApiConfig = {
                 {
                     name: "return",
                     active: true,
-                    min: 1
+                    min: 0
                 }
             ]
         }
@@ -283,7 +283,22 @@ final r4:ResourceAPIConfig ClaimApiConfig = {
         }
     ],
     operations: [
-
+        {
+            name: "submit",
+            active: true,
+            parameters: [
+                {
+                    name: "resource",
+                    active: true,
+                    min: 1
+                },
+                {
+                    name: "return",
+                    active: true,
+                    min: 0
+                }
+            ]
+        }
     ],
     serverConfig: (),
     authzConfig: ()

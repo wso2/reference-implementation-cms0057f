@@ -32,7 +32,7 @@ import ballerinax/health.fhir.r4.uscore700;
 
 public type Patient uscore501:USCorePatientProfile|international401:Patient;
 
-service /prv/fhir/r4/Patient on new fhirr4:Listener(9090, patientApiConfig) {
+service /fhir/r4/Patient on new fhirr4:Listener(9090, patientApiConfig) {
 
     // Implementation of the $match operation
     isolated resource function post \$match(r4:FHIRContext fhirContext, international401:Parameters parameters) returns r4:FHIRError|r4:Bundle|error {
@@ -139,16 +139,25 @@ service /prv/fhir/r4/Patient on new fhirr4:Listener(9090, patientApiConfig) {
 }
 
 // ######################################################################################################################
-// # Claim API                                                                                                  #
+// # Claim API                                                                                                          #
 // ###################################################################################################################### 
 
 public type Claim davincipas:PASClaim;
+
+public type Parameters international401:Parameters;
 
 # initialize source system endpoint here
 
 # A service representing a network-accessible API
 # bound to port `9090`.
-service /prv/fhir/r4/Claim on new fhirr4:Listener(9091, ClaimApiConfig) {
+service /fhir/r4/Claim on new fhirr4:Listener(9091, ClaimApiConfig) {
+
+    isolated resource function post \$submit(r4:FHIRContext fhirContext, Parameters parameters) returns error|http:Response {
+        international401:Parameters submitResult = check claimSubmit(parameters);
+        http:Response response = new;
+        response.setJsonPayload(submitResult.toJson());
+        return response;
+    }
 
     // Read the current state of single resource based on its id.
     isolated resource function get [string id](r4:FHIRContext fhirContext) returns error|http:Response {
@@ -213,7 +222,7 @@ service /prv/fhir/r4/Claim on new fhirr4:Listener(9091, ClaimApiConfig) {
 
 public type ClaimResponse davincipas:PASClaimResponse;
 
-service /prv/fhir/r4/ClaimResponse on new fhirr4:Listener(9092, claimResponseApiConfig) {
+service /fhir/r4/ClaimResponse on new fhirr4:Listener(9092, claimResponseApiConfig) {
 
     // Read the current state of single resource based on its id.
     isolated resource function get [string id](r4:FHIRContext fhirContext) returns http:Response|r4:OperationOutcome|r4:FHIRError|error {
@@ -285,7 +294,7 @@ public type Coverage international401:Coverage;
 
 # A service representing a network-accessible API
 # bound to port `9090`.
-service /prv/fhir/r4/Coverage on new fhirr4:Listener(9093, coverageApiConfig) {
+service /fhir/r4/Coverage on new fhirr4:Listener(9093, coverageApiConfig) {
 
     // Read the current state of single resource based on its id.
     isolated resource function get [string id](r4:FHIRContext fhirContext) returns Coverage|r4:OperationOutcome|r4:FHIRError {
@@ -405,7 +414,7 @@ public type MedicationRequest uscore501:USCoreMedicationRequestProfile;
 
 # A service representing a network-accessible API
 # bound to port `9090`.
-service /prv/fhir/r4/MedicationRequest on new fhirr4:Listener(9095, medicationRequestApiConfig) {
+service /fhir/r4/MedicationRequest on new fhirr4:Listener(9095, medicationRequestApiConfig) {
 
     // Read the current state of single resource based on its id.
     isolated resource function get [string id](r4:FHIRContext fhirContext) returns MedicationRequest|r4:OperationOutcome|r4:FHIRError {
@@ -467,7 +476,7 @@ public type Encounter uscore700:USCoreEncounterProfile;
 
 # A service representing a network-accessible API
 # bound to port `9090`.
-service /prv/fhir/r4/Encounter on new fhirr4:Listener(9098, encounterApiConfig) {
+service /fhir/r4/Encounter on new fhirr4:Listener(9098, encounterApiConfig) {
 
     // Read the current state of single resource based on its id.
     isolated resource function get [string id](r4:FHIRContext fhirContext) returns Encounter|r4:OperationOutcome|r4:FHIRError {

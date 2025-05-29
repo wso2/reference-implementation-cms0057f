@@ -16,7 +16,6 @@
 
 import ballerina/http;
 import ballerina/log;
-import ballerina/os;
 import ballerinax/health.clients.fhir;
 import ballerinax/health.fhir.r4;
 import ballerinax/health.fhirr4;
@@ -139,16 +138,25 @@ service /fhir/r4/Patient on new fhirr4:Listener(9090, patientApiConfig) {
 }
 
 // ######################################################################################################################
-// # Claim API                                                                                                  #
+// # Claim API                                                                                                          #
 // ###################################################################################################################### 
 
 public type Claim davincipas:PASClaim;
+
+public type Parameters international401:Parameters;
 
 # initialize source system endpoint here
 
 # A service representing a network-accessible API
 # bound to port `9090`.
 service /fhir/r4/Claim on new fhirr4:Listener(9091, ClaimApiConfig) {
+
+    isolated resource function post \$submit(r4:FHIRContext fhirContext, Parameters parameters) returns error|http:Response {
+        international401:Parameters submitResult = check claimSubmit(parameters);
+        http:Response response = new;
+        response.setJsonPayload(submitResult.toJson());
+        return response;
+    }
 
     // Read the current state of single resource based on its id.
     isolated resource function get [string id](r4:FHIRContext fhirContext) returns error|http:Response {
@@ -208,34 +216,10 @@ service /fhir/r4/Claim on new fhirr4:Listener(9091, ClaimApiConfig) {
 }
 
 // ######################################################################################################################
-// # Claim Submission API                                                                                               #
-// ###################################################################################################################### 
-
-public type Parameters international401:Parameters;
-
-service /fhir/r4/Claim/submit on new fhirr4:Listener(9030, claimSubmissionApiConfig) {
-
-    // Create a new resource.
-    isolated resource function post .(r4:FHIRContext fhirContext, Parameters parameters) returns error|http:Response {
-        international401:Parameters submitResult = check claimSubmit(parameters);
-        http:Response response = new;
-        response.setJsonPayload(submitResult.toJson());
-        return response;
-    }
-}
-
-// ######################################################################################################################
 // # ClaimResponse API                                                                                                  #
 // ###################################################################################################################### 
 
 public type ClaimResponse davincipas:PASClaimResponse;
-
-# Configurations for the claim repository service.
-configurable string serviceURL = os:getEnv("CHOREO_PATIENT_ACCESS_API_CLAIM_REPO_SERVICEURL");
-configurable string consumerKey = os:getEnv("CHOREO_PATIENT_ACCESS_API_CLAIM_REPO_CONSUMERKEY");
-configurable string consumerSecret = os:getEnv("CHOREO_PATIENT_ACCESS_API_CLAIM_REPO_CONSUMERSECRET");
-configurable string tokenURL = os:getEnv("CHOREO_PATIENT_ACCESS_API_CLAIM_REPO_TOKENURL");
-configurable string choreoApiKey = os:getEnv("CHOREO_PATIENT_ACCESS_API_CLAIM_REPO_CHOREOAPIKEY");
 
 service /fhir/r4/ClaimResponse on new fhirr4:Listener(9092, claimResponseApiConfig) {
 

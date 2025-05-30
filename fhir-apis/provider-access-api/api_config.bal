@@ -305,25 +305,6 @@ final r4:ResourceAPIConfig ClaimApiConfig = {
 };
 
 # ######################################################################################################################
-# Claim Submission API Configs                                                                                         #
-# ###################################################################################################################### 
-
-final r4:ResourceAPIConfig claimSubmissionApiConfig = {
-    resourceType: "Parameters",
-    profiles: [
-        "http://hl7.org/fhir/StructureDefinition/Parameters"
-    ],
-    defaultProfile: (),
-    searchParameters: [
-    ],
-    operations: [
-
-    ],
-    serverConfig: (),
-    authzConfig: ()
-};
-
-# ######################################################################################################################
 # Coverage API Configs                                                                                                 #
 # ###################################################################################################################### 
 

@@ -38,17 +38,6 @@ endpoints:
         - Public
       schemaFilePath: oas/Claim.yaml
 
-    - name: fhir-claim-submission-api
-      displayName: FHIR Claim Submission API
-      service:
-        basePath: /fhir/r4/Claim/submit
-        port: 9030
-      type: REST
-      networkVisibilities:
-        - Project
-        - Public
-      schemaFilePath: oas/Parameters.yaml
-
     - name: fhir-claim-response-api
       displayName: FHIR ClaimResponse API
       service:

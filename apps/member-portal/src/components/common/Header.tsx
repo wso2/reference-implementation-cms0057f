@@ -35,7 +35,7 @@ const Header = ({ userName, avatarUrl, isLoggedIn }: any) => {
       {/* Left Section: Main Text and Description */}
       <Box>
         <Typography variant="h4" component="div">
-          USPayer Member Portal
+          UnitedCare Health Member Portal
         </Typography>
         <Typography variant="subtitle1" component="div" color="textSecondary">
           Secure, standardized healthcare data access.

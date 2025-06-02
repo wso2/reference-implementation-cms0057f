@@ -71,16 +71,16 @@ endpoints:
         - Public
       schemaFilePath: oas/Practitioner.yaml
 
-    - name: questionnaireresponse-api
-      displayName: QuestionnaireResponse API
+    - name: questionnaire-api
+      displayName: Questionnaire API
       service:
-        basePath: /
+        basePath: /fhir/r4/Questionnaire
         port: 9095
       type: REST
       networkVisibilities:
         - Project
         - Public
-      schemaFilePath: oas/QuestionnaireResponse.yaml
+      schemaFilePath: oas/Questionnaire.yaml
 
 dependencies:
     connectionReferences:

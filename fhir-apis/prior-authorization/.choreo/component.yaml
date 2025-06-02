@@ -84,5 +84,5 @@ endpoints:
 
 dependencies:
     connectionReferences:
-    - name: patient-access-api-claim-repo
+    - name: prior-authorization-claim-repo
       resourceRef: service:/cms-0057-f/claim-repository-service/v1/176f4/PUBLIC

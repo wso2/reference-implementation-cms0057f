@@ -56,7 +56,7 @@ const LoginPage = () => {
         >
           <Box display={"row"}>
             <Typography variant="h2" align="center" padding={4} gutterBottom>
-              USPayer Member Portal
+              UnitedCare Health Member Portal
             </Typography>
             <Typography variant="h6" align="center">
               This website serves as an interactive platform showcasing

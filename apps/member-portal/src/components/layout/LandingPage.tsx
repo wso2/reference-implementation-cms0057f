@@ -354,10 +354,10 @@ export const LandingPage = () => {
             <Box>
               <Typography variant="h4">Fetch previous payer data</Typography>
               <Typography variant="h6" sx={{ mt: 2, mb: 4 }}>
-                Welcome to the USPayer Data Exchange Portal. If you haven't yet
+                Welcome to the UnitedCare Health Member Portal. If you haven't yet
                 synced your data with your previous, please select your previous
                 payer(s) and click 'Export' to securely transfer your data to
-                USPayer. The transfer will run in the background, and you will
+                UnitedCare Health. The transfer will run in the background, and you will
                 be notified once the process is complete.
               </Typography>
             </Box>

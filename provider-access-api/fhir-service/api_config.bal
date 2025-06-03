@@ -1,0 +1,477 @@
+// Copyright (c) 2025, WSO2 LLC. (http://www.wso2.com).
+
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+
+// http://www.apache.org/licenses/LICENSE-2.0
+
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
+import ballerinax/health.fhir.r4;
+
+# ######################################################################################################################
+# Patient API Configs                                                                                                  #
+# ###################################################################################################################### 
+
+final r4:ResourceAPIConfig patientApiConfig = {
+    resourceType: "Patient",
+    profiles: [
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient"
+    ],
+    defaultProfile: (),
+    searchParameters: [
+        {
+            name: "family",
+            active: true,
+            information: {
+                description: "**A portion of the family name of the patient**  **NOTE**: This US Core SearchParameter definition extends the usage context of the[Conformance expectation extension](http://hl7.org/fhir/R4/extension-capabilitystatement-expectation.html) - multipleAnd - multipleOr - comparator - modifier - chain",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/us/core/SearchParameter/us-core-patient-family"
+            }
+        },
+        {
+            name: "name",
+            active: true,
+            information: {
+                description: "**A server defined search that may match any of the string fields in the HumanName, including family, give, prefix, suffix, suffix, and/or text**  **NOTE**: This US Core SearchParameter definition extends the usage context of the[Conformance expectation extension](http://hl7.org/fhir/R4/extension-capabilitystatement-expectation.html) - multipleAnd - multipleOr - comparator - modifier - chain",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/us/core/SearchParameter/us-core-patient-name"
+            }
+        },
+        {
+            name: "gender-identity",
+            active: true,
+            information: {
+                description: "Returns patients with an gender-identity extension matching the specified code.",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/us/core/SearchParameter/us-core-patient-gender-identity"
+            }
+        },
+        {
+            name: "ethnicity",
+            active: true,
+            information: {
+                description: "Returns patients with an ethnicity extension matching the specified code.",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/us/core/SearchParameter/us-core-ethnicity"
+            }
+        },
+        {
+            name: "race",
+            active: true,
+            information: {
+                description: "Returns patients with a race extension matching the specified code.",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/us/core/SearchParameter/us-core-race"
+            }
+        },
+        {
+            name: "given",
+            active: true,
+            information: {
+                description: "**A portion of the given name of the patient**  **NOTE**: This US Core SearchParameter definition extends the usage context of the[Conformance expectation extension](http://hl7.org/fhir/R4/extension-capabilitystatement-expectation.html) - multipleAnd - multipleOr - comparator - modifier - chain",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/us/core/SearchParameter/us-core-patient-given"
+            }
+        },
+        {
+            name: "identifier",
+            active: true,
+            information: {
+                description: "**A patient identifier**  **NOTE**: This US Core SearchParameter definition extends the usage context of the[Conformance expectation extension](http://hl7.org/fhir/R4/extension-capabilitystatement-expectation.html) - multipleAnd - multipleOr - comparator - modifier - chain",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/us/core/SearchParameter/us-core-patient-identifier"
+            }
+        },
+        {
+            name: "_id",
+            active: true,
+            information: {
+                description: "**Logical id of this artifact**  **NOTE**: This US Core SearchParameter definition extends the usage context of the[Conformance expectation extension](http://hl7.org/fhir/R4/extension-capabilitystatement-expectation.html) - multipleAnd - multipleOr - comparator - modifier - chain",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/us/core/SearchParameter/us-core-patient-id"
+            }
+        },
+        {
+            name: "gender",
+            active: true,
+            information: {
+                description: "**Gender of the patient**  **NOTE**: This US Core SearchParameter definition extends the usage context of the[Conformance expectation extension](http://hl7.org/fhir/R4/extension-capabilitystatement-expectation.html) - multipleAnd - multipleOr - comparator - modifier - chain",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/us/core/SearchParameter/us-core-patient-gender"
+            }
+        },
+        {
+            name: "birthdate",
+            active: true,
+            information: {
+                description: "**The patient's date of birth**  **NOTE**: This US Core SearchParameter definition extends the usage context of the[Conformance expectation extension](http://hl7.org/fhir/R4/extension-capabilitystatement-expectation.html) - multipleAnd - multipleOr - comparator - modifier - chain",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/us/core/SearchParameter/us-core-patient-birthdate"
+            }
+        }
+    ],
+    operations: [
+
+        {
+            name: "export",
+            active: true,
+            parameters: [
+                {
+                    name: "_outputFormat",
+                    active: true,
+                    min: 0
+                },
+                {
+                    name: "_since",
+                    active: true,
+                    min: 0
+                },
+                {
+                    name: "_type",
+                    active: true,
+                    min: 0
+                },
+                {
+                    name: "_elements",
+                    active: true,
+                    min: 0
+                },
+                {
+                    name: "patient",
+                    active: true,
+                    min: 0
+                },
+                {
+                    name: "includeAssociatedData",
+                    active: true,
+                    min: 0
+                },
+                {
+                    name: "_typeFilter",
+                    active: true,
+                    min: 0
+                }
+            ]
+        },
+        {
+            name: "match",
+            active: true,
+            parameters: [
+                {
+                    name: "resource",
+                    active: true,
+                    min: 1
+                },
+                {
+                    name: "onlyCertainMatches",
+                    active: true,
+                    min: 0
+                },
+                {
+                    name: "count",
+                    active: true,
+                    min: 0
+                },
+                {
+                    name: "return",
+                    active: true,
+                    min: 0
+                }
+            ]
+        }
+
+    ],
+    serverConfig: (),
+    authzConfig: (),
+    auditConfig: {
+        enabled: true,
+        auditServiceUrl: "http://audit-service-3847061127:9093"
+    }
+};
+
+# ######################################################################################################################
+# ClaimResponse API Configs                                                                                            #
+# ###################################################################################################################### 
+
+final r4:ResourceAPIConfig claimResponseApiConfig = {
+    resourceType: "ClaimResponse",
+    profiles: [
+        "http://hl7.org/fhir/us/davinci-pas/StructureDefinition/profile-claimresponse"
+    ],
+    defaultProfile: (),
+    searchParameters: [
+        {
+            name: "patient",
+            active: true,
+            'type: r4:STRING,
+            information: {
+                description: "Patient receiving the products or services",
+                documentation: "https://hl7.org/fhir/R4/search.html#reference"
+            }
+        },
+        {
+            name: "use",
+            active: true,
+            'type: r4:TOKEN,
+            information: {
+                description: "The kind of financial resource",
+                documentation: "https://hl7.org/fhir/R4/search.html#token"
+            }
+        },
+        {
+            name: "created",
+            active: true,
+            'type: r4:DATE,
+            information: {
+                description: "  The creation date for the Claim",
+                documentation: "https://hl7.org/fhir/R4/search.html#date"
+            }
+        }
+    ],
+    operations: [
+
+    ],
+    serverConfig: (),
+    authzConfig: ()
+};
+
+# ######################################################################################################################
+# Claim API Configs                                                                                                    #
+# ###################################################################################################################### 
+
+final r4:ResourceAPIConfig ClaimApiConfig = {
+    resourceType: "Claim",
+    profiles: [
+        "http://hl7.org/fhir/us/davinci-pas/StructureDefinition/profile-claim"
+    ],
+    defaultProfile: (),
+    searchParameters: [
+        {
+            name: "patient",
+            active: true,
+            'type: r4:STRING,
+            information: {
+                description: "Patient receiving the products or services",
+                documentation: "https://hl7.org/fhir/R4/search.html#reference"
+            }
+        },
+        {
+            name: "use",
+            active: true,
+            'type: r4:TOKEN,
+            information: {
+                description: "The kind of financial resource",
+                documentation: "https://hl7.org/fhir/R4/search.html#token"
+            }
+        },
+        {
+            name: "created",
+            active: true,
+            'type: r4:DATE,
+            information: {
+                description: "  The creation date for the Claim",
+                documentation: "https://hl7.org/fhir/R4/search.html#date"
+            }
+        }
+    ],
+    operations: [
+        {
+            name: "submit",
+            active: true,
+            parameters: [
+                {
+                    name: "resource",
+                    active: true,
+                    min: 1
+                },
+                {
+                    name: "return",
+                    active: true,
+                    min: 0
+                }
+            ]
+        }
+    ],
+    serverConfig: (),
+    authzConfig: ()
+};
+
+# ######################################################################################################################
+# Coverage API Configs                                                                                                 #
+# ###################################################################################################################### 
+
+final r4:ResourceAPIConfig coverageApiConfig = {
+    resourceType: "Coverage",
+    profiles: [
+        "http://hl7.org/fhir/StructureDefinition/Coverage"
+    ],
+    defaultProfile: (),
+    searchParameters: [
+        {
+            name: "patient",
+            active: true,
+            'type: r4:STRING,
+            information: {
+                description: "Patient receiving the products or services",
+                documentation: "https://hl7.org/fhir/R4/search.html#reference"
+            }
+        }
+    ],
+    operations: [
+
+    ],
+    serverConfig: (),
+    authzConfig: ()
+};
+
+# ######################################################################################################################
+# EoB API Configs                                                                                                      #
+# ###################################################################################################################### 
+
+final r4:ResourceAPIConfig eobApiConfig = {
+    resourceType: "ExplanationOfBenefit",
+    profiles: [
+        "http://hl7.org/fhir/us/carin-bb/StructureDefinition/C4BB-ExplanationOfBenefit-Outpatient-Institutional",
+        "http://hl7.org/fhir/us/carin-bb/StructureDefinition/C4BB-ExplanationOfBenefit-Inpatient-Institutional",
+        "http://hl7.org/fhir/us/carin-bb/StructureDefinition/C4BB-ExplanationOfBenefit-Pharmacy",
+        "http://hl7.org/fhir/us/carin-bb/StructureDefinition/C4BB-ExplanationOfBenefit-Oral",
+        "http://hl7.org/fhir/us/carin-bb/StructureDefinition/C4BB-ExplanationOfBenefit-Professional-NonClinician"
+    ],
+    defaultProfile: (),
+    searchParameters: [
+        {
+            name: "identifier",
+            active: true,
+            'type: r4:STRING,
+            information: {
+                description: "The business identifier for the instance",
+                documentation: "https://hl7.org/fhir/R4/search.html#token"
+            }
+        },
+        {
+            name: "patient",
+            active: true,
+            'type: r4:STRING,
+            information: {
+                description: "Patient receiving the products or services",
+                documentation: "https://hl7.org/fhir/R4/search.html#reference"
+            }
+        },
+        {
+            name: "created",
+            active: true,
+            'type: r4:DATE,
+            information: {
+                description: "  The creation date for the resource",
+                documentation: "https://hl7.org/fhir/R4/search.html#date"
+            }
+        }
+    ],
+    operations: [
+
+    ],
+    serverConfig: (),
+    authzConfig: ()
+};
+
+# ######################################################################################################################
+# Medication Request API Configs                                                                                       #
+# ######################################################################################################################
+
+final r4:ResourceAPIConfig medicationRequestApiConfig = {
+    resourceType: "MedicationRequest",
+    profiles: [
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-medicationrequest"
+    ],
+    defaultProfile: (),
+    searchParameters: [
+    ],
+    operations: [
+
+    ],
+    serverConfig: (),
+    authzConfig: ()
+};
+
+# ######################################################################################################################
+# Organization API Configs                                                                                             #
+# ######################################################################################################################
+
+final r4:ResourceAPIConfig organizationApiConfig = {
+    resourceType: "Organization",
+    profiles: [
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization"
+    ],
+    defaultProfile: (),
+    searchParameters: [
+        {
+            name: "type",
+            active: true,
+            information: {
+                description: "A code for the type of organization",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Organization-type"
+            }
+        }
+    ],
+    operations: [
+
+    ],
+    serverConfig: (),
+    authzConfig: ()
+};
+
+# ######################################################################################################################
+# Practitioner API Configs                                                                                             #
+# ######################################################################################################################
+
+final r4:ResourceAPIConfig practitionerApiConfig = {
+    resourceType: "Practitioner",
+    profiles: [
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-practitioner"
+    ],
+    defaultProfile: (),
+    searchParameters: [
+        {
+            name: "name",
+            active: true,
+            information: {
+                description: "A server defined search that may match any of the string fields in the HumanName, including family, give, prefix, suffix, suffix, and/or text",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Patient-name"
+            }
+        }
+    ],
+    operations: [
+
+    ],
+    serverConfig: (),
+    authzConfig: ()
+};
+
+# ######################################################################################################################
+# Encounter API Configs                                                                                             #
+# ######################################################################################################################
+
+final r4:ResourceAPIConfig encounterApiConfig = {
+    resourceType: "Encounter",
+    profiles: [
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-encounter"
+    ],
+    defaultProfile: (),
+    searchParameters: [
+    ],
+    operations: [
+
+    ],
+    serverConfig: (),
+    authzConfig: ()
+};

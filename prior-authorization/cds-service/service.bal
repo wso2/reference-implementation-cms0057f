@@ -22,7 +22,7 @@ import ballerinax/health.fhir.cds;
 
 configurable string EHR_DTR_APP_LINK = ?;
 
-service http:InterceptableService / on new http:Listener(8080) {
+service http:InterceptableService /cds\-services on new http:Listener(9090) {
 
     public function createInterceptors() returns [RequestInterceptor, ResponseErrorInterceptor] {
         return [new RequestInterceptor(), new ResponseErrorInterceptor()];
@@ -31,7 +31,7 @@ service http:InterceptableService / on new http:Listener(8080) {
     # Discovery endpoint.
     #
     # + return - return CDS hook definition
-    isolated resource function get cds\-services() returns http:Response {
+    isolated resource function get .() returns http:Response {
         http:Response response = new ();
         if (cds:cds_services.count() > 0) {
             cds:Services services = {services: cds:cds_services};
@@ -47,7 +47,7 @@ service http:InterceptableService / on new http:Listener(8080) {
     # + hook_id - Registered id of the hook being invoked
     # + cdsRequest - cds request payload
     # + return - Clinical decisions as array of CDS cards
-    isolated resource function post cds\-services/[string hook_id](@http:Payload cds:CdsRequest cdsRequest) returns http:Response {
+    isolated resource function post [string hook_id](@http:Payload cds:CdsRequest cdsRequest) returns http:Response {
         //Connect with decision support system implementation
         cds:CdsResponse|cds:CdsError cdsResponse = submitForDecision(hook_id, cdsRequest);
         return postProcessing(cdsResponse);
@@ -58,7 +58,7 @@ service http:InterceptableService / on new http:Listener(8080) {
     # + hook_id - Registered id of the hook being invoked
     # + feedback - cds feedback payload
     # + return - return success message
-    isolated resource function post cds\-services/[string hook_id]/feedback(@http:Payload cds:Feedbacks feedback) returns http:Response {
+    isolated resource function post [string hook_id]/feedback(@http:Payload cds:Feedbacks feedback) returns http:Response {
         //Connect with feedback system implementation
         cds:CdsError? result = submitFeedback(hook_id, feedback);
         return postProcessing(result);

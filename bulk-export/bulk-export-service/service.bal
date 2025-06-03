@@ -16,14 +16,37 @@ import ballerina/log;
 import ballerina/time;
 import ballerina/uuid;
 import ballerinax/health.fhir.r4;
+import ballerinax/health.fhir.r4.international401;
 
 configurable SearchServerConfig searchServerConfig = ?;
 configurable BulkExportServerConfig exportServiceConfig = ?;
 
-service / on new http:Listener(8081) {
-    isolated resource function get fhir/r4/Patient/export() returns r4:OperationOutcome|r4:FHIRError {
+service /bulk on new http:Listener(8090) {
+    isolated resource function get fhir/export() returns r4:OperationOutcome|r4:FHIRError {
         string exportTaskId = uuid:createType1AsString();
-        error? executionResult = executeJob(exportTaskId, searchServerConfig, exportServiceConfig);
+        error? executionResult = executeJob(exportTaskId, searchServerConfig, exportServiceConfig, ());
+        if executionResult is error {
+            log:printError("Error occurred: ", executionResult);
+            return r4:createFHIRError("Server Error", r4:ERROR, r4:PROCESSING, httpStatusCode = http:STATUS_INTERNAL_SERVER_ERROR);
+        }
+        addExportTasktoMemory(exportTaskId, time:utcNow());
+
+        return createOpereationOutcome("information", "processing",
+                "Your request has been accepted. You can check its status at " + exportServiceConfig.baseUrl + "/bulk/fhir/bulkstatus/" + exportTaskId);
+    }
+
+    isolated resource function post fhir/r4/Patient/export(
+            @http:Payload international401:Parameters parameters,
+            @http:Query string? _outputFormat,
+            @http:Query string? _since,
+            @http:Query string? _type
+    ) returns r4:OperationOutcome|r4:FHIRError {
+        string exportTaskId = uuid:createType1AsString();
+        international401:ParametersParameter[] selectedPatients = <international401:ParametersParameter[]>parameters.'parameter;
+        //todo: Add support for multi-patient export. atm only the first patient's data will be exported.
+        string patientId = <string>(<r4:Reference>selectedPatients[0].valueReference).reference;
+        log:printDebug(string `Exporting data for ID: ${patientId}`);
+        error? executionResult = executeJob(exportTaskId, searchServerConfig, exportServiceConfig, patientId);
         if executionResult is error {
             log:printError("Error occurred: ", executionResult);
             return r4:createFHIRError("Server Error", r4:ERROR, r4:PROCESSING, httpStatusCode = http:STATUS_INTERNAL_SERVER_ERROR);
@@ -79,7 +102,7 @@ service / on new http:Listener(8081) {
         }
 
         // Set headers and payload
-        response.setHeader("Content-Type", "application/ndjson");
+        response.setHeader("Content-Type", "application/fhir+ndjson");
         response.setHeader("Content-Disposition", string `attachment; filename=${fileName}`);
         response.setBinaryPayload(fileContent);
 

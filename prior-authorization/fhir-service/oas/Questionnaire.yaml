@@ -1,0 +1,136 @@
+# Copyright (c) 2025, WSO2 LLC. (http://www.wso2.com).
+
+# WSO2 LLC. licenses this file to you under the Apache License,
+# Version 2.0 (the "License"); you may not use this file except
+# in compliance with the License.
+# You may obtain a copy of the License at
+
+# http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+openapi: 3.0.1
+info:
+  title: FHIR R4 Questionnaire API
+  description: API for managing FHIR R4 Questionnaire resources.
+  version: 1.0.0
+servers:
+  - url: http://localhost:9090/fhir/r4
+paths:
+  /{id}:
+    get:
+      summary: Retrieve a Questionnaire by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response with the requested Questionnaire
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Questionnaire"
+        "404":
+          description: Questionnaire not found
+    put:
+      summary: Update a Questionnaire by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Questionnaire"
+      responses:
+        "501":
+          description: Not implemented
+    delete:
+      summary: Delete a Questionnaire by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "501":
+          description: Not implemented
+  /:
+    get:
+      summary: Search for Questionnaires
+      parameters:
+        - name: searchParams
+          in: query
+          schema:
+            type: object
+      responses:
+        "200":
+          description: A bundle of matching Questionnaires
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Bundle"
+    post:
+      summary: Create a new Questionnaire
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Questionnaire"
+      responses:
+        "201":
+          description: Successfully created Questionnaire
+  /$questionnaire-package:
+    post:
+      summary: Get the Questionnaire package
+      tags:
+        - POST
+        - Parameters
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Parameters"
+      responses:
+        "200":
+          description: "Questionnaire Package"
+components:
+  schemas:
+    Questionnaire:
+      type: object
+      properties:
+        resourceType:
+          type: string
+          example: Questionnaire
+        id:
+          type: string
+        status:
+          type: string
+          example: active
+    Bundle:
+      type: object
+      properties:
+        resourceType:
+          type: string
+          example: Bundle
+    Parameters:
+      example: null
+      allOf:
+        - type: object
+          properties: {}
+          example: null

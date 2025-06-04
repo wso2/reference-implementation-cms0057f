@@ -71,16 +71,11 @@ public class FileCreateTask {
                 do {
                     log:printDebug(string `Searching ${resourceType}`);
                     // Construct the request path
-                    // string reqPath = string `${exportServiceConfig.contextPath}${resourceType}/_search`;
                     string reqPath = string `${exportServiceConfig.contextPath}${resourceType}`;
 
                     if self.patientId is string {
                         reqPath = string `${reqPath}/?patient=${<string>self.patientId}`;
                     }
-                    // Make the POST _search request
-                    // json response = check clientEp->post(path = reqPath , message = {},
-                    //     headers = {"Accept": "application/fhir+json", "Content-Type": "application/fhir+json"}
-                    // );
 
                     log:printDebug(string `Request URL: ${reqPath}`);
                     // Make the Search request

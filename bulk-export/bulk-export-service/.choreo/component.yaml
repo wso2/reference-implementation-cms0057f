@@ -18,7 +18,7 @@ endpoints:
   # +required Service section has the user service endpoint details
   service:
     # +optional Context (base path) of the API that gets exposed via the endpoint.
-    basePath: /
+    basePath: /bulk
     # +required Numeric port value that gets exposed via the endpoint
-    port: 9094
+    port: 8090
   schemaFilePath: openapi/service_openapi.yaml

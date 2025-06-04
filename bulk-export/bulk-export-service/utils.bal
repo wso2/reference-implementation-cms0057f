@@ -23,11 +23,12 @@ import ballerinax/health.fhir.r4;
 # + exportTaskId - Id of the exportTask instance in memory  
 # + sourceConfig - The configuration related to the search source server
 # + serverConfig - The configuration related to the export server
+# + patientId - Id of the patient that data need to be exported.
 # + return - error while scheduling job
-public isolated function executeJob(string exportTaskId, SearchServerConfig sourceConfig, BulkExportServerConfig serverConfig) returns error? {
+public isolated function executeJob(string exportTaskId, SearchServerConfig sourceConfig, BulkExportServerConfig serverConfig, string? patientId) returns error? {
 
     log:printDebug(string `Executing Job ${exportTaskId}`);
-    FileCreateTask fileCreateTask = new FileCreateTask(exportTaskId, sourceConfig, serverConfig);
+    FileCreateTask fileCreateTask = new FileCreateTask(exportTaskId, sourceConfig, serverConfig, patientId);
     task:JobId|error id = task:scheduleOneTimeJob(fileCreateTask, time:utcToCivil(time:utcAddSeconds(time:utcNow(1), 2)));
     if id is error {
         return id;
@@ -39,6 +40,7 @@ public class FileCreateTask {
 
     *task:Job;
     string exportTaskId;
+    string? patientId = ();
     OutputFile[] outputFiles = [];
     OutputFile[] errorFiles = [];
     r4:OperationOutcome[] errors = [];
@@ -69,9 +71,15 @@ public class FileCreateTask {
                 do {
                     log:printDebug(string `Searching ${resourceType}`);
                     // Construct the request path
-                    string reqPath = string `${exportServiceConfig.contextPath}${resourceType}/_search`;
-                    // Make the POST _search request
-                    json response = check clientEp->post(path = reqPath + resourceType + "/_search", message = {},
+                    string reqPath = string `${exportServiceConfig.contextPath}${resourceType}`;
+
+                    if self.patientId is string {
+                        reqPath = string `${reqPath}/?patient=${<string>self.patientId}`;
+                    }
+
+                    log:printDebug(string `Request URL: ${reqPath}`);
+                    // Make the Search request
+                    json response = check clientEp->get(path = reqPath,
                         headers = {"Accept": "application/fhir+json", "Content-Type": "application/fhir+json"}
                     );
 
@@ -151,10 +159,14 @@ public class FileCreateTask {
         self.errorFiles.push(result);
     }
 
-    public isolated function init(string exportTaskId, SearchServerConfig sourceConfig, BulkExportServerConfig serverConfig) {
+    public isolated function init(string exportTaskId, SearchServerConfig sourceConfig, BulkExportServerConfig serverConfig, string? patientId) {
         self.exportTaskId = exportTaskId;
         self.sourceConfig = sourceConfig;
         self.serverConfig = serverConfig;
+
+        if patientId is string {
+            self.patientId = patientId;
+        }
     }
 }
 

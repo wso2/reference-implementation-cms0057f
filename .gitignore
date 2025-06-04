@@ -37,6 +37,7 @@ target
 *.iml
 *.iws
 *.ipr
+*.vscode/
 
 # ionic Ignore
 .sourcemaps/
@@ -66,3 +67,4 @@ node_modules/
 **/npm/
 **/dist/
 **/Config.toml
+**/.devcontainer.json

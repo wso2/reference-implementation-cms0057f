@@ -30,4 +30,5 @@ function init() returns error? {
     check loadMedicationRequestData();
     check loadQuestionnaireData();
     check loadQuestionnairePackageData();
+    check loadQuestionnaireResponseData();
 }

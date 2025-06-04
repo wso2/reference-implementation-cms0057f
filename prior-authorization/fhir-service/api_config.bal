@@ -373,3 +373,50 @@ final r4:ResourceAPIConfig questionnaireApiConfig = {
     serverConfig: (),
     authzConfig: ()
 };
+
+# ######################################################################################################################
+# QuestionnaireResponse API Configs                                                                                            #
+# ######################################################################################################################
+
+final r4:ResourceAPIConfig questionnaireResponseApiConfig = {
+    resourceType: "QuestionnaireResponse",
+    profiles: [
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-questionnaireresponse"
+    ],
+    defaultProfile: (),
+    searchParameters: [
+        {
+            name: "subject",
+            active: true,
+            information: {
+                description: "A subject of the questionnaire response",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/QuestionnaireResponse-subject"
+            }
+        },
+        {
+            name: "author",
+            active: true,
+            information: {
+                description: "An author of the questionnaire response",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/QuestionnaireResponse-author"
+            }
+        },
+        {
+            name: "authored",
+            active: true,
+            information: {
+                description: "The date the questionnaire response was authored",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/QuestionnaireResponse-authored"
+            }
+        }
+    ],
+    operations: [
+
+    ],
+    serverConfig: (),
+    authzConfig: ()
+};
+

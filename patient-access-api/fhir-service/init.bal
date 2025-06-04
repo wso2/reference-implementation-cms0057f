@@ -29,4 +29,5 @@ function init() returns error? {
     check loadEobData();
     check loadMedicationRequestData();
     check loadOrganizationData();
+    check loadPractitionerData();
 }

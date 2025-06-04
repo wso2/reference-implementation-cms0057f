@@ -26,4 +26,3 @@ endpoints:
         - Project
         - Public
       schemaFilePath: oas/CDS.yaml
-      

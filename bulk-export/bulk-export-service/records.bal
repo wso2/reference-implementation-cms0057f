@@ -32,7 +32,7 @@ public type SearchServerConfig record {
     string[] types = [
         "AllergyIntolerence",
         "CarePlan",
-        "CareTeam",
+        "Claim",
         "Condition",
         "Coverage",
         "Device",
@@ -54,6 +54,7 @@ public type SearchServerConfig record {
 #
 # + port - port number of the service 
 # + baseUrl - base URL of the server. Needed when returning status and download URLs
+# + contextPath - FHIR Server's context path
 # + targetDirectory - temporary directory to save and host the exported files
 public type BulkExportServerConfig record {|
     int port;

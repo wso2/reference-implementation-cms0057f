@@ -8,11 +8,13 @@ Inside the Patient Access API module which imports `ballerinax.health.fhirr4`, w
 
 ### x-jwt-assertion Header :
 
-The data which is published for analytics are taken from the `x-jwt-assertion` header coming in the http request. Only the attributes in the `analyticsRequiredAttributes` list are published.
+The data which is published for analytics are taken from the `x-jwt-assertion` header coming in the http request. Only the attributes in the `ballerinax.health.fhirr4.analytics.attributes` list are published.
 
-### analyticsServerUrl :
+Usually this header should be generated at gateway level using the attributes in the `access_token` in the request, and pass to the backend.
 
-Opensearch endpoint to publish logs in the following format:
+### Analytics Server Endpoint :
+
+Opensearch endpoint (`ballerinax.health.fhirr4.analytics.url`) to publish logs in the following format:
 ```
 <opensearch_hostname>/<index>/_doc
 ```
@@ -20,7 +22,7 @@ Here the index should a value which can categorize the incoming logs. In this ca
 
 ### More Info Endpoint:
 
-There can be information related to patient like contract, plan etc. which are out of scope for the FHIR R4 server. Payer can expose these info using a POST resource endpoint which accepts a json with `requiredAttributes` as keys, and returns more info as a json with key:value pairs like below.
+There can be information related to patient like contract, plan etc. which are not available for the FHIR R4 server. Payer can expose these info using a POST resource endpoint which accepts a json with `ballerinax.health.fhirr4.analytics.atributes` as keys, and returns more info as a json with key:value pairs like below.
 
 ```
 {
@@ -28,6 +30,8 @@ There can be information related to patient like contract, plan etc. which are o
     "plan": "Premium"
 }
 ```
+
+Check `more_info_api.yaml` in `module-ballerinax-health.fhir.r4/fhirr4/ballerina/src/main/resources/fhirservice/resources/` for a sample open-api swagger.
 
 ## Step 1: Setting up  Analytics Server: Opensearch & Opensearch Dashboard
 
@@ -48,7 +52,7 @@ A sample Opensearch Dashboard to capture the required metrics as per the spec, c
 
 > Note: The index is set to `patient_access` in the .ndjson file. Change it if you are publishing logs under a different index (Change `analyticsServerUrl in Config.toml properly).
 
-> When the `analytics_opensearch_dashboard.ndjson` is imported, the relavent index pattern is created along with the fields, provided in the .ndjson. Therefore make sure to have all the fields in here, since any new fields published in the log json may not be visible. (You can manually add new fields in Opensearch Dashboards if needed later.)
+> When the `analytics_opensearch_dashboard.ndjson` is imported, the relevant index pattern is created along with the fields, provided in the .ndjson. Therefore make sure to have all the fields in here, since any new fields published in the log json may not be visible. (You can manually add new fields in Opensearch Dashboards if needed later.)
 
 Visit `<open_search_dashboard_host>/app/home#/` > Manage > Saved Objects > Import
 
@@ -56,8 +60,13 @@ The created dashboard should be available in the Dashboards section now. The mai
 
 ## Step 2: Run the patient-access-api service
 
-After the `Config.toml` is configured properly and the dashboard is imported, you can send a request to any Patient Access API and check the dashboard for visualization.
+After the `Config.toml` is configured properly and the dashboard is imported, you can run the service with `bal run` and after startup you can send a request to a Patient Access API and check the dashboard for visualization.
 
-> Note: If a request is sent before importing a dashboard (with the required fields in the `.ndjson`), Opensearch index fields will be created acording to the attributes sent in the first log. Any new field attributes sent in later logs, will not be shown in the dashboard, unles set manually.
+> Note: If a request is sent before importing a dashboard (with the required fields in the `.ndjson`), Opensearch index fields will be created acording to the attributes sent in the first log. Any new field attributes sent in later logs, will not be shown in the dashboard, unless set manually.
 
-If you are deploying in choreo, add the analytics configurations acordingly in the UI while deploying.
+# Try out with WSO2 Asgardeo & Choreo
+
+In Asgardeo application, you should add the required attributes of the user to be included in the `access_token`.
+> Go inside the application > `Protocol` > `Access Token` > Set Token type to `JWT` > Add required user attributes in `Access Token Attributes`
+
+In Choreo while deploying Patient Access API ballerina project, add the analytics configurations accordingly in the `Configure & Deploy` UI, and set `Pass end-user attributes to upstream` feature to `Enabled`, in order to generate the `x-jwt-assertion` header and pass it to the deployed FHIR server backend.

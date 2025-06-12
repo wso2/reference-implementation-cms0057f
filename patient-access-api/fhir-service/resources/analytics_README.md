@@ -64,6 +64,10 @@ After the `Config.toml` is configured properly and the dashboard is imported, yo
 
 > Note: If a request is sent before importing a dashboard (with the required fields in the `.ndjson`), Opensearch index fields will be created acording to the attributes sent in the first log. Any new field attributes sent in later logs, will not be shown in the dashboard, unless set manually.
 
+## Step 3: (optional) Retrieve analytics with Opensearch APIs
+
+Without using the Opensearch dashboards, you can retrieve the analytics data by directly calling APIs in Opensearch. Check `analytics_opensearch.postman_collection.json` for a sample postman collection to retrieve Patient Access API metrics.
+
 # Try out with WSO2 Asgardeo & Choreo
 
 In Asgardeo application, you should add the required attributes of the user to be included in the `access_token`.

@@ -98,17 +98,31 @@ function init() returns error? {
     lock {
         json organizationJson = {
             "resourceType": "MedicationRequest",
-            "id": "111112",
-            "meta": {
-                "profile": [
-                    "http://hl7.org/fhir/StructureDefinition/MedicationRequest"
-                ]
+            "subject": {
+                "reference": "Patient/102"
             },
-            "status": "active",
-            "intent": "order",
             "medicationReference": {
-                "reference": "Medication/aimovig-70mg"
+                "reference": "Medication/Aimovig 70 mg Injection"
             },
+            "dispenseRequest": {
+                "quantity": {
+                    "value": 1.0,
+                    "unit": "injection",
+                    "system": "http://unitsofmeasure.org",
+                    "code": "injection"
+                },
+                "expectedSupplyDuration": {
+                    "unit": "mo",
+                    "system": "http://unitsofmeasure.org",
+                    "code": "mo",
+                    "value": 1.0
+                }
+            },
+            "id": "111113",
+            "requester": {
+                "reference": "Practitioner/456"
+            },
+            "authoredOn": "2025-06-16",
             "medicationCodeableConcept": {
                 "coding": [
                     {
@@ -119,20 +133,13 @@ function init() returns error? {
                 ],
                 "text": "Aimovig 70 mg Injection"
             },
-            "subject": {
-                "reference": "Patient/john-smith"
-            },
-            "requester": {
-                "reference": "Practitioner/practitioner-456"
-            },
-            "authoredOn": "2025-03-02",
+            "intent": "order",
             "dosageInstruction": [
                 {
-                    "text": "Inject 70 mg subcutaneously once a month",
                     "timing": {
                         "repeat": {
                             "boundsPeriod": {
-                                "start": "2025-03-02"
+                                "start": "2025-06-16"
                             },
                             "frequency": 1,
                             "period": 1.0,
@@ -148,23 +155,11 @@ function init() returns error? {
                                 "code": "mg"
                             }
                         }
-                    ]
+                    ],
+                    "text": "Aimovig 70 mg Injection, for 1 times a mo for 1 mo"
                 }
             ],
-            "dispenseRequest": {
-                "quantity": {
-                    "value": 1.0,
-                    "unit": "injection",
-                    "system": "http://unitsofmeasure.org",
-                    "code": "injection"
-                },
-                "expectedSupplyDuration": {
-                    "value": 30,
-                    "unit": "days",
-                    "system": "http://unitsofmeasure.org",
-                    "code": "d"
-                }
-            }
+            "status": "active"
         };
 
         uscore501:USCoreMedicationRequestProfile medicationRequest = check parser:parse(organizationJson, uscore501:USCoreMedicationRequestProfile).ensureType();

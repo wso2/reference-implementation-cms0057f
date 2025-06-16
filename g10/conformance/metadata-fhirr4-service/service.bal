@@ -16,12 +16,6 @@ import ballerinax/health.fhir.r4;
 import ballerinax/health.fhir.r4.international401;
 import ballerinax/health.fhirr4;
 
-// Represents the subtype of http:InternalServerError status code record.
-type MetatataInternalServerError record {|
-    *http:InternalServerError;
-    r4:OperationOutcome body;
-|};
-
 final r4:ResourceAPIConfig apiConfig = {
     resourceType: "OperationOutcome",
     profiles: [

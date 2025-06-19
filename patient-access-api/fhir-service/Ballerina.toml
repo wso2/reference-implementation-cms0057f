@@ -3,7 +3,6 @@ org = "wso2"
 name = "patient.access.api"
 version = "1.0.0"
 distribution = "2201.12.3"
-include = ["Cloud.toml", "Config.toml"]
 keywords = ["Healthcare", "FHIR", "Patient", "r4", "health.fhir.r4.uscore501"]
 
 [build-options]

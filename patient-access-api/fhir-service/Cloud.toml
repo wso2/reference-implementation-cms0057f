@@ -1,0 +1,3 @@
+[[container.copy.files]]
+sourceFile="./resources/fhir_resources.json"
+target="/home/ballerina/resources/fhir_resources.json"

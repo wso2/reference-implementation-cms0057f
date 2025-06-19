@@ -19,6 +19,7 @@
 
 import ballerina/http;
 import ballerina/log;
+import ballerina/time;
 import ballerinax/health.clients.fhir;
 import ballerinax/health.fhir.r4;
 import ballerinax/health.fhirr4;
@@ -27,6 +28,38 @@ import ballerinax/health.fhir.r4.davincipas;
 import ballerinax/health.fhir.r4.international401;
 import ballerinax/health.fhir.r4.parser;
 import ballerinax/health.fhir.r4.uscore501;
+
+// ######################################################################################################################
+// # Capability statement API                                                                                           #
+// ###################################################################################################################### 
+
+# # The service representing capability statement API
+final readonly & international401:CapabilityStatement capabilityStatement = check generateCapabilityStatement().cloneReadOnly();
+
+# The service representing well known API
+# Bound to port defined by configs
+service http:InterceptableService /fhir/r4/metadata on new http:Listener(9098) {
+
+    public function createInterceptors() returns [fhirr4:FHIRResponseErrorInterceptor] {
+        return [new fhirr4:FHIRResponseErrorInterceptor()];
+    }
+
+    # The capability statement is a key part of the overall conformance framework in FHIR. It is used as a statement of the
+    # features of actual software, or of a set of rules for an application to provide. This statement connects to all the
+    # detailed statements of functionality, such as StructureDefinitions and ValueSets. This composite statement of application
+    # capability may be used for system compatibility testing, code generation, or as the basis for a conformance assessment.
+    # For further information https://hl7.org/fhir/capabilitystatement.html
+    # + return - capability statement as a json
+    isolated resource function get .() returns @http:Payload {mediaType: [r4:FHIR_MIME_TYPE_JSON, r4:FHIR_MIME_TYPE_XML]} json|r4:FHIRError {
+        json|error response = capabilityStatement.toJson();
+        if (response is json) {
+            LogDebug("Capability statement served at " + time:utcNow()[0].toString());
+            return response;
+        } else {
+            return r4:createFHIRError(response.message(), r4:FATAL, r4:TRANSIENT_EXCEPTION, response.detail().toString(), cause = response);
+        }
+    }
+}
 
 // ######################################################################################################################
 // # Patient API                                                                                                        #

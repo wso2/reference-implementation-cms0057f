@@ -16,6 +16,13 @@
 
 import ballerina/os;
 
+# Enable when you run locally.
+// configurable string serviceURL = "https://google.com";
+// configurable string consumerKey = "";
+// configurable string consumerSecret = "";
+// configurable string tokenURL = "";
+// configurable string choreoApiKey = "";
+
 # Configurations for the claim repository service.
 configurable string serviceURL = os:getEnv("CHOREO_PATIENT_ACCESS_API_CLAIM_REPO_SERVICEURL");
 configurable string consumerKey = os:getEnv("CHOREO_PATIENT_ACCESS_API_CLAIM_REPO_CONSUMERKEY");

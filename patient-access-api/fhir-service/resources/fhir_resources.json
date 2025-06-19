@@ -1,0 +1,202 @@
+[
+  {
+    "type": "Patient",
+    "versioning": "versioned",
+    "conditionalCreate": false,
+    "conditionalRead": "not-supported",
+    "conditionalUpdate": false,
+    "conditionalDelete": "not-supported",
+    "referencePolicies": [
+      "resolves"
+    ],
+    "searchRevIncludes": [
+      "null"
+    ],
+    "supportedProfiles": [
+      "http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient",
+      "http://hl7.org/fhir/StructureDefinition/Patient"
+    ],
+    "interactions": [
+      "create",
+      "search-type",
+      "read"
+    ],
+    "searchParamString": [
+      "_profile"
+    ],
+    "searchParamNumber": [
+      "_id"
+    ]
+  },
+  {
+    "type": "Claim",
+    "versioning": "versioned",
+    "conditionalCreate": false,
+    "conditionalRead": "not-supported",
+    "conditionalUpdate": false,
+    "conditionalDelete": "not-supported",
+    "referencePolicies": [
+      "resolves"
+    ],
+    "searchRevIncludes": [
+      "null"
+    ],
+    "supportedProfiles": [
+      "http://hl7.org/fhir/us/davinci-pas/StructureDefinition/profile-claim",
+      "http://hl7.org/fhir/StructureDefinition/parameters"
+    ],
+    "interactions": [
+      "create",
+      "search-type",
+      "read"
+    ],
+    "searchParamString": [
+      "patient",
+      "use",
+      "created"
+    ],
+    "searchParamNumber": [
+      "_id"
+    ]
+  },
+  {
+    "type": "ClaimResponse",
+    "versioning": "versioned",
+    "conditionalCreate": false,
+    "conditionalRead": "not-supported",
+    "conditionalUpdate": false,
+    "conditionalDelete": "not-supported",
+    "referencePolicies": [
+      "resolves"
+    ],
+    "searchRevIncludes": [
+      "null"
+    ],
+    "supportedProfiles": [
+      "http://hl7.org/fhir/us/davinci-pas/StructureDefinition/profile-claimresponse"
+    ],
+    "interactions": [
+      "create",
+      "search-type",
+      "read"
+    ],
+    "searchParamString": [
+      "patient",
+      "use",
+      "created"
+    ],
+    "searchParamNumber": [
+      "_id"
+    ]
+  },
+  {
+    "type": "Coverage",
+    "versioning": "versioned",
+    "conditionalCreate": false,
+    "conditionalRead": "not-supported",
+    "conditionalUpdate": false,
+    "conditionalDelete": "not-supported",
+    "referencePolicies": [
+      "resolves"
+    ],
+    "searchRevIncludes": [
+      "null"
+    ],
+    "supportedProfiles": [
+      "http://hl7.org/fhir/StructureDefinition/Coverage"
+    ],
+    "interactions": [
+      "create",
+      "search-type",
+      "read"
+    ],
+    "searchParamString": [
+      "patient"
+    ],
+    "searchParamNumber": [
+      "_id"
+    ]
+  },
+  {
+    "type": "MedicationRequest",
+    "versioning": "versioned",
+    "conditionalCreate": false,
+    "conditionalRead": "not-supported",
+    "conditionalUpdate": false,
+    "conditionalDelete": "not-supported",
+    "referencePolicies": [
+      "resolves"
+    ],
+    "searchRevIncludes": [
+      "null"
+    ],
+    "supportedProfiles": [
+      "http://hl7.org/fhir/us/core/StructureDefinition/us-core-medicationrequest"
+    ],
+    "interactions": [
+      "create",
+      "search-type",
+      "read"
+    ],
+    "searchParamString": [],
+    "searchParamNumber": [
+      "_id"
+    ]
+  },
+  {
+    "type": "Organization",
+    "versioning": "versioned",
+    "conditionalCreate": false,
+    "conditionalRead": "not-supported",
+    "conditionalUpdate": false,
+    "conditionalDelete": "not-supported",
+    "referencePolicies": [
+      "resolves"
+    ],
+    "searchRevIncludes": [
+      "null"
+    ],
+    "supportedProfiles": [
+      "http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization"
+    ],
+    "interactions": [
+      "create",
+      "search-type",
+      "read"
+    ],
+    "searchParamString": [
+      "type"
+    ],
+    "searchParamNumber": [
+      "_id"
+    ]
+  },
+  {
+    "type": "Practitioner",
+    "versioning": "versioned",
+    "conditionalCreate": false,
+    "conditionalRead": "not-supported",
+    "conditionalUpdate": false,
+    "conditionalDelete": "not-supported",
+    "referencePolicies": [
+      "resolves"
+    ],
+    "searchRevIncludes": [
+      "null"
+    ],
+    "supportedProfiles": [
+      "http://hl7.org/fhir/us/core/StructureDefinition/us-core-practitioner"
+    ],
+    "interactions": [
+      "create",
+      "search-type",
+      "read"
+    ],
+    "searchParamString": [
+      "name"
+    ],
+    "searchParamNumber": [
+      "_id"
+    ]
+  }
+]

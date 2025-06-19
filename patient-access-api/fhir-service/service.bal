@@ -61,6 +61,30 @@ service http:InterceptableService /fhir/r4/metadata on new http:Listener(9098) {
     }
 }
 
+# # The service representing well known API
+final readonly & SmartConfiguration smartConfiguration = check generateSmartConfiguration().cloneReadOnly();
+
+service http:InterceptableService /fhir/r4/\.well\-known/smart\-configuration on new http:Listener(9099) {
+
+    public function createInterceptors() returns [fhirr4:FHIRResponseErrorInterceptor] {
+        return [new fhirr4:FHIRResponseErrorInterceptor()];
+    }
+
+    # The authorization endpoints accepted by a FHIR resource server are exposed as a Well-Known Uniform Resource Identifiers (URIs) (RFC5785) JSON document.
+    # Reference: https://build.fhir.org/ig/HL7/smart-app-launch/conformance.html#using-well-known
+    # + return - Smart configuration
+    resource isolated function get .() returns json|r4:FHIRError {
+        json|error response = smartConfiguration.toJson();
+
+        if response is json {
+            LogDebug("Smart configuration served at " + time:utcNow()[0].toString());
+            return response;
+        } else {
+            return r4:createFHIRError(response.message(), r4:FATAL, r4:TRANSIENT_EXCEPTION, response.detail().toString(), cause = response);
+        }
+    }
+}
+
 // ######################################################################################################################
 // # Patient API                                                                                                        #
 // ###################################################################################################################### 

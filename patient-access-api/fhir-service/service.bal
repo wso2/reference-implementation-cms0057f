@@ -30,7 +30,7 @@ import ballerinax/health.fhir.r4.parser;
 import ballerinax/health.fhir.r4.uscore501;
 
 // ######################################################################################################################
-// # Capability statement API                                                                                             #
+// # Capability statement API                                                                                           #
 // ###################################################################################################################### 
 
 # # The service representing capability statement API

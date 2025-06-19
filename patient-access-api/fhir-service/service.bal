@@ -38,7 +38,7 @@ final readonly & international401:CapabilityStatement capabilityStatement = chec
 
 # The service representing well known API
 # Bound to port defined by configs
-service http:InterceptableService /fhir/r4/metadata on new http:Listener(9030) {
+service http:InterceptableService /fhir/r4/metadata on new http:Listener(9098) {
 
     public function createInterceptors() returns [fhirr4:FHIRResponseErrorInterceptor] {
         return [new fhirr4:FHIRResponseErrorInterceptor()];

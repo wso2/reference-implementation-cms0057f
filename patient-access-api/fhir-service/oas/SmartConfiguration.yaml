@@ -33,7 +33,7 @@ tags:
   - name: 4.0.1
 
 paths:
-  /:
+  /.well-known/smart-configuration:
     get:
       summary: Get SMART on FHIR Configuration
       description: >

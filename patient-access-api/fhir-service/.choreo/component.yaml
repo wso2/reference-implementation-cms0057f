@@ -118,7 +118,7 @@ endpoints:
     - name: fhir-smart-configuration-api
       displayName: FHIR SMART Configuration API
       service:
-        basePath: /fhir/r4/\.well-known/smart-configuration
+        basePath: /fhir/r4
         port: 9099
       type: REST
       networkVisibilities:

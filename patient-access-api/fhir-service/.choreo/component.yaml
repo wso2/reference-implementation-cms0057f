@@ -114,6 +114,17 @@ endpoints:
         - Project
         - Public
       schemaFilePath: oas/CapabilityStatement.yaml
+    
+    - name: fhir-smart-configuration-api
+      displayName: FHIR SMART Configuration API
+      service:
+        basePath: /fhir/r4
+        port: 9099
+      type: REST
+      networkVisibilities:
+        - Project
+        - Public
+      schemaFilePath: oas/SmartConfiguration.yaml
 
 dependencies:
     connectionReferences:

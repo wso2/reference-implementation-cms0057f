@@ -74,3 +74,6 @@ In Asgardeo application, you should add the required attributes of the user to b
 > Go inside the application > `Protocol` > `Access Token` > Set Token type to `JWT` > Add required user attributes in `Access Token Attributes`
 
 In Choreo while deploying Patient Access API ballerina project, add the analytics configurations accordingly in the `Configure & Deploy` UI, and set `Pass end-user attributes to upstream` feature to `Enabled`, in order to generate the `x-jwt-assertion` header and pass it to the deployed FHIR server backend.
+
+# Sample Opensearch Dashboard for Patient Access API Metrics
+![Sample Dashboard](analytics_sample_opensearch_dashboard.png)

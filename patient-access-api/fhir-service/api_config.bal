@@ -460,3 +460,40 @@ final r4:ResourceAPIConfig practitionerApiConfig = {
     serverConfig: (),
     authzConfig: ()
 };
+
+# ######################################################################################################################
+# Allergy Intolerance API Configs                                                                                      #
+# ######################################################################################################################
+
+final r4:ResourceAPIConfig allergyIntoleranceApiConfig = {
+    resourceType: "AllergyIntolerance",
+    profiles: [
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-allergyintolerance"
+    ],
+    defaultProfile: (),
+    searchParameters: [
+        {
+            name: "clinical-status",
+            active: true,
+            information: {
+                description: "**active | inactive | resolved**  **NOTE**: This US Core SearchParameter definition extends the usage context of the[Conformance expectation extension](http://hl7.org/fhir/R4/extension-capabilitystatement-expectation.html) - multipleAnd - multipleOr - comparator - modifier - chain",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/us/core/SearchParameter/us-core-allergyintolerance-clinical-status"
+            }
+        },
+        {
+            name: "patient",
+            active: true,
+            information: {
+                description: "**Who the sensitivity is for**  **NOTE**: This US Core SearchParameter definition extends the usage context of the[Conformance expectation extension](http://hl7.org/fhir/R4/extension-capabilitystatement-expectation.html) - multipleAnd - multipleOr - comparator - modifier - chain",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/us/core/SearchParameter/us-core-allergyintolerance-patient"
+            }
+        }
+    ],
+    operations: [
+
+    ],
+    serverConfig: (),
+    authzConfig: ()
+};

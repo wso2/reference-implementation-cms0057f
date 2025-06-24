@@ -125,6 +125,17 @@ endpoints:
         - Project
         - Public
       schemaFilePath: oas/SmartConfiguration.yaml
+    
+    - name: fhir-allergy-intolerance-api
+      displayName: FHIR Allergy Intolerance API
+      service:
+        basePath: /fhir/r4/AllergyIntolerance
+        port: 9100
+      type: REST
+      networkVisibilities:
+        - Project
+        - Public
+      schemaFilePath: oas/AllergyIntolerance.yaml
 
 dependencies:
     connectionReferences:

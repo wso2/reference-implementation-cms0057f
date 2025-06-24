@@ -783,4 +783,3 @@ service /fhir/r4/DiagnosticReport on new fhirr4:Listener(9102, diagnosticReportA
         return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
     }
 }
-

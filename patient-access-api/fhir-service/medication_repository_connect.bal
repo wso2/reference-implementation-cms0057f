@@ -112,7 +112,7 @@ public isolated function searchMedicationRequest(map<string[]>? searchParameters
 
 function loadMedicationRequestData() returns error? {
     lock {
-        json organizationJson = {
+        json medicationRequestJson1 = {
             "resourceType": "MedicationRequest",
             "id": "111112",
             "meta": {
@@ -136,7 +136,7 @@ function loadMedicationRequestData() returns error? {
                 "text": "Aimovig 70 mg Injection"
             },
             "subject": {
-                "reference": "Patient/john-smith"
+                "reference": "Patient/101"
             },
             "requester": {
                 "reference": "Practitioner/practitioner-456"
@@ -183,8 +183,211 @@ function loadMedicationRequestData() returns error? {
             }
         };
 
-        uscore501:USCoreMedicationRequestProfile medicationRequest = check parser:parse(organizationJson, uscore501:USCoreMedicationRequestProfile).ensureType();
-        medicationRequests.push(medicationRequest);
+        json medicationRequestJson2 = {
+            "resourceType": "MedicationRequest",
+            "id": "111114",
+            "meta": {
+                "profile": ["http://hl7.org/fhir/StructureDefinition/MedicationRequest"]
+            },
+            "status": "active",
+            "intent": "order",
+            "medicationReference": {
+                "reference": "Medication/lisinopril-10mg"
+            },
+            "medicationCodeableConcept": {
+                "coding": [
+                    {
+                        "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+                        "code": "197361",
+                        "display": "Lisinopril 10 mg oral tablet"
+                    }
+                ],
+                "text": "Lisinopril 10 mg Tablet"
+            },
+            "subject": {
+                "reference": "Patient/101"
+            },
+            "requester": {
+                "reference": "Practitioner/practitioner-456"
+            },
+            "authoredOn": "2025-04-01",
+            "dosageInstruction": [
+                {
+                    "text": "Take 1 tablet by mouth once daily",
+                    "timing": {
+                        "repeat": {
+                            "frequency": 1,
+                            "period": 1,
+                            "periodUnit": "d"
+                        }
+                    },
+                    "doseAndRate": [
+                        {
+                            "doseQuantity": {
+                                "value": 10,
+                                "unit": "mg",
+                                "system": "http://unitsofmeasure.org",
+                                "code": "mg"
+                            }
+                        }
+                    ]
+                }
+            ],
+            "dispenseRequest": {
+                "quantity": {
+                    "value": 30,
+                    "unit": "tablets",
+                    "system": "http://unitsofmeasure.org",
+                    "code": "tablet"
+                },
+                "expectedSupplyDuration": {
+                    "value": 30,
+                    "unit": "days",
+                    "system": "http://unitsofmeasure.org",
+                    "code": "d"
+                }
+            }
+        };
+
+        json medicationRequestJson3 = {
+            "resourceType": "MedicationRequest",
+            "id": "111113",
+            "meta": {
+                "profile": ["http://hl7.org/fhir/StructureDefinition/MedicationRequest"]
+            },
+            "status": "active",
+            "intent": "order",
+            "medicationReference": {
+                "reference": "Medication/metformin-500mg"
+            },
+            "medicationCodeableConcept": {
+                "coding": [
+                    {
+                        "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+                        "code": "860975",
+                        "display": "Metformin 500 mg oral tablet"
+                    }
+                ],
+                "text": "Metformin 500 mg Tablet"
+            },
+            "subject": {
+                "reference": "Patient/101"
+            },
+            "requester": {
+                "reference": "Practitioner/practitioner-456"
+            },
+            "authoredOn": "2025-03-10",
+            "dosageInstruction": [
+                {
+                    "text": "Take 1 tablet by mouth twice daily with meals",
+                    "timing": {
+                        "repeat": {
+                            "frequency": 2,
+                            "period": 1,
+                            "periodUnit": "d"
+                        }
+                    },
+                    "doseAndRate": [
+                        {
+                            "doseQuantity": {
+                                "value": 500,
+                                "unit": "mg",
+                                "system": "http://unitsofmeasure.org",
+                                "code": "mg"
+                            }
+                        }
+                    ]
+                }
+            ],
+            "dispenseRequest": {
+                "quantity": {
+                    "value": 60,
+                    "unit": "tablets",
+                    "system": "http://unitsofmeasure.org",
+                    "code": "tablet"
+                },
+                "expectedSupplyDuration": {
+                    "value": 30,
+                    "unit": "days",
+                    "system": "http://unitsofmeasure.org",
+                    "code": "d"
+                }
+            }
+        };
+
+        json medicationRequestJson4 = {
+            "resourceType": "MedicationRequest",
+            "id": "111115",
+            "meta": {
+                "profile": ["http://hl7.org/fhir/StructureDefinition/MedicationRequest"]
+            },
+            "status": "active",
+            "intent": "order",
+            "medicationReference": {
+                "reference": "Medication/lantus-100units"
+            },
+            "medicationCodeableConcept": {
+                "coding": [
+                    {
+                        "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+                        "code": "310798",
+                        "display": "Insulin glargine 100 unit/mL injectable solution"
+                    }
+                ],
+                "text": "Lantus (Insulin Glargine) 100 units/mL"
+            },
+            "subject": {
+                "reference": "Patient/101"
+            },
+            "requester": {
+                "reference": "Practitioner/practitioner-456"
+            },
+            "authoredOn": "2025-05-01",
+            "dosageInstruction": [
+                {
+                    "text": "Inject 10 units subcutaneously at bedtime",
+                    "timing": {
+                        "repeat": {
+                            "frequency": 1,
+                            "period": 1,
+                            "periodUnit": "d"
+                        }
+                    },
+                    "doseAndRate": [
+                        {
+                            "doseQuantity": {
+                                "value": 10,
+                                "unit": "units",
+                                "system": "http://unitsofmeasure.org",
+                                "code": "U"
+                            }
+                        }
+                    ]
+                }
+            ],
+            "dispenseRequest": {
+                "quantity": {
+                    "value": 1,
+                    "unit": "vial",
+                    "system": "http://unitsofmeasure.org",
+                    "code": "vial"
+                },
+                "expectedSupplyDuration": {
+                    "value": 30,
+                    "unit": "days",
+                    "system": "http://unitsofmeasure.org",
+                    "code": "d"
+                }
+            }
+        };
+
+        uscore501:USCoreMedicationRequestProfile medicationRequest1 = check parser:parse(medicationRequestJson1, uscore501:USCoreMedicationRequestProfile).ensureType();
+        uscore501:USCoreMedicationRequestProfile medicationRequest2 = check parser:parse(medicationRequestJson2, uscore501:USCoreMedicationRequestProfile).ensureType();
+        uscore501:USCoreMedicationRequestProfile medicationRequest3 = check parser:parse(medicationRequestJson3, uscore501:USCoreMedicationRequestProfile).ensureType();
+        uscore501:USCoreMedicationRequestProfile medicationRequest4 = check parser:parse(medicationRequestJson4, uscore501:USCoreMedicationRequestProfile).ensureType();
+
+        medicationRequests.push(medicationRequest1, medicationRequest2, medicationRequest3, medicationRequest4);
+
     }
 
 }

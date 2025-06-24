@@ -38,4 +38,5 @@ function init() returns error? {
     check loadOrganizationData();
     check loadPractitionerData();
     check loadAllergyIntoleranceData();
+    check loadObservationData();
 }

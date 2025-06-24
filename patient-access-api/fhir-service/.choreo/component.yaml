@@ -137,6 +137,17 @@ endpoints:
         - Public
       schemaFilePath: oas/AllergyIntolerance.yaml
 
+    - name: fhir-observation-api
+      displayName: FHIR Observation API
+      service:
+        basePath: /fhir/r4/Observation
+        port: 9101
+      type: REST
+      networkVisibilities:
+        - Project
+        - Public
+      schemaFilePath: oas/Observation.yaml
+
 dependencies:
     connectionReferences:
     - name: patient-access-api-claim-repo

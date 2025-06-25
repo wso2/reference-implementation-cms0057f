@@ -107,7 +107,7 @@ public isolated function searchObservation(map<string[]>? searchParameters = ())
 isolated function getByPatientObservation(string patient, Observation[] observations) returns Observation[] {
     Observation[] filteredObservation = [];
     foreach Observation observation in observations {
-        if observation.subject.reference == patient {
+        if observation.subject.reference == string `Patient/${patient}` {
             filteredObservation.push(observation);
         }
     }

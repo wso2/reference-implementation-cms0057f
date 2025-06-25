@@ -107,7 +107,7 @@ public isolated function searchDiagnosticReport(map<string[]>? searchParameters 
 isolated function getByPatientDiagnosticReport(string patient, DiagnosticReport[] diagnosticReports) returns DiagnosticReport[] {
     DiagnosticReport[] filteredDiagnosticReport = [];
     foreach DiagnosticReport diagnosticReport in diagnosticReports {
-        if diagnosticReport.subject.reference == patient {
+        if diagnosticReport.subject.reference == string `Patient/${patient}` {
             filteredDiagnosticReport.push(diagnosticReport);
         }
     }

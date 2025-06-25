@@ -679,4 +679,3 @@ final r4:ResourceAPIConfig diagnosticReportApiConfig = {
     serverConfig: (),
     authzConfig: ()
 };
-

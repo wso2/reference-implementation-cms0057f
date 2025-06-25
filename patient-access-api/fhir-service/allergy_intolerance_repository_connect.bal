@@ -102,7 +102,7 @@ public isolated function searchAllergyIntolerance(map<string[]>? searchParameter
 isolated function getByPatientAllergyIntolerance(string patient, AllergyIntolerance[] allergyIntolerances) returns AllergyIntolerance[] {
     AllergyIntolerance[] filteredAllergyIntolerance = [];
     foreach AllergyIntolerance allergyIntolerance in allergyIntolerances {
-        if allergyIntolerance.patient.reference == patient {
+        if allergyIntolerance.patient.reference == string `Patient/${patient}` {
             filteredAllergyIntolerance.push(allergyIntolerance);
         }
     }

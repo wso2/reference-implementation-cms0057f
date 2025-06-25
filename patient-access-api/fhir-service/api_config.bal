@@ -501,7 +501,7 @@ final r4:ResourceAPIConfig allergyIntoleranceApiConfig = {
 # ######################################################################################################################
 # Allergy Intolerance API Configs                                                                                      #
 # ######################################################################################################################
-#
+
 final r4:ResourceAPIConfig observationApiConfig = {
     resourceType: "Observation",
     profiles: [
@@ -597,6 +597,78 @@ final r4:ResourceAPIConfig observationApiConfig = {
                 description: "**Obtained date/time. If the obtained element is a period, a date that falls in the period**  **NOTE**: This US Core SearchParameter definition extends the usage context of the[Conformance expectation extension](http://hl7.org/fhir/R4/extension-capabilitystatement-expectation.html) - multipleAnd - multipleOr - comparator - modifier - chain",
                 builtin: false,
                 documentation: "http://hl7.org/fhir/us/core/SearchParameter/us-core-observation-date"
+            }
+        }
+
+    ],
+    operations: [
+
+    ],
+    serverConfig: (),
+    authzConfig: ()
+};
+
+# ######################################################################################################################
+# Diagnostic Report API Configs                                                                                      #
+# ######################################################################################################################
+
+final r4:ResourceAPIConfig diagnosticReportApiConfig = {
+    resourceType: "DiagnosticReport",
+    profiles: [
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-diagnosticreport-note",
+
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-diagnosticreport-lab"
+
+    ],
+    defaultProfile: (),
+    searchParameters: [
+        {
+            name: "status",
+            active: true,
+            information: {
+                description: "**The status of the report**  **NOTE**: This US Core SearchParameter definition extends the usage context of the[Conformance expectation extension](http://hl7.org/fhir/R4/extension-capabilitystatement-expectation.html) - multipleAnd - multipleOr - comparator - modifier - chain",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/us/core/SearchParameter/us-core-diagnosticreport-status"
+            }
+        },
+
+        {
+            name: "code",
+            active: true,
+            information: {
+                description: "**The code for the report, as opposed to codes for the atomic results, which are the names on the observation resource referred to from the result**  **NOTE**: This US Core SearchParameter definition extends the usage context of the[Conformance expectation extension](http://hl7.org/fhir/R4/extension-capabilitystatement-expectation.html) - multipleAnd - multipleOr - comparator - modifier - chain",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/us/core/SearchParameter/us-core-diagnosticreport-code"
+            }
+        },
+
+        {
+            name: "date",
+            active: true,
+            information: {
+                description: "**The clinically relevant time of the report**  **NOTE**: This US Core SearchParameter definition extends the usage context of the[Conformance expectation extension](http://hl7.org/fhir/R4/extension-capabilitystatement-expectation.html) - multipleAnd - multipleOr - comparator - modifier - chain",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/us/core/SearchParameter/us-core-diagnosticreport-date"
+            }
+        },
+
+        {
+            name: "category",
+            active: true,
+            information: {
+                description: "**Which diagnostic discipline/department created the report**  **NOTE**: This US Core SearchParameter definition extends the usage context of the[Conformance expectation extension](http://hl7.org/fhir/R4/extension-capabilitystatement-expectation.html) - multipleAnd - multipleOr - comparator - modifier - chain",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/us/core/SearchParameter/us-core-diagnosticreport-category"
+            }
+        },
+
+        {
+            name: "patient",
+            active: true,
+            information: {
+                description: "**The subject of the report if a patient**  **NOTE**: This US Core SearchParameter definition extends the usage context of the[Conformance expectation extension](http://hl7.org/fhir/R4/extension-capabilitystatement-expectation.html) - multipleAnd - multipleOr - comparator - modifier - chain",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/us/core/SearchParameter/us-core-diagnosticreport-patient"
             }
         }
 

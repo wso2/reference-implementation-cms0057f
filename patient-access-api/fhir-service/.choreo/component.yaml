@@ -147,6 +147,17 @@ endpoints:
         - Project
         - Public
       schemaFilePath: oas/Observation.yaml
+    
+    - name: fhir-diagnosticreport-api
+      displayName: FHIR DiagnosticReport API
+      service:
+        basePath: /fhir/r4/DiagnosticReport
+        port: 9102
+      type: REST
+      networkVisibilities:
+        - Project
+        - Public
+      schemaFilePath: oas/DiagnosticReport.yaml
 
 dependencies:
     connectionReferences:

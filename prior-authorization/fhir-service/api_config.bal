@@ -26,7 +26,8 @@ import ballerinax/health.fhir.r4;
 final r4:ResourceAPIConfig patientApiConfig = {
     resourceType: "Patient",
     profiles: [
-        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient"
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient",
+        "http://hl7.org/fhir/StructureDefinition/Patient"
     ],
     defaultProfile: (),
     searchParameters: [
@@ -362,7 +363,7 @@ final r4:ResourceAPIConfig practitionerApiConfig = {
 final r4:ResourceAPIConfig questionnaireApiConfig = {
     resourceType: "Questionnaire",
     profiles: [
-        "http://hl7.org/fhir/StructureDefinition/Questionnaire"
+        "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/dtr-std-questionnaire"
     ],
     defaultProfile: (),
     searchParameters: [
@@ -381,7 +382,7 @@ final r4:ResourceAPIConfig questionnaireApiConfig = {
 final r4:ResourceAPIConfig questionnaireResponseApiConfig = {
     resourceType: "QuestionnaireResponse",
     profiles: [
-        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-questionnaireresponse"
+        "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/dtr-questionnaireresponse"
     ],
     defaultProfile: (),
     searchParameters: [

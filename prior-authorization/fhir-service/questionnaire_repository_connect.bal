@@ -20,17 +20,17 @@
 import ballerina/http;
 import ballerinax/health.clients.fhir;
 import ballerinax/health.fhir.r4;
-import ballerinax/health.fhir.r4.international401;
+import ballerinax/health.fhir.r4.davincidtr210;
 import ballerinax/health.fhir.r4.parser;
 
-isolated international401:Questionnaire[] questionnaires = [];
+isolated Questionnaire[] questionnaires = [];
 isolated int createOperationNextIdQuestionnaire = 5;
 
-isolated international401:Parameters[] parameters = [];
+isolated davincidtr210:DTRQuestionnairePackageOutputParameters[] parameters = [];
 isolated int createOperationNextIdQuestionnairePackage = 33;
 
-public isolated function questionnairePackage(international401:Parameters payload) returns r4:FHIRError|international401:Parameters {
-    international401:Parameters|error parameters = parser:parseWithValidation(payload.toJson(), international401:Parameters).ensureType();
+public isolated function questionnairePackage(davincidtr210:DTRQuestionnairePackageInputParameters payload) returns r4:FHIRError|davincidtr210:DTRQuestionnairePackageOutputParameters {
+    davincidtr210:DTRQuestionnairePackageInputParameters|error parameters = parser:parseWithValidation(payload.toJson(), davincidtr210:DTRQuestionnairePackageInputParameters).ensureType();
 
     if parameters is error {
         return r4:createFHIRError(parameters.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
@@ -39,7 +39,7 @@ public isolated function questionnairePackage(international401:Parameters payloa
     }
 }
 
-public isolated function getByIdQuestionnairePackage(string id) returns r4:FHIRError|international401:Parameters {
+public isolated function getByIdQuestionnairePackage(string id) returns r4:FHIRError|davincidtr210:DTRQuestionnairePackageOutputParameters {
     lock {
         foreach var item in parameters {
             string result = item.id ?: "";
@@ -52,25 +52,26 @@ public isolated function getByIdQuestionnairePackage(string id) returns r4:FHIRE
     return r4:createFHIRError(string `Cannot find a Questionnaire resource with id: ${id}`, r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_NOT_FOUND);
 }
 
-public isolated function createQuestionnaire(Questionnaire payload) returns r4:FHIRError|international401:Questionnaire {
-    international401:Questionnaire|error patient = parser:parseWithValidation(payload.toJson(), international401:Questionnaire).ensureType();
+public isolated function createQuestionnaire(Questionnaire payload) returns r4:FHIRError|Questionnaire {
+    Questionnaire|error questionnaire = parser:parseWithValidation(payload.toJson(), davincidtr210:DTRStdQuestionnaire).ensureType();
 
-    if patient is error {
-        return r4:createFHIRError(patient.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+    if questionnaire is error {
+        return r4:createFHIRError(questionnaire.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
     } else {
         lock {
-            patient.id = (++createOperationNextIdQuestionnaire).toBalString();
+            createOperationNextIdQuestionnaire = createOperationNextIdQuestionnaire + 1;
+            questionnaire.id = (createOperationNextIdQuestionnaire).toBalString();
         }
 
         lock {
-            questionnaires.push(patient.clone());
+            questionnaires.push(questionnaire.clone());
         }
 
-        return patient;
+        return questionnaire;
     }
 }
 
-public isolated function getByIdQuestionnaire(string id) returns r4:FHIRError|international401:Questionnaire {
+public isolated function getByIdQuestionnaire(string id) returns r4:FHIRError|Questionnaire {
     lock {
         foreach var item in questionnaires {
             string result = item.id ?: "";
@@ -121,7 +122,7 @@ public isolated function searchQuestionnaire(string 'resource, map<string[]>? se
         foreach var 'key in searchParameters.keys() {
             match 'key {
                 "_id" => {
-                    international401:Questionnaire byId = check getByIdQuestionnaire(searchParameters.get('key)[0]);
+                    Questionnaire byId = check getByIdQuestionnaire(searchParameters.get('key)[0]);
                     bundle.entry = [
                         {
                             'resource: byId
@@ -152,61 +153,82 @@ function loadQuestionnairePackageData() returns error? {
                         "type": "collection",
                         "entry": [
                             {
-                                "resource": {
-                                    "resourceType": "Questionnaire",
-                                    "id": "4",
-                                    "status": "active",
-                                    "title": "Prior Authorization for Aimovig 70 mg Injection",
-                                    "subjectType": ["Patient"],
-                                    "extension": [
-                                        {
-                                            "url": "http://hl7.org/fhir/StructureDefinition/cqf-library",
-                                            "extension": [
-                                                {
-                                                    "url": "library",
-                                                    "valueBase64Binary": "bGlicmFyeSBBaW1vdmlnUHJpb3JBdXRoIHZlcnNpb24gJzEuMC4wJwoKdXNpbmcgRkhJUiB2ZXJzaW9uICc0LjAuMScKCmluY2x1ZGUgRkhJUkhlbHBlcnMgdmVyc2lvbiAnNC4wLjEn..."
-                                                }
-                                            ]
-                                        }
-                                    ],
-                                    "item": [
-                                        {
-                                            "linkId": "1",
-                                            "text": "Has the patient been diagnosed with chronic migraines?",
-                                            "type": "boolean"
-                                        },
-                                        {
-                                            "linkId": "2",
-                                            "text": "Has the patient tried other preventive migraine treatments?",
-                                            "type": "boolean"
-                                        },
-                                        {
-                                            "linkId": "3",
-                                            "text": "Please list previous medications used for migraine prevention.",
-                                            "type": "string"
-                                        },
-                                        {
-                                            "linkId": "4",
-                                            "text": "What is the frequency of migraines per month?",
-                                            "type": "integer"
-                                        },
-                                        {
-                                            "linkId": "5",
-                                            "text": "Has the patient experienced side effects or lack of effectiveness with prior treatments?",
-                                            "type": "boolean"
-                                        },
-                                        {
-                                            "linkId": "6",
-                                            "text": "Does the patient have any contraindications to other migraine medications?",
-                                            "type": "boolean"
-                                        },
-                                        {
-                                            "linkId": "7",
-                                            "text": "Does the patient have insurance coverage for Aimovig?",
-                                            "type": "boolean"
-                                        }
+                                "resourceType": "Questionnaire",
+                                "id": "4",
+                                "meta": {
+                                    "profile": [
+                                        "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/dtr-std-questionnaire"
                                     ]
-                                }
+                                },
+                                "text": {
+                                    "id": "text1",
+                                    "status": "generated",
+                                    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Prior Authorization Questionnaire for Aimovig 70 mg Injection</div>"
+                                },
+                                "url": "http://example.org/fhir/Questionnaire/aimovig-prior-auth",
+                                "version": "1.0.0",
+                                "status": "active",
+                                "title": {
+                                    "value": "Prior Authorization Questionnaire"
+                                },
+                                "publisher": "Example Payer Organization",
+                                "subjectType": ["Patient"],
+                                "extension": [
+                                    {
+                                        "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/extension-purposeOfUse",
+                                        "valueCodeableConcept": {
+                                            "coding": [
+                                                {
+                                                    "system": "http://terminology.hl7.org/CodeSystem/v3-ActReason",
+                                                    "code": "COVAUTH",
+                                                    "display": "Coverage Authorization"
+                                                }
+                                            ],
+                                            "text": "Coverage Authorization"
+                                        }
+                                    },
+                                    {
+                                        "url": "http://hl7.org/fhir/StructureDefinition/cqf-library",
+                                        "valueCanonical": "http://example.org/fhir/Library/AimovigPriorAuthLibrary"
+                                    }
+                                ],
+                                "item": [
+                                    {
+                                        "linkId": "1",
+                                        "text": {"value": "Has the patient been diagnosed with chronic migraines?"},
+                                        "type": "boolean"
+                                    },
+                                    {
+                                        "linkId": "2",
+                                        "text": {"value": "Has the patient tried other preventive migraine treatments?"},
+                                        "type": "boolean"
+                                    },
+                                    {
+                                        "linkId": "3",
+                                        "text": {"value": "Please list previous medications used for migraine prevention."},
+                                        "type": "display"
+                                    },
+                                    {
+                                        "linkId": "4",
+                                        "text": {"value": "What is the frequency of migraines per month?"},
+                                        "type": "integer"
+                                    },
+                                    {
+                                        "linkId": "5",
+                                        "text": {"value": "Has the patient experienced side effects or lack of effectiveness with prior treatments?"},
+                                        "type": "boolean"
+                                    },
+                                    {
+                                        "linkId": "6",
+                                        "text": {"value": "Does the patient have any contraindications to other migraine medications?"},
+                                        "type": "boolean"
+                                    },
+                                    {
+                                        "linkId": "7",
+                                        "text": {"value": "Does the patient have insurance coverage for Aimovig?"},
+                                        "type": "boolean"
+                                    }
+                                ]
                             }
                         ]
                     }
@@ -214,8 +236,8 @@ function loadQuestionnairePackageData() returns error? {
             ]
         };
 
-        international401:Parameters p = check parser:parse(questionnaireJson, international401:Parameters).ensureType();
-        parameters.push(p);
+        davincidtr210:DTRQuestionnairePackageOutputParameters package = check parser:parse(questionnaireJson, davincidtr210:DTRQuestionnairePackageOutputParameters).ensureType();
+        parameters.push(package);
     }
 }
 
@@ -224,60 +246,83 @@ function loadQuestionnaireData() returns error? {
         json questionnaireJson = {
             "resourceType": "Questionnaire",
             "id": "4",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/dtr-std-questionnaire"
+                ]
+            },
+            "text": {
+                "id": "text1",
+                "status": "generated",
+                "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Prior Authorization Questionnaire for Aimovig 70 mg Injection</div>"
+            },
+            "url": "http://example.org/fhir/Questionnaire/aimovig-prior-auth",
+            "version": "1.0.0",
             "status": "active",
-            "title": "Prior Authorization for Aimovig 70 mg Injection",
+            "title": {
+                "value": "Prior Authorization Questionnaire"
+            },
+            "publisher": "Example Payer Organization",
             "subjectType": ["Patient"],
             "extension": [
                 {
+                    "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/extension-purposeOfUse",
+                    "valueCodeableConcept": {
+                        "coding": [
+                            {
+                                "system": "http://terminology.hl7.org/CodeSystem/v3-ActReason",
+                                "code": "COVAUTH",
+                                "display": "Coverage Authorization"
+                            }
+                        ],
+                        "text": "Coverage Authorization"
+                    }
+                },
+                {
                     "url": "http://hl7.org/fhir/StructureDefinition/cqf-library",
-                    "extension": [
-                        {
-                            "url": "library",
-                            "valueBase64Binary": "bGlicmFyeSBBaW1vdmlnUHJpb3JBdXRoIHZlcnNpb24gJzEuMC4wJwoKdXNpbmcgRkhJUiB2ZXJzaW9uICc0LjAuMScKCmluY2x1ZGUgRkhJUkhlbHBlcnMgdmVyc2lvbiAnNC4wLjEnCgpjb250ZXh0IFBhdGllbnQKCi8vIERlZmluZSBDaHJvbmljIE1pZ3JhaW5lIERpYWdub3NpcwpkZWZpbmUgIkNocm9uaWMgTWlncmFpbmUgRGlhZ25vc2lzIjoKICBleGlzdHMgKAogICAgW0NvbmRpdGlvbjogIjM3Nzk2MDA5Il0gLy8gU05PTUVEIGNvZGUgZm9yIE1pZ3JhaW5lCiAgICB3aGVyZSBzdGF0dXMgPSAnYWN0aXZlJwogICkKCi8vIERlZmluZSBQcmV2aW91cyBQcmV2ZW50aXZlIE1pZ3JhaW5lIFRyZWF0bWVudHMKZGVmaW5lICJQcmV2aW91cyBQcmV2ZW50aXZlIFRyZWF0bWVudHMiOgogIGV4aXN0cyAoCiAgICBbTWVkaWNhdGlvblJlcXVlc3RdCiAgICB3aGVyZSBtZWRpY2F0aW9uIGluICgKICAgICAgJ1Byb3ByYW5vbG9sJywgJ1RvcGlyYW1hdGUnLCAnQW1pdHJpcHR5bGluZScsICdCb3RveCcsICdDR1JQIEluaGliaXRvcnMnCiAgICApCiAgICBhbmQgc3RhdHVzIGluICgnY29tcGxldGVkJywgJ2FjdGl2ZScpCiAgKQoKLy8gRGVmaW5lIE1pZ3JhaW5lIEZyZXF1ZW5jeSBDcml0ZXJpYQpkZWZpbmUgIk1pZ3JhaW5lIEZyZXF1ZW5jeSBIaWdoIjoKICBleGlzdHMgKAogICAgW09ic2VydmF0aW9uXQogICAgd2hlcmUgY29kZSA9ICdtaWdyYWluZS1mcmVxdWVuY3knIGFuZCB2YWx1ZVF1YW50aXR5LnZhbHVlID49IDQKICApCgovLyBEZWZpbmUgQ29udHJhaW5kaWNhdGlvbnMgdG8gT3RoZXIgTWlncmFpbmUgTWVkaWNhdGlvbnMKZGVmaW5lICJIYXMgQ29udHJhaW5kaWNhdGlvbnMiOgogIGV4aXN0cyAoCiAgICBbQ29uZGl0aW9uXQogICAgd2hlcmUgY29kZSBpbiAoCiAgICAgICdBbGxlcmd5IHRvIGJldGEgYmxvY2tlcnMnLCAnUmVuYWwgZGlzZWFzZScsICdMaXZlciBkaXNlYXNlJwogICAgKQogICkKCi8vIERlZmluZSBJbnN1cmFuY2UgQ292ZXJhZ2UgQ2hlY2sKZGVmaW5lICJJbnN1cmFuY2UgQ292ZXJhZ2UiOgogIGV4aXN0cyAoCiAgICBbQ292ZXJhZ2VdCiAgICB3aGVyZSBwYXlvci5yZWZlcmVuY2UgPSAnT3JnYW5pemF0aW9uL2luc3VyYW5jZS1vcmcnCiAgKQoKLy8gRGVmaW5lIENyaXRlcmlhIGZvciBBcHByb3ZhbApkZWZpbmUgIlByaW9yIEF1dGhvcml6YXRpb24gQXBwcm92ZWQiOgogICJDaHJvbmljIE1pZ3JhaW5lIERpYWdub3NpcyIgYW5kCiAgIlByZXZpb3VzIFByZXZlbnRpdmUgVHJlYXRtZW50cyIgYW5kCiAgIk1pZ3JhaW5lIEZyZXF1ZW5jeSBIaWdoIiBhbmQKICAoIkhhcyBDb250cmFpbmRpY2F0aW9ucyIgb3IgIkluc3VyYW5jZSBDb3ZlcmFnZSIp"
-                        }
-                    ]
+                    "valueCanonical": "http://example.org/fhir/Library/AimovigPriorAuthLibrary"
                 }
             ],
             "item": [
                 {
                     "linkId": "1",
-                    "text": "Has the patient been diagnosed with chronic migraines?",
+                    "text": {"value": "Has the patient been diagnosed with chronic migraines?"},
                     "type": "boolean"
                 },
                 {
                     "linkId": "2",
-                    "text": "Has the patient tried other preventive migraine treatments?",
+                    "text": {"value": "Has the patient tried other preventive migraine treatments?"},
                     "type": "boolean"
                 },
                 {
                     "linkId": "3",
-                    "text": "Please list previous medications used for migraine prevention.",
-                    "type": "string"
+                    "text": {"value": "Please list previous medications used for migraine prevention."},
+                    "type": "display"
                 },
                 {
                     "linkId": "4",
-                    "text": "What is the frequency of migraines per month?",
+                    "text": {"value": "What is the frequency of migraines per month?"},
                     "type": "integer"
                 },
                 {
                     "linkId": "5",
-                    "text": "Has the patient experienced side effects or lack of effectiveness with prior treatments?",
+                    "text": {"value": "Has the patient experienced side effects or lack of effectiveness with prior treatments?"},
                     "type": "boolean"
                 },
                 {
                     "linkId": "6",
-                    "text": "Does the patient have any contraindications to other migraine medications?",
+                    "text": {"value": "Does the patient have any contraindications to other migraine medications?"},
                     "type": "boolean"
                 },
                 {
                     "linkId": "7",
-                    "text": "Does the patient have insurance coverage for Aimovig?",
+                    "text": {"value": "Does the patient have insurance coverage for Aimovig?"},
                     "type": "boolean"
                 }
             ]
         };
 
-        international401:Questionnaire questionnaire = check parser:parse(questionnaireJson, international401:Questionnaire).ensureType();
+        davincidtr210:DTRStdQuestionnaire questionnaire = check parser:parse(questionnaireJson, davincidtr210:DTRStdQuestionnaire).ensureType();
         questionnaires.push(questionnaire);
     }
 

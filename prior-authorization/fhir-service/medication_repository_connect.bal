@@ -21,13 +21,13 @@ import ballerina/http;
 import ballerinax/health.clients.fhir;
 import ballerinax/health.fhir.r4;
 import ballerinax/health.fhir.r4.parser;
-import ballerinax/health.fhir.r4.uscore501;
+import ballerinax/health.fhir.r4.uscore700;
 
-isolated uscore501:USCoreMedicationRequestProfile[] medicationRequests = [];
+isolated MedicationRequest[] medicationRequests = [];
 isolated int createOperationNextIdMedicationRequest = 111113;
 
-public isolated function createMedicationRequest(uscore501:USCoreMedicationRequestProfile payload) returns r4:FHIRError|uscore501:USCoreMedicationRequestProfile {
-    uscore501:USCoreMedicationRequestProfile|error medicationRequest = parser:parseWithValidation(payload.toJson(), uscore501:USCoreMedicationRequestProfile).ensureType();
+public isolated function createMedicationRequest(MedicationRequest payload) returns r4:FHIRError|MedicationRequest {
+    MedicationRequest|error medicationRequest = parser:parseWithValidation(payload.toJson(), uscore700:USCoreMedicationRequestProfile).ensureType();
 
     if medicationRequest is error {
         return r4:createFHIRError(medicationRequest.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
@@ -44,7 +44,7 @@ public isolated function createMedicationRequest(uscore501:USCoreMedicationReque
     }
 }
 
-public isolated function getByIdMedicationRequest(string id) returns r4:FHIRError|uscore501:USCoreMedicationRequestProfile {
+public isolated function getByIdMedicationRequest(string id) returns r4:FHIRError|MedicationRequest {
     lock {
         foreach var item in medicationRequests {
             string result = item.id ?: "";
@@ -95,7 +95,7 @@ public isolated function searchMedicationRequest(map<string[]>? searchParameters
         foreach var 'key in searchParameters.keys() {
             match 'key {
                 "_id" => {
-                    uscore501:USCoreMedicationRequestProfile byId = check getByIdMedicationRequest(searchParameters.get('key)[0]);
+                    MedicationRequest byId = check getByIdMedicationRequest(searchParameters.get('key)[0]);
                     bundle.entry = [
                         {
                             'resource: byId
@@ -186,7 +186,7 @@ function loadMedicationRequestData() returns error? {
             }
         };
 
-        uscore501:USCoreMedicationRequestProfile medicationRequest = check parser:parse(organizationJson, uscore501:USCoreMedicationRequestProfile).ensureType();
+        MedicationRequest medicationRequest = check parser:parse(organizationJson, uscore700:USCoreMedicationRequestProfile).ensureType();
         medicationRequests.push(medicationRequest);
     }
 

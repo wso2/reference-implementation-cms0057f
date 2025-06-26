@@ -22,13 +22,13 @@ import ballerina/regex;
 import ballerinax/health.clients.fhir;
 import ballerinax/health.fhir.r4;
 import ballerinax/health.fhir.r4.parser;
-import ballerinax/health.fhir.r4.uscore501;
+import ballerinax/health.fhir.r4.uscore700;
 
-isolated uscore501:USCorePractitionerProfile[] practitioners = [];
+isolated Practitioner[] practitioners = [];
 isolated int createOperationNextIdPractitioner = 457;
 
-public isolated function createPractitioner(uscore501:USCorePractitionerProfile payload) returns r4:FHIRError|uscore501:USCorePractitionerProfile {
-    uscore501:USCorePractitionerProfile|error practitioner = parser:parseWithValidation(payload.toJson(), uscore501:USCorePractitionerProfile).ensureType();
+public isolated function createPractitioner(Practitioner payload) returns r4:FHIRError|Practitioner {
+    Practitioner|error practitioner = parser:parseWithValidation(payload.toJson(), uscore700:USCorePractitionerProfile).ensureType();
 
     if practitioner is error {
         return r4:createFHIRError(practitioner.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
@@ -45,7 +45,7 @@ public isolated function createPractitioner(uscore501:USCorePractitionerProfile 
     }
 }
 
-public isolated function getByIdPractitioner(string id) returns r4:FHIRError|uscore501:USCorePractitionerProfile {
+public isolated function getByIdPractitioner(string id) returns r4:FHIRError|Practitioner {
     lock {
         foreach var item in practitioners {
             string result = item.id ?: "";
@@ -96,7 +96,7 @@ public isolated function searchPractitioner(map<string[]>? searchParameters = ()
         foreach var 'key in searchParameters.keys() {
             match 'key {
                 "_id" => {
-                    uscore501:USCorePractitionerProfile byId = check getByIdPractitioner(searchParameters.get('key)[0]);
+                    Practitioner byId = check getByIdPractitioner(searchParameters.get('key)[0]);
                     bundle.entry = [
                         {
                             'resource: byId
@@ -109,7 +109,7 @@ public isolated function searchPractitioner(map<string[]>? searchParameters = ()
                     lock {
                         foreach var item in practitioners {
 
-                            uscore501:USCorePractitionerProfileName nameRecord = item.name[0];
+                            uscore700:USCorePractitionerProfileName nameRecord = item.name[0];
                             string given = nameRecord.given is string[] ? (<string[]>nameRecord.given)[0] : "";
                             string fullName = string `${nameRecord.family} ${given}`;
 
@@ -210,7 +210,7 @@ function loadPractitionerData() returns error? {
                 }
             ]
         };
-        uscore501:USCorePractitionerProfile practitioner = check parser:parse(practitionerJson, uscore501:USCorePractitionerProfile).ensureType();
+        Practitioner practitioner = check parser:parse(practitionerJson, uscore700:USCorePractitionerProfile).ensureType();
         practitioners.push(practitioner);
     }
 

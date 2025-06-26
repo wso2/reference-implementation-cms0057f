@@ -86,7 +86,7 @@ endpoints:
       displayName: QuestionnaireResponse API
       service:
         basePath: /fhir/r4/QuestionnaireResponse
-        port: 9097
+        port: 9096
       type: REST
       networkVisibilities:
         - Project

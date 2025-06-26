@@ -22,17 +22,17 @@ import ballerina/log;
 import ballerinax/health.clients.fhir;
 import ballerinax/health.fhir.r4;
 import ballerinax/health.fhirr4;
+import ballerinax/health.fhir.r4.davincidtr210;
 import ballerinax/health.fhir.r4.davincipas;
 import ballerinax/health.fhir.r4.international401;
 import ballerinax/health.fhir.r4.parser;
-import ballerinax/health.fhir.r4.uscore501;
 import ballerinax/health.fhir.r4.uscore700;
 
 // ######################################################################################################################
 // # Patient API                                                                                                        #
 // ###################################################################################################################### 
 
-public type Patient uscore501:USCorePatientProfile|international401:Patient;
+public type Patient uscore700:USCorePatientProfile|international401:Patient;
 
 service /fhir/r4/Patient on new fhirr4:Listener(9090, patientApiConfig) {
 
@@ -40,7 +40,7 @@ service /fhir/r4/Patient on new fhirr4:Listener(9090, patientApiConfig) {
     isolated resource function post \$match(r4:FHIRContext fhirContext, international401:Parameters parameters) returns r4:FHIRError|r4:Bundle|error {
 
         // This is a dummy logic to test the connections. Todo: add relavant matching logic
-        uscore501:USCorePatientProfile matchedPatient = {
+        uscore700:USCorePatientProfile matchedPatient = {
             identifier: [
                 {
                     use: "usual",
@@ -77,8 +77,8 @@ service /fhir/r4/Patient on new fhirr4:Listener(9090, patientApiConfig) {
     }
 
     // Read the current state of single resource based on its id.
-    isolated resource function get [string id](r4:FHIRContext fhirContext) returns r4:FHIRError|uscore501:USCorePatientProfile|error {
-        uscore501:USCorePatientProfile response = check getByIdPatient(id);
+    isolated resource function get [string id](r4:FHIRContext fhirContext) returns r4:FHIRError|uscore700:USCorePatientProfile|error {
+        uscore700:USCorePatientProfile response = check getByIdPatient(id);
         return response;
     }
 
@@ -95,7 +95,7 @@ service /fhir/r4/Patient on new fhirr4:Listener(9090, patientApiConfig) {
 
     // Create a new resource.
     isolated resource function post .(r4:FHIRContext fhirContext, Patient patient) returns Patient|error {
-        uscore501:USCorePatientProfile uSCorePatientProfile = check createPatient(patient.toJson());
+        uscore700:USCorePatientProfile uSCorePatientProfile = check createPatient(patient.toJson());
 
         return uSCorePatientProfile;
     }
@@ -105,7 +105,7 @@ service /fhir/r4/Patient on new fhirr4:Listener(9090, patientApiConfig) {
         fhir:FHIRResponse response = check updatePatient(patient.toJson());
 
         do {
-            return <uscore501:USCorePatientProfile>check parser:parse(response.'resource, uscore501:USCorePatientProfile);
+            return <uscore700:USCorePatientProfile>check parser:parse(response.'resource, uscore700:USCorePatientProfile);
         } on fail error parseError {
             log:printError(string `Error occurred while parsing : ${parseError.message()}`, parseError);
             return r4:createFHIRError(parseError.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_INTERNAL_SERVER_ERROR);
@@ -117,7 +117,7 @@ service /fhir/r4/Patient on new fhirr4:Listener(9090, patientApiConfig) {
         fhir:FHIRResponse response = check patchResourcePatient("Patient", id, patch);
 
         do {
-            return <uscore501:USCorePatientProfile>check parser:parse(response.'resource, uscore501:USCorePatientProfile);
+            return <uscore700:USCorePatientProfile>check parser:parse(response.'resource, uscore700:USCorePatientProfile);
         } on fail error parseError {
             log:printError(string `Error occurred while parsing : ${parseError.message()}`, parseError);
             return r4:createFHIRError(parseError.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_INTERNAL_SERVER_ERROR);
@@ -286,7 +286,7 @@ service /fhir/r4/ClaimResponse on new fhirr4:Listener(9092, claimResponseApiConf
 // # MedicationRequest API                                                                                              #
 // ######################################################################################################################
 
-public type MedicationRequest uscore501:USCoreMedicationRequestProfile;
+public type MedicationRequest uscore700:USCoreMedicationRequestProfile;
 
 service /fhir/r4/MedicationRequest on new fhirr4:Listener(9093, medicationRequestApiConfig) {
 
@@ -308,7 +308,7 @@ service /fhir/r4/MedicationRequest on new fhirr4:Listener(9093, medicationReques
 
     // Create a new resource.
     isolated resource function post .(r4:FHIRContext fhirContext, MedicationRequest medicationRequest) returns error|http:Response {
-        uscore501:USCoreMedicationRequestProfile createResult = check createMedicationRequest(medicationRequest);
+        uscore700:USCoreMedicationRequestProfile createResult = check createMedicationRequest(medicationRequest);
         http:Response response = new;
         response.setJsonPayload(createResult.toJson());
         return response;
@@ -344,7 +344,7 @@ service /fhir/r4/MedicationRequest on new fhirr4:Listener(9093, medicationReques
 // # Practitioner API                                                                                                   #
 // ######################################################################################################################
 
-public type Practitioner uscore501:USCorePractitionerProfile;
+public type Practitioner uscore700:USCorePractitionerProfile;
 
 service /fhir/r4/Practitioner on new fhirr4:Listener(9094, practitionerApiConfig) {
 
@@ -399,12 +399,12 @@ service /fhir/r4/Practitioner on new fhirr4:Listener(9094, practitionerApiConfig
 // # Questionnaire API                                                                                                  #
 // ######################################################################################################################
 
-public type Questionnaire international401:Questionnaire;
+public type Questionnaire davincidtr210:DTRStdQuestionnaire;
 
 service /fhir/r4/Questionnaire on new fhirr4:Listener(9095, questionnaireApiConfig) {
 
-    isolated resource function post \$questionnaire\-package(r4:FHIRContext fhirContext, Parameters parameters) returns error|http:Response {
-        international401:Parameters createResult = check questionnairePackage(parameters);
+    isolated resource function post questionnaire\-package(r4:FHIRContext fhirContext, davincidtr210:DTRQuestionnairePackageInputParameters parameters) returns error|http:Response {
+        davincidtr210:DTRQuestionnairePackageOutputParameters createResult = check questionnairePackage(parameters);
         http:Response response = new;
         response.setJsonPayload(createResult.toJson());
         return response;
@@ -461,7 +461,7 @@ service /fhir/r4/Questionnaire on new fhirr4:Listener(9095, questionnaireApiConf
 // # QuestionnaireResponse API                                                                                          #
 // ######################################################################################################################
 
-public type QuestionnaireResponse uscore700:USCoreQuestionnaireResponseProfile;
+public type QuestionnaireResponse davincidtr210:DTRQuestionnaireResponse;
 
 service /fhir/r4/QuestionnaireResponse on new fhirr4:Listener(9096, questionnaireResponseApiConfig) {
 

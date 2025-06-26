@@ -18,14 +18,14 @@ import ballerina/http;
 import ballerina/time;
 import ballerinax/health.clients.fhir;
 import ballerinax/health.fhir.r4;
+import ballerinax/health.fhir.r4.davincidtr210;
 import ballerinax/health.fhir.r4.parser;
-import ballerinax/health.fhir.r4.uscore700;
 
-isolated uscore700:USCoreQuestionnaireResponseProfile[] questionnaireResponses = [];
-isolated int createOperationNextIdQuestionnaireResponse = 1123;
+isolated QuestionnaireResponse[] questionnaireResponses = [];
+isolated int createOperationNextIdQuestionnaireResponse = 1121;
 
-public isolated function createQuestionnaireResponse(uscore700:USCoreQuestionnaireResponseProfile payload) returns r4:FHIRError|uscore700:USCoreQuestionnaireResponseProfile {
-    uscore700:USCoreQuestionnaireResponseProfile|error questionnaireResponse = parser:parse(payload.toJson(), uscore700:USCoreQuestionnaireResponseProfile).ensureType();
+public isolated function createQuestionnaireResponse(QuestionnaireResponse payload) returns r4:FHIRError|QuestionnaireResponse {
+    QuestionnaireResponse|error questionnaireResponse = parser:parse(payload.toJson(), davincidtr210:DTRQuestionnaireResponse).ensureType();
 
     if questionnaireResponse is error {
         return r4:createFHIRError(questionnaireResponse.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
@@ -43,7 +43,7 @@ public isolated function createQuestionnaireResponse(uscore700:USCoreQuestionnai
     }
 }
 
-public isolated function getByIdQuestionnaireResponse(string id) returns r4:FHIRError|uscore700:USCoreQuestionnaireResponseProfile {
+public isolated function getByIdQuestionnaireResponse(string id) returns r4:FHIRError|QuestionnaireResponse {
     lock {
         foreach var item in questionnaireResponses {
             string result = item.id ?: "";
@@ -254,12 +254,14 @@ function loadQuestionnaireResponseData() returns error? {
     lock {
         json questionnaireResponseJson = {
             "resourceType": "QuestionnaireResponse",
-            "meta": {
-                "profile": ["http://hl7.org/fhir/us/core/StructureDefinition/us-core-questionnaireresponse"]
-            },
             "id": "1121",
-            "questionnaire": "Questionnaire/12",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/dtr-questionnaireresponse"
+                ]
+            },
             "status": "completed",
+            "questionnaire": "http://example.org/fhir/Questionnaire/aimovig-prior-auth",
             "authored": "2023-08-14T20:40:49.675Z",
             "subject": {
                 "reference": "Patient/123"
@@ -267,13 +269,39 @@ function loadQuestionnaireResponseData() returns error? {
             "author": {
                 "reference": "PractitionerRole/456"
             },
+            "extension": [
+                {
+                    "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/dtr-questionnaireresponse-extension",
+                    "extension": [
+                        {
+                            "url": "launchMethod",
+                            "valueCode": "SMART-on-FHIR"
+                        }
+                    ]
+                }
+            ],
             "item": [
                 {
                     "linkId": "1",
                     "text": "Has the patient been diagnosed with chronic migraines?",
                     "answer": [
                         {
-                            "valueBoolean": true
+                            "valueQuestionnaireResponseBoolean": true,
+                            "extension": [
+                                {
+                                    "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/dtr-questionnaireresponse-answer-extension",
+                                    "valueCodeableConcept": {
+                                        "coding": [
+                                            {
+                                                "system": "http://hl7.org/fhir/us/davinci-dtr/CodeSystem/dtr-population-status",
+                                                "code": "user-entered",
+                                                "display": "User Entered"
+                                            }
+                                        ],
+                                        "text": "User Entered"
+                                    }
+                                }
+                            ]
                         }
                     ]
                 },
@@ -282,7 +310,22 @@ function loadQuestionnaireResponseData() returns error? {
                     "text": "Has the patient tried other preventive migraine treatments?",
                     "answer": [
                         {
-                            "valueBoolean": true
+                            "valueQuestionnaireResponseBoolean": true,
+                            "extension": [
+                                {
+                                    "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/dtr-questionnaireresponse-answer-extension",
+                                    "valueCodeableConcept": {
+                                        "coding": [
+                                            {
+                                                "system": "http://hl7.org/fhir/us/davinci-dtr/CodeSystem/dtr-population-status",
+                                                "code": "user-entered",
+                                                "display": "User Entered"
+                                            }
+                                        ],
+                                        "text": "User Entered"
+                                    }
+                                }
+                            ]
                         }
                     ]
                 },
@@ -291,7 +334,22 @@ function loadQuestionnaireResponseData() returns error? {
                     "text": "Please list previous medications used for migraine prevention.",
                     "answer": [
                         {
-                            "valueString": "Propranolol, Topiramate, Botox"
+                            "valueQuestionnaireResponseString": "Propranolol, Topiramate, Botox",
+                            "extension": [
+                                {
+                                    "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/dtr-questionnaireresponse-answer-extension",
+                                    "valueCodeableConcept": {
+                                        "coding": [
+                                            {
+                                                "system": "http://hl7.org/fhir/us/davinci-dtr/CodeSystem/dtr-population-status",
+                                                "code": "user-entered",
+                                                "display": "User Entered"
+                                            }
+                                        ],
+                                        "text": "User Entered"
+                                    }
+                                }
+                            ]
                         }
                     ]
                 },
@@ -300,7 +358,22 @@ function loadQuestionnaireResponseData() returns error? {
                     "text": "What is the frequency of migraines per month?",
                     "answer": [
                         {
-                            "valueInteger": 8
+                            "valueQuestionnaireResponseInteger": 8,
+                            "extension": [
+                                {
+                                    "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/dtr-questionnaireresponse-answer-extension",
+                                    "valueCodeableConcept": {
+                                        "coding": [
+                                            {
+                                                "system": "http://hl7.org/fhir/us/davinci-dtr/CodeSystem/dtr-population-status",
+                                                "code": "user-entered",
+                                                "display": "User Entered"
+                                            }
+                                        ],
+                                        "text": "User Entered"
+                                    }
+                                }
+                            ]
                         }
                     ]
                 },
@@ -309,7 +382,22 @@ function loadQuestionnaireResponseData() returns error? {
                     "text": "Has the patient experienced side effects or lack of effectiveness with prior treatments?",
                     "answer": [
                         {
-                            "valueBoolean": true
+                            "valueQuestionnaireResponseBoolean": true,
+                            "extension": [
+                                {
+                                    "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/dtr-questionnaireresponse-answer-extension",
+                                    "valueCodeableConcept": {
+                                        "coding": [
+                                            {
+                                                "system": "http://hl7.org/fhir/us/davinci-dtr/CodeSystem/dtr-population-status",
+                                                "code": "user-entered",
+                                                "display": "User Entered"
+                                            }
+                                        ],
+                                        "text": "User Entered"
+                                    }
+                                }
+                            ]
                         }
                     ]
                 },
@@ -318,7 +406,22 @@ function loadQuestionnaireResponseData() returns error? {
                     "text": "Does the patient have any contraindications to other migraine medications?",
                     "answer": [
                         {
-                            "valueBoolean": false
+                            "valueQuestionnaireResponseBoolean": false,
+                            "extension": [
+                                {
+                                    "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/dtr-questionnaireresponse-answer-extension",
+                                    "valueCodeableConcept": {
+                                        "coding": [
+                                            {
+                                                "system": "http://hl7.org/fhir/us/davinci-dtr/CodeSystem/dtr-population-status",
+                                                "code": "user-entered",
+                                                "display": "User Entered"
+                                            }
+                                        ],
+                                        "text": "User Entered"
+                                    }
+                                }
+                            ]
                         }
                     ]
                 },
@@ -327,14 +430,29 @@ function loadQuestionnaireResponseData() returns error? {
                     "text": "Does the patient have insurance coverage for Aimovig?",
                     "answer": [
                         {
-                            "valueBoolean": true
+                            "valueQuestionnaireResponseBoolean": true,
+                            "extension": [
+                                {
+                                    "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/dtr-questionnaireresponse-answer-extension",
+                                    "valueCodeableConcept": {
+                                        "coding": [
+                                            {
+                                                "system": "http://hl7.org/fhir/us/davinci-dtr/CodeSystem/dtr-population-status",
+                                                "code": "user-entered",
+                                                "display": "User Entered"
+                                            }
+                                        ],
+                                        "text": "User Entered"
+                                    }
+                                }
+                            ]
                         }
                     ]
                 }
             ]
         };
 
-        QuestionnaireResponse questionnaireResponse = check parser:parse(questionnaireResponseJson, uscore700:USCoreQuestionnaireResponseProfile).ensureType();
+        QuestionnaireResponse questionnaireResponse = check parser:parse(questionnaireResponseJson, davincidtr210:DTRQuestionnaireResponse).ensureType();
         questionnaireResponses.push(questionnaireResponse);
     }
 }

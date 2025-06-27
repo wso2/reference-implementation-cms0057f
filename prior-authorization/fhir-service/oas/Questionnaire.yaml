@@ -35,7 +35,7 @@ paths:
         "200":
           description: Successful response with the requested Questionnaire
           content:
-            application/json:
+            application/fhir+json:
               schema:
                 $ref: "#/components/schemas/Questionnaire"
         "404":
@@ -51,7 +51,7 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
+          application/fhir+json:
             schema:
               $ref: "#/components/schemas/Questionnaire"
       responses:
@@ -80,7 +80,7 @@ paths:
         "200":
           description: A bundle of matching Questionnaires
           content:
-            application/json:
+            application/fhir+json:
               schema:
                 $ref: "#/components/schemas/Bundle"
     post:
@@ -88,7 +88,7 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
+          application/fhir+json:
             schema:
               $ref: "#/components/schemas/Questionnaire"
       responses:
@@ -103,7 +103,7 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
+          application/fhir+json:
             schema:
               $ref: "#/components/schemas/Parameters"
       responses:

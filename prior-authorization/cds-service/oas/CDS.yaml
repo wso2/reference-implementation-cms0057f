@@ -15,7 +15,7 @@
 # under the License.
 #
 
-openapi: 3.0.3
+openapi: 3.0.1
 info:
   title: CDS Services API
   version: 1.0.0
@@ -23,10 +23,7 @@ info:
     This API provides endpoints to discover CDS services, submit CDS requests, and send feedback on decisions.
   contact:
     name: API Support
-    url: https://wso2.com/contact/`
-
-servers:
-  - url: http://localhost:9090
+    url: https://wso2.com/contact/
 
 paths:
   /:

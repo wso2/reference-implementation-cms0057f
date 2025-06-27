@@ -1,0 +1,8 @@
+[package]
+org = "healthcare"
+name = "health.fhir.r4.uscore501.encounter"
+version = "1.0.0"
+distribution = "2201.10.2"
+authors = ["Ballerina"]
+keywords = ["Healthcare", "FHIR", "Encounter", "r4", "health.fhir.r4.uscore501"]
+template = true

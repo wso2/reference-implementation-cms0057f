@@ -1,0 +1,12 @@
+schemaVersion: 1.1
+endpoints:
+  - name: r4-diagnostic-report-api
+    displayName: r4 DiagnosticReport API
+    service:
+      basePath: /
+      port: 9092
+    type: REST
+    networkVisibilities:
+      - Project
+      - Public
+    schemaFilePath: oas/DiagnosticReport.yaml

@@ -1,0 +1,8 @@
+[package]
+org = "wso2"
+name = "bulk_export_service"
+version = "1.0.0"
+distribution = "2201.10.4"
+
+[build-options]
+observabilityIncluded = true

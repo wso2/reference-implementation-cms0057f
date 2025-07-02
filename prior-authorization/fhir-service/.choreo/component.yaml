@@ -114,6 +114,17 @@ endpoints:
         - Project
         - Public
       schemaFilePath: oas/SmartConfiguration.yaml
+    
+    - name: international401-parameters-api
+      displayName: international401 Parameters API
+      service:
+        basePath: /fhir/r4/Questionnaire/questionnaire-package
+        port: 9099
+      type: REST
+      networkVisibilities:
+        - Project
+        - Public
+      schemaFilePath: oas/Parameters.yaml
 
 dependencies:
     connectionReferences:

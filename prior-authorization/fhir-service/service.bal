@@ -457,6 +457,20 @@ service /fhir/r4/Practitioner on new fhirr4:Listener(9094, practitionerApiConfig
 }
 
 // ######################################################################################################################
+// # Questionnaire Package API                                                                                          #
+// ######################################################################################################################
+
+service /fhir/r4/Questionnaire/questionnaire\-package on new fhirr4:Listener(9099, questionnairePackageApiConfig) {
+
+    isolated resource function post .(r4:FHIRContext fhirContext, international401:Parameters parameters) returns error|http:Response {
+        international401:Parameters createResult = check questionnairePackage(parameters);
+        http:Response response = new;
+        response.setJsonPayload(createResult.toJson());
+        return response;
+    }
+}
+
+// ######################################################################################################################
 // # Questionnaire API                                                                                                  #
 // ######################################################################################################################
 
@@ -464,12 +478,12 @@ public type Questionnaire davincidtr210:DTRStdQuestionnaire;
 
 service /fhir/r4/Questionnaire on new fhirr4:Listener(9095, questionnaireApiConfig) {
 
-    isolated resource function post questionnaire\-package(r4:FHIRContext fhirContext, davincidtr210:DTRQuestionnairePackageInputParameters parameters) returns error|http:Response {
-        davincidtr210:DTRQuestionnairePackageOutputParameters createResult = check questionnairePackage(parameters);
-        http:Response response = new;
-        response.setJsonPayload(createResult.toJson());
-        return response;
-    }
+    // isolated resource function post questionnaire\-package(r4:FHIRContext fhirContext, davincidtr210:DTRQuestionnairePackageInputParameters parameters) returns error|http:Response {
+    //     davincidtr210:DTRQuestionnairePackageOutputParameters createResult = check questionnairePackage(parameters);
+    //     http:Response response = new;
+    //     response.setJsonPayload(createResult.toJson());
+    //     return response;
+    // }
 
     // Read the current state of single resource based on its id.
     isolated resource function get [string id](r4:FHIRContext fhirContext) returns Questionnaire|r4:OperationOutcome|r4:FHIRError {

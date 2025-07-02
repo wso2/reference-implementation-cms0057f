@@ -21,16 +21,17 @@ import ballerina/http;
 import ballerinax/health.clients.fhir;
 import ballerinax/health.fhir.r4;
 import ballerinax/health.fhir.r4.davincidtr210;
+import ballerinax/health.fhir.r4.international401;
 import ballerinax/health.fhir.r4.parser;
 
 isolated Questionnaire[] questionnaires = [];
 isolated int createOperationNextIdQuestionnaire = 5;
 
-isolated davincidtr210:DTRQuestionnairePackageOutputParameters[] parameters = [];
+isolated international401:Parameters[] parameters = [];
 isolated int createOperationNextIdQuestionnairePackage = 33;
 
-public isolated function questionnairePackage(davincidtr210:DTRQuestionnairePackageInputParameters payload) returns r4:FHIRError|davincidtr210:DTRQuestionnairePackageOutputParameters {
-    davincidtr210:DTRQuestionnairePackageInputParameters|error parameters = parser:parseWithValidation(payload.toJson(), davincidtr210:DTRQuestionnairePackageInputParameters).ensureType();
+public isolated function questionnairePackage(international401:Parameters payload) returns r4:FHIRError|international401:Parameters {
+    international401:Parameters|error parameters = parser:parseWithValidation(payload.toJson(), international401:Parameters).ensureType();
 
     if parameters is error {
         return r4:createFHIRError(parameters.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
@@ -39,7 +40,7 @@ public isolated function questionnairePackage(davincidtr210:DTRQuestionnairePack
     }
 }
 
-public isolated function getByIdQuestionnairePackage(string id) returns r4:FHIRError|davincidtr210:DTRQuestionnairePackageOutputParameters {
+public isolated function getByIdQuestionnairePackage(string id) returns r4:FHIRError|international401:Parameters {
     lock {
         foreach var item in parameters {
             string result = item.id ?: "";
@@ -236,7 +237,7 @@ function loadQuestionnairePackageData() returns error? {
             ]
         };
 
-        davincidtr210:DTRQuestionnairePackageOutputParameters package = check parser:parse(questionnaireJson, davincidtr210:DTRQuestionnairePackageOutputParameters).ensureType();
+        international401:Parameters package = check parser:parse(questionnaireJson, international401:Parameters).ensureType();
         parameters.push(package);
     }
 }

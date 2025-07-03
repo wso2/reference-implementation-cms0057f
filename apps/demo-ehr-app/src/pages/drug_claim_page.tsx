@@ -138,7 +138,7 @@ const ClaimForm = () => {
   };
 
   const handleSubmit = () => {
-    // const Config = window.Config;
+    const Config = window.Config;
     const payload = CLAIM_REQUEST_BODY(
       formData.patient,
       formData.provider,
@@ -186,22 +186,17 @@ const ClaimForm = () => {
     localStorage.setItem(CLAIM_REQUEST_METHOD, HTTP_METHODS.POST);
     localStorage.setItem(
       CLAIM_REQUEST_URL,
-      "https://unitedcare.com" +
-        "/choreo-apis/cms-0057-f/claim-submission-servi-hk/v1/fhir/r4/Claim/submit"
+      Config.demoBaseUrl + Config.claim_submit
     );
 
     localStorage.setItem(CLAIM_REQUEST, JSON.stringify(payload));
 
     axios
-      .post(
-        "/choreo-apis/cms-0057-f/claim-submission-servi-hk/v1/fhir/r4/Claim/submit",
-        payload,
-        {
-          headers: {
-            "Content-Type": "application/fhir+json",
-          },
-        }
-      )
+      .post(Config.claim_submit, payload, {
+        headers: {
+          "Content-Type": "application/fhir+json",
+        },
+      })
       .then((response) => {
         if (response.status >= 200 && response.status < 300) {
           console.log("Claim submitted successfully:", response.data);

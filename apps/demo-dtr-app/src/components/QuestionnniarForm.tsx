@@ -49,7 +49,7 @@ export default function QuestionnniarForm({
 }) {
   const dispatch = useDispatch();
   const [questions, setQuestions] = useState<
-    { linkId: string; text: string; type: string }[]
+    { linkId: string; text: { value: string }; type: string }[]
   >([]);
   const [questionnaireID, setQuestionnaireID] = useState<string | null>(null);
   const [formData, setFormData] = useState<{
@@ -108,10 +108,10 @@ export default function QuestionnniarForm({
         setOpenSnackbar(true);
 
         const questionnaire = response.data;
-        setQuestions(
-          questionnaire.parameter[0].resource.entry[0].resource.item || []
+        setQuestions(questionnaire.parameter[0].resource.entry[0].item || []);
+        setQuestionnaireID(
+          questionnaire.parameter[0].resource.entry[0].id || null
         );
-        setQuestionnaireID(questionnaire.parameter[0].resource.entry[0].resource.id || null);
 
         dispatch(
           updateCdsResponse({
@@ -162,9 +162,18 @@ export default function QuestionnniarForm({
       resourceType: "QuestionnaireResponse",
       meta: {
         profile: [
-          "http://hl7.org/fhir/us/core/StructureDefinition/us-core-questionnaireresponse",
+          "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/dtr-questionnaireresponse",
         ],
       },
+      extension: [
+        {
+          url: "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/questionnaireresponse-item-mapping-extension",
+          valueExpression: {
+            language: "text/fhirpath",
+            expression: "Bundle.entry.resource",
+          },
+        },
+      ],
       authored: new Date().toISOString(),
       questionnaire: "Questionnaire/" + questionnaireID,
       status: "completed",
@@ -176,21 +185,30 @@ export default function QuestionnniarForm({
       },
       item: questions.map((question) => ({
         linkId: question.linkId,
-        text: question.text,
+        text: question.text.value,
         answer: [
           {
-            valueBoolean:
+            valueQuestionnaireResponseBoolean:
               typeof formData[question.linkId] === "boolean"
                 ? (formData[question.linkId] as boolean)
                 : undefined,
-            valueInteger:
+            valueQuestionnaireResponseInteger:
               typeof formData[question.linkId] === "number"
                 ? (formData[question.linkId] as number)
                 : undefined,
-            valueString:
+            valueQuestionnaireResponseString:
               typeof formData[question.linkId] === "string"
                 ? (formData[question.linkId] as string)
                 : undefined,
+            extension: [
+              {
+                url: "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/questionnaireresponse-item-extension",
+                valueExpression: {
+                  language: "text/fhirpath",
+                  expression: "Observation.value",
+                },
+              },
+            ],
           },
         ],
       })),
@@ -201,9 +219,7 @@ export default function QuestionnniarForm({
     dispatch(resetCdsRequest());
     dispatch(resetCdsResponse());
     dispatch(updateRequest(questionnaireResponse));
-    dispatch(
-      updateRequestUrl(Config.questionnaire_response)
-    );
+    dispatch(updateRequestUrl(Config.questionnaire_response));
     dispatch(updateRequestMethod("POST"));
     axios
       .post(Config.questionnaire_response, questionnaireResponse, {
@@ -307,7 +323,7 @@ export default function QuestionnniarForm({
               key={index}
             >
               <Form.Label>
-                {question.text} <span style={{ color: "red" }}>*</span>
+                {question.text.value} <span style={{ color: "red" }}>*</span>
               </Form.Label>
               {renderFormField(question)}
             </Form.Group>
@@ -327,7 +343,9 @@ export default function QuestionnniarForm({
             variant="success"
             style={{ marginTop: "30px", marginRight: "20px", float: "right" }}
             onClick={() =>
-              window.open(Config.ehr_baseUrl + "/dashboard/drug-order-v2/claim-submit")
+              window.open(
+                Config.ehr_baseUrl + "/dashboard/drug-order-v2/claim-submit"
+              )
             }
             disabled={!isQuestionnaireResponseSubmited}
           >

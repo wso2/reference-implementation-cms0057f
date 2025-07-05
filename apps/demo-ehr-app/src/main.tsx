@@ -88,10 +88,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
                     path="drug-order-v2/prior-auth/*"
                     element={<DrugPiorAuthPage />}
                   />
-                  <Route
-                    path="drug-order-v2/claim-submit/*"
-                    element={<DrugClaimPage />}
-                  />
+                  <Route path="claim-submit/*" element={<DrugClaimPage />} />
                   <Route
                     path="drug-order/:drugName"
                     element={<DrugDetailsPage />}
@@ -122,7 +119,10 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
                     element={<CoverageCardDisplayPage />}
                   />
                   <Route path="patient" element={<PatientViewPage />} />
-                  <Route path="patient-history" element={<PatientHistoryPage />} />
+                  <Route
+                    path="patient-history"
+                    element={<PatientHistoryPage />}
+                  />
                 </Route>
 
                 <Route path="settings" element={<div>Not Implemented</div>} />

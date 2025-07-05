@@ -343,9 +343,7 @@ export default function QuestionnniarForm({
             variant="success"
             style={{ marginTop: "30px", marginRight: "20px", float: "right" }}
             onClick={() =>
-              window.open(
-                Config.ehr_baseUrl + "/dashboard/drug-order-v2/claim-submit"
-              )
+              window.open(Config.ehr_baseUrl + "/dashboard/claim-submit")
             }
             disabled={!isQuestionnaireResponseSubmited}
           >

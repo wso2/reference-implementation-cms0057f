@@ -16,24 +16,23 @@
 
 window.Config = {
   baseUrl:
-    "https://c32618cf-389d-44f1-93ee-b67a3468aae3-dev.e1-us-east-azure.choreoapis.dev",
+    "https://abdf12cf-bd27-4827-82a6-c661dc00af8e.e1-us-east-azure.choreoapps.dev",
   demoBaseUrl: "https://unitedcare.com",
-  demoHospitalUrl: "https://grace-memorial-hospital.com",
+  demoHospitalUrl: "https://grace-hospital.com",
 
   medication_request:
-    "/choreo-apis/cms-0057-f-provider/medication-request-servic/v1/fhir/r4/MedicationRequest",
+    "/choreo-apis/cms-0057-f/prior-authorization-fhir/fhir-medication-request-api/v1",
   prescribe_medication:
-    "/choreo-apis/cms-0057-f/cds-service-qn/v1/cds-services/prescribe-medication",
+    "/choreo-apis/cms-0057-f/prior-authorization-cds-s/v1/prescribe-medication",
   questionnaire_package:
-    "/choreo-apis/cms-0057-f/questionnaire-package-wp/v1/fhir/r4/Questionnaire/questionnaire-package",
+    "/choreo-apis/cms-0057-f/prior-authorization-fhir/international401-parameters-api/v1",
   questionnaire_response:
-    "/choreo-apis/cms-0057-f/questionnaire-response-fh/v1/fhir/r4/QuestionnaireResponse",
+    "/choreo-apis/cms-0057-f/prior-authorization-fhir/questionnaire-response-api/v1",
   claim_submit:
-    "/choreo-apis/cms-0057-f/claim-submission-servi-hk/v1/fhir/r4/Claim/submit",
+    "/choreo-apis/cms-0057-f/prior-authorization-fhir/fhir-claim-api/v1/$submit",
   practitioner_new:
-    "/choreo-apis/cms-0057-f-provider/practitioner-service/v1/fhir/r4/Practitioner",
-  patient:
-    "/choreo-apis/cms-0057-f-provider/patient-service/v1/fhir/r4/Patient",
+    "/choreo-apis/cms-0057-f/prior-authorization-fhir/fhir-practitioner-api/v1",
+  patient: "/choreo-apis/cms-0057-f/prior-authorization-fhir/v1",
   bulkExportFetch:
     "/choreo-apis/cms-0057-f/bulk-export-client/file-service/v1.0/fetch",
   bulkExportKickoffUrl:

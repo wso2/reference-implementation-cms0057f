@@ -42,7 +42,7 @@ paths:
             application/fhir+json:
               schema:
                 type: object
-  :
+  /:
     get:
       tags:
       - GET

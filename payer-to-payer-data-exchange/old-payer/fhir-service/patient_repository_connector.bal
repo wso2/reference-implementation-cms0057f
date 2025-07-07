@@ -40,31 +40,19 @@ public isolated function getByIdPatient(string id) returns r4:FHIRError|uscore50
 }
 
 public isolated function searchPatient(string 'resource, map<string[]>? searchParameters = ()) returns r4:FHIRError|r4:Bundle {
-    r4:Bundle bundle = {
-        'type: "collection"
-    };
+    lock {
+        r4:Bundle bundle = {
+            'type: "collection"
+        };
 
-    if searchParameters is map<string[]> {
-        // if searchParameters.keys().count() == 0 {
-        //     lock {
-        //         r4:BundleEntry[] bundleEntries = [];
-        //         foreach var item in patients {
-        //             r4:BundleEntry bundleEntry = {
-        //                 'resource: item
-        //             };
-        //             bundleEntries.push(bundleEntry);
-        //         }
-        //         r4:Bundle BundleClone = bundle.clone();
-        //         BundleClone.entry = bundleEntries;
-        //         return BundleClone.clone();
-        //     }
-        // }
+        Patient[] patientsCopy = patients;
 
-        foreach var 'key in searchParameters.keys() {
-            match 'key {
-                "given" => {
-                    uscore501:USCorePatientProfile byGivenName = {identifier: [], gender: "unknown", name: []};
-                    lock {
+        if searchParameters is map<string[]> {
+
+            foreach var 'key in searchParameters.clone().keys() {
+                match 'key {
+                    "given" => {
+                        uscore501:USCorePatientProfile byGivenName = {identifier: [], gender: "unknown", name: []};
                         foreach uscore501:USCorePatientProfile item in patients {
                             string givenNameParam = searchParameters.get('key)[0];
                             uscore501:USCorePatientProfileName[] names = item.name;
@@ -80,23 +68,28 @@ public isolated function searchPatient(string 'resource, map<string[]>? searchPa
                                 byGivenName = item.clone();
 
                             }
+                            patientsCopy = [byGivenName];
                         }
                     }
-                    bundle.entry = [
-                        {
-                            'resource: byGivenName
+                    "_count" => {
+                        r4:BundleEntry[] entries = [];
+                        foreach var patient in patientsCopy {
+                            r4:BundleEntry entry = {'resource: patient};
+                            entries.push(entry);
                         }
-                    ];
-                    return bundle;
-                }
-                _ => {
-                    return r4:createFHIRError(string `Not supported search parameter: ${'key}`, r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+                        bundle.entry = entries;
+                        return bundle.clone();
+                    }
+                    _ => {
+                        return r4:createFHIRError(string `Not supported search parameter: ${'key}`, r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+                    }
                 }
             }
         }
+
+        return bundle.clone();
     }
 
-    return bundle;
 }
 
 public isolated function updatePatient(json payload) returns r4:FHIRError|fhir:FHIRResponse {
@@ -160,85 +153,48 @@ function loadPatientData() returns error? {
             },
             "given2": {
                 "resourceType": "Patient",
-                "id": "101",
+                "id": "102",
                 "meta": {
                     "profile": ["http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient"]
                 },
                 "identifier": [
                     {
                         "system": "http://hospital.org/patients",
-                        "value": "12345"
+                        "value": "54321"
+                    },
+                    {
+                        "system": "urn:oid:wso2.healthcare.payer.memberID",
+                        "value": "644d85af-aaf9-4068-ad23-1e55aedd5205",
+                        "use": "secondary"
                     }
                 ],
                 "name": [
                     {
                         "use": "official",
-                        "family": "Smith",
-                        "given": ["John"]
+                        "family": "Shaw",
+                        "given": ["Jax"]
                     }
                 ],
-                "gender": "male",
-                "birthDate": "1979-04-15",
+                "gender": "female",
+                "birthDate": "1985-08-22",
                 "address": [
                     {
-                        "line": ["123 Main St"],
-                        "city": "Anytown",
-                        "state": "CA",
-                        "postalCode": "90210",
+                        "line": ["456 Elm Street"],
+                        "city": "Oaktown",
+                        "state": "NY",
+                        "postalCode": "10001",
                         "country": "US"
                     }
                 ],
                 "telecom": [
                     {
                         "system": "phone",
-                        "value": "+1 555-555-5555",
+                        "value": "+1 555-123-4567",
                         "use": "mobile"
                     },
                     {
                         "system": "email",
-                        "value": "john@example.com"
-                    }
-                ]
-            },
-            "given3": {
-                "resourceType": "Patient",
-                "id": "588675dc-e80e-4528-a78f-af10f9755f23",
-                "meta": {
-                    "profile": ["http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient"]
-                },
-                "identifier": [
-                    {
-                        "system": "http://hospital.org/patients",
-                        "value": "12345"
-                    }
-                ],
-                "name": [
-                    {
-                        "use": "official",
-                        "family": "Smith",
-                        "given": ["John"]
-                    }
-                ],
-                "gender": "male",
-                "birthDate": "1979-04-15",
-                "address": [
-                    {
-                        "line": ["123 Main St"],
-                        "city": "Anytown",
-                        "state": "CA",
-                        "postalCode": "90210",
-                        "country": "US"
-                    }
-                ],
-                "telecom": [
-                    {
-                        "system": "phone",
-                        "value": "+1 555-555-5555",
-                        "use": "mobile"
-                    },
-                    {
-                        "system": "email",
-                        "value": "john@example.com"
+                        "value": "jax.shaw@example.com"
                     }
                 ]
             }

@@ -28,8 +28,6 @@ import ballerinax/health.fhir.r4.uscore501;
 // # Patient API                                                                                                        #
 // ###################################################################################################################### 
 
-// configurable string client_id = ?;
-// configurable string client_secret = ?;
 configurable string exportServiceUrl = ?;
 
 # Generic type to wrap all implemented profiles.

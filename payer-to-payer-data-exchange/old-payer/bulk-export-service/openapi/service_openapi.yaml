@@ -10,7 +10,7 @@ servers:
     port:
       default: "8081"
 paths:
-  /fhir/r4/Patient/export:
+  /fhir/export:
     get:
       operationId: getFhirR4PatientExport
       responses:

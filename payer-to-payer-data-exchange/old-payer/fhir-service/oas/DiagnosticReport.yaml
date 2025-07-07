@@ -14,7 +14,7 @@ tags:
   - name: DiagnosticReport
   - name: 4.0.1
 paths:
-  :
+  /:
     get:
       tags:
         - GET

@@ -57,7 +57,6 @@ public type SearchServerConfig record {
 # + contextPath - FHIR Server's context path
 # + targetDirectory - temporary directory to save and host the exported files
 public type BulkExportServerConfig record {|
-    int port;
     string baseUrl;
     string contextPath;
     string targetDirectory;

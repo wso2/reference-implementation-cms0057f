@@ -16,49 +16,48 @@ import ballerina/time;
 # Source Server config, this server should support the <resource-type>/_search operation.
 #
 # + searchUrl - search URL of the source server. Only the host needs to be configured here
+# + contextPath - FHIR Server's context path
 # + tokenUrl - token endpoint URL. Not required if authEnabled is false
 # + clientId - client ID. Not required if authEnabled is false
 # + clientSecret - client secret. Not required if authEnabled is false
 # + scopes - array of scopes, to access the search operation. Not required if authEnabled is false
 # + authEnabled - true if the search server requires authentication
-# + types - array of types the export needs to support. If not set, all types will be active
+# + types - map of types the export needs to support and Choreo connection URLs, if it's deployed in Choreo. If not set, all types will be active
 public type SearchServerConfig record {
     boolean authEnabled = false;
-    string searchUrl;
-    string tokenUrl = "";
-    string clientId = "";
-    string clientSecret = "";
-    string[] scopes = [];
-    string[] types = [
-        "AllergyIntolerence",
-        "CarePlan",
-        "Claim",
-        "Condition",
-        "Coverage",
-        "Device",
-        "DiagnosticReport",
-        "DocumentReference",
-        "Encounter",
-        "Goal",
-        "Immunization",
-        "MedicationRequest",
-        "Observation",
-        "Organization",
-        "Patient",
-        "Practitioner",
-        "Procedure"
-    ];
+    string searchUrl?;
+    string contextPath?;
+    string tokenUrl?;
+    string clientId?;
+    string clientSecret?;
+    string[] scopes?;
+    map<string> types = {
+        "AllergyIntolerence": "",
+        "CarePlan": "",
+        "Claim": "",
+        "Condition": "",
+        "Coverage": "",
+        "Device": "",
+        "DiagnosticReport": "",
+        "DocumentReference": "",
+        "Encounter": "",
+        "Goal": "",
+        "Immunization": "",
+        "MedicationRequest": "",
+        "Observation": "",
+        "Organization": "",
+        "Patient": "",
+        "Practitioner": "",
+        "Procedure": ""
+    };
 };
 
 # Configs for pre built export service.
 #
-# + port - port number of the service 
 # + baseUrl - base URL of the server. Needed when returning status and download URLs
-# + contextPath - FHIR Server's context path
 # + targetDirectory - temporary directory to save and host the exported files
 public type BulkExportServerConfig record {|
     string baseUrl;
-    string contextPath;
     string targetDirectory;
 |};
 

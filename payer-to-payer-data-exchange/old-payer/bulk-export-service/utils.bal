@@ -48,59 +48,86 @@ public class FileCreateTask {
     BulkExportServerConfig serverConfig;
 
     public function execute() {
+        string[] types = searchServerConfig.types.keys();
         do {
             // Initialize the HTTP client
-            http:Client clientEp;
+            http:Client clientEp = check new ("");
             if self.sourceConfig.authEnabled {
-                clientEp = check new (self.sourceConfig.searchUrl,
+                clientEp = check new (self.sourceConfig?.searchUrl ?: "",
                     auth = {
-                        tokenUrl: self.sourceConfig.tokenUrl,
-                        clientId: self.sourceConfig.clientId,
-                        clientSecret: self.sourceConfig.clientSecret,
+                        tokenUrl: self.sourceConfig?.tokenUrl ?: "",
+                        clientId: self.sourceConfig?.clientId ?: "",
+                        clientSecret: self.sourceConfig?.clientSecret ?: "",
                         scopes: self.sourceConfig.scopes
                     }
                 );
-            } else {
-                clientEp = check new (self.sourceConfig.searchUrl);
-            }
 
-            string[] types = searchServerConfig.types;
-            log:printDebug(string `Task initialted for ${self.sourceConfig.searchUrl}`);
+                log:printDebug(string `Task initialted for ${self.sourceConfig?.searchUrl ?: ""}`);
 
-            foreach string resourceType in types {
-                do {
-                    log:printDebug(string `Searching ${resourceType}`);
-                    // Construct the request path
-                    // string reqPath = string `${exportServiceConfig.contextPath}${resourceType}/_search`;
-                    string reqPath = string `${exportServiceConfig.contextPath}${resourceType}`;
+                foreach string resourceType in types {
+                    do {
+                        log:printDebug(string `Searching ${resourceType}`);
+                        // Construct the request path
+                        // string reqPath = string `${searchServerConfig.contextPath}${resourceType}/_search`;
+                        string reqPath = string `${searchServerConfig?.contextPath ?: ""}${resourceType}`;
 
-                    if self.patientId is string {
-                        reqPath = string `${reqPath}/?patient=${<string>self.patientId}`;
-                    }
-                    // Make the POST _search request
-                    // json response = check clientEp->post(path = reqPath , message = {},
-                    //     headers = {"Accept": "application/fhir+json", "Content-Type": "application/fhir+json"}
-                    // );
+                        if self.patientId is string {
+                            reqPath = string `${reqPath}/?patient=${<string>self.patientId}`;
+                        }
+                        // Make the POST _search request
+                        // json response = check clientEp->post(path = reqPath , message = {},
+                        //     headers = {"Accept": "application/fhir+json", "Content-Type": "application/fhir+json"}
+                        // );
 
-                    log:printDebug(string `Request URL: ${reqPath}`);
-                    // Make the Search request
-                    json response = check clientEp->get(path = reqPath,
+                        log:printDebug(string `Request URL: ${reqPath}`);
+                        // Make the Search request
+                        json response = check clientEp->get(path = reqPath,
                         headers = {"Accept": "application/fhir+json", "Content-Type": "application/fhir+json"}
-                    );
+                        );
 
-                    r4:Bundle bundle = check response.cloneWithType(r4:Bundle);
-                    r4:BundleEntry[]? entries = bundle.entry;
-                    if entries !is () {
-                        check self.storeResult(entries, resourceType);
-                    } else {
-                        log:printError("No records for resource type: " + resourceType + " proceeding other types.");
-                        self.errors.push(createOpereationOutcome(r4:CODE_SEVERITY_INFORMATION, r4:PROCESSING, "No records for resource type: " + resourceType));
+                        r4:Bundle bundle = check response.cloneWithType(r4:Bundle);
+                        r4:BundleEntry[]? entries = bundle.entry;
+                        if entries !is () {
+                            check self.storeResult(entries, resourceType);
+                        } else {
+                            log:printError("No records for resource type: " + resourceType + " proceeding other types.");
+                            self.errors.push(createOpereationOutcome(r4:CODE_SEVERITY_INFORMATION, r4:PROCESSING, "No records for resource type: " + resourceType));
+                        }
+                    } on fail error e {
+                        log:printError("Error occurred while reading and storing resource type: " + resourceType + " proceeding other types.", e);
+                        self.errors.push(createOpereationOutcome(r4:CODE_SEVERITY_ERROR, r4:PROCESSING, "Error in retrieving " + resourceType + " resources"));
                     }
-                } on fail error e {
-                    log:printError("Error occurred while reading and storing resource type: " + resourceType + " proceeding other types.", e);
-                    self.errors.push(createOpereationOutcome(r4:CODE_SEVERITY_ERROR, r4:PROCESSING, "Error in retrieving " + resourceType + " resources"));
+                }
+            } else {
+                foreach string resourceType in types {
+                    string? serviceUrl = searchServerConfig.types[resourceType];
+                    if serviceUrl is string {
+                        do {
+                            log:printDebug(string `Searching ${resourceType}`);
+                            log:printDebug(string `Request URL: ${serviceUrl}`);
+
+                            // Make the Search request
+                            json response = check clientEp->get(path = serviceUrl,
+                            headers = {"Accept": "application/fhir+json", "Content-Type": "application/fhir+json"}
+                            );
+
+                            r4:Bundle bundle = check response.cloneWithType(r4:Bundle);
+                            r4:BundleEntry[]? entries = bundle.entry;
+                            if entries !is () {
+                                check self.storeResult(entries, resourceType);
+                            } else {
+                                log:printError("No records for resource type: " + resourceType + " proceeding other types.");
+                                self.errors.push(createOpereationOutcome(r4:CODE_SEVERITY_INFORMATION, r4:PROCESSING, "No records for resource type: " + resourceType));
+                            }
+                        } on fail error e {
+                            log:printError("Error occurred while reading and storing resource type: " + resourceType + " proceeding other types.", e);
+                            self.errors.push(createOpereationOutcome(r4:CODE_SEVERITY_ERROR, r4:PROCESSING, "Error in retrieving " + resourceType + " resources"));
+                        }
+                    }
+
                 }
             }
+
             ///The errors array needs to be populated to a seperate ndjson and responded under error in the status get
             if self.errors.length() > 0 {
                 check self.storeError();

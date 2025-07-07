@@ -35,7 +35,7 @@ service /bulk on new http:Listener(8090) {
                 "Your request has been accepted. You can check its status at " + exportServiceConfig.baseUrl + "/bulk/fhir/bulkstatus/" + exportTaskId);
     }
 
-    isolated resource function post fhir/r4/Patient/export(
+    isolated resource function post fhir/export(
             @http:Payload international401:Parameters parameters,
             @http:Query string? _outputFormat,
             @http:Query string? _since,

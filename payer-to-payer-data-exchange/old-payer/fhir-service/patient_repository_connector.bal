@@ -72,13 +72,7 @@ public isolated function searchPatient(string 'resource, map<string[]>? searchPa
                         }
                     }
                     "_count" => {
-                        r4:BundleEntry[] entries = [];
-                        foreach var patient in patientsCopy {
-                            r4:BundleEntry entry = {'resource: patient};
-                            entries.push(entry);
-                        }
-                        bundle.entry = entries;
-                        return bundle.clone();
+
                     }
                     _ => {
                         return r4:createFHIRError(string `Not supported search parameter: ${'key}`, r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
@@ -87,6 +81,12 @@ public isolated function searchPatient(string 'resource, map<string[]>? searchPa
             }
         }
 
+        r4:BundleEntry[] entries = [];
+        foreach var patient in patientsCopy {
+            r4:BundleEntry entry = {'resource: patient};
+            entries.push(entry);
+        }
+        bundle.entry = entries;
         return bundle.clone();
     }
 
@@ -111,7 +111,7 @@ function loadPatientData() returns error? {
         map<json> patientJson = {
             "given1": {
                 "resourceType": "Patient",
-                "id": "101",
+                "id": "588675dc-e80e-4528-a78f-af10f9755f23",
                 "meta": {
                     "profile": ["http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient"]
                 },

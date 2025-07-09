@@ -54,3 +54,14 @@ endpoints:
       - Project
       - Public
     schemaFilePath: oas/Encounter.yaml
+  
+  - name: r4-bulk-api
+    displayName: r4 Bulk API
+    service:
+      basePath: /bulk
+      port: 8090
+    type: REST
+    networkVisibilities:
+      - Project
+      - Public
+    schemaFilePath: oas/BulkAPI.yaml

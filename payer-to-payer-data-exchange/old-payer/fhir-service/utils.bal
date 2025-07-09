@@ -25,14 +25,13 @@ isolated function getQueryParamsMap(map<r4:RequestSearchParameter[] & readonly> 
 # Execute export task.
 #
 # + exportTaskId - Id of the exportTask instance in memory  
-# + sourceConfig - The configuration related to the search source server
 # + serverConfig - The configuration related to the export server
 # + patientId - Id of the patient that data need to be exported.
 # + return - error while scheduling job
-public isolated function executeJob(string exportTaskId, SearchServerConfig sourceConfig, BulkExportServerConfig serverConfig, string? patientId) returns error? {
+public isolated function executeJob(string exportTaskId, BulkExportServerConfig serverConfig, string? patientId) returns error? {
 
     log:printDebug(string `Executing Job ${exportTaskId}`);
-    FileCreateTask fileCreateTask = new FileCreateTask(exportTaskId, sourceConfig, serverConfig, patientId);
+    FileCreateTask fileCreateTask = new FileCreateTask(exportTaskId, serverConfig, patientId);
     task:JobId|error id = task:scheduleOneTimeJob(fileCreateTask, time:utcToCivil(time:utcAddSeconds(time:utcNow(1), 2)));
     if id is error {
         return id;
@@ -48,12 +47,10 @@ public class FileCreateTask {
     OutputFile[] outputFiles = [];
     OutputFile[] errorFiles = [];
     r4:OperationOutcome[] errors = [];
-    SearchServerConfig sourceConfig;
     BulkExportServerConfig serverConfig;
 
-    public isolated function init(string exportTaskId, SearchServerConfig sourceConfig, BulkExportServerConfig serverConfig, string? patientId) {
+    public isolated function init(string exportTaskId, BulkExportServerConfig serverConfig, string? patientId) {
         self.exportTaskId = exportTaskId;
-        self.sourceConfig = sourceConfig;
         self.serverConfig = serverConfig;
 
         if patientId is string {
@@ -62,9 +59,9 @@ public class FileCreateTask {
     }
 
     public function execute() {
-        string[] types = searchServerConfig.types;
+        string[] types = self.serverConfig.types;
         do {
-            log:printDebug(string `Task initialted for ${self.sourceConfig?.searchUrl ?: ""}`);
+            log:printDebug(string `Task initialted for ${self.exportTaskId}`);
 
             map<string[]> searchParams = {"patient": [self.patientId]};
             foreach var 'type in types {

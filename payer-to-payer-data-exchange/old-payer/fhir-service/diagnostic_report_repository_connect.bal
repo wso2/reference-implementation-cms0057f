@@ -157,7 +157,7 @@ function loadDiagnosticReportData() returns error? {
                 "text": "Lipid Panel"
             },
             "subject": {
-                "reference": "Patient/102"
+                "reference": "Patient/58c297c4-d684-4677-8024-01131d93835e"
             },
             "effectiveDateTime": "2011-03-04T08:30:00+11:00",
             "issued": "2013-01-27T11:45:33+11:00",
@@ -210,7 +210,7 @@ function loadDiagnosticReportData() returns error? {
                 "text": "Lipid Panel"
             },
             "subject": {
-                "reference": "Patient/102"
+                "reference": "Patient/58c297c4-d684-4677-8024-01131d93835e"
             },
             "effectiveDateTime": "2011-03-04T08:30:00+11:00",
             "issued": "2013-01-27T11:45:33+11:00",
@@ -262,7 +262,7 @@ function loadDiagnosticReportData() returns error? {
                 "text": "Lipid Panel"
             },
             "subject": {
-                "reference": "Patient/105"
+                "reference": "Patient/58c297c4-d684-4677-8024-01131d93835e"
             },
             "effectiveDateTime": "2011-03-04T08:30:00+11:00",
             "issued": "2013-01-27T11:45:33+11:00",

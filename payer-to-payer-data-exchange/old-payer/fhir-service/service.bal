@@ -31,7 +31,6 @@ import ballerinax/health.fhir.r4.uscore501;
 // # Patient API                                                                                                        #
 // ###################################################################################################################### 
 
-configurable SearchServerConfig searchServerConfig = ?;
 configurable BulkExportServerConfig exportServiceConfig = ?;
 
 # Generic type to wrap all implemented profiles.
@@ -88,7 +87,7 @@ service /fhir/r4/Patient on new fhirr4:Listener(9090, patientApiConfig) {
             string? patientId = selectedPatients[0]?.valueReference?.reference;
             if patientId is string {
                 log:printDebug(string `Exporting data for ID: ${patientId}`);
-                error? executionResult = executeJob(exportTaskId, searchServerConfig, exportServiceConfig, patientId);
+                error? executionResult = executeJob(exportTaskId, exportServiceConfig, patientId);
                 if executionResult is error {
                     log:printError("Error occurred: ", executionResult);
                     return r4:createFHIRError("Server Error", r4:ERROR, r4:PROCESSING, httpStatusCode = http:STATUS_INTERNAL_SERVER_ERROR);
@@ -150,8 +149,8 @@ service /fhir/r4/Patient on new fhirr4:Listener(9090, patientApiConfig) {
     }
 
     // Delete a resource.
-    isolated resource function delete [string id](r4:FHIRContext fhirContext) returns r4:OperationOutcome?|r4:FHIRError? {
-        _ = check deletePatient("Patient", id);
+    isolated resource function delete [string id](r4:FHIRContext fhirContext) returns r4:FHIRError|fhir:FHIRResponse {
+        return check deletePatient("Patient", id);
     }
 
     // Retrieve the update history for a particular resource.

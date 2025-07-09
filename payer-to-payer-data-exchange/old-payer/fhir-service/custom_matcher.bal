@@ -22,9 +22,9 @@ public isolated class DemoFHIRMemberMatcher {
 
         // Member match resources
         uscore501:USCorePatientProfile memberPatient = memberMatchResources.memberPatient;
-        hrex100:HRexConsent? consent = memberMatchResources.consent;
+        hrex100:HRexConsent? _ = memberMatchResources.consent;
         hrex100:HRexCoverage coverageToMatch = memberMatchResources.coverageToMatch;
-        hrex100:HRexCoverage? coverageToLink = memberMatchResources.coverageToLink;
+        hrex100:HRexCoverage? _ = memberMatchResources.coverageToLink;
 
         // Get patient resource from OLD payor
         // Search Patient from given name
@@ -87,9 +87,11 @@ public isolated class DemoFHIRMemberMatcher {
 
         log:printDebug(string `Demographic values from the request: Gender = ${incomingPatientGender} , DoB = ${birthDate.toBalString()}`);
 
-        foreach international401:Patient patient in nameMatchedPatients {
-            // Additional filter logic can be added here.
-        }
+        // Additional filter logic can be added here.
+        // foreach international401:Patient patient in nameMatchedPatients {
+
+        // }
+
         // Selecting the first element as the matched patient for the reference Impl
         filteredPatient = nameMatchedPatients[0];
 

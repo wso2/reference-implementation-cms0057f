@@ -16,6 +16,35 @@ tags:
 paths:
   /$member-match:
     post:
+      operationId: postmatch
+      requestBody:
+        content:
+          application/fhir+json:
+            schema:
+              type: object
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            application/fhir+json:
+              schema:
+                type: object
+        "500":
+          description: InternalServerError
+          content:
+            application/fhir+json:
+              schema:
+                type: object
+        "400":
+          description: BadRequest
+          content:
+            application/fhir+json:
+              schema:
+                type: object
+  
+  /$export:
+    post:
       operationId: postExport
       requestBody:
         content:
@@ -42,6 +71,7 @@ paths:
             application/fhir+json:
               schema:
                 type: object
+
   /:
     get:
       tags:

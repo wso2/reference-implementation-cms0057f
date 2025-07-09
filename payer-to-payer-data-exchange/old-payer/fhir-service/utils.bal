@@ -68,14 +68,19 @@ public class FileCreateTask {
                 match ('type) {
                     ENCOUNTER => {
                         r4:Bundle bundle = check searchEncounter(searchParams);
-                        r4:BundleEntry[]? entries = bundle.entry;
-                        if entries !is () {
-                            check self.storeResult(entries, ENCOUNTER);
-                        } else {
-                            log:printError("No records for resource type: " + ENCOUNTER + " proceeding other types.");
-                            self.errors.push(createOpereationOutcome(r4:CODE_SEVERITY_INFORMATION, r4:PROCESSING, "No records for resource type: " + ENCOUNTER));
-                        }
+                        check self.storeResult(bundle, ENCOUNTER);
                     }
+
+                    DIAGNOSTIC_REPORT => {
+                        r4:Bundle bundle = check searchDiagnosticReport(searchParams);
+                        check self.storeResult(bundle, DIAGNOSTIC_REPORT);
+                    }
+
+                    CLAIM => {
+                        r4:Bundle bundle = check searchClaim(searchParams);
+                        check self.storeResult(bundle, CLAIM);
+                    }
+
                     _ => {
 
                     }
@@ -95,33 +100,40 @@ public class FileCreateTask {
     }
 
     // Internal method used by execute method
-    isolated function storeResult(r4:BundleEntry[] content, string recordType) returns error? {
+    isolated function storeResult(r4:Bundle bundle, string recordType) returns error? {
 
-        string filePath = string `${self.serverConfig.targetDirectory}/${self.exportTaskId}/${recordType}.ndjson`;
-        string[] lines = [];
+        r4:BundleEntry[]? entries = bundle.entry;
+        if entries !is () {
+            string filePath = string `${self.serverConfig.targetDirectory}/${self.exportTaskId}/${recordType}.ndjson`;
+            string[] lines = [];
 
-        foreach r4:BundleEntry entry in content {
-            //Check if entry has a resource since resource is an optional field
-            if (entry.hasKey("resource")) {
-                // Write each entry as a separate line for the NDJSON file
-                lines.push(entry?.'resource.toJsonString());
+            foreach r4:BundleEntry entry in entries {
+                //Check if entry has a resource since resource is an optional field
+                if (entry.hasKey("resource")) {
+                    // Write each entry as a separate line for the NDJSON file
+                    lines.push(entry?.'resource.toJsonString());
+                }
             }
+
+            log:printDebug(string `Content Extracted ${recordType}`);
+
+            io:Error? fileResult = io:fileWriteLines(filePath, lines);
+            if fileResult is io:Error {
+                log:printError(string `Error writing to NDJSON file: ${fileResult.message()}`);
+                return fileResult;
+            }
+
+            OutputFile result = {
+                url: self.serverConfig.baseUrl + "/" + self.exportTaskId + "/fhir/bulkfiles/" + recordType + ".ndjson",
+                count: entries.length(),
+                'type: recordType
+            };
+            self.outputFiles.push(result);
+
+        } else {
+            log:printError("No records for resource type: " + ENCOUNTER + " proceeding other types.");
+            self.errors.push(createOpereationOutcome(r4:CODE_SEVERITY_INFORMATION, r4:PROCESSING, "No records for resource type: " + ENCOUNTER));
         }
-
-        log:printDebug(string `Content Extracted ${recordType}`);
-
-        io:Error? fileResult = io:fileWriteLines(filePath, lines);
-        if fileResult is io:Error {
-            log:printError(string `Error writing to NDJSON file: ${fileResult.message()}`);
-            return fileResult;
-        }
-
-        OutputFile result = {
-            url: self.serverConfig.baseUrl + "/" + self.exportTaskId + "/fhir/bulkfiles/" + recordType + ".ndjson",
-            count: content.length(),
-            'type: recordType
-        };
-        self.outputFiles.push(result);
     }
 
     public isolated function storeError() returns error? {

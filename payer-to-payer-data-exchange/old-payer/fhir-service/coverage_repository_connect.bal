@@ -4,24 +4,6 @@ import ballerinax/health.fhir.r4;
 import ballerinax/health.fhir.r4.international401;
 import ballerinax/health.fhir.r4.parser;
 
-// http:OAuth2ClientCredentialsGrantConfig ehrSystemAuthConfig = {
-//     tokenUrl: "https://login.microsoftonline.com/da76d684-740f-4d94-8717-9d5fb21dd1f9/oauth2/token",
-//     clientId: "",
-//     clientSecret: "",
-//     scopes: ["system/Patient.read, system/Patient.write"],
-//     optionalParams: {
-//         "resource": "https://ohfhirrepositorypoc-ohfhirrepositorypoc.fhir.azurehealthcareapis.com"
-//     }
-// };
-
-// fhir:FHIRConnectorConfig ehrSystemConfig = {
-//     baseURL: "https://ohfhirrepositorypoc-ohfhirrepositorypoc.fhir.azurehealthcareapis.com/",
-//     mimeType: fhir:FHIR_JSON,
-//     authConfig: ehrSystemAuthConfig
-// };
-
-// isolated fhir:FHIRConnector fhirConnectorObj = check new (ehrSystemConfig);
-
 isolated international401:Coverage[] coverages = [];
 isolated int createOperationNextIdCoverge = 368;
 
@@ -115,9 +97,9 @@ public isolated function searchCoverage(map<string[]>? searchParameters = ()) re
 
 function loadCoverageData() returns error? {
     lock {
-        json coverageJson = {
+        json coverageJson1 = {
             "resourceType": "Coverage",
-            "id": "367",
+            "id": "366",
             "meta": {
                 "profile": [
                     "http://hl7.org/fhir/StructureDefinition/Coverage"
@@ -180,8 +162,75 @@ function loadCoverageData() returns error? {
                 }
             ]
         };
-        international401:Coverage coverage = check parser:parseWithValidation(coverageJson, international401:Coverage).ensureType();
-        coverages.push(coverage);
+
+        json coverageJson2 = {
+            "resourceType": "Coverage",
+            "id": "367",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/StructureDefinition/Coverage"
+                ]
+            },
+            "status": "active",
+            "subscriber": {
+                "reference": "Patient/aa7d75d6-7fa0-47cd-89b9-d4326b382f28"
+            },
+            "subscriberId": "UC-123456789",
+            "beneficiary": {
+                "reference": "Patient/aa7d75d6-7fa0-47cd-89b9-d4326b382f28"
+            },
+            "payor": [
+                {
+                    "reference": "Organization/50"
+                }
+            ],
+            "class": [
+                {
+                    "type": {
+                        "coding": [
+                            {
+                                "system": "http://terminology.hl7.org/CodeSystem/coverage-class",
+                                "code": "group",
+                                "display": "Group"
+                            }
+                        ]
+                    },
+                    "value": "UC-Group-001",
+                    "name": "UnitedCare Standard Plan"
+                }
+            ],
+            "period": {
+                "start": "2025-01-01",
+                "end": "2025-12-31"
+            },
+            "network": "UC-Preferred-Network",
+            "costToBeneficiary": [
+                {
+                    "type": {
+                        "coding": [
+                            {
+                                "system": "http://terminology.hl7.org/CodeSystem/coverage-copay-type",
+                                "code": "copay",
+                                "display": "CoPay"
+                            }
+                        ]
+                    },
+                    "valueMoney": {
+                        "value": 50.00,
+                        "currency": "USD"
+                    },
+                    "valueQuantity": {
+                        "value": 1,
+                        "unit": "visit",
+                        "system": "http://unitsofmeasure.org",
+                        "code": "visit"
+                    }
+                }
+            ]
+        };
+        international401:Coverage coverage1 = check parser:parseWithValidation(coverageJson1, international401:Coverage).ensureType();
+        international401:Coverage coverage2 = check parser:parseWithValidation(coverageJson2, international401:Coverage).ensureType();
+        coverages.push(coverage1, coverage2);
 
     }
 }

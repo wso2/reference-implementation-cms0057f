@@ -65,3 +65,14 @@ endpoints:
       - Project
       - Public
     schemaFilePath: oas/BulkAPI.yaml
+
+  - name: fhir-organization-api
+    displayName: FHIR Organization API
+    service:
+      basePath: /fhir/r4/Organization
+      port: 9095
+    type: REST
+    networkVisibilities:
+      - Project
+      - Public
+    schemaFilePath: oas/Organization.yaml

@@ -4,4 +4,5 @@ function init() returns error? {
     check loadDiagnosticReportData();
     check loadEncounterData();
     check loadPatientData();
+    check loadOrganizationData();
 }

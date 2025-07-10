@@ -401,3 +401,31 @@ final r4:ResourceAPIConfig encounterApiConfig = {
     serverConfig: (),
     authzConfig: ()
 };
+
+# ######################################################################################################################
+# Organization API Configs                                                                                             #
+# ######################################################################################################################
+
+final r4:ResourceAPIConfig organizationApiConfig = {
+    resourceType: "Organization",
+    profiles: [
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization"
+    ],
+    defaultProfile: (),
+    searchParameters: [
+        {
+            name: "type",
+            active: true,
+            information: {
+                description: "A code for the type of organization",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Organization-type"
+            }
+        }
+    ],
+    operations: [
+
+    ],
+    serverConfig: (),
+    authzConfig: ()
+};

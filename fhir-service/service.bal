@@ -41,7 +41,10 @@ final readonly & international401:CapabilityStatement capabilityStatement = chec
 
 # The service representing well known API
 # Bound to port defined by configs
-service http:InterceptableService /fhir/r4/metadata on new http:Listener(9098) {
+
+listener http:Listener httpListener = http:getDefaultListener();
+
+service http:InterceptableService /fhir/r4/metadata on httpListener {
 
     public function createInterceptors() returns [fhirr4:FHIRResponseErrorInterceptor] {
         return [new fhirr4:FHIRResponseErrorInterceptor()];
@@ -105,7 +108,7 @@ final DemoFHIRMemberMatcher fhirMemberMatcher = new;
 
 # A service representing a network-accessible API
 # bound to port `9090`.
-service /fhir/r4/Patient on new fhirr4:Listener(9090, patientApiConfig) {
+service /fhir/r4/Patient on new fhirr4:Listener(config = patientApiConfig) {
 
     //Member Match implementation
     isolated resource function post \$member\-match(r4:FHIRContext context,
@@ -233,7 +236,7 @@ public type Claim davincipas:PASClaim;
 
 public type Parameters international401:Parameters;
 
-service /fhir/r4/Claim on new fhirr4:Listener(9091, ClaimApiConfig) {
+service /fhir/r4/Claim on new fhirr4:Listener(config = ClaimApiConfig) {
 
     isolated resource function post \$submit(r4:FHIRContext fhirContext, Parameters parameters) returns error|http:Response {
         international401:Parameters submitResult = check claimSubmit(parameters);
@@ -305,7 +308,7 @@ service /fhir/r4/Claim on new fhirr4:Listener(9091, ClaimApiConfig) {
 
 public type ClaimResponse davincipas:PASClaimResponse;
 
-service /fhir/r4/ClaimResponse on new fhirr4:Listener(9092, claimResponseApiConfig) {
+service /fhir/r4/ClaimResponse on new fhirr4:Listener(config = claimResponseApiConfig) {
 
     // Read the current state of single resource based on its id.
     isolated resource function get [string id](r4:FHIRContext fhirContext) returns http:Response|r4:OperationOutcome|r4:FHIRError|error {
@@ -373,7 +376,7 @@ service /fhir/r4/ClaimResponse on new fhirr4:Listener(9092, claimResponseApiConf
 
 public type Coverage international401:Coverage;
 
-service /fhir/r4/Coverage on new fhirr4:Listener(9093, coverageApiConfig) {
+service /fhir/r4/Coverage on new fhirr4:Listener(config = coverageApiConfig) {
 
     // Read the current state of single resource based on its id.
     isolated resource function get [string id](r4:FHIRContext fhirContext) returns Coverage|r4:OperationOutcome|r4:FHIRError {
@@ -428,7 +431,7 @@ service /fhir/r4/Coverage on new fhirr4:Listener(9093, coverageApiConfig) {
 
 public type ExplanationOfBenefit carinbb200:C4BBExplanationOfBenefitOutpatientInstitutional|carinbb200:C4BBExplanationOfBenefitInpatientInstitutional|carinbb200:C4BBExplanationOfBenefitPharmacy|carinbb200:C4BBExplanationOfBenefitOral|carinbb200:C4BBExplanationOfBenefitProfessionalNonClinician;
 
-service / on new fhirr4:Listener(9094, eobApiConfig) {
+service / on new fhirr4:Listener(config = eobApiConfig) {
 
     // Read the current state of single resource based on its id.
     isolated resource function get fhir/r4/ExplanationOfBenefit/[string id](r4:FHIRContext fhirContext) returns ExplanationOfBenefit|r4:OperationOutcome|r4:FHIRError {
@@ -485,7 +488,7 @@ service / on new fhirr4:Listener(9094, eobApiConfig) {
 
 public type MedicationRequest uscore501:USCoreMedicationRequestProfile;
 
-service /fhir/r4/MedicationRequest on new fhirr4:Listener(9095, medicationRequestApiConfig) {
+service /fhir/r4/MedicationRequest on new fhirr4:Listener(config = medicationRequestApiConfig) {
 
     // Read the current state of single resource based on its id.
     isolated resource function get [string id](r4:FHIRContext fhirContext) returns MedicationRequest|r4:OperationOutcome|r4:FHIRError {
@@ -543,7 +546,7 @@ service /fhir/r4/MedicationRequest on new fhirr4:Listener(9095, medicationReques
 
 public type Organization uscore501:USCoreOrganizationProfile;
 
-service /fhir/r4/Organization on new fhirr4:Listener(9096, organizationApiConfig) {
+service /fhir/r4/Organization on new fhirr4:Listener(config = organizationApiConfig) {
 
     // Read the current state of single resource based on its id.
     isolated resource function get [string id](r4:FHIRContext fhirContext) returns Organization|r4:OperationOutcome|r4:FHIRError {
@@ -598,7 +601,7 @@ service /fhir/r4/Organization on new fhirr4:Listener(9096, organizationApiConfig
 
 public type Practitioner uscore501:USCorePractitionerProfile;
 
-service /fhir/r4/Practitioner on new fhirr4:Listener(9097, practitionerApiConfig) {
+service /fhir/r4/Practitioner on new fhirr4:Listener(config = practitionerApiConfig) {
 
     // Read the current state of single resource based on its id.
     isolated resource function get [string id](r4:FHIRContext fhirContext) returns Practitioner|r4:OperationOutcome|r4:FHIRError {
@@ -653,7 +656,7 @@ service /fhir/r4/Practitioner on new fhirr4:Listener(9097, practitionerApiConfig
 
 public type AllergyIntolerance uscore501:USCoreAllergyIntolerance;
 
-service /fhir/r4/AllergyIntolerance on new fhirr4:Listener(9100, allergyIntoleranceApiConfig) {
+service /fhir/r4/AllergyIntolerance on new fhirr4:Listener(config = allergyIntoleranceApiConfig) {
 
     // Read the current state of single resource based on its id.
     isolated resource function get [string id](r4:FHIRContext fhirContext) returns AllergyIntolerance|r4:OperationOutcome|r4:FHIRError {
@@ -708,7 +711,7 @@ service /fhir/r4/AllergyIntolerance on new fhirr4:Listener(9100, allergyIntolera
 
 public type Observation uscore501:USCoreObservationSDOHAssessment|uscore501:USCoreLaboratoryResultObservationProfile|uscore501:USCorePediatricWeightForHeightObservationProfile|uscore501:USCorePediatricBMIforAgeObservationProfile|uscore501:USCoreBodyTemperatureProfile|uscore501:USCoreBodyHeightProfile|uscore501:USCoreObservationSurveyProfile|uscore501:USCoreHeartRateProfile|uscore501:USCoreHeadCircumferenceProfile|uscore501:USCoreRespiratoryRateProfile|uscore501:USCoreBloodPressureProfile|uscore501:USCorePulseOximetryProfile|uscore501:USCoreBodyWeightProfile|uscore501:USCoreVitalSignsProfile|uscore501:USCoreObservationSexualOrientationProfile|uscore501:USCorePediatricHeadOccipitalFrontalCircumferencePercentileProfile|uscore501:USCoreObservationImagingResultProfile|uscore501:USCoreObservationClinicalTestResultProfile|uscore501:USCoreObservationSocialHistoryProfile|uscore501:USCoreSmokingStatusProfile|uscore501:USCoreBMIProfile;
 
-service / on new fhirr4:Listener(9101, observationApiConfig) {
+service / on new fhirr4:Listener(config = observationApiConfig) {
 
     // Read the current state of single resource based on its id.
     isolated resource function get fhir/r4/Observation/[string id](r4:FHIRContext fhirContext) returns Observation|r4:OperationOutcome|r4:FHIRError {
@@ -763,7 +766,7 @@ service / on new fhirr4:Listener(9101, observationApiConfig) {
 
 public type DiagnosticReport uscore501:USCoreDiagnosticReportProfileNoteExchange|uscore501:USCoreDiagnosticReportProfileLaboratoryReporting;
 
-service /fhir/r4/DiagnosticReport on new fhirr4:Listener(9102, diagnosticReportApiConfig) {
+service /fhir/r4/DiagnosticReport on new fhirr4:Listener(config = diagnosticReportApiConfig) {
 
     // Read the current state of single resource based on its id.
     isolated resource function get [string id](r4:FHIRContext fhirContext) returns DiagnosticReport|r4:OperationOutcome|r4:FHIRError {
@@ -822,7 +825,7 @@ public type Encounter uscore501:USCoreEncounterProfile;
 
 # A service representing a network-accessible API
 # bound to port `9090`.
-service /fhir/r4/Encounter on new fhirr4:Listener(9103, encounterApiConfig) {
+service /fhir/r4/Encounter on new fhirr4:Listener(config = encounterApiConfig) {
 
     // Read the current state of single resource based on its id.
     isolated resource function get [string id](r4:FHIRContext fhirContext) returns Encounter|r4:OperationOutcome|r4:FHIRError {
@@ -875,7 +878,7 @@ service /fhir/r4/Encounter on new fhirr4:Listener(9103, encounterApiConfig) {
 // # Questionnaire Package API                                                                                          #
 // ######################################################################################################################
 
-service /fhir/r4/Questionnaire/questionnaire\-package on new fhirr4:Listener(9104, questionnairePackageApiConfig) {
+service /fhir/r4/Questionnaire/questionnaire\-package on new fhirr4:Listener(config = questionnairePackageApiConfig) {
 
     isolated resource function post .(r4:FHIRContext fhirContext, international401:Parameters parameters) returns error|http:Response {
         international401:Parameters createResult = check questionnairePackage(parameters);
@@ -891,7 +894,7 @@ service /fhir/r4/Questionnaire/questionnaire\-package on new fhirr4:Listener(910
 
 public type Questionnaire davincidtr210:DTRStdQuestionnaire;
 
-service /fhir/r4/Questionnaire on new fhirr4:Listener(9105, questionnaireApiConfig) {
+service /fhir/r4/Questionnaire on new fhirr4:Listener(config = questionnaireApiConfig) {
 
     // isolated resource function post questionnaire\-package(r4:FHIRContext fhirContext, davincidtr210:DTRQuestionnairePackageInputParameters parameters) returns error|http:Response {
     //     davincidtr210:DTRQuestionnairePackageOutputParameters createResult = check questionnairePackage(parameters);
@@ -953,7 +956,7 @@ service /fhir/r4/Questionnaire on new fhirr4:Listener(9105, questionnaireApiConf
 
 public type QuestionnaireResponse davincidtr210:DTRQuestionnaireResponse;
 
-service /fhir/r4/QuestionnaireResponse on new fhirr4:Listener(9106, questionnaireResponseApiConfig) {
+service /fhir/r4/QuestionnaireResponse on new fhirr4:Listener(config = questionnaireResponseApiConfig) {
 
     // Read the current state of single resource based on its id.
     isolated resource function get [string id](r4:FHIRContext fhirContext) returns QuestionnaireResponse|r4:OperationOutcome|r4:FHIRError {

@@ -1,8 +1,0 @@
-[package]
-org = "healthcare"
-name = "claim.repository.api"
-version = "1.0.0"
-distribution = "2201.10.2"
-authors = ["Ballerina"]
-keywords = ["Healthcare", "FHIR", "Parameters", "r4", "health.fhir.r4.international401", "Claim", "ClaimResponse"]
-template = true

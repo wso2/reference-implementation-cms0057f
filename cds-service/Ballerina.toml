@@ -1,9 +1,0 @@
-
-[package]
-org = "ballerinax"
-name = "health.fhir.templates.crd"
-version = "1.0.0"
-distribution = "2201.10.2"
-authors = ["Ballerina"]
-keywords = ["Healthcare", "FHIR", "CRD", "Da Vinci", "CDS", "Coverage Requirements Discovery"]
-template = true

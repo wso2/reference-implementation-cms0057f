@@ -21,9 +21,22 @@ import { LandingPage } from "./LandingPage";
 import { Layout } from "./Layout";
 import { ExportedDataPage } from "./ExportedDataPage";
 
+interface PayersAndFhirServerMappings {
+  id: number;
+  fhirServerUrl: string;
+}
 declare global {
   interface Window {
-    Config: any;
+    Config: {
+      patient: string;
+      organizationServiceUrl: string;
+      bulkExportKickoffUrl: string;
+      bulkExportStatusUrl: string;
+      bulkExportFetch: string;
+      memberMatch: string;
+      oldPayerCoverageGet: string;
+      payersAndFhirServerMappings: [PayersAndFhirServerMappings];
+    };
   }
 }
 
@@ -37,7 +50,7 @@ export const MainContent = () => {
     return <Layout Component={LandingPage} />;
   }
   if (location.pathname.includes("/exported-data")) {
-    return <Layout Component={ExportedDataPage}/>;
+    return <Layout Component={ExportedDataPage} />;
   }
 
   return (

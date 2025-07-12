@@ -41,14 +41,15 @@ isolated function updateExportTaskStatusInMemory(map<ExportTask> taskMap, string
     ExportTask exportTask = taskMap.get(exportTaskId);
     exportTask.lastUpdated = time:utcNow();
     exportTask.lastStatus = newStatus;
+    taskMap[exportTaskId] = exportTask;
     return true;
 }
 
 isolated function getExportTaskFromMemory(string exportId) returns ExportTask {
-    // get the export task from the memory
-    ExportTask exportTask;
     lock {
-        exportTask = exportTasks.get(exportId).clone();
+        if exportTasks.hasKey(exportId) {
+            return exportTasks.get(exportId).clone();
+        }
+        return {id: "", lastStatus: "", pollingEvents: []};
     }
-    return exportTask;
 }

@@ -262,7 +262,7 @@ function loadClaimData() returns error? {
                 ]
             },
             "patient": {
-                "reference": "Patient/58c297c4-d684-4677-8024-01131d93835e"
+                "reference": "Patient/aa7d75d6-7fa0-47cd-89b9-d4326b382f28"
             },
             "created": "2025-03-02",
             "insurer": {
@@ -361,7 +361,7 @@ function loadClaimData() returns error? {
                 ]
             },
             "patient": {
-                "reference": "Patient/58c297c4-d684-4677-8024-01131d93835e"
+                "reference": "Patient/aa7d75d6-7fa0-47cd-89b9-d4326b382f28"
             },
             "created": "2025-03-02",
             "insurer": {
@@ -454,7 +454,7 @@ isolated json claimResponseJson = {
     },
     "use": "preauthorization",
     "patient": {
-        "reference": "Patient/588675dc-e80e-4528-a78f-af10f9755f23"
+        "reference": "Patient/aa7d75d6-7fa0-47cd-89b9-d4326b382f28"
     },
     "created": "2025-03-02",
     "insurer": {

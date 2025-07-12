@@ -52,13 +52,13 @@ public isolated function unscheduleJob(task:JobId id) returns error? {
 # + downloadLink - file location
 # + statusClientV2 - http Client instance
 # + return - byte array stream of content
-public isolated function getFileAsStream(string downloadLink, http:Client statusClientV2) returns stream<byte[], io:Error?>|error? {
+public isolated function getFileAsStream(string downloadLink, http:Client statusClientV2) returns byte[]|error? {
 
     http:Response|http:ClientError statusResponse = statusClientV2->get("/");
     if statusResponse is http:Response {
         int status = statusResponse.statusCode;
         if status == 200 {
-            return check statusResponse.getByteStream();
+            return check statusResponse.getBinaryPayload();
         } else {
             log:printError("Error occurred while getting the status.");
         }
@@ -76,10 +76,9 @@ public isolated function getFileAsStream(string downloadLink, http:Client status
 public isolated function saveFileInFS(string downloadLink, string fileName) returns error? {
 
     http:Client statusClientV2 = check new (downloadLink);
-    stream<byte[], io:Error?> streamer = check getFileAsStream(downloadLink, statusClientV2) ?: new ();
+    byte[] streamer = check getFileAsStream(downloadLink, statusClientV2) ?: [];
 
-    check io:fileWriteBlocksFromStream(fileName, streamer);
-    check streamer.close();
+    check io:fileWriteBytes(fileName, streamer);
     log:printDebug(string `Successfully downloaded the file. File name: ${fileName}`);
 }
 
@@ -92,17 +91,17 @@ public isolated function saveFileInFS(string downloadLink, string fileName) retu
 public isolated function sendFileFromFSToFTP(TargetServerConfig config, string sourcePath, string fileName) returns error? {
     // Implement the FTP server logic here.
     ftp:Client fileClient = check new ({
-        host: config.host,
+        host: config.host ?: "",
         auth: {
             credentials: {
-                username: config.username,
-                password: config.password
+                username: config.username ?: "",
+                password: config.password ?: ""
             }
         }
     });
     stream<io:Block, io:Error?> fileStream
         = check io:fileReadBlocksAsStream(sourcePath, 1024);
-    check fileClient->put(string `${config.directory}/${fileName}`, fileStream);
+    check fileClient->put(string `${config.directory ?: ""}/${fileName}`, fileStream);
     check fileStream.close();
 }
 
@@ -252,6 +251,24 @@ public isolated function addQueryParam(string queryString, string key, string va
         return string `?${key}=${value}`;
     } else {
         return string `${queryString}&${key}=${value}`;
+    }
+}
+
+isolated function submitBackgroundJob(string taskId, http:Response|http:ClientError status) {
+    if status is http:Response {
+        log:printDebug(status.statusCode.toBalString());
+
+        // get the location of the status check
+        do {
+            string location = check status.getHeader("Content-location");
+            task:JobId|() _ = check executeJob(new PollingTask(taskId, location), sourceServerConfig.defaultIntervalInSec);
+            log:printDebug("Polling location recieved: " + location);
+        } on fail var e {
+            log:printError("Error occurred while getting the location or scheduling the Job", e);
+            // if location is available, can retry the task
+        }
+    } else {
+        log:printError("Error occurred while sending the kick-off request to the bulk export server.", status);
     }
 }
 

@@ -79,7 +79,7 @@ service /fhir/r4/Patient on new fhirr4:Listener(9090, patientApiConfig) {
     }
 
     // Implementation of the $export operation
-    isolated resource function post \$export(r4:FHIRContext fhirContext, international401:Parameters parameters) returns r4:FHIRError|r4:OperationOutcome|error {
+    isolated resource function post \$export(r4:FHIRContext fhirContext, international401:Parameters parameters) returns r4:FHIRError|r4:OperationOutcome|error|http:Response {
 
         string exportTaskId = uuid:createType1AsString();
         international401:ParametersParameter[]? selectedPatients = parameters.'parameter;
@@ -96,8 +96,14 @@ service /fhir/r4/Patient on new fhirr4:Listener(9090, patientApiConfig) {
             }
         }
 
-        return createOpereationOutcome("information", "processing",
+        r4:OperationOutcome OperationOutcome = createOpereationOutcome("information", "processing",
                 "Your request has been accepted. You can check its status at " + exportServiceConfig.baseUrl + "/fhir/bulkstatus/" + exportTaskId);
+
+        http:Response response = new;
+        response.setJsonPayload(OperationOutcome.toJson());
+        response.setHeader("Content-location", exportServiceConfig.baseUrl + "/fhir/bulkstatus/" + exportTaskId);
+        return response;
+
     }
 
     // Read the current state of single resource based on its id.

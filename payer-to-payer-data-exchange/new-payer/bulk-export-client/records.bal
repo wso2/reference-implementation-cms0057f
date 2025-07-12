@@ -23,13 +23,13 @@
 # + defaultIntervalInSec - polling interval in seconds
 public type BulkExportServerConfig record {|
     string baseUrl;
-    string tokenUrl;
-    string clientId;
-    string clientSecret;
-    string[] scopes;
-    string fileServerUrl;
+    string tokenUrl?;
+    string clientId?;
+    string clientSecret?;
+    string[] scopes?;
+    string fileServerUrl?;
     string contextPath;
-    decimal defaultIntervalInSec;
+    decimal defaultIntervalInSec = 5;
 |};
 
 # Server config for import FHIR resources.
@@ -41,21 +41,21 @@ public type BulkExportServerConfig record {|
 # + password - password to access the server, for ftp
 # + directory - directory to save the exported files
 public type TargetServerConfig record {|
-    string 'type;
-    string host;
-    int port;
-    string username;
-    string password;
-    string directory;
+    string 'type = "file";
+    string host?;
+    int port?;
+    string username?;
+    string password?;
+    string directory?;
 |};
 
 # Configs for pre built service.
 #
-# + port - port number of the service 
-# + authEnabled - true if the bulk export server requires authentication
+# + baseUrl - Base URL of the client itself. 
+# + authEnabled - true if the bulk export server requires authentication  
 # + targetDirectory - temporary directory to save the exported files
 public type BulkExportClientConfig record {|
-    int port;
+    string baseUrl;
     boolean authEnabled;
     string targetDirectory;
 |};

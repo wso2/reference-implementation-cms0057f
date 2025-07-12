@@ -219,7 +219,7 @@ function loadEncounterData() returns error? {
                 ]
             },
             "subject": {
-                "reference": "Patient/58c297c4-d684-4677-8024-01131d93835e",
+                "reference": "Patient/aa7d75d6-7fa0-47cd-89b9-d4326b382f28",
                 "display": "P. van de Heuvel"
             },
             "participant": [
@@ -321,7 +321,7 @@ function loadEncounterData() returns error? {
                 ]
             },
             "subject": {
-                "reference": "Patient/58c297c4-d684-4677-8024-01131d93835e",
+                "reference": "Patient/aa7d75d6-7fa0-47cd-89b9-d4326b382f28",
                 "display": "Roel"
             },
             "episodeOfCare": [

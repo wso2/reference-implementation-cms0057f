@@ -1,0 +1,13 @@
+# Sample configuration for Patient Access API Metrics with FHIR R4 Analytics
+[ballerinax.health.fhirr4.analytics]
+enabled = true
+attributes = ["fhirUser", "client_id", "iss"]
+url = "http://localhost:9200/patient_access/_doc" # Opensearch format: <hostname>/<index>/_doc
+username = "admin"
+password = "Strong@pass@432"
+
+[ballerinax.health.fhirr4.analytics.moreInfo]
+enabled = true
+url = "http://localhost:8082/more_info"
+username = "admin"
+password = "MoreInfo@987"

@@ -80,7 +80,7 @@ export const LandingPage = () => {
   const dispatch = useDispatch();
 
   // State to manage selected options
-  const [selectedOrgId, setSelectedOrgId] = useState<number | null>(null);
+  const [selectedOrgId, setSelectedOrgId] = useState<number>(50);
   const Config = window.Config;
   const loggedUser = useSelector((state: any) => state.loggedUser);
 
@@ -130,7 +130,7 @@ export const LandingPage = () => {
     const loadOrganizations = async () => {
       const payers = await fetchOrganizations();
       setPayerList(payers);
-      setSelectedOrgId(payers[0]?.id || null);
+      setSelectedOrgId(payers[0]?.id);
     };
 
     loadOrganizations();
@@ -164,39 +164,25 @@ export const LandingPage = () => {
       return;
     }
 
+    const coverageUrl = Config.payersAndFhirServerMappings.find(
+      (p) => p.id == selectedOrgId
+    )?.fhirServerUrl;
+
     try {
       axios
-        .get(
-          Config.oldPayerCoverageGet + "/" + selectedOrgId + "/" + coverageId
-        )
+        .get(coverageUrl + "/" + coverageId)
         .then((res) => {
           if (res.status >= 200 && res.status < 300) {
             const coverageResource = res.data;
-
-            // Replace coverage resource in payload
-            payload.parameter = payload.parameter.map((param: any) => {
-              if (param.name === "CoverageToLink") {
-                return {
-                  ...param,
-                  resource: coverageResource,
-                };
-              }
-              return param;
-            });
-
-            // Replace patient resource in payload
             const patientResource = JSON.parse(
               localStorage.getItem("patientResource") || "{}"
             );
-            payload.parameter = payload.parameter.map((param: any) => {
-              if (param.name === "MemberPatient") {
-                return {
-                  ...param,
-                  resource: patientResource,
-                };
-              }
-              return param;
-            });
+
+            // Replace coverage and patient resource in payload
+            const payload = memberMatchPayload(
+              patientResource,
+              coverageResource
+            );
 
             dispatch(updateRequestMethod("POST"));
             dispatch(updateRequestUrl("/member-service/v1.0/match"));
@@ -204,7 +190,7 @@ export const LandingPage = () => {
             dispatch(resetCdsResponse());
 
             axios
-              .post(Config.memberMatch, payload, {
+              .post(Config.memberMatch + "/$member-match", payload, {
                 headers: {
                   "Content-Type": "application/fhir+json",
                 },
@@ -236,7 +222,7 @@ export const LandingPage = () => {
                 setAlertMessage("Match failed. Please retry!");
                 setAlertSeverity("error");
                 setOpenSnackbar(true);
-              })
+              });
           } else {
             console.error("Error fetching coverage:", res);
             setAlertMessage("Error fetching coverage!");
@@ -354,11 +340,12 @@ export const LandingPage = () => {
             <Box>
               <Typography variant="h4">Fetch previous payer data</Typography>
               <Typography variant="h6" sx={{ mt: 2, mb: 4 }}>
-                Welcome to the UnitedCare Health Member Portal. If you haven't yet
-                synced your data with your previous, please select your previous
-                payer(s) and click 'Export' to securely transfer your data to
-                UnitedCare Health. The transfer will run in the background, and you will
-                be notified once the process is complete.
+                Welcome to the UnitedCare Health Member Portal. If you haven't
+                yet synced your data with your previous, please select your
+                previous payer(s) and click 'Export' to securely transfer your
+                data to UnitedCare Health. The transfer will run in the
+                background, and you will be notified once the process is
+                complete.
               </Typography>
             </Box>
 

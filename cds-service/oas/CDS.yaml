@@ -1,0 +1,186 @@
+# Copyright (c) 2025, WSO2 LLC. (http://www.wso2.com).
+
+# WSO2 LLC. licenses this file to you under the Apache License,
+# Version 2.0 (the "License"); you may not use this file except
+# in compliance with the License.
+# You may obtain a copy of the License at
+
+# http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+openapi: 3.0.1
+info:
+  title: CDS Services API
+  version: 1.0.0
+  description: |
+    This API provides endpoints to discover CDS services, submit CDS requests, and send feedback on decisions.
+  contact:
+    name: API Support
+    url: https://wso2.com/contact/
+
+paths:
+  /:
+    get:
+      summary: Discovery endpoint
+      description: Returns a list of available CDS hook services.
+      responses:
+        '200':
+          description: A list of available CDS services.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: array
+                    items:
+                      $ref: '#/components/schemas/ServiceDefinition'
+                  - $ref: '#/components/schemas/Services'
+
+  /{hook_id}:
+    post:
+      summary: CDS Hook Service Endpoint
+      description: Submits a CDS request and returns decision support cards.
+      parameters:
+        - name: hook_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Registered ID of the CDS hook being invoked.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CdsRequest'
+      responses:
+        '200':
+          description: CDS response containing decision cards.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/CdsResponse'
+                  - $ref: '#/components/schemas/CdsError'
+
+  /{hook_id}/feedback:
+    post:
+      summary: CDS Feedback Endpoint
+      description: Submits feedback for the specified CDS hook.
+      parameters:
+        - name: hook_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Registered ID of the CDS hook being invoked.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Feedbacks'
+      responses:
+        '200':
+          description: Feedback submission result.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/CdsError'
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+
+components:
+  schemas:
+    ServiceDefinition:
+      type: object
+      properties:
+        hook:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        id:
+          type: string
+
+    Services:
+      type: object
+      properties:
+        services:
+          type: array
+          items:
+            $ref: '#/components/schemas/ServiceDefinition'
+
+    CdsRequest:
+      type: object
+      properties:
+        hookInstance:
+          type: string
+        hook:
+          type: string
+        fhirServer:
+          type: string
+        patient:
+          type: string
+        encounter:
+          type: string
+        user:
+          type: string
+        context:
+          type: object
+        prefetch:
+          type: object
+
+    CdsResponse:
+      type: object
+      properties:
+        cards:
+          type: array
+          items:
+            type: object
+            properties:
+              summary:
+                type: string
+              detail:
+                type: string
+              indicator:
+                type: string
+                enum: [info, warning, critical]
+              source:
+                type: object
+                properties:
+                  label:
+                    type: string
+                  url:
+                    type: string
+
+    Feedbacks:
+      type: object
+      properties:
+        feedback:
+          type: array
+          items:
+            type: object
+            properties:
+              cardId:
+                type: string
+              outcome:
+                type: string
+
+    CdsError:
+      type: object
+      properties:
+        error:
+          type: string
+        details:
+          type: string

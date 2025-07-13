@@ -1,9 +1,0 @@
-[package]
-org = "wso2"
-name = "payer.to.payer.api"
-version = "1.0.0"
-distribution = "2201.12.3"
-keywords = ["Healthcare", "FHIR", "Patient", "r4", "health.fhir.r4.uscore501"]
-
-[build-options]
-observabilityIncluded = true

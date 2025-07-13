@@ -233,7 +233,7 @@ service /fhir/r4/Claim on new fhirr4:Listener(config = ClaimApiConfig) {
 
     // Read the current state of single resource based on its id.
     isolated resource function get [string id](r4:FHIRContext fhirContext) returns error|http:Response {
-        davincipas:PASClaim claim = check getByIdClaim(id);
+        davincipas:PASClaim claim = check getPASClaimByID(id);
         http:Response response = new;
         response.setJsonPayload(claim.toJson());
         return response;
@@ -247,7 +247,7 @@ service /fhir/r4/Claim on new fhirr4:Listener(config = ClaimApiConfig) {
     // Search for resources based on a set of criteria.
     isolated resource function get .(r4:FHIRContext fhirContext) returns error|http:Response {
         map<string[]> queryParamsMap = getQueryParamsMap(fhirContext.getRequestSearchParameters());
-        r4:Bundle bundle = check searchClaim(queryParamsMap);
+        r4:Bundle bundle = check searchPASClaim(queryParamsMap);
 
         http:Response response = new;
         response.setJsonPayload(bundle.toJson());
@@ -255,8 +255,8 @@ service /fhir/r4/Claim on new fhirr4:Listener(config = ClaimApiConfig) {
     }
 
     // Create a new resource.
-    isolated resource function post .(r4:FHIRContext fhirContext, Claim procedure) returns error|http:Response {
-        davincipas:PASClaim createResult = check createClaim(procedure);
+    isolated resource function post .(r4:FHIRContext fhirContext, Claim claim) returns error|http:Response {
+        davincipas:PASClaim createResult = check addNewPASClaim(claim);
         http:Response response = new;
         response.setJsonPayload(createResult.toJson());
         return response;
@@ -298,7 +298,7 @@ service /fhir/r4/ClaimResponse on new fhirr4:Listener(config = claimResponseApiC
 
     // Read the current state of single resource based on its id.
     isolated resource function get [string id](r4:FHIRContext fhirContext) returns http:Response|r4:OperationOutcome|r4:FHIRError|error {
-        ClaimResponse claimResponse = check getByIdClaimResponse(id);
+        ClaimResponse claimResponse = check getPASClaimResponseByID(id);
         http:Response response = new;
         response.setJsonPayload(claimResponse.toJson());
         response.statusCode = http:STATUS_OK;
@@ -315,16 +315,16 @@ service /fhir/r4/ClaimResponse on new fhirr4:Listener(config = claimResponseApiC
         map<string[]> queryParamsMap = getQueryParamsMap(fhirContext.getRequestSearchParameters());
 
         http:Response response = new;
-        r4:Bundle bundle = check searchClaimResponse(queryParamsMap);
+        r4:Bundle bundle = check searchPASClaimResponse(queryParamsMap);
         response.setJsonPayload(bundle.toJson());
         response.statusCode = http:STATUS_OK;
         return response;
     }
 
     // Create a new resource.
-    isolated resource function post .(r4:FHIRContext fhirContext, ClaimResponse procedure) returns error|http:Response {
+    isolated resource function post .(r4:FHIRContext fhirContext, ClaimResponse claimResponse) returns error|http:Response {
         http:Response response = new;
-        ClaimResponse result = check createClaimResponse(procedure);
+        ClaimResponse result = check addNewPASClaimResponse(claimResponse);
         response.setJsonPayload(result.toJson());
         response.statusCode = http:STATUS_CREATED;
         return response;

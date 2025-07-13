@@ -99,7 +99,7 @@ public class FileCreateTask {
                     }
 
                     CLAIM => {
-                        r4:Bundle bundle = check searchClaim(searchParams);
+                        r4:Bundle bundle = check searchPASClaim(searchParams);
                         check self.storeResult(bundle, CLAIM);
                     }
 

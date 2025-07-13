@@ -14,25 +14,9 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ballerina/os;
 import ballerinax/health.fhir.r4;
-// import ballerinax/health.fhir.r4;
 import ballerinax/health.fhir.r4.parser;
 import ballerinax/health.fhir.r4.uscore501;
-
-# Enable when you run locally.
-// configurable string serviceURL = "https://google.com";
-// configurable string consumerKey = "";
-// configurable string consumerSecret = "";
-// configurable string tokenURL = "";
-// configurable string choreoApiKey = "";
-
-# Configurations for the claim repository service.
-configurable string serviceURL = os:getEnv("CHOREO_PATIENT_ACCESS_API_CLAIM_REPO_SERVICEURL");
-configurable string consumerKey = os:getEnv("CHOREO_PATIENT_ACCESS_API_CLAIM_REPO_CONSUMERKEY");
-configurable string consumerSecret = os:getEnv("CHOREO_PATIENT_ACCESS_API_CLAIM_REPO_CONSUMERSECRET");
-configurable string tokenURL = os:getEnv("CHOREO_PATIENT_ACCESS_API_CLAIM_REPO_TOKENURL");
-configurable string choreoApiKey = os:getEnv("CHOREO_PATIENT_ACCESS_API_CLAIM_REPO_CHOREOAPIKEY");
 
 function init() returns error? {
     check loadAllergyIntoleranceData();
@@ -48,6 +32,7 @@ function init() returns error? {
     check loadQuestionnaireData();
     check loadQuestionnairePackageData();
     check loadQuestionnaireResponseData();
+    check loadClaimData();
 }
 
 function loadData() returns error? {

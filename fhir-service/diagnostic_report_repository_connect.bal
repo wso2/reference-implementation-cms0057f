@@ -192,7 +192,7 @@ function loadDiagnosticReportData() returns error? {
                 "text": "Lipid Panel"
             },
             "subject": {
-                "reference": "Patient/101"
+                "reference": "Patient/102"
             },
             "effectiveDateTime": "2025-06-03T09:00:00-05:00",
             "issued": "2025-06-03T11:00:00-05:00",

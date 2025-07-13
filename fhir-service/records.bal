@@ -48,10 +48,11 @@ public type ResponseResource record {
     string version;
 };
 
-public enum ResourceTypes {
+public enum ResourceType {
     ALLERGY_INTOLERENCE = "AllergyIntolerence",
     CARE_PLAN = "CarePlan",
     CLAIM = "Claim",
+    CLAIM_RESPONSE = "ClaimResponse",
     CONDITION = "Condition",
     COVERAGE = "Coverage",
     DEVICE = "Device",
@@ -65,7 +66,11 @@ public enum ResourceTypes {
     ORGANIZATION = "Organization",
     PATIENT = "Patient",
     PRACTITIONER = "Practitioner",
-    PROCEDURE = "Procedure"
+    PROCEDURE = "Procedure",
+    QUESTIONNAIRE = "Questionnaire",
+    QUESTIONNAIRE_PACKAGE = "QuestionnairePackage",
+    QUESTIONNAIRE_RESPONSE = "QuestionnaireResponse",
+    EXPLANATION_OF_BENEFIT = "ExplanationOfBenefit"
 }
 
 # Configs for pre built export service.

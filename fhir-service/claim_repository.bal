@@ -1,8 +1,8 @@
 import ballerina/http;
+import ballerina/time;
 import ballerinax/health.fhir.r4;
 import ballerinax/health.fhir.r4.davincipas;
 import ballerinax/health.fhir.r4.parser;
-import ballerina/time;
 
 // Claim Repository
 isolated davincipas:PASClaim[] claims = [];
@@ -11,7 +11,6 @@ isolated int claimCreateOperationNextId = 12343;
 // Claim Response Repository
 isolated davincipas:PASClaimResponse[] claimResponses = [];
 isolated int claimResponseCreateOperationNextId = 12343;
-
 
 // ######################################################################################################################
 // # Claim Repository Functions                                                                                         #
@@ -125,7 +124,7 @@ public isolated function searchPASClaim(map<string[]>? searchParameters = ()) re
         if patient is string {
             results = getClaimsByPatient(patient, results);
         }
-        
+
         if use is string {
             results = getClaimsByUse(use, results);
         }
@@ -253,12 +252,9 @@ isolated function getClaimsByCreatedDate(string created, davincipas:PASClaim[] t
     return filteredClaims;
 }
 
-
-
 // ######################################################################################################################
 // # Clain Response Repository Functions                                                                                #
 // ######################################################################################################################
-
 
 public isolated function addNewPASClaimResponse(davincipas:PASClaimResponse payload) returns r4:FHIRError|davincipas:PASClaimResponse|error {
     davincipas:PASClaimResponse|error claimResponse = parser:parseWithValidation(payload.toJson(), davincipas:PASClaimResponse).ensureType();
@@ -368,7 +364,7 @@ public isolated function searchPASClaimResponse(map<string[]>? searchParameters 
         if patient is string {
             results = getClaimResponsesByPatient(patient, results);
         }
-        
+
         if use is string {
             results = getClaimResponsesByUse(use, results);
         }

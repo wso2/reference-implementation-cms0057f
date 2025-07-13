@@ -172,7 +172,7 @@ isolated function getByLastUpdatedDateEob(string lastUpdated, ExplanationOfBenef
 isolated function getByPatientEob(string patient, ExplanationOfBenefit[] targetArr) returns ExplanationOfBenefit[] {
     ExplanationOfBenefit[] filteredEobs = [];
     foreach ExplanationOfBenefit eob in targetArr {
-        if eob.patient.reference == string `Patient/${patient}` { 
+        if eob.patient.reference == string `Patient/${patient}` {
             filteredEobs.push(eob);
         }
     }

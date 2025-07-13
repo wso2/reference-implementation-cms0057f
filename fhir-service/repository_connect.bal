@@ -1,12 +1,45 @@
+import ballerina/http;
 import ballerinax/health.fhir.r4;
 
 // key = resource type
-isolated map<r4:Resource[]> repositoryMap = {};
-isolated map<int> nextIdMap = {};
+isolated map<r4:Resource[]> repositoryMap = {
+    Patient: [],
+    AllergyIntolerance: [],
+    Claim: [],
+    ClaimResponse: [],
+    Coverage: [],
+    DiagnosticReport: [],
+    Encounter: [],
+    ExplanationOfBenefit: [],
+    MedicationRequest: [],
+    Observation: [],
+    Organization: [],
+    Practitioner: [],
+    Questionnaire: [],
+    QuestionnairPackage: [],
+    QuestionnaireResponse: []
+};
+isolated map<int> nextIdMap = {
+    Patient: 102,
+    AllergyIntolerance: 20300,
+    Claim: 12343,
+    ClaimResponse: 12343,
+    Coverage: 367,
+    DiagnosticReport: 87920,
+    Encounter: 12344,
+    ExplanationOfBenefit: 14453,
+    MedicationRequest: 111113,
+    Observation: 63230,
+    Organization: 50,
+    Practitioner: 457,
+    Questionnaire: 5,
+    QuestionnairPackage: 33,
+    QuestionnaireResponse: 1121
+};
 
-public isolated function create(string resourceType, r4:Resource payload) returns r4:Resource|error {
+public isolated function create(ResourceType resourceType, r4:Resource payload) returns r4:Resource|error {
     int nextId;
-    lock {  
+    lock {
         int? prevId = nextIdMap[resourceType];
         if prevId is int {
             nextId = (<int>prevId) + 1;
@@ -26,10 +59,8 @@ public isolated function create(string resourceType, r4:Resource payload) return
             r4:Resource[]? resourceArr = repositoryMap[resourceType].clone();
             if resourceArr is r4:Resource[] {
                 resources = resourceArr;
-            } else {
-                resources = [];
             }
-        }   
+        }
 
         resources.push(payload.clone());
         repositoryMap[resourceType] = resources;
@@ -37,7 +68,7 @@ public isolated function create(string resourceType, r4:Resource payload) return
     return resourceClone;
 }
 
-public isolated function getById(string resourceType, string id) returns r4:Resource|error {
+public isolated function getById(ResourceType resourceType, string id) returns r4:Resource|r4:FHIRError {
     lock {
         if repositoryMap.hasKey(resourceType) {
             r4:Resource[]? resources = repositoryMap[resourceType];
@@ -50,7 +81,6 @@ public isolated function getById(string resourceType, string id) returns r4:Reso
             }
         }
     }
-    return error(string `Resource of type ${resourceType} with id ${id} not found`);
+    return r4:createFHIRError(string `Resource of type ${resourceType} with id ${id} not found`, r4:ERROR, r4:PROCESSING_NOT_FOUND, httpStatusCode = http:STATUS_NOT_FOUND);
 }
-
 

@@ -1,0 +1,22 @@
+[configs]
+discoveryEndpoint = "https://api.asgardeo.io/t/wso2healthcare/oauth2/token/.well-known/openid-configuration"
+[configs.smartConfiguration]
+issuer = "https://api.asgardeo.io/t/wso2healthcare/oauth2/token"
+jwksUri = "https://api.asgardeo.io/t/wso2healthcare/oauth2/jwks"
+authorizationEndpoint = "https://api.asgardeo.io/t/wso2healthcare/oauth2/authorize"
+capabilities = ["launch-ehr"]
+
+[configFHIRServer]
+status = "active"
+kind = "instance"
+implementationDescription = "FHIR server"
+fhirVersion = "4.0.1"
+format = ["json"]
+
+[configRest]
+mode = "server"
+
+[exportServiceConfig]
+baseUrl = "http://localhost:9090"
+targetDirectory = "./target"
+types = ["Claim", "Encounter", "DiagnosticReport"]

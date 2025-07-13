@@ -20,6 +20,7 @@
 import ballerina/http;
 import ballerina/log;
 import ballerina/time;
+import ballerina/uuid;
 import ballerinax/health.clients.fhir;
 import ballerinax/health.fhir.r4;
 import ballerinax/health.fhirr4;
@@ -28,9 +29,10 @@ import ballerinax/health.fhir.r4.davincidtr210;
 import ballerinax/health.fhir.r4.davincihrex100;
 import ballerinax/health.fhir.r4.davincipas;
 import ballerinax/health.fhir.r4.international401;
-import ballerinax/health.fhir.r4.parser;
 import ballerinax/health.fhir.r4.uscore501;
-import ballerina/uuid;
+
+configurable Configs configs = ?;
+configurable BulkExportServerConfig exportServiceConfig = ?;
 
 // ######################################################################################################################
 // # Capability statement API                                                                                           #
@@ -70,7 +72,7 @@ service http:InterceptableService /fhir/r4/metadata on httpListener {
 # # The service representing well known API
 final readonly & SmartConfiguration smartConfiguration = check generateSmartConfiguration().cloneReadOnly();
 
-service http:InterceptableService /fhir/r4 on new http:Listener(9099) {
+service http:InterceptableService /fhir/r4/\.well\-known/smart\-configuration on httpListener {
 
     public function createInterceptors() returns [fhirr4:FHIRResponseErrorInterceptor] {
         return [new fhirr4:FHIRResponseErrorInterceptor()];
@@ -79,7 +81,7 @@ service http:InterceptableService /fhir/r4 on new http:Listener(9099) {
     # The authorization endpoints accepted by a FHIR resource server are exposed as a Well-Known Uniform Resource Identifiers (URIs) (RFC5785) JSON document.
     # Reference: https://build.fhir.org/ig/HL7/smart-app-launch/conformance.html#using-well-known
     # + return - Smart configuration
-    resource isolated function get \.well\-known/smart\-configuration() returns json|r4:FHIRError {
+    resource isolated function get .() returns json|r4:FHIRError {
         json|error response = smartConfiguration.toJson();
 
         if response is json {
@@ -94,8 +96,6 @@ service http:InterceptableService /fhir/r4 on new http:Listener(9099) {
 // ######################################################################################################################
 // # Patient API                                                                                                        #
 // ###################################################################################################################### 
-
-configurable BulkExportServerConfig exportServiceConfig = ?;
 
 # Generic type to wrap all implemented profiles.
 # Add required profile types here.
@@ -190,31 +190,17 @@ service /fhir/r4/Patient on new fhirr4:Listener(config = patientApiConfig) {
 
     // Update the current state of a resource completely.
     isolated resource function put [string id](r4:FHIRContext fhirContext, Patient patient) returns Patient|r4:OperationOutcome|r4:FHIRError {
-        fhir:FHIRResponse response = check updatePatient(patient.toJson());
-
-        do {
-            return <uscore501:USCorePatientProfile>check parser:parse(response.'resource, uscore501:USCorePatientProfile);
-        } on fail error parseError {
-            log:printError(string `Error occurred while parsing : ${parseError.message()}`, parseError);
-            return r4:createFHIRError(parseError.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_INTERNAL_SERVER_ERROR);
-        }
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
     }
 
     // Update the current state of a resource partially.
     isolated resource function patch [string id](r4:FHIRContext fhirContext, json patch) returns Patient|r4:OperationOutcome|r4:FHIRError {
-        fhir:FHIRResponse response = check patchResourcePatient("Patient", id, patch);
-
-        do {
-            return <uscore501:USCorePatientProfile>check parser:parse(response.'resource, uscore501:USCorePatientProfile);
-        } on fail error parseError {
-            log:printError(string `Error occurred while parsing : ${parseError.message()}`, parseError);
-            return r4:createFHIRError(parseError.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_INTERNAL_SERVER_ERROR);
-        }
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
     }
 
     // Delete a resource.
     isolated resource function delete [string id](r4:FHIRContext fhirContext) returns r4:FHIRError|fhir:FHIRResponse {
-        return check deletePatient("Patient", id);
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
     }
 
     // Retrieve the update history for a particular resource.
@@ -431,7 +417,7 @@ service /fhir/r4/Coverage on new fhirr4:Listener(config = coverageApiConfig) {
 
 public type ExplanationOfBenefit carinbb200:C4BBExplanationOfBenefitOutpatientInstitutional|carinbb200:C4BBExplanationOfBenefitInpatientInstitutional|carinbb200:C4BBExplanationOfBenefitPharmacy|carinbb200:C4BBExplanationOfBenefitOral|carinbb200:C4BBExplanationOfBenefitProfessionalNonClinician;
 
-service / on new fhirr4:Listener(config = eobApiConfig) {
+service /fhir/r4/ExplanationOfBenefit on new fhirr4:Listener(config = eobApiConfig) {
 
     // Read the current state of single resource based on its id.
     isolated resource function get fhir/r4/ExplanationOfBenefit/[string id](r4:FHIRContext fhirContext) returns ExplanationOfBenefit|r4:OperationOutcome|r4:FHIRError {
@@ -711,7 +697,7 @@ service /fhir/r4/AllergyIntolerance on new fhirr4:Listener(config = allergyIntol
 
 public type Observation uscore501:USCoreObservationSDOHAssessment|uscore501:USCoreLaboratoryResultObservationProfile|uscore501:USCorePediatricWeightForHeightObservationProfile|uscore501:USCorePediatricBMIforAgeObservationProfile|uscore501:USCoreBodyTemperatureProfile|uscore501:USCoreBodyHeightProfile|uscore501:USCoreObservationSurveyProfile|uscore501:USCoreHeartRateProfile|uscore501:USCoreHeadCircumferenceProfile|uscore501:USCoreRespiratoryRateProfile|uscore501:USCoreBloodPressureProfile|uscore501:USCorePulseOximetryProfile|uscore501:USCoreBodyWeightProfile|uscore501:USCoreVitalSignsProfile|uscore501:USCoreObservationSexualOrientationProfile|uscore501:USCorePediatricHeadOccipitalFrontalCircumferencePercentileProfile|uscore501:USCoreObservationImagingResultProfile|uscore501:USCoreObservationClinicalTestResultProfile|uscore501:USCoreObservationSocialHistoryProfile|uscore501:USCoreSmokingStatusProfile|uscore501:USCoreBMIProfile;
 
-service / on new fhirr4:Listener(config = observationApiConfig) {
+service /fhir/r4/Observation on new fhirr4:Listener(config = observationApiConfig) {
 
     // Read the current state of single resource based on its id.
     isolated resource function get fhir/r4/Observation/[string id](r4:FHIRContext fhirContext) returns Observation|r4:OperationOutcome|r4:FHIRError {

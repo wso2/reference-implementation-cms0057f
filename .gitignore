@@ -66,5 +66,4 @@ node_modules/
 **/build/
 **/npm/
 **/dist/
-**/Config.toml
 **/.devcontainer.json

@@ -30,7 +30,7 @@ public isolated function createOrganization(uscore501:USCoreOrganizationProfile 
         return r4:createFHIRError(claim.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
     } else {
         lock {
-            claim.id = (++createOperationNextId).toBalString();
+            claim.id = (++createOperationNextIdOrganization).toBalString();
         }
 
         lock {

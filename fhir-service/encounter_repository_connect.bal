@@ -149,7 +149,7 @@ function loadEncounterData() returns error? {
                 }
             ],
             "subject": {
-                "reference": "Patient/example"
+                "reference": "Patient/102"
             },
             "hospitalization": {
                 "dischargeDisposition": {

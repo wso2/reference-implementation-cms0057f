@@ -1,7 +1,7 @@
 import ballerina/time;
 
 public enum ResourceType {
-    ALLERGY_INTOLERENCE = "AllergyIntolerence",
+    ALLERGY_INTOLERENCE = "AllergyIntolerance",
     CARE_PLAN = "CarePlan",
     CLAIM = "Claim",
     CLAIM_RESPONSE = "ClaimResponse",

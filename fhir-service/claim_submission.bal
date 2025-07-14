@@ -40,11 +40,8 @@ public isolated function claimSubmit(international401:Parameters payload) return
                             anydata 'resource = bundleEntry?.'resource;
                             davincipas:PASClaim claim = check parser:parse('resource.toJson(), davincipas:PASClaim).ensureType();
 
-                            davincipas:PASClaim|error newClaim = check addNewPASClaim(claim);
-
-                            if newClaim is error {
-                                return r4:createFHIRError(newClaim.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
-                            }
+                            r4:DomainResource newClaimResource = check create(CLAIM, claim.toJson());
+                            davincipas:PASClaim newClaim = check newClaimResource.cloneWithType();
 
                             davincipas:PASClaimResponse claimResponse;
                             lock {
@@ -56,28 +53,18 @@ public isolated function claimSubmit(international401:Parameters payload) return
                             claimResponse.created = newClaim.created;
                             claimResponse.request = {reference: "Claim/" + <string>newClaim.id};
 
-                            davincipas:PASClaimResponse|error newClaimResponse = addNewPASClaimResponse(claimResponse);
+                            r4:DomainResource newClaimResponseResource = check create(CLAIM_RESPONSE, claimResponse.toJson());
+                            davincipas:PASClaimResponse newClaimResponse = check newClaimResponseResource.cloneWithType();
 
-                            if newClaimResponse is davincipas:PASClaimResponse {
-                                international401:ParametersParameter p = {
-                                    name: "return",
-                                    'resource: newClaimResponse
-                                };
+                            international401:ParametersParameter p = {
+                                name: "return",
+                                'resource: newClaimResponse
+                            };
 
-                                international401:Parameters parameterResponse = {
-                                    'parameter: [p]
-                                };
-                                return parameterResponse.clone();
-                            }
-
-                            // claim submission failed
-                            // rollback the claim creation
-                            r4:FHIRError? deleteResponse = check deletePASClaimByID(<string>newClaim.id);
-                            if deleteResponse is r4:FHIRError {
-                                return r4:createFHIRError(deleteResponse.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
-                            } else {
-                                return r4:createFHIRError("Claim submission failed. Claim has been deleted.", r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
-                            }
+                            international401:Parameters parameterResponse = {
+                                'parameter: [p]
+                            };
+                            return parameterResponse.clone();
                         }
                     }
                 }

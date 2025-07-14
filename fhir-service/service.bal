@@ -155,9 +155,8 @@ service /fhir/r4/Patient on new fhirr4:Listener(config = patientApiConfig) {
     }
 
     // Read the current state of single resource based on its id.
-    isolated resource function get [string id](r4:FHIRContext fhirContext) returns r4:FHIRError|uscore501:USCorePatientProfile|error {
-        uscore501:USCorePatientProfile response = check getByIdPatient(id);
-        return response;
+    isolated resource function get [string id](r4:FHIRContext fhirContext) returns r4:FHIRError|r4:DomainResource|error {
+        return getById(PATIENT, id);
     }
 
     // Read the state of a specific version of a resource based on its id.
@@ -167,15 +166,12 @@ service /fhir/r4/Patient on new fhirr4:Listener(config = patientApiConfig) {
 
     // Search for resources based on a set of criteria.
     isolated resource function get .(r4:FHIRContext fhirContext) returns r4:FHIRError|error|r4:Bundle {
-        r4:Bundle searchResult = check searchPatient("Patient", getQueryParamsMap(fhirContext.getRequestSearchParameters()));
-        return searchResult;
+        return search(PATIENT, getQueryParamsMap(fhirContext.getRequestSearchParameters()));
     }
 
     // Create a new resource.
-    isolated resource function post .(r4:FHIRContext fhirContext, Patient patient) returns Patient|error {
-        uscore501:USCorePatientProfile uSCorePatientProfile = check createPatient(patient.toJson());
-
-        return uSCorePatientProfile;
+    isolated resource function post .(r4:FHIRContext fhirContext, Patient patient) returns r4:DomainResource|error {
+        return create(PATIENT, patient.toJson());
     }
 
     // Update the current state of a resource completely.
@@ -223,7 +219,7 @@ service /fhir/r4/Claim on new fhirr4:Listener(config = ClaimApiConfig) {
 
     // Read the current state of single resource based on its id.
     isolated resource function get [string id](r4:FHIRContext fhirContext) returns error|http:Response {
-        davincipas:PASClaim claim = check getPASClaimByID(id);
+        r4:DomainResource claim = check getById(CLAIM, id);
         http:Response response = new;
         response.setJsonPayload(claim.toJson());
         return response;
@@ -237,7 +233,7 @@ service /fhir/r4/Claim on new fhirr4:Listener(config = ClaimApiConfig) {
     // Search for resources based on a set of criteria.
     isolated resource function get .(r4:FHIRContext fhirContext) returns error|http:Response {
         map<string[]> queryParamsMap = getQueryParamsMap(fhirContext.getRequestSearchParameters());
-        r4:Bundle bundle = check searchPASClaim(queryParamsMap);
+        r4:Bundle bundle = check search(CLAIM, queryParamsMap);
 
         http:Response response = new;
         response.setJsonPayload(bundle.toJson());
@@ -246,7 +242,7 @@ service /fhir/r4/Claim on new fhirr4:Listener(config = ClaimApiConfig) {
 
     // Create a new resource.
     isolated resource function post .(r4:FHIRContext fhirContext, Claim claim) returns error|http:Response {
-        davincipas:PASClaim createResult = check addNewPASClaim(claim);
+        r4:DomainResource createResult = check create(CLAIM, claim.toJson());
         http:Response response = new;
         response.setJsonPayload(createResult.toJson());
         return response;
@@ -288,7 +284,7 @@ service /fhir/r4/ClaimResponse on new fhirr4:Listener(config = claimResponseApiC
 
     // Read the current state of single resource based on its id.
     isolated resource function get [string id](r4:FHIRContext fhirContext) returns http:Response|r4:OperationOutcome|r4:FHIRError|error {
-        ClaimResponse claimResponse = check getPASClaimResponseByID(id);
+        r4:DomainResource claimResponse = check getById(CLAIM_RESPONSE, id);
         http:Response response = new;
         response.setJsonPayload(claimResponse.toJson());
         response.statusCode = http:STATUS_OK;
@@ -305,7 +301,7 @@ service /fhir/r4/ClaimResponse on new fhirr4:Listener(config = claimResponseApiC
         map<string[]> queryParamsMap = getQueryParamsMap(fhirContext.getRequestSearchParameters());
 
         http:Response response = new;
-        r4:Bundle bundle = check searchPASClaimResponse(queryParamsMap);
+        r4:Bundle bundle = check search(CLAIM_RESPONSE, queryParamsMap);
         response.setJsonPayload(bundle.toJson());
         response.statusCode = http:STATUS_OK;
         return response;
@@ -314,7 +310,7 @@ service /fhir/r4/ClaimResponse on new fhirr4:Listener(config = claimResponseApiC
     // Create a new resource.
     isolated resource function post .(r4:FHIRContext fhirContext, ClaimResponse claimResponse) returns error|http:Response {
         http:Response response = new;
-        ClaimResponse result = check addNewPASClaimResponse(claimResponse);
+        r4:DomainResource result = check create(CLAIM_RESPONSE, claimResponse.toJson());
         response.setJsonPayload(result.toJson());
         response.statusCode = http:STATUS_CREATED;
         return response;
@@ -355,8 +351,8 @@ public type Coverage international401:Coverage;
 service /fhir/r4/Coverage on new fhirr4:Listener(config = coverageApiConfig) {
 
     // Read the current state of single resource based on its id.
-    isolated resource function get [string id](r4:FHIRContext fhirContext) returns Coverage|r4:OperationOutcome|r4:FHIRError {
-        return getByIdCoverage(id);
+    isolated resource function get [string id](r4:FHIRContext fhirContext) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return getById(COVERAGE, id);
     }
 
     // Read the state of a specific version of a resource based on its id.
@@ -367,12 +363,12 @@ service /fhir/r4/Coverage on new fhirr4:Listener(config = coverageApiConfig) {
     // Search for resources based on a set of criteria.
     isolated resource function get .(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
         map<string[]> queryParamsMap = getQueryParamsMap(fhirContext.getRequestSearchParameters());
-        return searchCoverage(queryParamsMap);
+        return search(COVERAGE, queryParamsMap);
     }
 
     // Create a new resource.
-    isolated resource function post .(r4:FHIRContext fhirContext, Coverage coverage) returns Coverage|r4:OperationOutcome|r4:FHIRError {
-        return createCoverage(coverage);
+    isolated resource function post .(r4:FHIRContext fhirContext, Coverage coverage) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return create(COVERAGE, coverage.toJson());
     }
 
     // Update the current state of a resource completely.
@@ -410,8 +406,8 @@ public type ExplanationOfBenefit carinbb200:C4BBExplanationOfBenefitOutpatientIn
 service /fhir/r4/ExplanationOfBenefit on new fhirr4:Listener(config = eobApiConfig) {
 
     // Read the current state of single resource based on its id.
-    isolated resource function get [string id](r4:FHIRContext fhirContext) returns ExplanationOfBenefit|r4:OperationOutcome|r4:FHIRError {
-        return getByIdEob(id);
+    isolated resource function get [string id](r4:FHIRContext fhirContext) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return getById(EXPLANATION_OF_BENEFIT, id);
     }
 
     // Read the state of a specific version of a resource based on its id.
@@ -421,15 +417,12 @@ service /fhir/r4/ExplanationOfBenefit on new fhirr4:Listener(config = eobApiConf
 
     // Search for resources based on a set of criteria.
     isolated resource function get .(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
-        r4:Bundle searchResult = check searchEob(getQueryParamsMap(fhirContext.getRequestSearchParameters()));
-        return searchResult;
+        return search(EXPLANATION_OF_BENEFIT, getQueryParamsMap(fhirContext.getRequestSearchParameters()));
     }
 
     // Create a new resource.
-    isolated resource function post .(r4:FHIRContext fhirContext, ExplanationOfBenefit procedure) returns ExplanationOfBenefit|r4:OperationOutcome|r4:FHIRError {
-        ExplanationOfBenefit eob = check createEob(procedure.toJson());
-
-        return eob;
+    isolated resource function post .(r4:FHIRContext fhirContext, ExplanationOfBenefit procedure) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return create(EXPLANATION_OF_BENEFIT, procedure.toJson());
     }
 
     // Update the current state of a resource completely.
@@ -467,8 +460,8 @@ public type MedicationRequest uscore501:USCoreMedicationRequestProfile;
 service /fhir/r4/MedicationRequest on new fhirr4:Listener(config = medicationRequestApiConfig) {
 
     // Read the current state of single resource based on its id.
-    isolated resource function get [string id](r4:FHIRContext fhirContext) returns MedicationRequest|r4:OperationOutcome|r4:FHIRError {
-        return getByIdMedicationRequest(id);
+    isolated resource function get [string id](r4:FHIRContext fhirContext) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return getById(MEDICATION_REQUEST, id);
     }
 
     // Read the state of a specific version of a resource based on its id.
@@ -479,12 +472,12 @@ service /fhir/r4/MedicationRequest on new fhirr4:Listener(config = medicationReq
     // Search for resources based on a set of criteria.
     isolated resource function get .(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
         map<string[]> queryParamsMap = getQueryParamsMap(fhirContext.getRequestSearchParameters());
-        return searchMedicationRequest(queryParamsMap);
+        return search(MEDICATION_REQUEST, queryParamsMap);
     }
 
     // Create a new resource.
     isolated resource function post .(r4:FHIRContext fhirContext, MedicationRequest medicationRequest) returns error|http:Response {
-        uscore501:USCoreMedicationRequestProfile createResult = check createMedicationRequest(medicationRequest);
+        r4:DomainResource createResult = check create(MEDICATION_REQUEST, medicationRequest.toJson());
         http:Response response = new;
         response.setJsonPayload(createResult.toJson());
         return response;
@@ -525,8 +518,8 @@ public type Organization uscore501:USCoreOrganizationProfile;
 service /fhir/r4/Organization on new fhirr4:Listener(config = organizationApiConfig) {
 
     // Read the current state of single resource based on its id.
-    isolated resource function get [string id](r4:FHIRContext fhirContext) returns Organization|r4:OperationOutcome|r4:FHIRError {
-        return getByIdOrganization(id);
+    isolated resource function get [string id](r4:FHIRContext fhirContext) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return getById(ORGANIZATION, id);
     }
 
     // Read the state of a specific version of a resource based on its id.
@@ -537,12 +530,12 @@ service /fhir/r4/Organization on new fhirr4:Listener(config = organizationApiCon
     // Search for resources based on a set of criteria.
     isolated resource function get .(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
         map<string[]> queryParamsMap = getQueryParamsMap(fhirContext.getRequestSearchParameters());
-        return searchOrganization(queryParamsMap);
+        return search(ORGANIZATION, queryParamsMap);
     }
 
     // Create a new resource.
-    isolated resource function post .(r4:FHIRContext fhirContext, Organization organization) returns Organization|r4:OperationOutcome|r4:FHIRError {
-        return createOrganization(organization);
+    isolated resource function post .(r4:FHIRContext fhirContext, Organization organization) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return create(ORGANIZATION, organization.toJson());
     }
 
     // Update the current state of a resource completely.
@@ -580,8 +573,8 @@ public type Practitioner uscore501:USCorePractitionerProfile;
 service /fhir/r4/Practitioner on new fhirr4:Listener(config = practitionerApiConfig) {
 
     // Read the current state of single resource based on its id.
-    isolated resource function get [string id](r4:FHIRContext fhirContext) returns Practitioner|r4:OperationOutcome|r4:FHIRError {
-        return getByIdPractitioner(id);
+    isolated resource function get [string id](r4:FHIRContext fhirContext) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return getById(PRACTITIONER, id);
     }
 
     // Read the state of a specific version of a resource based on its id.
@@ -592,12 +585,12 @@ service /fhir/r4/Practitioner on new fhirr4:Listener(config = practitionerApiCon
     // Search for resources based on a set of criteria.
     isolated resource function get .(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
         map<string[]> queryParamsMap = getQueryParamsMap(fhirContext.getRequestSearchParameters());
-        return searchPractitioner(queryParamsMap);
+        return search(PRACTITIONER, queryParamsMap);
     }
 
     // Create a new resource.
-    isolated resource function post .(r4:FHIRContext fhirContext, Practitioner practitioner) returns Practitioner|r4:OperationOutcome|r4:FHIRError {
-        return createPractitioner(practitioner);
+    isolated resource function post .(r4:FHIRContext fhirContext, Practitioner practitioner) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return create(PRACTITIONER, practitioner.toJson());
     }
 
     // Update the current state of a resource completely.
@@ -635,8 +628,8 @@ public type AllergyIntolerance uscore501:USCoreAllergyIntolerance;
 service /fhir/r4/AllergyIntolerance on new fhirr4:Listener(config = allergyIntoleranceApiConfig) {
 
     // Read the current state of single resource based on its id.
-    isolated resource function get [string id](r4:FHIRContext fhirContext) returns AllergyIntolerance|r4:OperationOutcome|r4:FHIRError {
-        return check getByIdAllergyIntolerance(id);
+    isolated resource function get [string id](r4:FHIRContext fhirContext) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return getById(ALLERGY_INTOLERENCE, id);
     }
 
     // Read the state of a specific version of a resource based on its id.
@@ -647,12 +640,12 @@ service /fhir/r4/AllergyIntolerance on new fhirr4:Listener(config = allergyIntol
     // Search for resources based on a set of criteria.
     isolated resource function get .(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
         map<string[]> queryParamsMap = getQueryParamsMap(fhirContext.getRequestSearchParameters());
-        return searchAllergyIntolerance(queryParamsMap);
+        return search(ALLERGY_INTOLERENCE, queryParamsMap);
     }
 
     // Create a new resource.
-    isolated resource function post .(r4:FHIRContext fhirContext, AllergyIntolerance allergyIntolerance) returns AllergyIntolerance|r4:OperationOutcome|r4:FHIRError {
-        return createAllergyIntolerance(allergyIntolerance);
+    isolated resource function post .(r4:FHIRContext fhirContext, AllergyIntolerance allergyIntolerance) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return create(ALLERGY_INTOLERENCE, allergyIntolerance.toJson());
     }
 
     // Update the current state of a resource completely.
@@ -690,8 +683,8 @@ public type Observation uscore501:USCoreObservationSDOHAssessment|uscore501:USCo
 service /fhir/r4/Observation on new fhirr4:Listener(config = observationApiConfig) {
 
     // Read the current state of single resource based on its id.
-    isolated resource function get fhir/r4/Observation/[string id](r4:FHIRContext fhirContext) returns Observation|r4:OperationOutcome|r4:FHIRError {
-        return getByIdObservation(id);
+    isolated resource function get fhir/r4/Observation/[string id](r4:FHIRContext fhirContext) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return getById(OBSERVATION, id);
     }
 
     // Read the state of a specific version of a resource based on its id.
@@ -702,12 +695,12 @@ service /fhir/r4/Observation on new fhirr4:Listener(config = observationApiConfi
     // Search for resources based on a set of criteria.
     isolated resource function get fhir/r4/Observation(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
         map<string[]> queryParamsMap = getQueryParamsMap(fhirContext.getRequestSearchParameters());
-        return searchObservation(queryParamsMap);
+        return search(OBSERVATION, queryParamsMap);
     }
 
     // Create a new resource.
-    isolated resource function post fhir/r4/Observation(r4:FHIRContext fhirContext, Observation observation) returns Observation|r4:OperationOutcome|r4:FHIRError {
-        return createObservation(observation);
+    isolated resource function post fhir/r4/Observation(r4:FHIRContext fhirContext, Observation observation) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return create(OBSERVATION, observation.toJson());
     }
 
     // Update the current state of a resource completely.
@@ -745,8 +738,8 @@ public type DiagnosticReport uscore501:USCoreDiagnosticReportProfileNoteExchange
 service /fhir/r4/DiagnosticReport on new fhirr4:Listener(config = diagnosticReportApiConfig) {
 
     // Read the current state of single resource based on its id.
-    isolated resource function get [string id](r4:FHIRContext fhirContext) returns DiagnosticReport|r4:OperationOutcome|r4:FHIRError {
-        return getByIdDiagnosticReport(id);
+    isolated resource function get [string id](r4:FHIRContext fhirContext) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return getById(DIAGNOSTIC_REPORT, id);
     }
 
     // Read the state of a specific version of a resource based on its id.
@@ -757,12 +750,12 @@ service /fhir/r4/DiagnosticReport on new fhirr4:Listener(config = diagnosticRepo
     // Search for resources based on a set of criteria.
     isolated resource function get .(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
         map<string[]> queryParamsMap = getQueryParamsMap(fhirContext.getRequestSearchParameters());
-        return searchDiagnosticReport(queryParamsMap);
+        return search(DIAGNOSTIC_REPORT, queryParamsMap);
     }
 
     // Create a new resource.
-    isolated resource function post .(r4:FHIRContext fhirContext, DiagnosticReport diagnosticReport) returns DiagnosticReport|r4:OperationOutcome|r4:FHIRError {
-        return createDiagnosticReport(diagnosticReport);
+    isolated resource function post .(r4:FHIRContext fhirContext, DiagnosticReport diagnosticReport) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return create(DIAGNOSTIC_REPORT, diagnosticReport.toJson());
     }
 
     // Update the current state of a resource completely.
@@ -804,8 +797,8 @@ public type Encounter uscore501:USCoreEncounterProfile;
 service /fhir/r4/Encounter on new fhirr4:Listener(config = encounterApiConfig) {
 
     // Read the current state of single resource based on its id.
-    isolated resource function get [string id](r4:FHIRContext fhirContext) returns Encounter|r4:OperationOutcome|r4:FHIRError {
-        return getByIdEncounter(id);
+    isolated resource function get [string id](r4:FHIRContext fhirContext) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return getById(ENCOUNTER, id);
     }
 
     // Read the state of a specific version of a resource based on its id.
@@ -815,13 +808,12 @@ service /fhir/r4/Encounter on new fhirr4:Listener(config = encounterApiConfig) {
 
     // Search for resources based on a set of criteria.
     isolated resource function get .(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
-        r4:Bundle searchResult = check searchEncounter(getQueryParamsMap(fhirContext.getRequestSearchParameters()));
-        return searchResult;
+        return search(ENCOUNTER, getQueryParamsMap(fhirContext.getRequestSearchParameters()));
     }
 
     // Create a new resource.
-    isolated resource function post .(r4:FHIRContext fhirContext, Encounter procedure) returns Encounter|r4:OperationOutcome|r4:FHIRError {
-        return createEncounter(procedure.toJson());
+    isolated resource function post .(r4:FHIRContext fhirContext, Encounter procedure) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return create(ENCOUNTER, procedure.toJson());
     }
 
     // Update the current state of a resource completely.
@@ -857,7 +849,7 @@ service /fhir/r4/Encounter on new fhirr4:Listener(config = encounterApiConfig) {
 service /fhir/r4/Questionnaire/questionnaire\-package on new fhirr4:Listener(config = questionnairePackageApiConfig) {
 
     isolated resource function post .(r4:FHIRContext fhirContext, international401:Parameters parameters) returns error|http:Response {
-        international401:Parameters createResult = check questionnairePackage(parameters);
+        r4:DomainResource createResult = check getById(QUESTIONNAIRE_RESPONSE, "32");
         http:Response response = new;
         response.setJsonPayload(createResult.toJson());
         return response;
@@ -880,8 +872,8 @@ service /fhir/r4/Questionnaire on new fhirr4:Listener(config = questionnaireApiC
     // }
 
     // Read the current state of single resource based on its id.
-    isolated resource function get [string id](r4:FHIRContext fhirContext) returns Questionnaire|r4:OperationOutcome|r4:FHIRError {
-        return getByIdQuestionnaire(id);
+    isolated resource function get [string id](r4:FHIRContext fhirContext) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return getById(QUESTIONNAIRE, id);
     }
 
     // Read the state of a specific version of a resource based on its id.
@@ -891,13 +883,12 @@ service /fhir/r4/Questionnaire on new fhirr4:Listener(config = questionnaireApiC
 
     // Search for resources based on a set of criteria.
     isolated resource function get .(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
-        r4:Bundle searchResult = check searchQuestionnaire("Patient", getQueryParamsMap(fhirContext.getRequestSearchParameters()));
-        return searchResult;
+        return check search(QUESTIONNAIRE, getQueryParamsMap(fhirContext.getRequestSearchParameters()));
     }
 
     // Create a new resource.
-    isolated resource function post .(r4:FHIRContext fhirContext, Questionnaire questionnaire) returns Questionnaire|r4:OperationOutcome|r4:FHIRError {
-        return createQuestionnaire(questionnaire);
+    isolated resource function post .(r4:FHIRContext fhirContext, Questionnaire questionnaire) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return create(QUESTIONNAIRE, questionnaire.toJson());
     }
 
     // Update the current state of a resource completely.
@@ -935,8 +926,8 @@ public type QuestionnaireResponse davincidtr210:DTRQuestionnaireResponse;
 service /fhir/r4/QuestionnaireResponse on new fhirr4:Listener(config = questionnaireResponseApiConfig) {
 
     // Read the current state of single resource based on its id.
-    isolated resource function get [string id](r4:FHIRContext fhirContext) returns QuestionnaireResponse|r4:OperationOutcome|r4:FHIRError {
-        return getByIdQuestionnaireResponse(id);
+    isolated resource function get [string id](r4:FHIRContext fhirContext) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return getById(QUESTIONNAIRE_RESPONSE, id);
     }
 
     // Read the state of a specific version of a resource based on its id.
@@ -946,12 +937,12 @@ service /fhir/r4/QuestionnaireResponse on new fhirr4:Listener(config = questionn
 
     // Search for resources based on a set of criteria.
     isolated resource function get .(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
-        return check searchQuestionnaireResponse(getQueryParamsMap(fhirContext.getRequestSearchParameters()));
+        return check search(QUESTIONNAIRE_RESPONSE, getQueryParamsMap(fhirContext.getRequestSearchParameters()));
     }
 
     // Create a new resource.
-    isolated resource function post .(r4:FHIRContext fhirContext, QuestionnaireResponse procedure) returns QuestionnaireResponse|r4:OperationOutcome|r4:FHIRError {
-        return createQuestionnaireResponse(procedure);
+    isolated resource function post .(r4:FHIRContext fhirContext, QuestionnaireResponse procedure) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return create(QUESTIONNAIRE_RESPONSE, procedure.toJson());
     }
 
     // Update the current state of a resource completely.

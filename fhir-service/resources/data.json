@@ -1,0 +1,2606 @@
+{
+    "AllergyIntolerance": [
+        {
+            "resourceType": "AllergyIntolerance",
+            "id": "20300",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-allergyintolerance"
+                ]
+            },
+            "clinicalStatus": {
+                "coding": [
+                    {
+                        "system": "http://terminology.hl7.org/CodeSystem/allergyintolerance-clinical",
+                        "code": "active",
+                        "display": "Active"
+                    }
+                ]
+            },
+            "verificationStatus": {
+                "coding": [
+                    {
+                        "system": "http://terminology.hl7.org/CodeSystem/allergyintolerance-verification",
+                        "code": "confirmed",
+                        "display": "Confirmed"
+                    }
+                ]
+            },
+            "type": "allergy",
+            "category": [
+                "medication"
+            ],
+            "criticality": "high",
+            "code": {
+                "coding": [
+                    {
+                        "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+                        "code": "7980",
+                        "display": "Penicillin"
+                    }
+                ],
+                "text": "Penicillin"
+            },
+            "patient": {
+                "reference": "Patient/101"
+            },
+            "onsetDateTime": "2012-06-10",
+            "recordedDate": "2012-06-15",
+            "recorder": {
+                "reference": "Practitioner/practitioner-456"
+            },
+            "reaction": [
+                {
+                    "manifestation": [
+                        {
+                            "coding": [
+                                {
+                                    "system": "http://snomed.info/sct",
+                                    "code": "271807003",
+                                    "display": "Rash"
+                                }
+                            ],
+                            "text": "Skin rash"
+                        }
+                    ],
+                    "severity": "moderate",
+                    "description": "Developed itchy rash after taking penicillin"
+                }
+            ]
+        },
+        {
+            "resourceType": "AllergyIntolerance",
+            "id": "allergy-peanut",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-allergyintolerance"
+                ]
+            },
+            "clinicalStatus": {
+                "coding": [
+                    {
+                        "system": "http://terminology.hl7.org/CodeSystem/allergyintolerance-clinical",
+                        "code": "active",
+                        "display": "Active"
+                    }
+                ]
+            },
+            "verificationStatus": {
+                "coding": [
+                    {
+                        "system": "http://terminology.hl7.org/CodeSystem/allergyintolerance-verification",
+                        "code": "confirmed",
+                        "display": "Confirmed"
+                    }
+                ]
+            },
+            "type": "allergy",
+            "category": [
+                "food"
+            ],
+            "criticality": "high",
+            "code": {
+                "coding": [
+                    {
+                        "system": "http://snomed.info/sct",
+                        "code": "91935009",
+                        "display": "Allergy to peanuts"
+                    }
+                ],
+                "text": "Peanut Allergy"
+            },
+            "patient": {
+                "reference": "Patient/101"
+            },
+            "onsetDateTime": "2008-09-20",
+            "recordedDate": "2008-09-25",
+            "recorder": {
+                "reference": "Practitioner/practitioner-456"
+            },
+            "reaction": [
+                {
+                    "manifestation": [
+                        {
+                            "coding": [
+                                {
+                                    "system": "http://snomed.info/sct",
+                                    "code": "39579001",
+                                    "display": "Anaphylaxis"
+                                }
+                            ],
+                            "text": "Severe allergic reaction (anaphylaxis)"
+                        }
+                    ],
+                    "severity": "severe",
+                    "description": "Swelling and difficulty breathing after eating peanut-containing food"
+                }
+            ]
+        },
+        {
+            "resourceType": "AllergyIntolerance",
+            "id": "allergy-pollen",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-allergyintolerance"
+                ]
+            },
+            "clinicalStatus": {
+                "coding": [
+                    {
+                        "system": "http://terminology.hl7.org/CodeSystem/allergyintolerance-clinical",
+                        "code": "active",
+                        "display": "Active"
+                    }
+                ]
+            },
+            "verificationStatus": {
+                "coding": [
+                    {
+                        "system": "http://terminology.hl7.org/CodeSystem/allergyintolerance-verification",
+                        "code": "confirmed",
+                        "display": "Confirmed"
+                    }
+                ]
+            },
+            "type": "allergy",
+            "category": [
+                "environment"
+            ],
+            "criticality": "low",
+            "code": {
+                "coding": [
+                    {
+                        "system": "http://snomed.info/sct",
+                        "code": "418689008",
+                        "display": "Allergy to pollen"
+                    }
+                ],
+                "text": "Pollen Allergy"
+            },
+            "patient": {
+                "reference": "Patient/102"
+            },
+            "onsetDateTime": "2015-04-01",
+            "recordedDate": "2015-04-05",
+            "recorder": {
+                "reference": "Practitioner/practitioner-456"
+            },
+            "reaction": [
+                {
+                    "manifestation": [
+                        {
+                            "coding": [
+                                {
+                                    "system": "http://snomed.info/sct",
+                                    "code": "78352004",
+                                    "display": "Sneezing"
+                                }
+                            ],
+                            "text": "Sneezing and runny nose"
+                        }
+                    ],
+                    "severity": "mild",
+                    "description": "Seasonal sneezing and nasal congestion"
+                }
+            ]
+        }
+    ],
+    "Patient": [
+        {
+            "resourceType": "Patient",
+            "id": "101",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient"
+                ]
+            },
+            "identifier": [
+                {
+                    "system": "http://hospital.org/patients",
+                    "value": "12345"
+                },
+                {
+                    "system": "urn:oid:wso2.healthcare.payer.memberID",
+                    "value": "588675dc-e80e-4528-a78f-af10f9755f23",
+                    "use": "secondary"
+                }
+            ],
+            "name": [
+                {
+                    "use": "official",
+                    "family": "Smith",
+                    "given": [
+                        "John"
+                    ]
+                }
+            ],
+            "gender": "male",
+            "birthDate": "1979-04-15",
+            "address": [
+                {
+                    "line": [
+                        "123 Main St"
+                    ],
+                    "city": "Anytown",
+                    "state": "CA",
+                    "postalCode": "90210",
+                    "country": "US"
+                }
+            ],
+            "telecom": [
+                {
+                    "system": "phone",
+                    "value": "+1 555-555-5555",
+                    "use": "mobile"
+                },
+                {
+                    "system": "email",
+                    "value": "john@example.com"
+                }
+            ]
+        },
+        {
+            "resourceType": "Patient",
+            "id": "102",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient"
+                ]
+            },
+            "identifier": [
+                {
+                    "system": "http://hospital.org/patients",
+                    "value": "54321"
+                },
+                {
+                    "system": "urn:oid:wso2.healthcare.payer.memberID",
+                    "value": "644d85af-aaf9-4068-ad23-1e55aedd5205",
+                    "use": "secondary"
+                }
+            ],
+            "name": [
+                {
+                    "use": "official",
+                    "family": "Shaw",
+                    "given": [
+                        "Jax"
+                    ]
+                }
+            ],
+            "gender": "female",
+            "birthDate": "1985-08-22",
+            "address": [
+                {
+                    "line": [
+                        "456 Elm Street"
+                    ],
+                    "city": "Oaktown",
+                    "state": "NY",
+                    "postalCode": "10001",
+                    "country": "US"
+                }
+            ],
+            "telecom": [
+                {
+                    "system": "phone",
+                    "value": "+1 555-123-4567",
+                    "use": "mobile"
+                },
+                {
+                    "system": "email",
+                    "value": "jax.shaw@example.com"
+                }
+            ]
+        }
+    ],
+    "Practitioner": [
+        {
+            "resourceType": "Practitioner",
+            "id": "456",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-practitioner"
+                ]
+            },
+            "identifier": [
+                {
+                    "system": "http://hl7.org/fhir/sid/us-npi",
+                    "value": "9876543210"
+                }
+            ],
+            "active": true,
+            "name": [
+                {
+                    "family": "Smith",
+                    "given": [
+                        "James"
+                    ],
+                    "prefix": [
+                        "Dr."
+                    ]
+                }
+            ],
+            "telecom": [
+                {
+                    "system": "phone",
+                    "value": "+1 800-555-6789",
+                    "use": "work"
+                },
+                {
+                    "system": "email",
+                    "value": "dr.james.smith@hospital.com",
+                    "use": "work"
+                }
+            ],
+            "address": [
+                {
+                    "line": [
+                        "123 Medical Plaza"
+                    ],
+                    "city": "MedCity",
+                    "state": "CA",
+                    "postalCode": "90410",
+                    "country": "US"
+                }
+            ],
+            "qualification": [
+                {
+                    "identifier": [
+                        {
+                            "system": "http://terminology.hl7.org/CodeSystem/v2-2.7",
+                            "value": "MD12345"
+                        }
+                    ],
+                    "code": {
+                        "coding": [
+                            {
+                                "system": "http://terminology.hl7.org/CodeSystem/v2-0360/2.7",
+                                "code": "MD",
+                                "display": "Medical Doctor"
+                            }
+                        ]
+                    },
+                    "issuer": {
+                        "display": "California Medical Board"
+                    }
+                }
+            ]
+        }
+    ],
+    "Organization": [
+        {
+            "resourceType": "Organization",
+            "id": "50",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization"
+                ]
+            },
+            "identifier": [
+                {
+                    "system": "http://hl7.org/fhir/sid/us-npi",
+                    "value": "1234567890"
+                }
+            ],
+            "active": true,
+            "name": "KindCover Health Insurance",
+            "type": [
+                {
+                    "coding": [
+                        {
+                            "system": "http://hl7.org/fhir/organization-role",
+                            "code": "payer",
+                            "display": "Payer"
+                        }
+                    ]
+                }
+            ],
+            "telecom": [
+                {
+                    "system": "phone",
+                    "value": "+1 800-555-1234",
+                    "use": "work"
+                },
+                {
+                    "system": "email",
+                    "value": "support@kindcover.com",
+                    "use": "work"
+                }
+            ],
+            "address": [
+                {
+                    "line": [
+                        "456 Insurance Ave"
+                    ],
+                    "city": "Insuretown",
+                    "state": "OH",
+                    "postalCode": "43004",
+                    "country": "US"
+                }
+            ],
+            "contact": [
+                {
+                    "name": {
+                        "family": "Adam",
+                        "given": [
+                            "Nickman"
+                        ]
+                    },
+                    "telecom": [
+                        {
+                            "system": "phone",
+                            "value": "+1 800-555-5678",
+                            "use": "work"
+                        },
+                        {
+                            "system": "email",
+                            "value": "adam@kindcover.com",
+                            "use": "work"
+                        }
+                    ],
+                    "purpose": {
+                        "coding": [
+                            {
+                                "system": "http://terminology.hl7.org/CodeSystem/contactentity-type",
+                                "code": "ADMIN",
+                                "display": "Administrative"
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "resourceType": "Organization",
+            "id": "51",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization"
+                ]
+            },
+            "identifier": [
+                {
+                    "system": "http://hl7.org/fhir/sid/us-npi",
+                    "value": "9876543210"
+                }
+            ],
+            "active": true,
+            "name": "SecureHealth Insurance",
+            "type": [
+                {
+                    "coding": [
+                        {
+                            "system": "http://hl7.org/fhir/organization-role",
+                            "code": "payer",
+                            "display": "Payer"
+                        }
+                    ]
+                }
+            ],
+            "telecom": [
+                {
+                    "system": "phone",
+                    "value": "+1 888-123-4567",
+                    "use": "work"
+                },
+                {
+                    "system": "email",
+                    "value": "support@securehealth.com",
+                    "use": "work"
+                }
+            ],
+            "address": [
+                {
+                    "line": [
+                        "789 Protection Blvd"
+                    ],
+                    "city": "HealthCity",
+                    "state": "NY",
+                    "postalCode": "10001",
+                    "country": "US"
+                }
+            ],
+            "contact": [
+                {
+                    "name": {
+                        "family": "Smith",
+                        "given": [
+                            "Alice"
+                        ]
+                    },
+                    "telecom": [
+                        {
+                            "system": "phone",
+                            "value": "+1 888-987-6543",
+                            "use": "work"
+                        },
+                        {
+                            "system": "email",
+                            "value": "alice.smith@securehealth.com",
+                            "use": "work"
+                        }
+                    ],
+                    "purpose": {
+                        "coding": [
+                            {
+                                "system": "http://terminology.hl7.org/CodeSystem/contactentity-type",
+                                "code": "ADMIN",
+                                "display": "Administrative"
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "resourceType": "Organization",
+            "id": "52",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization"
+                ]
+            },
+            "identifier": [
+                {
+                    "system": "http://hl7.org/fhir/sid/us-npi",
+                    "value": "1928374650"
+                }
+            ],
+            "active": true,
+            "name": "MediTrust Insurance",
+            "type": [
+                {
+                    "coding": [
+                        {
+                            "system": "http://hl7.org/fhir/organization-role",
+                            "code": "payer",
+                            "display": "Payer"
+                        }
+                    ]
+                }
+            ],
+            "telecom": [
+                {
+                    "system": "phone",
+                    "value": "+1 877-999-7890",
+                    "use": "work"
+                },
+                {
+                    "system": "email",
+                    "value": "help@meditrust.com",
+                    "use": "work"
+                }
+            ],
+            "address": [
+                {
+                    "line": [
+                        "123 Wellness Street"
+                    ],
+                    "city": "Caretown",
+                    "state": "TX",
+                    "postalCode": "75001",
+                    "country": "US"
+                }
+            ],
+            "contact": [
+                {
+                    "name": {
+                        "family": "Johnson",
+                        "given": [
+                            "Robert"
+                        ]
+                    },
+                    "telecom": [
+                        {
+                            "system": "phone",
+                            "value": "+1 877-555-9087",
+                            "use": "work"
+                        },
+                        {
+                            "system": "email",
+                            "value": "robert.johnson@meditrust.com",
+                            "use": "work"
+                        }
+                    ],
+                    "purpose": {
+                        "coding": [
+                            {
+                                "system": "http://terminology.hl7.org/CodeSystem/contactentity-type",
+                                "code": "ADMIN",
+                                "display": "Administrative"
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "resourceType": "Organization",
+            "id": "53",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization"
+                ]
+            },
+            "identifier": [
+                {
+                    "system": "http://hl7.org/fhir/sid/us-npi",
+                    "value": "5432109876"
+                }
+            ],
+            "active": true,
+            "name": "City General Hospital",
+            "type": [
+                {
+                    "coding": [
+                        {
+                            "system": "http://hl7.org/fhir/organization-role",
+                            "code": "provider",
+                            "display": "Provider"
+                        }
+                    ]
+                }
+            ],
+            "telecom": [
+                {
+                    "system": "phone",
+                    "value": "+1 800-111-2222",
+                    "use": "work"
+                },
+                {
+                    "system": "email",
+                    "value": "info@citygeneralhospital.com",
+                    "use": "work"
+                }
+            ],
+            "address": [
+                {
+                    "line": [
+                        "123 Medical Lane"
+                    ],
+                    "city": "MedCity",
+                    "state": "NY",
+                    "postalCode": "10011",
+                    "country": "US"
+                }
+            ],
+            "contact": [
+                {
+                    "name": {
+                        "family": "Williams",
+                        "given": [
+                            "Michael"
+                        ]
+                    },
+                    "telecom": [
+                        {
+                            "system": "phone",
+                            "value": "+1 800-111-3333",
+                            "use": "work"
+                        },
+                        {
+                            "system": "email",
+                            "value": "michael.williams@citygeneralhospital.com",
+                            "use": "work"
+                        }
+                    ],
+                    "purpose": {
+                        "coding": [
+                            {
+                                "system": "http://terminology.hl7.org/CodeSystem/contactentity-type",
+                                "code": "ADMIN",
+                                "display": "Administrative"
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "resourceType": "Organization",
+            "id": "54",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization"
+                ]
+            },
+            "identifier": [
+                {
+                    "system": "http://hl7.org/fhir/sid/us-npi",
+                    "value": "6789054321"
+                }
+            ],
+            "active": true,
+            "name": "St. Mary's Regional Hospital",
+            "type": [
+                {
+                    "coding": [
+                        {
+                            "system": "http://hl7.org/fhir/organization-role",
+                            "code": "provider",
+                            "display": "Provider"
+                        }
+                    ]
+                }
+            ],
+            "telecom": [
+                {
+                    "system": "phone",
+                    "value": "+1 800-222-5555",
+                    "use": "work"
+                },
+                {
+                    "system": "email",
+                    "value": "contact@stmarysregional.com",
+                    "use": "work"
+                }
+            ],
+            "address": [
+                {
+                    "line": [
+                        "789 Care Street"
+                    ],
+                    "city": "Healthville",
+                    "state": "CA",
+                    "postalCode": "90210",
+                    "country": "US"
+                }
+            ],
+            "contact": [
+                {
+                    "name": {
+                        "family": "Johnson",
+                        "given": [
+                            "Emma"
+                        ]
+                    },
+                    "telecom": [
+                        {
+                            "system": "phone",
+                            "value": "+1 800-222-7777",
+                            "use": "work"
+                        },
+                        {
+                            "system": "email",
+                            "value": "emma.johnson@stmarysregional.com",
+                            "use": "work"
+                        }
+                    ],
+                    "purpose": {
+                        "coding": [
+                            {
+                                "system": "http://terminology.hl7.org/CodeSystem/contactentity-type",
+                                "code": "ADMIN",
+                                "display": "Administrative"
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "resourceType": "Organization",
+            "id": "55",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization"
+                ]
+            },
+            "identifier": [
+                {
+                    "system": "http://hl7.org/fhir/sid/us-npi",
+                    "value": "1122334455"
+                }
+            ],
+            "active": true,
+            "name": "Green Valley Community Hospital",
+            "type": [
+                {
+                    "coding": [
+                        {
+                            "system": "http://hl7.org/fhir/organization-role",
+                            "code": "provider",
+                            "display": "Provider"
+                        }
+                    ]
+                }
+            ],
+            "telecom": [
+                {
+                    "system": "phone",
+                    "value": "+1 800-333-8888",
+                    "use": "work"
+                },
+                {
+                    "system": "email",
+                    "value": "info@greenvalleyhospital.com",
+                    "use": "work"
+                }
+            ],
+            "address": [
+                {
+                    "line": [
+                        "456 Wellness Ave"
+                    ],
+                    "city": "Caretown",
+                    "state": "TX",
+                    "postalCode": "75002",
+                    "country": "US"
+                }
+            ],
+            "contact": [
+                {
+                    "name": {
+                        "family": "Brown",
+                        "given": [
+                            "David"
+                        ]
+                    },
+                    "telecom": [
+                        {
+                            "system": "phone",
+                            "value": "+1 800-333-9999",
+                            "use": "work"
+                        },
+                        {
+                            "system": "email",
+                            "value": "david.brown@greenvalleyhospital.com",
+                            "use": "work"
+                        }
+                    ],
+                    "purpose": {
+                        "coding": [
+                            {
+                                "system": "http://terminology.hl7.org/CodeSystem/contactentity-type",
+                                "code": "ADMIN",
+                                "display": "Administrative"
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    ],
+    "Encounter": [
+        {
+            "resourceType": "Encounter",
+            "id": "12344",
+            "meta": {
+                "lastUpdated": "2024-01-28T16:06:21-08:00",
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-encounter"
+                ]
+            },
+            "text": {
+                "status": "generated",
+                "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p><b>Generated Narrative: Encounter</b><a name=\"1036\"> </a><a name=\"hc1036\"> </a></p><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Resource Encounter &quot;1036&quot; Updated &quot;2024-01-28 16:06:21-0800&quot; </p><p style=\"margin-bottom: 0px\">Profile: <a href=\"StructureDefinition-us-core-encounter.html\">US Core Encounter Profile (version 7.0.0)</a></p></div><p><b>status</b>: in-progress</p><p><b>class</b>: inpatient encounter (Details: http://terminology.hl7.org/CodeSystem/v3-ActCode code IMP = 'inpatient encounter', stated as 'inpatient encounter')</p><p><b>type</b>: Unknown (qualifier value) <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"https://browser.ihtsdotools.org/\">SNOMED CT[US]</a>#261665006)</span></p><p><b>subject</b>: <a href=\"Patient-example.html\">Patient/example</a> &quot; SHAW&quot;</p><h3>Hospitalizations</h3><table class=\"grid\"><tr><td style=\"display: none\">-</td><td><b>DischargeDisposition</b></td></tr><tr><td style=\"display: none\">*</td><td>Discharged to Home <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"http://terminology.hl7.org/5.3.0/CodeSystem-AHANUBCPatientDischargeStatus.html\">AHA NUBC Patient Discharge Status Codes</a>#01)</span></td></tr></table><h3>Locations</h3><table class=\"grid\"><tr><td style=\"display: none\">-</td><td><b>Location</b></td></tr><tr><td style=\"display: none\">*</td><td><a href=\"Location-hospital.html\">Location/hospital: Holy Family Hospital</a> &quot;Holy Family Hospital&quot;</td></tr></table></div>"
+            },
+            "status": "in-progress",
+            "class": {
+                "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+                "code": "IMP",
+                "display": "inpatient encounter"
+            },
+            "type": [
+                {
+                    "coding": [
+                        {
+                            "system": "http://snomed.info/sct",
+                            "version": "http://snomed.info/sct/731000124108",
+                            "code": "261665006",
+                            "display": "Unknown (qualifier value)"
+                        }
+                    ],
+                    "text": "Unknown (qualifier value)"
+                }
+            ],
+            "subject": {
+                "reference": "Patient/aa7d75d6-7fa0-47cd-89b9-d4326b382f28"
+            },
+            "hospitalization": {
+                "dischargeDisposition": {
+                    "coding": [
+                        {
+                            "system": "https://www.nubc.org/CodeSystem/PatDischargeStatus",
+                            "code": "01",
+                            "display": "Discharged to Home"
+                        }
+                    ]
+                }
+            },
+            "location": [
+                {
+                    "location": {
+                        "reference": "Location/hospital",
+                        "display": "Holy Family Hospital"
+                    }
+                }
+            ]
+        }
+    ],
+    "Coverage": [
+        {
+            "resourceType": "Coverage",
+            "id": "366",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/StructureDefinition/Coverage"
+                ]
+            },
+            "status": "active",
+            "subscriber": {
+                "reference": "Patient/101"
+            },
+            "subscriberId": "UC-123456789",
+            "beneficiary": {
+                "reference": "Patient/101"
+            },
+            "payor": [
+                {
+                    "reference": "Organization/50"
+                }
+            ],
+            "class": [
+                {
+                    "type": {
+                        "coding": [
+                            {
+                                "system": "http://terminology.hl7.org/CodeSystem/coverage-class",
+                                "code": "group",
+                                "display": "Group"
+                            }
+                        ]
+                    },
+                    "value": "UC-Group-001",
+                    "name": "UnitedCare Standard Plan"
+                }
+            ],
+            "period": {
+                "start": "2025-01-01",
+                "end": "2025-12-31"
+            },
+            "network": "UC-Preferred-Network",
+            "costToBeneficiary": [
+                {
+                    "type": {
+                        "coding": [
+                            {
+                                "system": "http://terminology.hl7.org/CodeSystem/coverage-copay-type",
+                                "code": "copay",
+                                "display": "CoPay"
+                            }
+                        ]
+                    },
+                    "valueMoney": {
+                        "value": 50.00,
+                        "currency": "USD"
+                    },
+                    "valueQuantity": {
+                        "value": 1,
+                        "unit": "visit",
+                        "system": "http://unitsofmeasure.org",
+                        "code": "visit"
+                    }
+                }
+            ]
+        },
+        {
+            "resourceType": "Coverage",
+            "id": "367",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/StructureDefinition/Coverage"
+                ]
+            },
+            "status": "active",
+            "subscriber": {
+                "reference": "Patient/102"
+            },
+            "subscriberId": "UC-123456789",
+            "beneficiary": {
+                "reference": "Patient/102"
+            },
+            "payor": [
+                {
+                    "reference": "Organization/50"
+                }
+            ],
+            "class": [
+                {
+                    "type": {
+                        "coding": [
+                            {
+                                "system": "http://terminology.hl7.org/CodeSystem/coverage-class",
+                                "code": "group",
+                                "display": "Group"
+                            }
+                        ]
+                    },
+                    "value": "UC-Group-001",
+                    "name": "UnitedCare Standard Plan"
+                }
+            ],
+            "period": {
+                "start": "2022-01-01",
+                "end": "2026-12-31"
+            },
+            "network": "UC-Preferred-Network",
+            "costToBeneficiary": [
+                {
+                    "type": {
+                        "coding": [
+                            {
+                                "system": "http://terminology.hl7.org/CodeSystem/coverage-copay-type",
+                                "code": "copay",
+                                "display": "CoPay"
+                            }
+                        ]
+                    },
+                    "valueMoney": {
+                        "value": 50.00,
+                        "currency": "USD"
+                    },
+                    "valueQuantity": {
+                        "value": 1,
+                        "unit": "visit",
+                        "system": "http://unitsofmeasure.org",
+                        "code": "visit"
+                    }
+                }
+            ]
+        }
+    ],
+    "DiagnosticReport": [
+        {
+            "resourceType": "DiagnosticReport",
+            "id": "87920",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-diagnosticreport-lab"
+                ]
+            },
+            "status": "final",
+            "category": [
+                {
+                    "coding": [
+                        {
+                            "system": "http://terminology.hl7.org/CodeSystem/v2-0074",
+                            "code": "LAB",
+                            "display": "Laboratory"
+                        }
+                    ]
+                }
+            ],
+            "code": {
+                "coding": [
+                    {
+                        "system": "http://loinc.org",
+                        "code": "58410-2",
+                        "display": "Complete blood count panel"
+                    }
+                ],
+                "text": "Complete Blood Count (CBC)"
+            },
+            "subject": {
+                "reference": "Patient/aa7d75d6-7fa0-47cd-89b9-d4326b382f28"
+            },
+            "effectiveDateTime": "2025-06-05T10:00:00-05:00",
+            "issued": "2025-06-05T12:00:00-05:00",
+            "result": [
+                {
+                    "reference": "Observation/observation-wbc"
+                },
+                {
+                    "reference": "Observation/observation-hemoglobin"
+                }
+            ]
+        },
+        {
+            "resourceType": "DiagnosticReport",
+            "id": "87919",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-diagnosticreport-lab"
+                ]
+            },
+            "status": "final",
+            "category": [
+                {
+                    "coding": [
+                        {
+                            "system": "http://terminology.hl7.org/CodeSystem/v2-0074",
+                            "code": "LAB",
+                            "display": "Laboratory"
+                        }
+                    ]
+                }
+            ],
+            "code": {
+                "coding": [
+                    {
+                        "system": "http://loinc.org",
+                        "code": "24331-1",
+                        "display": "Lipid panel with direct LDL"
+                    }
+                ],
+                "text": "Lipid Panel"
+            },
+            "subject": {
+                "reference": "Patient/aa7d75d6-7fa0-47cd-89b9-d4326b382f28"
+            },
+            "effectiveDateTime": "2025-06-03T09:00:00-05:00",
+            "issued": "2025-06-03T11:00:00-05:00",
+            "result": [
+                {
+                    "reference": "Observation/observation-cholesterol"
+                },
+                {
+                    "reference": "Observation/observation-ldl"
+                },
+                {
+                    "reference": "Observation/observation-hdl"
+                },
+                {
+                    "reference": "Observation/observation-triglycerides"
+                }
+            ]
+        },
+        {
+            "resourceType": "DiagnosticReport",
+            "id": "87918",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-diagnosticreport-note"
+                ]
+            },
+            "status": "final",
+            "category": [
+                {
+                    "coding": [
+                        {
+                            "system": "http://terminology.hl7.org/CodeSystem/v2-0074",
+                            "code": "RAD",
+                            "display": "Radiology"
+                        }
+                    ]
+                }
+            ],
+            "code": {
+                "coding": [
+                    {
+                        "system": "http://loinc.org",
+                        "code": "30746-0",
+                        "display": "Chest X-ray study"
+                    }
+                ],
+                "text": "Chest X-ray"
+            },
+            "subject": {
+                "reference": "Patient/aa7d75d6-7fa0-47cd-89b9-d4326b382f28"
+            },
+            "effectiveDateTime": "2025-06-01T08:00:00-05:00",
+            "issued": "2025-06-01T10:00:00-05:00",
+            "presentedForm": [
+                {
+                    "contentType": "application/pdf",
+                    "language": "en",
+                    "title": "Chest X-ray Report",
+                    "url": "http://example.org/fhir/Binary/chest-xray-report.pdf"
+                }
+            ],
+            "conclusion": "Normal chest radiograph. No signs of pneumonia or pleural effusion."
+        }
+    ],
+    "Observation": [
+        {
+            "resourceType": "Observation",
+            "id": "63230",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-observation-clinical-test"
+                ]
+            },
+            "status": "final",
+            "category": [
+                {
+                    "coding": [
+                        {
+                            "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                            "code": "vital-signs",
+                            "display": "Vital Signs"
+                        }
+                    ]
+                }
+            ],
+            "code": {
+                "coding": [
+                    {
+                        "system": "http://loinc.org",
+                        "code": "8310-5",
+                        "display": "Body temperature"
+                    }
+                ],
+                "text": "Body temperature"
+            },
+            "subject": {
+                "reference": "Patient/101"
+            },
+            "effectivePeriod": {
+                "start": "2025-06-10T08:30:00-05:00",
+                "end": "2025-06-10T08:35:00-05:00"
+            },
+            "valueQuantity": {
+                "value": 98.6,
+                "unit": "°F",
+                "system": "http://unitsofmeasure.org",
+                "code": "°F"
+            }
+        },
+        {
+            "resourceType": "Observation",
+            "id": "63229",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-blood-pressure"
+                ]
+            },
+            "status": "final",
+            "category": [
+                {
+                    "coding": [
+                        {
+                            "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                            "code": "vital-signs",
+                            "display": "Vital Signs"
+                        }
+                    ]
+                }
+            ],
+            "code": {
+                "coding": [
+                    {
+                        "system": "http://loinc.org",
+                        "code": "85354-9",
+                        "display": "Blood pressure panel with all children optional"
+                    }
+                ],
+                "text": "Blood Pressure"
+            },
+            "subject": {
+                "reference": "Patient/101"
+            },
+            "effectivePeriod": {
+                "start": "2025-06-10T08:35:00-05:00",
+                "end": "2025-06-10T08:40:00-05:00"
+            },
+            "effectiveDateTime": "2025-06-10T08:35:00-05:00",
+            "component": [
+                {
+                    "code": {
+                        "coding": [
+                            {
+                                "system": "http://loinc.org",
+                                "code": "8480-6",
+                                "display": "Systolic blood pressure"
+                            }
+                        ]
+                    },
+                    "valueQuantity": {
+                        "value": 120,
+                        "unit": "mmHg",
+                        "system": "http://unitsofmeasure.org",
+                        "code": "mm[Hg]"
+                    }
+                },
+                {
+                    "code": {
+                        "coding": [
+                            {
+                                "system": "http://loinc.org",
+                                "code": "8462-4",
+                                "display": "Diastolic blood pressure"
+                            }
+                        ]
+                    },
+                    "valueQuantity": {
+                        "value": 80,
+                        "unit": "mmHg",
+                        "system": "http://unitsofmeasure.org",
+                        "code": "mm[Hg]"
+                    }
+                }
+            ]
+        },
+        {
+            "resourceType": "Observation",
+            "id": "63228",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-pulse-oximetry"
+                ]
+            },
+            "status": "final",
+            "category": [
+                {
+                    "coding": [
+                        {
+                            "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+                            "code": "vital-signs",
+                            "display": "Vital Signs"
+                        }
+                    ]
+                }
+            ],
+            "code": {
+                "coding": [
+                    {
+                        "system": "http://loinc.org",
+                        "code": "59408-5",
+                        "display": "Oxygen saturation in Arterial blood by Pulse oximetry"
+                    }
+                ],
+                "text": "Oxygen Saturation"
+            },
+            "subject": {
+                "reference": "Patient/102"
+            },
+            "effectivePeriod": {
+                "start": "2025-06-10T08:40:00-05:00",
+                "end": "2025-06-10T08:45:00-05:00"
+            },
+            "effectiveDateTime": "2025-06-10T08:30:00-05:00",
+            "valueQuantity": {
+                "value": 97,
+                "unit": "%",
+                "system": "http://unitsofmeasure.org",
+                "code": "%"
+            }
+        }
+    ],
+    "MedicationRequest": [
+        {
+            "resourceType": "MedicationRequest",
+            "id": "111112",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-medicationrequest"
+                ]
+            },
+            "status": "active",
+            "intent": "order",
+            "medicationReference": {
+                "reference": "Medication/aimovig-70mg"
+            },
+            "medicationCodeableConcept": {
+                "coding": [
+                    {
+                        "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+                        "code": "1746007",
+                        "display": "Aimovig 70 mg Injection"
+                    }
+                ],
+                "text": "Aimovig 70 mg Injection"
+            },
+            "subject": {
+                "reference": "Patient/101"
+            },
+            "requester": {
+                "reference": "Practitioner/practitioner-456"
+            },
+            "authoredOn": "2025-03-02",
+            "dosageInstruction": [
+                {
+                    "text": "Inject 70 mg subcutaneously once a month",
+                    "timing": {
+                        "repeat": {
+                            "boundsPeriod": {
+                                "start": "2025-03-02"
+                            },
+                            "frequency": 1,
+                            "period": 1.0,
+                            "periodUnit": "mo"
+                        }
+                    },
+                    "doseAndRate": [
+                        {
+                            "doseQuantity": {
+                                "value": 70.0,
+                                "unit": "mg",
+                                "system": "http://unitsofmeasure.org",
+                                "code": "mg"
+                            }
+                        }
+                    ]
+                }
+            ],
+            "dispenseRequest": {
+                "quantity": {
+                    "value": 1.0,
+                    "unit": "injection",
+                    "system": "http://unitsofmeasure.org",
+                    "code": "injection"
+                },
+                "expectedSupplyDuration": {
+                    "value": 30,
+                    "unit": "days",
+                    "system": "http://unitsofmeasure.org",
+                    "code": "d"
+                }
+            }
+        },
+        {
+            "resourceType": "MedicationRequest",
+            "id": "111114",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-medicationrequest"
+                ]
+            },
+            "status": "active",
+            "intent": "order",
+            "medicationReference": {
+                "reference": "Medication/lisinopril-10mg"
+            },
+            "medicationCodeableConcept": {
+                "coding": [
+                    {
+                        "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+                        "code": "197361",
+                        "display": "Lisinopril 10 mg oral tablet"
+                    }
+                ],
+                "text": "Lisinopril 10 mg Tablet"
+            },
+            "subject": {
+                "reference": "Patient/101"
+            },
+            "requester": {
+                "reference": "Practitioner/practitioner-456"
+            },
+            "authoredOn": "2025-04-01",
+            "dosageInstruction": [
+                {
+                    "text": "Take 1 tablet by mouth once daily",
+                    "timing": {
+                        "repeat": {
+                            "frequency": 1,
+                            "period": 1,
+                            "periodUnit": "d"
+                        }
+                    },
+                    "doseAndRate": [
+                        {
+                            "doseQuantity": {
+                                "value": 10,
+                                "unit": "mg",
+                                "system": "http://unitsofmeasure.org",
+                                "code": "mg"
+                            }
+                        }
+                    ]
+                }
+            ],
+            "dispenseRequest": {
+                "quantity": {
+                    "value": 30,
+                    "unit": "tablets",
+                    "system": "http://unitsofmeasure.org",
+                    "code": "tablet"
+                },
+                "expectedSupplyDuration": {
+                    "value": 30,
+                    "unit": "days",
+                    "system": "http://unitsofmeasure.org",
+                    "code": "d"
+                }
+            }
+        },
+        {
+            "resourceType": "MedicationRequest",
+            "id": "111113",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-medicationrequest"
+                ]
+            },
+            "status": "active",
+            "intent": "order",
+            "medicationReference": {
+                "reference": "Medication/metformin-500mg"
+            },
+            "medicationCodeableConcept": {
+                "coding": [
+                    {
+                        "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+                        "code": "860975",
+                        "display": "Metformin 500 mg oral tablet"
+                    }
+                ],
+                "text": "Metformin 500 mg Tablet"
+            },
+            "subject": {
+                "reference": "Patient/101"
+            },
+            "requester": {
+                "reference": "Practitioner/practitioner-456"
+            },
+            "authoredOn": "2025-03-10",
+            "dosageInstruction": [
+                {
+                    "text": "Take 1 tablet by mouth twice daily with meals",
+                    "timing": {
+                        "repeat": {
+                            "frequency": 2,
+                            "period": 1,
+                            "periodUnit": "d"
+                        }
+                    },
+                    "doseAndRate": [
+                        {
+                            "doseQuantity": {
+                                "value": 500,
+                                "unit": "mg",
+                                "system": "http://unitsofmeasure.org",
+                                "code": "mg"
+                            }
+                        }
+                    ]
+                }
+            ],
+            "dispenseRequest": {
+                "quantity": {
+                    "value": 60,
+                    "unit": "tablets",
+                    "system": "http://unitsofmeasure.org",
+                    "code": "tablet"
+                },
+                "expectedSupplyDuration": {
+                    "value": 30,
+                    "unit": "days",
+                    "system": "http://unitsofmeasure.org",
+                    "code": "d"
+                }
+            }
+        },
+        {
+            "resourceType": "MedicationRequest",
+            "id": "111115",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/core/StructureDefinition/us-core-medicationrequest"
+                ]
+            },
+            "status": "active",
+            "intent": "order",
+            "medicationReference": {
+                "reference": "Medication/lantus-100units"
+            },
+            "medicationCodeableConcept": {
+                "coding": [
+                    {
+                        "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+                        "code": "310798",
+                        "display": "Insulin glargine 100 unit/mL injectable solution"
+                    }
+                ],
+                "text": "Lantus (Insulin Glargine) 100 units/mL"
+            },
+            "subject": {
+                "reference": "Patient/101"
+            },
+            "requester": {
+                "reference": "Practitioner/practitioner-456"
+            },
+            "authoredOn": "2025-05-01",
+            "dosageInstruction": [
+                {
+                    "text": "Inject 10 units subcutaneously at bedtime",
+                    "timing": {
+                        "repeat": {
+                            "frequency": 1,
+                            "period": 1,
+                            "periodUnit": "d"
+                        }
+                    },
+                    "doseAndRate": [
+                        {
+                            "doseQuantity": {
+                                "value": 10,
+                                "unit": "units",
+                                "system": "http://unitsofmeasure.org",
+                                "code": "U"
+                            }
+                        }
+                    ]
+                }
+            ],
+            "dispenseRequest": {
+                "quantity": {
+                    "value": 1,
+                    "unit": "vial",
+                    "system": "http://unitsofmeasure.org",
+                    "code": "vial"
+                },
+                "expectedSupplyDuration": {
+                    "value": 30,
+                    "unit": "days",
+                    "system": "http://unitsofmeasure.org",
+                    "code": "d"
+                }
+            }
+        }
+    ],
+    "ExplanationOfBenefit": [
+        {
+            "resourceType": "ExplanationOfBenefit",
+            "id": "14453",
+            "meta": {
+                "lastUpdated": "2024-12-12T09:14:11+00:00",
+                "profile": [
+                    "http://hl7.org/fhir/us/carin-bb/StructureDefinition/C4BB-ExplanationOfBenefit-Outpatient-Institutional"
+                ]
+            },
+            "language": "en-US",
+            "text": {
+                "status": "generated",
+                "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en-US\" lang=\"en-US\"><p class=\"res-header-id\"><b>Generated Narrative: ExplanationOfBenefit EOBOutpatient1</b></p><a name=\"EOBOutpatient1\"> </a><a name=\"hcEOBOutpatient1\"> </a><a name=\"EOBOutpatient1-en-US\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Last updated: 2024-12-12 09:14:11+0000; Language: en-US</p><p style=\"margin-bottom: 0px\">Profile: <a href=\"StructureDefinition-C4BB-ExplanationOfBenefit-Outpatient-Institutional.html\">C4BB ExplanationOfBenefit Outpatient Institutionalversion: null2.1.0)</a></p></div><p><b>identifier</b>: Unique Claim ID/AW123412341234123412341234123412</p><p><b>status</b>: Active</p><p><b>type</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/claim-type institutional}\">Institutional</span></p><p><b>subType</b>: <span title=\"Codes:{http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBInstitutionalClaimSubType outpatient}\">Outpatient</span></p><p><b>use</b>: Claim</p><p><b>patient</b>: <a href=\"Patient-Patient2.html\">Member 01 Test  Male, DoB: 1943-01-01 ( An identifier for the insured of an insurance policy (this insured always has a subscriber), usually assigned by the insurance carrier.:\u00a088800933501)</a></p><p><b>billablePeriod</b>: 2024-01-01 --&gt; 2024-10-31</p><p><b>created</b>: 2024-11-02 00:00:00+0000</p><p><b>insurer</b>: <a href=\"Organization-Payer1.html\">Organization Payer 1</a></p><p><b>provider</b>: <a href=\"Organization-ProviderOrganization1.html\">Orange Medical Group</a></p><p><b>outcome</b>: Partial Processing</p><h3>CareTeams</h3><table class=\"grid\"><tr><td style=\"display: none\">-</td><td><b>Sequence</b></td><td><b>Provider</b></td><td><b>Role</b></td><td><b>Qualification</b></td></tr><tr><td style=\"display: none\">*</td><td>1</td><td><a href=\"Organization-ProviderOrganization1.html\">Organization Orange Medical Group</a></td><td><span title=\"Codes:{http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBClaimCareTeamRole rendering}\">Rendering provider</span></td><td><span title=\"Codes:{http://nucc.org/provider-taxonomy 364SX0200X}\">Oncology Clinical Nurse Specialist</span></td></tr></table><blockquote><p><b>supportingInfo</b></p><p><b>sequence</b>: 2</p><p><b>category</b>: <span title=\"Codes:{http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBSupportingInfoType clmrecvddate}\">Claim Received Date</span></p><p><b>timing</b>: 2024-11-30</p></blockquote><blockquote><p><b>supportingInfo</b></p><p><b>sequence</b>: 3</p><p><b>category</b>: <span title=\"Codes:{http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBSupportingInfoType typeofbill}\">Type of Bill</span></p><p><b>code</b>: <span title=\"Codes:{https://www.nubc.org/CodeSystem/TypeOfBill Dummy}\">Dummy</span></p></blockquote><blockquote><p><b>supportingInfo</b></p><p><b>sequence</b>: 4</p><p><b>category</b>: <span title=\"Codes:{http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBSupportingInfoType pointoforigin}\">Point Of Origin</span></p><p><b>code</b>: <span title=\"Codes:{https://www.nubc.org/CodeSystem/PointOfOrigin Dummy}\">Dummy</span></p></blockquote><blockquote><p><b>supportingInfo</b></p><p><b>sequence</b>: 5</p><p><b>category</b>: <span title=\"Codes:{http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBSupportingInfoType admtype}\">Admission Type</span></p><p><b>code</b>: <span title=\"Codes:{https://www.nubc.org/CodeSystem/PriorityTypeOfAdmitOrVisit Dummy}\">Dummy</span></p></blockquote><blockquote><p><b>supportingInfo</b></p><p><b>sequence</b>: 6</p><p><b>category</b>: <span title=\"Codes:{http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBSupportingInfoType discharge-status}\">Discharge Status</span></p><p><b>code</b>: <span title=\"Codes:{https://www.nubc.org/CodeSystem/PatDischargeStatus Dummy}\">Dummy</span></p></blockquote><blockquote><p><b>supportingInfo</b></p><p><b>sequence</b>: 7</p><p><b>category</b>: <span title=\"Codes:{http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBSupportingInfoType medicalrecordnumber}\">Medical Record Number</span></p><p><b>value</b>: 1234-234-1243-12345678901m</p></blockquote><blockquote><p><b>supportingInfo</b></p><p><b>sequence</b>: 8</p><p><b>category</b>: <span title=\"Codes:{http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBSupportingInfoType patientaccountnumber}\">Patient Account Number</span></p><p><b>value</b>: 1234-234-1243-12345678901a</p></blockquote><h3>Diagnoses</h3><table class=\"grid\"><tr><td style=\"display: none\">-</td><td><b>Sequence</b></td><td><b>Diagnosis[x]</b></td><td><b>Type</b></td></tr><tr><td style=\"display: none\">*</td><td>1</td><td><span title=\"Codes:{http://hl7.org/fhir/sid/icd-10-cm S06.0X1A}\">Concussion w LOC of 30 minutes or less, init</span></td><td><span title=\"Codes:{http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBClaimDiagnosisType patientreasonforvisit}\">Patient Reason for Visit</span></td></tr></table><h3>Insurances</h3><table class=\"grid\"><tr><td style=\"display: none\">-</td><td><b>Focal</b></td><td><b>Coverage</b></td></tr><tr><td style=\"display: none\">*</td><td>true</td><td><a href=\"Coverage-Coverage3.html\">Coverage: identifier = Member Number; status = active; type = health insurance plan policy; subscriberId = 12345678901; dependent = 01; relationship = Self; period = 2024-01-01 --&gt; 2024-10-31; network = XYZ123-UPMC CONSUMER ADVA</a></td></tr></table><h3>Items</h3><table class=\"grid\"><tr><td style=\"display: none\">-</td><td><b>Sequence</b></td><td><b>Revenue</b></td><td><b>ProductOrService</b></td><td><b>Serviced[x]</b></td></tr><tr><td style=\"display: none\">*</td><td>1</td><td><span title=\"Codes:{https://www.nubc.org/CodeSystem/RevenueCodes Dummy}\">Dummy</span></td><td><span title=\"Codes:{http://terminology.hl7.org/CodeSystem/data-absent-reason not-applicable}\">Not Applicable</span></td><td>2024-11-02</td></tr></table><blockquote><p><b>adjudication</b></p><p><b>category</b>: <span title=\"Codes:{http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudicationDiscriminator benefitpaymentstatus}\">Benefit Payment Status</span></p><p><b>reason</b>: <span title=\"Codes:{http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBPayerAdjudicationStatus innetwork}\">In Network</span></p></blockquote><blockquote><p><b>adjudication</b></p><p><b>category</b>: <span title=\"Codes:{http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudicationDiscriminator billingnetworkstatus}\">Billing Network Status</span></p><p><b>reason</b>: <span title=\"Codes:{http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBPayerAdjudicationStatus innetwork}\">In Network</span></p></blockquote><blockquote><p><b>adjudication</b></p><p><b>category</b>: <span title=\"Codes:{http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication paidtoprovider}\">Payment Amount</span></p><h3>Amounts</h3><table class=\"grid\"><tr><td style=\"display: none\">-</td><td><b>Value</b></td><td><b>Currency</b></td></tr><tr><td style=\"display: none\">*</td><td>620</td><td>United States dollar</td></tr></table></blockquote><blockquote><p><b>adjudication</b></p><p><b>category</b>: <span title=\"Codes:{http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication paidbypatient}\">Patient Pay Amount</span></p><h3>Amounts</h3><table class=\"grid\"><tr><td style=\"display: none\">-</td><td><b>Value</b></td></tr><tr><td style=\"display: none\">*</td><td>0</td></tr></table></blockquote><blockquote><p><b>total</b></p><p><b>category</b>: <span title=\"Codes:{http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication paidtoprovider}\">Payment Amount</span></p><h3>Amounts</h3><table class=\"grid\"><tr><td style=\"display: none\">-</td><td><b>Value</b></td><td><b>Currency</b></td></tr><tr><td style=\"display: none\">*</td><td>620</td><td>United States dollar</td></tr></table></blockquote><blockquote><p><b>total</b></p><p><b>category</b>: <span title=\"Codes:{http://terminology.hl7.org/CodeSystem/adjudication submitted}\">Submitted Amount</span></p><h3>Amounts</h3><table class=\"grid\"><tr><td style=\"display: none\">-</td><td><b>Value</b></td><td><b>Currency</b></td></tr><tr><td style=\"display: none\">*</td><td>2650</td><td>United States dollar</td></tr></table></blockquote><blockquote><p><b>total</b></p><p><b>category</b>: <span title=\"Codes:{http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication paidbypatient}\">Patient Pay Amount</span></p><h3>Amounts</h3><table class=\"grid\"><tr><td style=\"display: none\">-</td><td><b>Value</b></td><td><b>Currency</b></td></tr><tr><td style=\"display: none\">*</td><td>0</td><td>United States dollar</td></tr></table></blockquote></div>"
+            },
+            "identifier": [
+                {
+                    "type": {
+                        "coding": [
+                            {
+                                "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBIdentifierType",
+                                "code": "uc"
+                            }
+                        ]
+                    },
+                    "system": "https://www.xxxplan.com/fhir/EOBIdentifier",
+                    "value": "AW123412341234123412341234123412"
+                }
+            ],
+            "status": "active",
+            "type": {
+                "coding": [
+                    {
+                        "system": "http://terminology.hl7.org/CodeSystem/claim-type",
+                        "code": "institutional"
+                    }
+                ],
+                "text": "Institutional"
+            },
+            "subType": {
+                "coding": [
+                    {
+                        "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBInstitutionalClaimSubType",
+                        "code": "outpatient"
+                    }
+                ],
+                "text": "Outpatient"
+            },
+            "use": "claim",
+            "patient": {
+                "reference": "Patient/aa7d75d6-7fa0-47cd-89b9-d4326b382f28"
+            },
+            "billablePeriod": {
+                "start": "2024-01-01",
+                "end": "2024-10-31"
+            },
+            "created": "2024-11-02T00:00:00+00:00",
+            "insurer": {
+                "reference": "Organization/50",
+                "display": "UnitedCare Health Insurance"
+            },
+            "provider": {
+                "reference": "Organization/64",
+                "display": "Grace Hospital"
+            },
+            "outcome": "partial",
+            "careTeam": [
+                {
+                    "sequence": 1,
+                    "provider": {
+                        "reference": "Organization/64"
+                    },
+                    "role": {
+                        "coding": [
+                            {
+                                "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBClaimCareTeamRole",
+                                "code": "rendering",
+                                "display": "Rendering provider"
+                            }
+                        ]
+                    },
+                    "qualification": {
+                        "coding": [
+                            {
+                                "system": "http://nucc.org/provider-taxonomy",
+                                "code": "364SX0200X",
+                                "display": "Oncology Clinical Nurse Specialist"
+                            }
+                        ]
+                    }
+                }
+            ],
+            "supportingInfo": [
+                {
+                    "sequence": 2,
+                    "category": {
+                        "coding": [
+                            {
+                                "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBSupportingInfoType",
+                                "code": "clmrecvddate"
+                            }
+                        ]
+                    },
+                    "timingDate": "2024-11-30"
+                },
+                {
+                    "sequence": 3,
+                    "category": {
+                        "coding": [
+                            {
+                                "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBSupportingInfoType",
+                                "code": "typeofbill"
+                            }
+                        ]
+                    },
+                    "code": {
+                        "coding": [
+                            {
+                                "system": "https://www.nubc.org/CodeSystem/TypeOfBill",
+                                "code": "Dummy"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "sequence": 4,
+                    "category": {
+                        "coding": [
+                            {
+                                "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBSupportingInfoType",
+                                "code": "pointoforigin"
+                            }
+                        ]
+                    },
+                    "code": {
+                        "coding": [
+                            {
+                                "system": "https://www.nubc.org/CodeSystem/PointOfOrigin",
+                                "code": "Dummy"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "sequence": 5,
+                    "category": {
+                        "coding": [
+                            {
+                                "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBSupportingInfoType",
+                                "code": "admtype"
+                            }
+                        ]
+                    },
+                    "code": {
+                        "coding": [
+                            {
+                                "system": "https://www.nubc.org/CodeSystem/PriorityTypeOfAdmitOrVisit",
+                                "code": "Dummy"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "sequence": 6,
+                    "category": {
+                        "coding": [
+                            {
+                                "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBSupportingInfoType",
+                                "code": "discharge-status"
+                            }
+                        ]
+                    },
+                    "code": {
+                        "coding": [
+                            {
+                                "system": "https://www.nubc.org/CodeSystem/PatDischargeStatus",
+                                "code": "Dummy"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "sequence": 7,
+                    "category": {
+                        "coding": [
+                            {
+                                "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBSupportingInfoType",
+                                "code": "medicalrecordnumber"
+                            }
+                        ]
+                    },
+                    "valueString": "1234-234-1243-12345678901m"
+                },
+                {
+                    "sequence": 8,
+                    "category": {
+                        "coding": [
+                            {
+                                "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBSupportingInfoType",
+                                "code": "patientaccountnumber"
+                            }
+                        ]
+                    },
+                    "valueString": "1234-234-1243-12345678901a"
+                }
+            ],
+            "diagnosis": [
+                {
+                    "sequence": 1,
+                    "diagnosisCodeableConcept": {
+                        "coding": [
+                            {
+                                "system": "http://hl7.org/fhir/sid/icd-10-cm",
+                                "code": "S06.0X1A",
+                                "display": "Concussion with loss of consciousness of 30 minutes or less, initial encounter."
+                            }
+                        ]
+                    },
+                    "type": [
+                        {
+                            "coding": [
+                                {
+                                    "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBClaimDiagnosisType",
+                                    "code": "patientreasonforvisit"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ],
+            "insurance": [
+                {
+                    "focal": true,
+                    "coverage": {
+                        "reference": "Coverage/367"
+                    }
+                }
+            ],
+            "item": [
+                {
+                    "sequence": 1,
+                    "revenue": {
+                        "coding": [
+                            {
+                                "system": "https://www.nubc.org/CodeSystem/RevenueCodes",
+                                "code": "Dummy"
+                            }
+                        ]
+                    },
+                    "productOrService": {
+                        "coding": [
+                            {
+                                "system": "http://terminology.hl7.org/CodeSystem/data-absent-reason",
+                                "code": "not-applicable",
+                                "display": "Not Applicable"
+                            }
+                        ]
+                    },
+                    "servicedDate": "2024-11-02"
+                }
+            ],
+            "adjudication": [
+                {
+                    "category": {
+                        "coding": [
+                            {
+                                "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudicationDiscriminator",
+                                "code": "benefitpaymentstatus"
+                            }
+                        ]
+                    },
+                    "reason": {
+                        "coding": [
+                            {
+                                "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBPayerAdjudicationStatus",
+                                "code": "innetwork"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "category": {
+                        "coding": [
+                            {
+                                "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudicationDiscriminator",
+                                "code": "billingnetworkstatus"
+                            }
+                        ]
+                    },
+                    "reason": {
+                        "coding": [
+                            {
+                                "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBPayerAdjudicationStatus",
+                                "code": "innetwork"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "category": {
+                        "coding": [
+                            {
+                                "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+                                "code": "paidtoprovider"
+                            }
+                        ],
+                        "text": "Payment Amount"
+                    },
+                    "amount": {
+                        "value": 620,
+                        "currency": "USD"
+                    }
+                },
+                {
+                    "category": {
+                        "coding": [
+                            {
+                                "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+                                "code": "paidbypatient"
+                            }
+                        ],
+                        "text": "Patient Pay Amount"
+                    },
+                    "amount": {
+                        "value": 0
+                    }
+                }
+            ],
+            "total": [
+                {
+                    "category": {
+                        "coding": [
+                            {
+                                "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+                                "code": "paidtoprovider"
+                            }
+                        ],
+                        "text": "Payment Amount"
+                    },
+                    "amount": {
+                        "value": 620,
+                        "currency": "USD"
+                    }
+                },
+                {
+                    "category": {
+                        "coding": [
+                            {
+                                "system": "http://terminology.hl7.org/CodeSystem/adjudication",
+                                "code": "submitted"
+                            }
+                        ],
+                        "text": "Submitted Amount"
+                    },
+                    "amount": {
+                        "value": 2650,
+                        "currency": "USD"
+                    }
+                },
+                {
+                    "category": {
+                        "coding": [
+                            {
+                                "system": "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication",
+                                "code": "paidbypatient"
+                            }
+                        ],
+                        "text": "Patient Pay Amount"
+                    },
+                    "amount": {
+                        "value": 0,
+                        "currency": "USD"
+                    }
+                }
+            ]
+        }
+    ],
+    "Questionnaire": [
+        {
+            "resourceType": "Questionnaire",
+            "id": "4",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/dtr-std-questionnaire"
+                ]
+            },
+            "text": {
+                "id": "text1",
+                "status": "generated",
+                "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Prior Authorization Questionnaire for Aimovig 70 mg Injection</div>"
+            },
+            "url": "http://example.org/fhir/Questionnaire/aimovig-prior-auth",
+            "version": "1.0.0",
+            "status": "active",
+            "title": {
+                "value": "Prior Authorization Questionnaire"
+            },
+            "publisher": "Example Payer Organization",
+            "subjectType": [
+                "Patient"
+            ],
+            "extension": [
+                {
+                    "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/extension-purposeOfUse",
+                    "valueCodeableConcept": {
+                        "coding": [
+                            {
+                                "system": "http://terminology.hl7.org/CodeSystem/v3-ActReason",
+                                "code": "COVAUTH",
+                                "display": "Coverage Authorization"
+                            }
+                        ],
+                        "text": "Coverage Authorization"
+                    }
+                },
+                {
+                    "url": "http://hl7.org/fhir/StructureDefinition/cqf-library",
+                    "valueCanonical": "http://example.org/fhir/Library/AimovigPriorAuthLibrary"
+                }
+            ],
+            "item": [
+                {
+                    "linkId": "1",
+                    "text": {
+                        "value": "Has the patient been diagnosed with chronic migraines?"
+                    },
+                    "type": "boolean"
+                },
+                {
+                    "linkId": "2",
+                    "text": {
+                        "value": "Has the patient tried other preventive migraine treatments?"
+                    },
+                    "type": "boolean"
+                },
+                {
+                    "linkId": "3",
+                    "text": {
+                        "value": "Please list previous medications used for migraine prevention."
+                    },
+                    "type": "display"
+                },
+                {
+                    "linkId": "4",
+                    "text": {
+                        "value": "What is the frequency of migraines per month?"
+                    },
+                    "type": "integer"
+                },
+                {
+                    "linkId": "5",
+                    "text": {
+                        "value": "Has the patient experienced side effects or lack of effectiveness with prior treatments?"
+                    },
+                    "type": "boolean"
+                },
+                {
+                    "linkId": "6",
+                    "text": {
+                        "value": "Does the patient have any contraindications to other migraine medications?"
+                    },
+                    "type": "boolean"
+                },
+                {
+                    "linkId": "7",
+                    "text": {
+                        "value": "Does the patient have insurance coverage for Aimovig?"
+                    },
+                    "type": "boolean"
+                }
+            ]
+        }
+    ],
+    "QuestionnaireResponse": [
+        {
+            "resourceType": "QuestionnaireResponse",
+            "id": "1121",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/dtr-questionnaireresponse"
+                ]
+            },
+            "status": "completed",
+            "questionnaire": "http://example.org/fhir/Questionnaire/aimovig-prior-auth",
+            "authored": "2023-08-14T20:40:49.675Z",
+            "subject": {
+                "reference": "Patient/123"
+            },
+            "author": {
+                "reference": "PractitionerRole/456"
+            },
+            "extension": [
+                {
+                    "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/dtr-questionnaireresponse-extension",
+                    "extension": [
+                        {
+                            "url": "launchMethod",
+                            "valueCode": "SMART-on-FHIR"
+                        }
+                    ]
+                }
+            ],
+            "item": [
+                {
+                    "linkId": "1",
+                    "text": "Has the patient been diagnosed with chronic migraines?",
+                    "answer": [
+                        {
+                            "valueQuestionnaireResponseBoolean": true,
+                            "extension": [
+                                {
+                                    "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/dtr-questionnaireresponse-answer-extension",
+                                    "valueCodeableConcept": {
+                                        "coding": [
+                                            {
+                                                "system": "http://hl7.org/fhir/us/davinci-dtr/CodeSystem/dtr-population-status",
+                                                "code": "user-entered",
+                                                "display": "User Entered"
+                                            }
+                                        ],
+                                        "text": "User Entered"
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "linkId": "2",
+                    "text": "Has the patient tried other preventive migraine treatments?",
+                    "answer": [
+                        {
+                            "valueQuestionnaireResponseBoolean": true,
+                            "extension": [
+                                {
+                                    "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/dtr-questionnaireresponse-answer-extension",
+                                    "valueCodeableConcept": {
+                                        "coding": [
+                                            {
+                                                "system": "http://hl7.org/fhir/us/davinci-dtr/CodeSystem/dtr-population-status",
+                                                "code": "user-entered",
+                                                "display": "User Entered"
+                                            }
+                                        ],
+                                        "text": "User Entered"
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "linkId": "3",
+                    "text": "Please list previous medications used for migraine prevention.",
+                    "answer": [
+                        {
+                            "valueQuestionnaireResponseString": "Propranolol, Topiramate, Botox",
+                            "extension": [
+                                {
+                                    "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/dtr-questionnaireresponse-answer-extension",
+                                    "valueCodeableConcept": {
+                                        "coding": [
+                                            {
+                                                "system": "http://hl7.org/fhir/us/davinci-dtr/CodeSystem/dtr-population-status",
+                                                "code": "user-entered",
+                                                "display": "User Entered"
+                                            }
+                                        ],
+                                        "text": "User Entered"
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "linkId": "4",
+                    "text": "What is the frequency of migraines per month?",
+                    "answer": [
+                        {
+                            "valueQuestionnaireResponseInteger": 8,
+                            "extension": [
+                                {
+                                    "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/dtr-questionnaireresponse-answer-extension",
+                                    "valueCodeableConcept": {
+                                        "coding": [
+                                            {
+                                                "system": "http://hl7.org/fhir/us/davinci-dtr/CodeSystem/dtr-population-status",
+                                                "code": "user-entered",
+                                                "display": "User Entered"
+                                            }
+                                        ],
+                                        "text": "User Entered"
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "linkId": "5",
+                    "text": "Has the patient experienced side effects or lack of effectiveness with prior treatments?",
+                    "answer": [
+                        {
+                            "valueQuestionnaireResponseBoolean": true,
+                            "extension": [
+                                {
+                                    "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/dtr-questionnaireresponse-answer-extension",
+                                    "valueCodeableConcept": {
+                                        "coding": [
+                                            {
+                                                "system": "http://hl7.org/fhir/us/davinci-dtr/CodeSystem/dtr-population-status",
+                                                "code": "user-entered",
+                                                "display": "User Entered"
+                                            }
+                                        ],
+                                        "text": "User Entered"
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "linkId": "6",
+                    "text": "Does the patient have any contraindications to other migraine medications?",
+                    "answer": [
+                        {
+                            "valueQuestionnaireResponseBoolean": false,
+                            "extension": [
+                                {
+                                    "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/dtr-questionnaireresponse-answer-extension",
+                                    "valueCodeableConcept": {
+                                        "coding": [
+                                            {
+                                                "system": "http://hl7.org/fhir/us/davinci-dtr/CodeSystem/dtr-population-status",
+                                                "code": "user-entered",
+                                                "display": "User Entered"
+                                            }
+                                        ],
+                                        "text": "User Entered"
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "linkId": "7",
+                    "text": "Does the patient have insurance coverage for Aimovig?",
+                    "answer": [
+                        {
+                            "valueQuestionnaireResponseBoolean": true,
+                            "extension": [
+                                {
+                                    "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/dtr-questionnaireresponse-answer-extension",
+                                    "valueCodeableConcept": {
+                                        "coding": [
+                                            {
+                                                "system": "http://hl7.org/fhir/us/davinci-dtr/CodeSystem/dtr-population-status",
+                                                "code": "user-entered",
+                                                "display": "User Entered"
+                                            }
+                                        ],
+                                        "text": "User Entered"
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "Claim": [
+        {
+            "resourceType": "Claim",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/davinci-pas/StructureDefinition/profile-claim"
+                ]
+            },
+            "id": "12343",
+            "identifier": [
+                {
+                    "system": "http://hospital.org/claims",
+                    "value": "PA-20250302-001"
+                }
+            ],
+            "status": "active",
+            "type": {
+                "coding": [
+                    {
+                        "system": "http://terminology.hl7.org/CodeSystem/claim-type",
+                        "code": "professional",
+                        "display": "Professional"
+                    }
+                ]
+            },
+            "use": "preauthorization",
+            "priority": {
+                "coding": [
+                    {
+                        "system": "http://terminology.hl7.org/CodeSystem/processpriority",
+                        "code": "stat",
+                        "display": "Immediate"
+                    }
+                ]
+            },
+            "patient": {
+                "reference": "Patient/aa7d75d6-7fa0-47cd-89b9-d4326b382f28"
+            },
+            "created": "2025-03-02",
+            "insurer": {
+                "reference": "Organization/insurance-org"
+            },
+            "provider": {
+                "reference": "PractitionerRole/456"
+            },
+            "insurance": [
+                {
+                    "sequence": 1,
+                    "focal": true,
+                    "coverage": {
+                        "reference": "Coverage/insurance-coverage"
+                    }
+                }
+            ],
+            "supportingInfo": [
+                {
+                    "sequence": 1,
+                    "category": {
+                        "coding": [
+                            {
+                                "system": "http://terminology.hl7.org/CodeSystem/claiminformationcategory",
+                                "code": "info",
+                                "display": "Supporting Information"
+                            }
+                        ]
+                    },
+                    "valueReference": {
+                        "reference": "QuestionnaireResponse/1121"
+                    }
+                }
+            ],
+            "item": [
+                {
+                    "sequence": 1,
+                    "category": {
+                        "coding": [
+                            {
+                                "system": "http://terminology.hl7.org/CodeSystem/ex-benefitcategory",
+                                "code": "pharmacy",
+                                "display": "Pharmacy"
+                            }
+                        ]
+                    },
+                    "productOrService": {
+                        "coding": [
+                            {
+                                "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+                                "code": "1746007",
+                                "display": "Aimovig 70 mg Injection"
+                            }
+                        ]
+                    },
+                    "servicedDate": "2025-03-02",
+                    "unitPrice": {
+                        "value": 600.00,
+                        "currency": "USD"
+                    },
+                    "quantity": {
+                        "value": 1
+                    }
+                }
+            ]
+        }
+    ],
+    "ClaimResponse": [
+        {
+            "resourceType": "ClaimResponse",
+            "meta": {
+                "profile": [
+                    "http://hl7.org/fhir/us/davinci-pas/StructureDefinition/profile-claimresponse"
+                ]
+            },
+            "id": "12343",
+            "status": "active",
+            "type": {
+                "coding": [
+                    {
+                        "system": "http://terminology.hl7.org/CodeSystem/claim-type",
+                        "code": "professional",
+                        "display": "Professional"
+                    }
+                ]
+            },
+            "use": "preauthorization",
+            "patient": {
+                "reference": "Patient/101"
+            },
+            "created": "2025-03-02",
+            "insurer": {
+                "reference": "Organization/insurance-org"
+            },
+            "request": {
+                "reference": "Claim/12343"
+            },
+            "outcome": "complete",
+            "disposition": "Prior authorization approved for Aimovig 70 mg Injection.",
+            "preAuthRef": "PA-20250302-001",
+            "preAuthPeriod": {
+                "start": "2025-03-02",
+                "end": "2025-06-02"
+            },
+            "payment": {
+                "type": {
+                    "coding": [
+                        {
+                            "system": "http://terminology.hl7.org/CodeSystem/payment-type",
+                            "code": "complete",
+                            "display": "Payment complete"
+                        }
+                    ]
+                },
+                "adjustmentReason": {
+                    "coding": [
+                        {
+                            "system": "http://terminology.hl7.org/CodeSystem/claim-adjustment-reason",
+                            "code": "45",
+                            "display": "Charge exceeds fee schedule/maximum allowable or contracted/legislated fee arrangement"
+                        }
+                    ]
+                },
+                "amount": {
+                    "value": 600.00,
+                    "currency": "USD"
+                },
+                "date": "2025-03-03"
+            }
+        }
+    ],
+    "QuestionnairePackage": [
+        {
+            "resourceType": "Parameters",
+            "id": "32",
+            "parameter": [
+                {
+                    "name": "PackageBundle",
+                    "resource": {
+                        "resourceType": "Bundle",
+                        "type": "collection",
+                        "entry": [
+                            {
+                                "resourceType": "Questionnaire",
+                                "id": "4",
+                                "meta": {
+                                    "profile": [
+                                        "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/dtr-std-questionnaire"
+                                    ]
+                                },
+                                "text": {
+                                    "id": "text1",
+                                    "status": "generated",
+                                    "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Prior Authorization Questionnaire for Aimovig 70 mg Injection</div>"
+                                },
+                                "url": "http://example.org/fhir/Questionnaire/aimovig-prior-auth",
+                                "version": "1.0.0",
+                                "status": "active",
+                                "title": {
+                                    "value": "Prior Authorization Questionnaire"
+                                },
+                                "publisher": "Example Payer Organization",
+                                "subjectType": [
+                                    "Patient"
+                                ],
+                                "extension": [
+                                    {
+                                        "url": "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/extension-purposeOfUse",
+                                        "valueCodeableConcept": {
+                                            "coding": [
+                                                {
+                                                    "system": "http://terminology.hl7.org/CodeSystem/v3-ActReason",
+                                                    "code": "COVAUTH",
+                                                    "display": "Coverage Authorization"
+                                                }
+                                            ],
+                                            "text": "Coverage Authorization"
+                                        }
+                                    },
+                                    {
+                                        "url": "http://hl7.org/fhir/StructureDefinition/cqf-library",
+                                        "valueCanonical": "http://example.org/fhir/Library/AimovigPriorAuthLibrary"
+                                    }
+                                ],
+                                "item": [
+                                    {
+                                        "linkId": "1",
+                                        "text": {
+                                            "value": "Has the patient been diagnosed with chronic migraines?"
+                                        },
+                                        "type": "boolean"
+                                    },
+                                    {
+                                        "linkId": "2",
+                                        "text": {
+                                            "value": "Has the patient tried other preventive migraine treatments?"
+                                        },
+                                        "type": "boolean"
+                                    },
+                                    {
+                                        "linkId": "3",
+                                        "text": {
+                                            "value": "Please list previous medications used for migraine prevention."
+                                        },
+                                        "type": "display"
+                                    },
+                                    {
+                                        "linkId": "4",
+                                        "text": {
+                                            "value": "What is the frequency of migraines per month?"
+                                        },
+                                        "type": "integer"
+                                    },
+                                    {
+                                        "linkId": "5",
+                                        "text": {
+                                            "value": "Has the patient experienced side effects or lack of effectiveness with prior treatments?"
+                                        },
+                                        "type": "boolean"
+                                    },
+                                    {
+                                        "linkId": "6",
+                                        "text": {
+                                            "value": "Does the patient have any contraindications to other migraine medications?"
+                                        },
+                                        "type": "boolean"
+                                    },
+                                    {
+                                        "linkId": "7",
+                                        "text": {
+                                            "value": "Does the patient have insurance coverage for Aimovig?"
+                                        },
+                                        "type": "boolean"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    ]
+}

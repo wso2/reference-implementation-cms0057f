@@ -38,7 +38,7 @@ isolated map<int> nextIdMap = {
     QuestionnaireResponse: 1121
 };
 
-public isolated function create(ResourceType resourceType, r4:DomainResource payload) returns r4:DomainResource|error {
+public isolated function create(ResourceType resourceType, json payload) returns r4:DomainResource|r4:FHIRError {
     int nextId = 0;
     lock {
         int? prevId = nextIdMap[resourceType];
@@ -48,7 +48,11 @@ public isolated function create(ResourceType resourceType, r4:DomainResource pay
         nextIdMap[resourceType] = nextId;
 
     }
-    r4:DomainResource resourceClone = check payload.ensureType();
+    r4:DomainResource|error resourceClone = payload.cloneWithType();
+    if resourceClone is error {
+        return r4:createFHIRError(string `Invalid payload for resource type ${resourceType}: ${resourceClone.message()}`, 
+            r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+    }
     lock {
         resourceClone.id = nextId.toBalString();
 
@@ -61,7 +65,7 @@ public isolated function create(ResourceType resourceType, r4:DomainResource pay
             }
         }
 
-        resources.push(payload.clone());
+        resources.push(resourceClone.clone());
         repositoryMap[resourceType] = resources;
     }
     return resourceClone;

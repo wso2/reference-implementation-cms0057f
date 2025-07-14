@@ -14,142 +14,150 @@
 // specific language governing permissions and limitations
 // under the License.
 
+import ballerina/io;
+import ballerina/log;
 import ballerinax/health.fhir.r4;
 import ballerinax/health.fhir.r4.parser;
-import ballerinax/health.fhir.r4.uscore501;
 
 function init() returns error? {
-    check loadAllergyIntoleranceData();
-    check loadCoverageData();
-    check loadDiagnosticReportData();
-    check loadEncounterData();
-    check loadEobData();
-    check loadMedicationRequestData();
-    check loadObservationData();
-    check loadOrganizationData();
-    check loadPatientData();
-    check loadPractitionerData();
-    check loadQuestionnaireData();
-    check loadQuestionnairePackageData();
-    check loadQuestionnaireResponseData();
-    check loadClaimData();
+    check loadData();
+    log:printInfo("FHIR repository initialized successfully.");
 }
 
 function loadData() returns error? {
-    foreach var patientJson in patientJsons {
-        lock {
-            uscore501:USCorePatientProfile patient = check parser:parse(patientJson.clone(), uscore501:USCorePatientProfile).ensureType();
-            r4:DomainResource[] patientArr = repositoryMap.get(PATIENT);
-            patientArr.push(patient);
-            repositoryMap[PATIENT] = patientArr;
+    json dataSet = check io:fileReadJson("resources/data.json");
+
+    if dataSet is map<json> {
+        json[] patientData = check dataSet[PATIENT].cloneWithType();
+        json[] allergyIntoleranceData = check dataSet[ALLERGY_INTOLERENCE].cloneWithType();
+        json[] claimData = check dataSet[CLAIM].cloneWithType();
+        json[] claimResponseData = check dataSet[CLAIM_RESPONSE].cloneWithType();
+        json[] coverageData = check dataSet[COVERAGE].cloneWithType();
+        json[] diagnosticReportData = check dataSet[DIAGNOSTIC_REPORT].cloneWithType();
+        json[] encounterData = check dataSet[ENCOUNTER].cloneWithType();
+        json[] medicationRequestData = check dataSet[MEDICATION_REQUEST].cloneWithType();
+        json[] observationData = check dataSet[OBSERVATION].cloneWithType();
+        json[] organizationData = check dataSet[ORGANIZATION].cloneWithType();
+        json[] practitionerData = check dataSet[PRACTITIONER].cloneWithType();
+        json[] questionnaireData = check dataSet[QUESTIONNAIRE].cloneWithType();
+        json[] questionnaireResponseData = check dataSet[QUESTIONNAIRE_RESPONSE].cloneWithType();
+
+        foreach var patientJson in patientData {
+            lock {
+                Patient patient = check parser:parse(patientJson.clone()).ensureType();
+                r4:DomainResource[] patientArr = repositoryMap.get(PATIENT);
+                patientArr.push(patient);
+                repositoryMap[PATIENT] = patientArr;
+            }
+        }
+
+        foreach var allergyIntoleranceJson in allergyIntoleranceData {
+            lock {
+                AllergyIntolerance allergyIntolerance = check parser:parse(allergyIntoleranceJson.clone()).ensureType();
+                r4:DomainResource[] allergyIntoleranceArr = repositoryMap.get(ALLERGY_INTOLERENCE);
+                allergyIntoleranceArr.push(allergyIntolerance);
+                repositoryMap[ALLERGY_INTOLERENCE] = allergyIntoleranceArr;
+            }
+        }
+
+        foreach var claimJson in claimData {
+            lock {
+                Claim claim = check parser:parse(claimJson.clone()).ensureType();
+                r4:DomainResource[] claimArr = repositoryMap.get(CLAIM);
+                claimArr.push(claim);
+                repositoryMap[CLAIM] = claimArr;
+            }
+        }
+
+        foreach var claimResponseJson in claimResponseData {
+            lock {
+                ClaimResponse claimResponse = check parser:parse(claimResponseJson.clone()).ensureType();
+                r4:DomainResource[] claimResponseArr = repositoryMap.get(CLAIM_RESPONSE);
+                claimResponseArr.push(claimResponse);
+                repositoryMap[CLAIM_RESPONSE] = claimResponseArr;
+            }
+        }
+
+        foreach var coverageJson in coverageData {
+            lock {
+                Coverage coverage = check parser:parse(coverageJson.clone()).ensureType();
+                r4:DomainResource[] coverageArr = repositoryMap.get(COVERAGE);
+                coverageArr.push(coverage);
+                repositoryMap[COVERAGE] = coverageArr;
+            }
+        }
+
+        foreach var diagnosticReportJson in diagnosticReportData {
+            lock {
+                DiagnosticReport diagnosticReport = check parser:parse(diagnosticReportJson.clone()).ensureType();
+                r4:DomainResource[] diagnosticReportArr = repositoryMap.get(DIAGNOSTIC_REPORT);
+                diagnosticReportArr.push(diagnosticReport);
+                repositoryMap[DIAGNOSTIC_REPORT] = diagnosticReportArr;
+            }
+        }
+
+        foreach var encounterJson in encounterData {
+            lock {
+                Encounter encounter = check parser:parse(encounterJson.clone()).ensureType();
+                r4:DomainResource[] encounterArr = repositoryMap.get(ENCOUNTER);
+                encounterArr.push(encounter);
+                repositoryMap[ENCOUNTER] = encounterArr;
+            }
+        }
+
+        foreach var medicationRequestJson in medicationRequestData {
+            lock {
+                MedicationRequest medicationRequest = check parser:parse(medicationRequestJson.clone()).ensureType();
+                r4:DomainResource[] medicationRequestArr = repositoryMap.get(MEDICATION_REQUEST);
+                medicationRequestArr.push(medicationRequest);
+                repositoryMap[MEDICATION_REQUEST] = medicationRequestArr;
+            }
+        }
+
+        foreach var observationJson in observationData {
+            lock {
+                Observation observation = check parser:parse(observationJson.clone()).ensureType();
+                r4:DomainResource[] observationArr = repositoryMap.get(OBSERVATION);
+                observationArr.push(observation);
+                repositoryMap[OBSERVATION] = observationArr;
+            }
+        }
+
+        foreach var organizationJson in organizationData {
+            lock {
+                Organization organization = check parser:parse(organizationJson.clone()).ensureType();
+                r4:DomainResource[] organizationArr = repositoryMap.get(ORGANIZATION);
+                organizationArr.push(organization);
+                repositoryMap[ORGANIZATION] = organizationArr;
+            }
+        }
+
+        foreach var practitionerJson in practitionerData {
+            lock {
+                Practitioner practitioner = check parser:parse(practitionerJson.clone()).ensureType();
+                r4:DomainResource[] practitionerArr = repositoryMap.get(PRACTITIONER);
+                practitionerArr.push(practitioner);
+                repositoryMap[PRACTITIONER] = practitionerArr;
+            }
+        }
+
+        foreach var questionnaireJson in questionnaireData {
+            lock {
+                Questionnaire questionnaire = check parser:parse(questionnaireJson.clone()).ensureType();
+                r4:DomainResource[] questionnaireArr = repositoryMap.get(QUESTIONNAIRE);
+                questionnaireArr.push(questionnaire);
+                repositoryMap[QUESTIONNAIRE] = questionnaireArr;
+            }
+        }
+
+        foreach var questionnaireresponseJson in questionnaireResponseData {
+            lock {
+                QuestionnaireResponse questionnaireresponse = check parser:parse(questionnaireresponseJson.clone()).ensureType();
+                r4:DomainResource[] questionnaireresponseArr = repositoryMap.get(QUESTIONNAIRE_RESPONSE);
+                questionnaireresponseArr.push(questionnaireresponse);
+                repositoryMap[QUESTIONNAIRE_RESPONSE] = questionnaireresponseArr;
+            }
         }
     }
 
-    foreach var allergyIntoleranceJson in allergyIntoleranceJsons {
-        lock {
-            AllergyIntolerance allergyIntolerance = check parser:parse(allergyIntoleranceJson.clone(), AllergyIntolerance).ensureType();
-            r4:DomainResource[] allergyIntoleranceArr = repositoryMap.get(ALLERGY_INTOLERENCE);
-            allergyIntoleranceArr.push(allergyIntolerance);
-            repositoryMap[ALLERGY_INTOLERENCE] = allergyIntoleranceArr;
-        }
-    }
-
-    foreach var claimJson in claimJsons {
-        lock {
-            Claim claim = check parser:parse(claimJson.clone(), Claim).ensureType();
-            r4:DomainResource[] claimArr = repositoryMap.get(CLAIM);
-            claimArr.push(claim);
-            repositoryMap[CLAIM] = claimArr;
-        }
-    }
-
-    foreach var claimResponseJson in claimResponseJsons {
-        lock {
-            ClaimResponse claimResponse = check parser:parse(claimResponseJson.clone(), ClaimResponse).ensureType();
-            r4:DomainResource[] claimResponseArr = repositoryMap.get(CLAIM_RESPONSE);
-            claimResponseArr.push(claimResponse);
-            repositoryMap[CLAIM_RESPONSE] = claimResponseArr;
-        }
-    }
-
-    foreach var coverageJson in coverageJsons {
-        lock {
-            Coverage coverage = check parser:parse(coverageJson.clone(), Coverage).ensureType();
-            r4:DomainResource[] coverageArr = repositoryMap.get(COVERAGE);
-            coverageArr.push(coverage);
-            repositoryMap[COVERAGE] = coverageArr;
-        }
-    }
-
-    foreach var diagnosticReportJson in diagnosticReportJsons {
-        lock {
-            DiagnosticReport diagnosticReport = check parser:parse(diagnosticReportJson.clone(), DiagnosticReport).ensureType();
-            r4:DomainResource[] diagnosticReportArr = repositoryMap.get(DIAGNOSTIC_REPORT);
-            diagnosticReportArr.push(diagnosticReport);
-            repositoryMap[DIAGNOSTIC_REPORT] = diagnosticReportArr;
-        }
-    }
-
-    foreach var encounterJson in encounterJsons {
-        lock {
-            Encounter encounter = check parser:parse(encounterJson.clone(), Encounter).ensureType();
-            r4:DomainResource[] encounterArr = repositoryMap.get(ENCOUNTER);
-            encounterArr.push(encounter);
-            repositoryMap[ENCOUNTER] = encounterArr;
-        }
-    }
-
-    foreach var medicationRequestJson in medicationRequestJsons {
-        lock {
-            MedicationRequest medicationRequest = check parser:parse(medicationRequestJson.clone(), MedicationRequest).ensureType();
-            r4:DomainResource[] medicationRequestArr = repositoryMap.get(MEDICATION_REQUEST);
-            medicationRequestArr.push(medicationRequest);
-            repositoryMap[MEDICATION_REQUEST] = medicationRequestArr;
-        }
-    }
-
-    foreach var observationJson in observationJsons {
-        lock {
-            Observation observation = check parser:parse(observationJson.clone(), Observation).ensureType();
-            r4:DomainResource[] observationArr = repositoryMap.get(OBSERVATION);
-            observationArr.push(observation);
-            repositoryMap[OBSERVATION] = observationArr;
-        }
-    }
-
-    foreach var organizationJson in organizationJsons {
-        lock {
-            Organization organization = check parser:parse(organizationJson.clone(), Organization).ensureType();
-            r4:DomainResource[] organizationArr = repositoryMap.get(ORGANIZATION);
-            organizationArr.push(organization);
-            repositoryMap[ORGANIZATION] = organizationArr;
-        }
-    }
-
-    foreach var practitionerJson in practitionerJsons {
-        lock {
-            Practitioner practitioner = check parser:parse(practitionerJson.clone(), Practitioner).ensureType();
-            r4:DomainResource[] practitionerArr = repositoryMap.get(PRACTITIONER);
-            practitionerArr.push(practitioner);
-            repositoryMap[PRACTITIONER] = practitionerArr;
-        }
-    }
-
-    foreach var questionnaireJson in questionnaireJsons {
-        lock {
-            Questionnaire questionnaire = check parser:parse(questionnaireJson.clone(), Questionnaire).ensureType();
-            r4:DomainResource[] questionnaireArr = repositoryMap.get(QUESTIONNAIRE);
-            questionnaireArr.push(questionnaire);
-            repositoryMap[QUESTIONNAIRE] = questionnaireArr;
-        }
-    }
-
-    foreach var questionnaireresponseJson in questionnaireResponseJsons {
-        lock {
-            QuestionnaireResponse questionnaireresponse = check parser:parse(questionnaireresponseJson.clone(), QuestionnaireResponse).ensureType();
-            r4:DomainResource[] questionnaireresponseArr = repositoryMap.get(QUESTIONNAIRE_RESPONSE);
-            questionnaireresponseArr.push(questionnaireresponse);
-            repositoryMap[QUESTIONNAIRE_RESPONSE] = questionnaireresponseArr;
-        }
-    }
 }

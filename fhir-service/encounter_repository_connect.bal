@@ -79,7 +79,7 @@ public isolated function searchEncounter(map<string[]>? searchParameters = ()) r
                             string patientSearchParam = searchParameters.get('key)[0];
                             string patientReference = <string>(item.subject).reference;
 
-                            if patientSearchParam != patientReference {
+                            if string `Patient/${patientSearchParam}` != patientReference {
                                 continue;
                             }
 
@@ -149,7 +149,7 @@ function loadEncounterData() returns error? {
                 }
             ],
             "subject": {
-                "reference": "Patient/102"
+                "reference": "Patient/aa7d75d6-7fa0-47cd-89b9-d4326b382f28"
             },
             "hospitalization": {
                 "dischargeDisposition": {

@@ -147,7 +147,7 @@ function loadDiagnosticReportData() returns error? {
                 "text": "Complete Blood Count (CBC)"
             },
             "subject": {
-                "reference": "Patient/101"
+                "reference": "Patient/aa7d75d6-7fa0-47cd-89b9-d4326b382f28"
             },
             "effectiveDateTime": "2025-06-05T10:00:00-05:00",
             "issued": "2025-06-05T12:00:00-05:00",
@@ -192,7 +192,7 @@ function loadDiagnosticReportData() returns error? {
                 "text": "Lipid Panel"
             },
             "subject": {
-                "reference": "Patient/102"
+                "reference": "Patient/aa7d75d6-7fa0-47cd-89b9-d4326b382f28"
             },
             "effectiveDateTime": "2025-06-03T09:00:00-05:00",
             "issued": "2025-06-03T11:00:00-05:00",
@@ -243,7 +243,7 @@ function loadDiagnosticReportData() returns error? {
                 "text": "Chest X-ray"
             },
             "subject": {
-                "reference": "Patient/102"
+                "reference": "Patient/aa7d75d6-7fa0-47cd-89b9-d4326b382f28"
             },
             "effectiveDateTime": "2025-06-01T08:00:00-05:00",
             "issued": "2025-06-01T10:00:00-05:00",

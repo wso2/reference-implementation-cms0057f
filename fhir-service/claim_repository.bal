@@ -164,7 +164,7 @@ isolated function getClaimsByUse(string use, davincipas:PASClaim[] targetArr) re
 isolated function getClaimsByPatient(string patient, davincipas:PASClaim[] targetArr) returns davincipas:PASClaim[] {
     davincipas:PASClaim[] filteredClaims = [];
     foreach davincipas:PASClaim claim in targetArr {
-        if claim.patient.reference == patient {
+        if claim.patient.reference == string `Patient/${patient}` {
             filteredClaims.push(claim.clone());
         }
     }
@@ -524,7 +524,7 @@ function loadClaimData() returns error? {
                 ]
             },
             "patient": {
-                "reference": "Patient/102"
+                "reference": "Patient/aa7d75d6-7fa0-47cd-89b9-d4326b382f28"
             },
             "created": "2025-03-02",
             "insurer": {

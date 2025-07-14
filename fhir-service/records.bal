@@ -1,53 +1,5 @@
 import ballerina/time;
 
-public type CustomPatient record {
-    string patientType;
-    string patientId;
-    string version;
-    string lastUpdatedOn;
-    string originSource;
-    Description description;
-    Identifier[] identifiers;
-    string firstName;
-    string lastName;
-    string gender;
-    LocatoionDetail[] locatoionDetail;
-
-};
-
-public type Identifier record {
-    IdType id_type;
-    string id_value;
-};
-
-public type IdType record {
-    Code[] codes;
-};
-
-public type Code record {
-    string system_source;
-    string identifier_code;
-};
-
-public type Description record {
-    string status;
-    string details?;
-};
-
-public type LocatoionDetail record {
-    string nation?;
-    string town?;
-    string region?;
-    string zipCode?;
-    string identifier?;
-    string province?;
-};
-
-public type ResponseResource record {
-    string resourceId;
-    string version;
-};
-
 public enum ResourceType {
     ALLERGY_INTOLERENCE = "AllergyIntolerence",
     CARE_PLAN = "CarePlan",
@@ -72,36 +24,6 @@ public enum ResourceType {
     QUESTIONNAIRE_RESPONSE = "QuestionnaireResponse",
     EXPLANATION_OF_BENEFIT = "ExplanationOfBenefit"
 }
-
-# Configs for pre built export service.
-#
-# + baseUrl - base URL of the server. Needed when returning status and download URLs
-# + targetDirectory - temporary directory to save and host the exported files
-# + types - map of types the export needs to support. If not set, all types will be active
-
-public type BulkExportServerConfig record {|
-    string baseUrl;
-    string targetDirectory;
-    string[] types = [
-        ALLERGY_INTOLERENCE,
-        CARE_PLAN,
-        CLAIM,
-        CONDITION,
-        COVERAGE,
-        DEVICE,
-        DIAGNOSTIC_REPORT,
-        DOCUMENT_REFERENCE,
-        ENCOUNTER,
-        GOAL,
-        IMMUNIZATION,
-        MEDICATION_REQUEST,
-        OBSERVATION,
-        ORGANIZATION,
-        PATIENT,
-        PRACTITIONER,
-        PROCEDURE
-    ];
-|};
 
 # Exported file data.
 #

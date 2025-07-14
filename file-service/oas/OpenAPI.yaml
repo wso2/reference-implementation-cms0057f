@@ -1,0 +1,185 @@
+openapi: 3.0.1
+info:
+  title: FHIR Bulk Export Service API
+  version: 1.0.0
+  description: |
+    This API provides endpoints to initiate a FHIR bulk data export job, check its status, and retrieve result files.
+
+servers:
+  - url: http://localhost:8090/bulk
+
+security:
+  - bearerAuth: []
+
+paths:
+  /bulk/export:
+    post:
+      summary: Initiate a FHIR bulk data export job
+      operationId: startExport
+      requestBody:
+        required: true
+        content:
+          application/fhir+json:
+            schema:
+              $ref: '#/components/schemas/Parameters'
+      responses:
+        '200':
+          description: Export job accepted
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
+        '500':
+          description: Server error
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/FHIRError'
+
+  /bulk/status/{exportTaskId}:
+    get:
+      summary: Get export job status
+      operationId: getExportStatus
+      parameters:
+        - name: exportTaskId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Job status (possibly completed with file URLs)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  transactionTime:
+                    type: string
+                    format: date-time
+                  request:
+                    type: string
+                  requiresAccessToken:
+                    type: boolean
+                  outputOrganizedBy:
+                    type: string
+                  deleted:
+                    type: array
+                    items:
+                      type: string
+                  output:
+                    type: array
+                    items:
+                      type: object
+                  error:
+                    type: array
+                    items:
+                      type: object
+        '400':
+          description: Invalid request
+          content:
+            text/plain:
+              schema:
+                type: string
+        '500':
+          description: Export failed
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/FHIRError'
+
+  /bulk/{exportId}/files/{fileName}:
+    get:
+      summary: Retrieve exported file
+      operationId: getExportedFile
+      parameters:
+        - name: exportId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: fileName
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: File download
+          content:
+            application/ndjson:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: File not found
+          content:
+            text/plain:
+              schema:
+                type: string
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Parameters:
+      type: object
+      description: FHIR Parameters resource
+      properties:
+        resourceType:
+          type: string
+          enum: [Parameters]
+        parameter:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              valueReference:
+                type: object
+                properties:
+                  reference:
+                    type: string
+
+    OperationOutcome:
+      type: object
+      description: FHIR OperationOutcome resource
+      properties:
+        resourceType:
+          type: string
+          enum: [OperationOutcome]
+        issue:
+          type: array
+          items:
+            type: object
+            properties:
+              severity:
+                type: string
+              code:
+                type: string
+              diagnostics:
+                type: string
+
+    FHIRError:
+      type: object
+      description: FHIR error object similar to OperationOutcome
+      properties:
+        resourceType:
+          type: string
+          enum: [OperationOutcome]
+        issue:
+          type: array
+          items:
+            type: object
+            properties:
+              severity:
+                type: string
+              code:
+                type: string
+              diagnostics:
+                type: string

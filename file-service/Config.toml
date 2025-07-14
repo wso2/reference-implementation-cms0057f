@@ -1,0 +1,5 @@
+[exportServiceConfig]
+fhirServerBaseUrl = "http://localhost:9090/fhir/r4"
+fileServerBaseUrl = "http://localhost:8090/bulk"
+targetDirectory = "./target"
+types = ["Claim", "Encounter", "DiagnosticReport"]

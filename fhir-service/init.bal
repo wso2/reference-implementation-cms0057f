@@ -39,7 +39,7 @@ function loadData() returns error? {
     foreach var patientJson in patientJsons {
         lock {
             uscore501:USCorePatientProfile patient = check parser:parse(patientJson.clone(), uscore501:USCorePatientProfile).ensureType();
-            r4:Resource[] patientArr = repositoryMap.get(PATIENT);
+            r4:DomainResource[] patientArr = repositoryMap.get(PATIENT);
             patientArr.push(patient);
             repositoryMap[PATIENT] = patientArr;
         }
@@ -48,7 +48,7 @@ function loadData() returns error? {
     foreach var allergyIntoleranceJson in allergyIntoleranceJsons {
         lock {
             AllergyIntolerance allergyIntolerance = check parser:parse(allergyIntoleranceJson.clone(), AllergyIntolerance).ensureType();
-            r4:Resource[] allergyIntoleranceArr = repositoryMap.get(ALLERGY_INTOLERENCE);
+            r4:DomainResource[] allergyIntoleranceArr = repositoryMap.get(ALLERGY_INTOLERENCE);
             allergyIntoleranceArr.push(allergyIntolerance);
             repositoryMap[ALLERGY_INTOLERENCE] = allergyIntoleranceArr;
         }
@@ -57,7 +57,7 @@ function loadData() returns error? {
     foreach var claimJson in claimJsons {
         lock {
             Claim claim = check parser:parse(claimJson.clone(), Claim).ensureType();
-            r4:Resource[] claimArr = repositoryMap.get(CLAIM);
+            r4:DomainResource[] claimArr = repositoryMap.get(CLAIM);
             claimArr.push(claim);
             repositoryMap[CLAIM] = claimArr;
         }
@@ -66,7 +66,7 @@ function loadData() returns error? {
     foreach var claimResponseJson in claimResponseJsons {
         lock {
             ClaimResponse claimResponse = check parser:parse(claimResponseJson.clone(), ClaimResponse).ensureType();
-            r4:Resource[] claimResponseArr = repositoryMap.get(CLAIM_RESPONSE);
+            r4:DomainResource[] claimResponseArr = repositoryMap.get(CLAIM_RESPONSE);
             claimResponseArr.push(claimResponse);
             repositoryMap[CLAIM_RESPONSE] = claimResponseArr;
         }
@@ -75,7 +75,7 @@ function loadData() returns error? {
     foreach var coverageJson in coverageJsons {
         lock {
             Coverage coverage = check parser:parse(coverageJson.clone(), Coverage).ensureType();
-            r4:Resource[] coverageArr = repositoryMap.get(COVERAGE);
+            r4:DomainResource[] coverageArr = repositoryMap.get(COVERAGE);
             coverageArr.push(coverage);
             repositoryMap[COVERAGE] = coverageArr;
         }
@@ -84,7 +84,7 @@ function loadData() returns error? {
     foreach var diagnosticReportJson in diagnosticReportJsons {
         lock {
             DiagnosticReport diagnosticReport = check parser:parse(diagnosticReportJson.clone(), DiagnosticReport).ensureType();
-            r4:Resource[] diagnosticReportArr = repositoryMap.get(DIAGNOSTIC_REPORT);
+            r4:DomainResource[] diagnosticReportArr = repositoryMap.get(DIAGNOSTIC_REPORT);
             diagnosticReportArr.push(diagnosticReport);
             repositoryMap[DIAGNOSTIC_REPORT] = diagnosticReportArr;
         }
@@ -93,7 +93,7 @@ function loadData() returns error? {
     foreach var encounterJson in encounterJsons {
         lock {
             Encounter encounter = check parser:parse(encounterJson.clone(), Encounter).ensureType();
-            r4:Resource[] encounterArr = repositoryMap.get(ENCOUNTER);
+            r4:DomainResource[] encounterArr = repositoryMap.get(ENCOUNTER);
             encounterArr.push(encounter);
             repositoryMap[ENCOUNTER] = encounterArr;
         }
@@ -102,7 +102,7 @@ function loadData() returns error? {
     foreach var medicationRequestJson in medicationRequestJsons {
         lock {
             MedicationRequest medicationRequest = check parser:parse(medicationRequestJson.clone(), MedicationRequest).ensureType();
-            r4:Resource[] medicationRequestArr = repositoryMap.get(MEDICATION_REQUEST);
+            r4:DomainResource[] medicationRequestArr = repositoryMap.get(MEDICATION_REQUEST);
             medicationRequestArr.push(medicationRequest);
             repositoryMap[MEDICATION_REQUEST] = medicationRequestArr;
         }
@@ -111,7 +111,7 @@ function loadData() returns error? {
     foreach var observationJson in observationJsons {
         lock {
             Observation observation = check parser:parse(observationJson.clone(), Observation).ensureType();
-            r4:Resource[] observationArr = repositoryMap.get(OBSERVATION);
+            r4:DomainResource[] observationArr = repositoryMap.get(OBSERVATION);
             observationArr.push(observation);
             repositoryMap[OBSERVATION] = observationArr;
         }
@@ -120,7 +120,7 @@ function loadData() returns error? {
     foreach var organizationJson in organizationJsons {
         lock {
             Organization organization = check parser:parse(organizationJson.clone(), Organization).ensureType();
-            r4:Resource[] organizationArr = repositoryMap.get(ORGANIZATION);
+            r4:DomainResource[] organizationArr = repositoryMap.get(ORGANIZATION);
             organizationArr.push(organization);
             repositoryMap[ORGANIZATION] = organizationArr;
         }
@@ -129,7 +129,7 @@ function loadData() returns error? {
     foreach var practitionerJson in practitionerJsons {
         lock {
             Practitioner practitioner = check parser:parse(practitionerJson.clone(), Practitioner).ensureType();
-            r4:Resource[] practitionerArr = repositoryMap.get(PRACTITIONER);
+            r4:DomainResource[] practitionerArr = repositoryMap.get(PRACTITIONER);
             practitionerArr.push(practitioner);
             repositoryMap[PRACTITIONER] = practitionerArr;
         }
@@ -138,7 +138,7 @@ function loadData() returns error? {
     foreach var questionnaireJson in questionnaireJsons {
         lock {
             Questionnaire questionnaire = check parser:parse(questionnaireJson.clone(), Questionnaire).ensureType();
-            r4:Resource[] questionnaireArr = repositoryMap.get(QUESTIONNAIRE);
+            r4:DomainResource[] questionnaireArr = repositoryMap.get(QUESTIONNAIRE);
             questionnaireArr.push(questionnaire);
             repositoryMap[QUESTIONNAIRE] = questionnaireArr;
         }
@@ -147,7 +147,7 @@ function loadData() returns error? {
     foreach var questionnaireresponseJson in questionnaireResponseJsons {
         lock {
             QuestionnaireResponse questionnaireresponse = check parser:parse(questionnaireresponseJson.clone(), QuestionnaireResponse).ensureType();
-            r4:Resource[] questionnaireresponseArr = repositoryMap.get(QUESTIONNAIRE_RESPONSE);
+            r4:DomainResource[] questionnaireresponseArr = repositoryMap.get(QUESTIONNAIRE_RESPONSE);
             questionnaireresponseArr.push(questionnaireresponse);
             repositoryMap[QUESTIONNAIRE_RESPONSE] = questionnaireresponseArr;
         }

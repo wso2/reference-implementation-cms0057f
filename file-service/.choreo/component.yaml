@@ -16,8 +16,8 @@
 
 schemaVersion: 1.2
 endpoints:
-    - name: fhir-service
-      displayName: FHIR Service
+    - name: file-service
+      displayName: File Service
       service:
         basePath: /
         port: 8090

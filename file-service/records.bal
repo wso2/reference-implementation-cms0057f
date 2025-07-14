@@ -25,6 +25,38 @@ public enum ResourceType {
     EXPLANATION_OF_BENEFIT = "ExplanationOfBenefit"
 }
 
+# Configs for pre built export service.
+#
+# + fhirServerBaseUrl - base URL of the FHIR server. Needed to retrieve the data to be exported
+# + fileServerBaseUrl - base URL of the server. Needed when returning status and download URLs
+# + targetDirectory - temporary directory to save and host the exported files
+# + types - map of types the export needs to support. If not set, all types will be active
+
+public type BulkExportServerConfig record {|
+    string fhirServerBaseUrl;
+    string fileServerBaseUrl;
+    string targetDirectory;
+    string[] types = [
+        ALLERGY_INTOLERENCE,
+        CARE_PLAN,
+        CLAIM,
+        CONDITION,
+        COVERAGE,
+        DEVICE,
+        DIAGNOSTIC_REPORT,
+        DOCUMENT_REFERENCE,
+        ENCOUNTER,
+        GOAL,
+        IMMUNIZATION,
+        MEDICATION_REQUEST,
+        OBSERVATION,
+        ORGANIZATION,
+        PATIENT,
+        PRACTITIONER,
+        PROCEDURE
+    ];
+|};
+
 # Exported file data.
 #
 # + 'type - file type

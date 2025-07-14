@@ -20,7 +20,6 @@
 import ballerina/http;
 import ballerina/log;
 import ballerina/time;
-import ballerina/uuid;
 import ballerinax/health.clients.fhir;
 import ballerinax/health.fhir.r4;
 import ballerinax/health.fhirr4;
@@ -32,7 +31,10 @@ import ballerinax/health.fhir.r4.international401;
 import ballerinax/health.fhir.r4.uscore501;
 
 configurable Configs configs = ?;
-configurable BulkExportServerConfig exportServiceConfig = ?;
+configurable string exportServiceUrl = ?;
+
+// This is used to connect to file service
+isolated http:Client exportServiceClient = check new (exportServiceUrl);
 
 // ######################################################################################################################
 // # Capability statement API                                                                                           #
@@ -145,23 +147,11 @@ service /fhir/r4/Patient on new fhirr4:Listener(config = patientApiConfig) {
     // Implementation of the $export operation
     isolated resource function post \$export(r4:FHIRContext fhirContext, international401:Parameters parameters) returns r4:FHIRError|r4:OperationOutcome|error {
 
-        string exportTaskId = uuid:createType1AsString();
-        international401:ParametersParameter[]? selectedPatients = parameters.'parameter;
-        if selectedPatients is international401:ParametersParameter[] {
-            string? patientId = selectedPatients[0]?.valueReference?.reference;
-            if patientId is string {
-                log:printDebug(string `Exporting data for ID: ${patientId}`);
-                error? executionResult = executeJob(exportTaskId, exportServiceConfig, patientId);
-                if executionResult is error {
-                    log:printError("Error occurred: ", executionResult);
-                    return r4:createFHIRError("Server Error", r4:ERROR, r4:PROCESSING, httpStatusCode = http:STATUS_INTERNAL_SERVER_ERROR);
-                }
-                addExportTasktoMemory(exportTaskId, time:utcNow());
-            }
+        lock {
+            r4:FHIRError|r4:OperationOutcome|error response = check exportServiceClient->/.post(parameters.clone());
+            return response.clone();
         }
 
-        return createOpereationOutcome("information", "processing",
-                "Your request has been accepted. You can check its status at " + exportServiceConfig.baseUrl + "/fhir/bulkstatus/" + exportTaskId);
     }
 
     // Read the current state of single resource based on its id.
@@ -420,50 +410,50 @@ public type ExplanationOfBenefit carinbb200:C4BBExplanationOfBenefitOutpatientIn
 service /fhir/r4/ExplanationOfBenefit on new fhirr4:Listener(config = eobApiConfig) {
 
     // Read the current state of single resource based on its id.
-    isolated resource function get fhir/r4/ExplanationOfBenefit/[string id](r4:FHIRContext fhirContext) returns ExplanationOfBenefit|r4:OperationOutcome|r4:FHIRError {
+    isolated resource function get [string id](r4:FHIRContext fhirContext) returns ExplanationOfBenefit|r4:OperationOutcome|r4:FHIRError {
         return getByIdEob(id);
     }
 
     // Read the state of a specific version of a resource based on its id.
-    isolated resource function get fhir/r4/ExplanationOfBenefit/[string id]/_history/[string vid](r4:FHIRContext fhirContext) returns ExplanationOfBenefit|r4:OperationOutcome|r4:FHIRError {
+    isolated resource function get [string id]/_history/[string vid](r4:FHIRContext fhirContext) returns ExplanationOfBenefit|r4:OperationOutcome|r4:FHIRError {
         return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
     }
 
     // Search for resources based on a set of criteria.
-    isolated resource function get fhir/r4/ExplanationOfBenefit(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+    isolated resource function get .(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
         r4:Bundle searchResult = check searchEob(getQueryParamsMap(fhirContext.getRequestSearchParameters()));
         return searchResult;
     }
 
     // Create a new resource.
-    isolated resource function post fhir/r4/ExplanationOfBenefit(r4:FHIRContext fhirContext, ExplanationOfBenefit procedure) returns ExplanationOfBenefit|r4:OperationOutcome|r4:FHIRError {
+    isolated resource function post .(r4:FHIRContext fhirContext, ExplanationOfBenefit procedure) returns ExplanationOfBenefit|r4:OperationOutcome|r4:FHIRError {
         ExplanationOfBenefit eob = check createEob(procedure.toJson());
 
         return eob;
     }
 
     // Update the current state of a resource completely.
-    isolated resource function put fhir/r4/ExplanationOfBenefit/[string id](r4:FHIRContext fhirContext, ExplanationOfBenefit explanationofbenefit) returns ExplanationOfBenefit|r4:OperationOutcome|r4:FHIRError {
+    isolated resource function put [string id](r4:FHIRContext fhirContext, ExplanationOfBenefit explanationofbenefit) returns ExplanationOfBenefit|r4:OperationOutcome|r4:FHIRError {
         return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
     }
 
     // Update the current state of a resource partially.
-    isolated resource function patch fhir/r4/ExplanationOfBenefit/[string id](r4:FHIRContext fhirContext, json patch) returns ExplanationOfBenefit|r4:OperationOutcome|r4:FHIRError {
+    isolated resource function patch [string id](r4:FHIRContext fhirContext, json patch) returns ExplanationOfBenefit|r4:OperationOutcome|r4:FHIRError {
         return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
     }
 
     // Delete a resource.
-    isolated resource function delete fhir/r4/ExplanationOfBenefit/[string id](r4:FHIRContext fhirContext) returns r4:OperationOutcome|r4:FHIRError {
+    isolated resource function delete [string id](r4:FHIRContext fhirContext) returns r4:OperationOutcome|r4:FHIRError {
         return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
     }
 
     // Retrieve the update history for a particular resource.
-    isolated resource function get fhir/r4/ExplanationOfBenefit/[string id]/_history(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+    isolated resource function get [string id]/_history(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
         return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
     }
 
     // Retrieve the update history for all resources.
-    isolated resource function get fhir/r4/ExplanationOfBenefit/_history(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+    isolated resource function get _history(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
         return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
     }
 }

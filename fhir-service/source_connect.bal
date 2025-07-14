@@ -17,7 +17,7 @@ isolated map<r4:DomainResource[]> repositoryMap = {
     Organization: [],
     Practitioner: [],
     Questionnaire: [],
-    QuestionnairPackage: [],
+    QuestionnairePackage: [],
     QuestionnaireResponse: []
 };
 isolated map<int> nextIdMap = {
@@ -34,7 +34,7 @@ isolated map<int> nextIdMap = {
     Organization: 50,
     Practitioner: 457,
     Questionnaire: 5,
-    QuestionnairPackage: 33,
+    QuestionnairePackage: 33,
     QuestionnaireResponse: 1121
 };
 
@@ -50,8 +50,8 @@ public isolated function create(ResourceType resourceType, json payload) returns
     }
     r4:DomainResource|error resourceClone = payload.cloneWithType();
     if resourceClone is error {
-        return r4:createFHIRError(string `Invalid payload for resource type ${resourceType}: ${resourceClone.message()}`, 
-            r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+        return r4:createFHIRError(string `Invalid payload for resource type ${resourceType}: ${resourceClone.message()}`,
+                r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
     }
     lock {
         resourceClone.id = nextId.toBalString();
@@ -112,7 +112,7 @@ public isolated function search(ResourceType resourceType, map<string[]>? search
                 "patient" => {
                     // search parameter should be patient='id' e.g., patient='123'
                     if resourceType == ALLERGY_INTOLERENCE || resourceType == CLAIM || resourceType == CLAIM_RESPONSE ||
-                        resourceType == COVERAGE || resourceType == DIAGNOSTIC_REPORT || resourceType == ENCOUNTER || 
+                        resourceType == COVERAGE || resourceType == DIAGNOSTIC_REPORT || resourceType == ENCOUNTER ||
                         resourceType == EXPLANATION_OF_BENEFIT || resourceType == OBSERVATION {
                         results = searchByReference(results, "patient", string `Patient/${searchParameters.get('key)[0]}`);
                     }

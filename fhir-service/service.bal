@@ -849,7 +849,7 @@ service /fhir/r4/Encounter on new fhirr4:Listener(config = encounterApiConfig) {
 service /fhir/r4/Questionnaire/questionnaire\-package on new fhirr4:Listener(config = questionnairePackageApiConfig) {
 
     isolated resource function post .(r4:FHIRContext fhirContext, international401:Parameters parameters) returns error|http:Response {
-        r4:DomainResource createResult = check getById(QUESTIONNAIRE_RESPONSE, "32");
+        r4:DomainResource createResult = check getById(QUESTIONNAIRE_PACKAGE, "32");
         http:Response response = new;
         response.setJsonPayload(createResult.toJson());
         return response;

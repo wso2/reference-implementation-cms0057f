@@ -15,6 +15,7 @@
 // under the License.
 
 import ballerina/http;
+import ballerina/io;
 import ballerinax/health.fhir.r4;
 import ballerinax/health.fhir.r4.davincipas;
 import ballerinax/health.fhir.r4.international401;
@@ -22,6 +23,8 @@ import ballerinax/health.fhir.r4.parser;
 
 public isolated function claimSubmit(international401:Parameters payload) returns r4:FHIRError|international401:Parameters|error {
     international401:Parameters|error 'parameters = parser:parseWithValidation(payload.toJson(), international401:Parameters).ensureType();
+
+    json claimResponseJson = check io:fileReadJson("resources/claim-response.json");
 
     if parameters is error {
         return r4:createFHIRError(parameters.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
@@ -43,11 +46,8 @@ public isolated function claimSubmit(international401:Parameters payload) return
                             r4:DomainResource newClaimResource = check create(CLAIM, claim.toJson());
                             davincipas:PASClaim newClaim = check newClaimResource.cloneWithType();
 
-                            davincipas:PASClaimResponse claimResponse;
-                            lock {
-                                claimResponse = check parser:parse(claimResponseJson.clone(), davincipas:PASClaimResponse).ensureType();
-                            }
-
+                            davincipas:PASClaimResponse claimResponse = check parser:parse(claimResponseJson, davincipas:PASClaimResponse).ensureType();
+                            
                             claimResponse.patient = newClaim.patient;
                             claimResponse.insurer = newClaim.insurer;
                             claimResponse.created = newClaim.created;
@@ -73,61 +73,3 @@ public isolated function claimSubmit(international401:Parameters payload) return
     }
     return r4:createFHIRError("Something went wrong", r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
 }
-
-isolated json claimResponseJson = {
-    "resourceType": "ClaimResponse",
-    "id": "12344",
-    "status": "active",
-    "type": {
-        "coding": [
-            {
-                "system": "http://terminology.hl7.org/CodeSystem/claim-type",
-                "code": "professional",
-                "display": "Professional"
-            }
-        ]
-    },
-    "use": "preauthorization",
-    "patient": {
-        "reference": "Patient/101"
-    },
-    "created": "2025-03-02",
-    "insurer": {
-        "reference": "Organization/insurance-org"
-    },
-    "request": {
-        "reference": "Claim/12344"
-    },
-    "outcome": "complete",
-    "disposition": "Prior authorization approved for Aimovig 70 mg Injection.",
-    "preAuthRef": "PA-20250302-001",
-    "preAuthPeriod": {
-        "start": "2025-03-02",
-        "end": "2025-06-02"
-    },
-    "payment": {
-        "type": {
-            "coding": [
-                {
-                    "system": "http://terminology.hl7.org/CodeSystem/payment-type",
-                    "code": "complete",
-                    "display": "Payment complete"
-                }
-            ]
-        },
-        "adjustmentReason": {
-            "coding": [
-                {
-                    "system": "http://terminology.hl7.org/CodeSystem/claim-adjustment-reason",
-                    "code": "45",
-                    "display": "Charge exceeds fee schedule/maximum allowable or contracted/legislated fee arrangement"
-                }
-            ]
-        },
-        "amount": {
-            "value": 600.00,
-            "currency": "USD"
-        },
-        "date": "2025-03-03"
-    }
-};

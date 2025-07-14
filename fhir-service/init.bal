@@ -17,6 +17,7 @@
 import ballerina/io;
 import ballerina/log;
 import ballerinax/health.fhir.r4;
+import ballerinax/health.fhir.r4.international401;
 import ballerinax/health.fhir.r4.parser;
 
 function init() returns error? {
@@ -41,6 +42,8 @@ function loadData() returns error? {
         json[] practitionerData = check dataSet[PRACTITIONER].cloneWithType();
         json[] questionnaireData = check dataSet[QUESTIONNAIRE].cloneWithType();
         json[] questionnaireResponseData = check dataSet[QUESTIONNAIRE_RESPONSE].cloneWithType();
+        json[] explanationOfBenefitData = check dataSet[EXPLANATION_OF_BENEFIT].cloneWithType();
+        json[] questionnairePackageData = check dataSet[QUESTIONNAIRE_PACKAGE].cloneWithType();
 
         foreach var patientJson in patientData {
             lock {
@@ -158,6 +161,23 @@ function loadData() returns error? {
                 repositoryMap[QUESTIONNAIRE_RESPONSE] = questionnaireresponseArr;
             }
         }
-    }
 
+        foreach var explanationOfBenefitJson in explanationOfBenefitData {
+            lock {
+                ExplanationOfBenefit explanationOfBenefit = check parser:parse(explanationOfBenefitJson.clone()).ensureType();
+                r4:DomainResource[] explanationOfBenefitArr = repositoryMap.get(EXPLANATION_OF_BENEFIT);
+                explanationOfBenefitArr.push(explanationOfBenefit);
+                repositoryMap[EXPLANATION_OF_BENEFIT] = explanationOfBenefitArr;
+            }
+        }
+
+        foreach var questionnairePackageJson in questionnairePackageData {
+            lock {
+                international401:Parameters questionnairePackage = check parser:parse(questionnairePackageJson.clone()).ensureType();
+                r4:DomainResource[] questionnairePackageArr = repositoryMap.get(QUESTIONNAIRE_PACKAGE);
+                questionnairePackageArr.push(questionnairePackage);
+                repositoryMap[QUESTIONNAIRE_PACKAGE] = questionnairePackageArr;
+            }
+        }
+    }
 }

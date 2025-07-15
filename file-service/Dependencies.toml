@@ -264,7 +264,7 @@ dependencies = [
 [[package]]
 org = "ballerina"
 name = "regex"
-version = "1.4.3"
+version = "1.3.2"
 dependencies = [
 	{org = "ballerina", name = "jballerina.java"},
 	{org = "ballerina", name = "lang.string"}
@@ -426,7 +426,7 @@ modules = [
 
 [[package]]
 org = "wso2"
-name = "fhir.service"
+name = "bulk.file.service"
 version = "1.0.0"
 dependencies = [
 	{org = "ballerina", name = "http"},
@@ -444,6 +444,6 @@ dependencies = [
 	{org = "ballerinax", name = "health.fhir.r4.uscore501"}
 ]
 modules = [
-	{org = "wso2", packageName = "fhir.service", moduleName = "fhir.service"}
+	{org = "wso2", packageName = "bulk.file.service", moduleName = "bulk.file.service"}
 ]
 

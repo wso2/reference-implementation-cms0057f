@@ -31,7 +31,7 @@ public isolated class DemoFHIRMemberMatcher {
         uscore501:USCorePatientProfileName[] name = memberPatient.name;
 
         string[] given = name[0].given ?: [];
-        r4:Bundle nameMatchedPatients = check searchPatient("Patient", {"given": [given[0]]});
+        r4:Bundle nameMatchedPatients = check search(PATIENT, {"given": [given[0]]});
 
         r4:BundleEntry[]? entry = nameMatchedPatients.entry;
 
@@ -50,13 +50,18 @@ public isolated class DemoFHIRMemberMatcher {
             // Get coverage from id
             string coverageId = <string>coverageToMatch.id;
             r4:Reference incomingCoverageBeneficiary = coverageToMatch.beneficiary;
-            international401:Coverage|r4:FHIRError oldCoverage = check getByIdCoverage(coverageId);
+            r4:DomainResource|r4:FHIRError oldCoverage = check getById(COVERAGE, coverageId);
 
             if oldCoverage is r4:FHIRError {
                 log:printError("FHIR read response is not a valid FHIR Resource", oldCoverage);
                 return INTERNAL_ERROR;
             }
-            string oldBeneficiaryRef = <string>oldCoverage.beneficiary.reference;
+            international401:Coverage|error i4OldCoverage = oldCoverage.cloneWithType();
+            if i4OldCoverage is error {
+                log:printError("Failed to clone old coverage resource", i4OldCoverage);
+                return INTERNAL_ERROR;
+            }
+            string oldBeneficiaryRef = <string>i4OldCoverage.beneficiary.reference;
 
             if oldBeneficiaryRef != incomingCoverageBeneficiary.reference {
                 log:printError(string `Beneficiaries Mismatch. Old reference:${oldBeneficiaryRef}  Patient ID:${patientId}`);
@@ -123,7 +128,7 @@ public isolated class DemoFHIRMemberMatcher {
             //     return INTERNAL_ERROR;
             // }
             // r4:Bundle|error searchBundle = searchRes.'resource.cloneWithType();
-            r4:FHIRError|r4:Bundle searchBundle = searchPatient("Patient", searchParams);
+            r4:FHIRError|r4:Bundle searchBundle = search(PATIENT, searchParams);
             if searchBundle is error {
                 log:printError("FHIR search response is not a valid FHIR Bundle", searchBundle);
                 return INTERNAL_ERROR;

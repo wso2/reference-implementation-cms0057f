@@ -19,6 +19,9 @@
 
 import ballerinax/health.fhir.r4;
 
+## This file contains the FHIR API configurations for the FHIR service. 
+## The configurations are used to automatically generated from the FHIR specification using Ballerina Health Tool [https://ballerina.io/learn/health-tool/]
+
 # ######################################################################################################################
 # Patient API Configs                                                                                                  #
 # ###################################################################################################################### 

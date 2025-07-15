@@ -32,7 +32,7 @@ http:Client fhirServiceClient = check new (exportServiceConfig.fhirServerBaseUrl
 
 service /bulk on new http:Listener(8090) {
 
-    isolated resource function post export(international401:Parameters parameters) returns r4:FHIRError|r4:OperationOutcome|error {
+    isolated resource function post export(international401:Parameters parameters) returns r4:FHIRError|http:Response|error {
 
         string exportTaskId = uuid:createType1AsString();
         international401:ParametersParameter[]? selectedPatients = parameters.'parameter;
@@ -49,8 +49,14 @@ service /bulk on new http:Listener(8090) {
             }
         }
 
-        return createOpereationOutcome("information", "processing",
+        http:Response response = new;
+        response.statusCode = http:STATUS_ACCEPTED;
+        response.setHeader(CONTENT_LOCATION, exportServiceConfig.fileServerBaseUrl + "/status/" + exportTaskId);
+        response.setHeader(CONTENT_TYPE, "application/fhir+json");    
+        r4:OperationOutcome outcome = createOpereationOutcome("information", "processing",
                 "Your request has been accepted. You can check its status at " + exportServiceConfig.fileServerBaseUrl + "/status/" + exportTaskId);
+        response.setPayload(outcome);
+        return response;
     }
 
     isolated resource function get status/[string exportTaskId]() returns json|r4:FHIRError|http:Response {

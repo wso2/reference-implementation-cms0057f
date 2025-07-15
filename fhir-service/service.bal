@@ -145,12 +145,12 @@ service /fhir/r4/Patient on new fhirr4:Listener(config = patientApiConfig) {
     }
 
     // Implementation of the $export operation
-    isolated resource function post \$export(r4:FHIRContext fhirContext, international401:Parameters parameters) returns r4:FHIRError|r4:OperationOutcome|error {
-
+    isolated resource function post \$export(r4:FHIRContext fhirContext, international401:Parameters parameters) returns r4:FHIRError|http:Response|error {
+        http:Response response;
         lock {
-            r4:FHIRError|r4:OperationOutcome|error response = check exportServiceClient->/.post(parameters.clone());
-            return response.clone();
+            response = check exportServiceClient->/.post(parameters.clone());
         }
+        return response;
 
     }
 

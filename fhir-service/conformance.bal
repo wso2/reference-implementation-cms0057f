@@ -1,4 +1,4 @@
-// Copyright (c) 2023, WSO2 LLC. (http://www.wso2.com).
+// Copyright (c) 2025, WSO2 LLC. (http://www.wso2.com).
 
 // WSO2 LLC. licenses this file to you under the Apache License,
 // Version 2.0 (the "License"); you may not use this file except
@@ -18,6 +18,7 @@ import ballerina/io;
 import ballerina/time;
 import ballerinax/health.fhir.r4;
 import ballerinax/health.fhir.r4.international401;
+import ballerina/log;
 
 # # metadata of server and rest components as configurables
 configurable ConfigFHIRServer configFHIRServer = ?;
@@ -31,7 +32,7 @@ string resourcePath = "";
 #
 # + return - capabilitity statement object
 isolated function generateCapabilityStatement() returns international401:CapabilityStatement|error {
-    LogDebug("Generating capability statement started");
+    log:printDebug("Generating capability statement started");
 
     international401:CapabilityStatementStatus capabilityStatementStatus = check configFHIRServer.status.ensureType(international401:CapabilityStatementStatus);
     international401:CapabilityStatementKind capabilityStatementKind = check configFHIRServer.kind.ensureType(international401:CapabilityStatementKind);
@@ -79,10 +80,10 @@ isolated function generateCapabilityStatement() returns international401:Capabil
     if capabilityStatementRest is international401:CapabilityStatementRest {
         capabilityStatement.rest = [capabilityStatementRest];
     } else {
-        LogDebug(string `${VALUE_NOT_FOUND}: capabilityStatementRest`);
+        log:printDebug(string `${VALUE_NOT_FOUND}: capabilityStatementRest`);
     }
 
-    LogDebug("Generating capability statement ended");
+    log:printDebug("Generating capability statement ended");
     return capabilityStatement;
 }
 
@@ -98,23 +99,8 @@ isolated function populateCapabilityStatementRest() returns international401:Cap
     if restSecurity is international401:CapabilityStatementRestSecurity {
         rest.security = restSecurity;
     } else {
-        LogDebug(string `${VALUE_NOT_FOUND}: restSecurity`);
+        log:printDebug(string `${VALUE_NOT_FOUND}: restSecurity`);
     }
-
-    // international401:CapabilityStatementRestResourceInteraction[] restInteraction = [];
-    // string[]? configRestInteraction = configRest.interaction;
-    // if configRestInteraction is string[] {
-    //     foreach string configInteractionCode in configRestInteraction {
-    //         international401:CapabilityStatementRestResourceInteractionCode interactionCode = check configInteractionCode.ensureType(international401:CapabilityStatementRestResourceInteractionCode);
-    //         international401:CapabilityStatementRestResourceInteraction interaction = {
-    //             code: interactionCode
-    //         };
-    //         restInteraction.push(interaction);
-    //     }
-    //     rest.interaction = restInteraction;
-    // } else {
-    //     LogDebug(VALUE_NOT_FOUND);
-    // }
 
     international401:CapabilityStatementRestInteraction[] restInteraction = [];
     string[]? configRestInteraction = configRest.interaction;
@@ -128,14 +114,14 @@ isolated function populateCapabilityStatementRest() returns international401:Cap
         }
         rest.interaction = restInteraction;
     } else {
-        LogDebug(VALUE_NOT_FOUND);
+        log:printDebug(VALUE_NOT_FOUND);
     }
 
     international401:CapabilityStatementRestResource[]? restResources = check populateCapabilityStatementRestResources(configRest.resourceFilePath);
     if restResources is international401:CapabilityStatementRestResource[] {
         rest.'resource = restResources;
     } else {
-        LogDebug(string `${VALUE_NOT_FOUND}: restResources`);
+        log:printDebug(string `${VALUE_NOT_FOUND}: restResources`);
     }
     return rest;
 }
@@ -150,7 +136,7 @@ isolated function populateCapabilityStatementRestSecurity() returns internationa
     if cors is boolean {
         restSecurity.cors = cors;
     } else {
-        LogDebug(string `${VALUE_NOT_FOUND}: cors`);
+        log:printDebug(string `${VALUE_NOT_FOUND}: cors`);
     }
 
     r4:Coding seviceCoding = {
@@ -173,9 +159,14 @@ isolated function populateCapabilityStatementRestSecurity() returns internationa
     OpenIDConfiguration openIdConfigurations = {};
     string? discoveryEndpoint = configRest.security?.discoveryEndpoint;
     if discoveryEndpoint is string && discoveryEndpoint != "" {
-        openIdConfigurations = check getOpenidConfigurations(discoveryEndpoint).cloneReadOnly();
+        OpenIDConfiguration|error openidConfigs = getOpenidConfigurations(discoveryEndpoint);
+        if openidConfigs is error {
+            log:printWarn("Failed to get OpenID configurations from the authz server. Falling back to manual configurations", openidConfigs);
+        } else {
+            openIdConfigurations = openidConfigs.cloneReadOnly();
+        }
     } else {
-        LogDebug(string `${VALUE_NOT_FOUND}: discoveryEndpoint`);
+        log:printDebug(string `${VALUE_NOT_FOUND}: discoveryEndpoint`);
     }
 
     string? configTokenEndpoint = configRest.security?.tokenEndpoint;
@@ -208,11 +199,11 @@ isolated function populateSecurityExtensions(r4:Extension[] extensions, string e
     if endpointOpenid is string {
         endpoint = endpointOpenid;
     } else {
-        LogDebug(string `${VALUE_NOT_FOUND}: ${extensionUrl} in Openid configuration`);
+        log:printDebug(string `${VALUE_NOT_FOUND}: ${extensionUrl} in Openid configuration`);
         if configEndpoint is string {
             endpoint = configEndpoint;
         } else {
-            LogDebug(string `${VALUE_NOT_FOUND}: ${extensionUrl}`);
+            log:printDebug(string `${VALUE_NOT_FOUND}: ${extensionUrl}`);
         }
     }
 
@@ -230,7 +221,7 @@ isolated function populateSecurityExtensions(r4:Extension[] extensions, string e
 # + resourceFilePath - resource file path
 # + return - capability statement rest resources list
 isolated function populateCapabilityStatementRestResources(string? resourceFilePath = ()) returns international401:CapabilityStatementRestResource[]?|error {
-    LogDebug("Populating resources");
+    log:printDebug("Populating resources");
 
     international401:CapabilityStatementRestResource[] resources = [];
 
@@ -241,9 +232,9 @@ isolated function populateCapabilityStatementRestResources(string? resourceFileP
     if filePath is string {
         json resourcesJSON = check io:fileReadJson(filePath);
         configResources = check resourcesJSON.cloneWithType();
-        LogDebug(string `Resource file path: ${filePath}`);
+        log:printDebug(string `Resource file path: ${filePath}`);
     } else {
-        LogDebug(string `${VALUE_NOT_FOUND}: resourceFilePath`);
+        log:printDebug(string `${VALUE_NOT_FOUND}: resourceFilePath`);
         return;
     }
 
@@ -258,7 +249,7 @@ isolated function populateCapabilityStatementRestResources(string? resourceFileP
             if supportedProfile is string[] {
                 'resource.supportedProfile = supportedProfile;
             } else {
-                LogDebug(string `${VALUE_NOT_FOUND}: supportedProfile`);
+                log:printDebug(string `${VALUE_NOT_FOUND}: supportedProfile`);
             }
 
             international401:CapabilityStatementRestResourceInteraction[] resourceInteraction = [];
@@ -273,7 +264,7 @@ isolated function populateCapabilityStatementRestResources(string? resourceFileP
                 }
                 'resource.interaction = resourceInteraction;
             } else {
-                LogDebug(string `${VALUE_NOT_FOUND}: resourceInteraction`);
+                log:printDebug(string `${VALUE_NOT_FOUND}: resourceInteraction`);
             }
 
             string? configVersioning = configResource.versioning;
@@ -281,14 +272,14 @@ isolated function populateCapabilityStatementRestResources(string? resourceFileP
                 international401:CapabilityStatementRestResourceVersioning versioning = check configVersioning.ensureType(international401:CapabilityStatementRestResourceVersioning);
                 'resource.versioning = versioning;
             } else {
-                LogDebug(string `${VALUE_NOT_FOUND}: versioning`);
+                log:printDebug(string `${VALUE_NOT_FOUND}: versioning`);
             }
 
             boolean? conditionalCreate = configResource.conditionalCreate;
             if conditionalCreate is boolean {
                 'resource.conditionalCreate = conditionalCreate;
             } else {
-                LogDebug(string `${VALUE_NOT_FOUND}: conditionalCreate`);
+                log:printDebug(string `${VALUE_NOT_FOUND}: conditionalCreate`);
             }
 
             string? configConditionalRead = configResource.conditionalRead;
@@ -296,14 +287,14 @@ isolated function populateCapabilityStatementRestResources(string? resourceFileP
                 international401:CapabilityStatementRestResourceConditionalRead conditionalRead = check configConditionalRead.ensureType(international401:CapabilityStatementRestResourceConditionalRead);
                 'resource.conditionalRead = conditionalRead;
             } else {
-                LogDebug(string `${VALUE_NOT_FOUND}: conditionalRead`);
+                log:printDebug(string `${VALUE_NOT_FOUND}: conditionalRead`);
             }
 
             boolean? conditionalUpdate = configResource.conditionalUpdate;
             if conditionalUpdate is boolean {
                 'resource.conditionalUpdate = conditionalUpdate;
             } else {
-                LogDebug(string `${VALUE_NOT_FOUND}: conditionalUpdate`);
+                log:printDebug(string `${VALUE_NOT_FOUND}: conditionalUpdate`);
             }
 
             string? configConditionalDelete = configResource.conditionalDelete;
@@ -311,7 +302,7 @@ isolated function populateCapabilityStatementRestResources(string? resourceFileP
                 international401:CapabilityStatementRestResourceConditionalDelete conditionalDelete = check configConditionalDelete.ensureType(international401:CapabilityStatementRestResourceConditionalDelete);
                 'resource.conditionalDelete = conditionalDelete;
             } else {
-                LogDebug(string `${VALUE_NOT_FOUND}: conditionalDelete`);
+                log:printDebug(string `${VALUE_NOT_FOUND}: conditionalDelete`);
             }
 
             international401:CapabilityStatementRestResourceReferencePolicy[] referencePolicy = [];
@@ -323,7 +314,7 @@ isolated function populateCapabilityStatementRestResources(string? resourceFileP
                 }
                 'resource.referencePolicy = referencePolicy;
             } else {
-                LogDebug(string `${VALUE_NOT_FOUND}: referencePolicy`);
+                log:printDebug(string `${VALUE_NOT_FOUND}: referencePolicy`);
             }
 
             string[] searchRevInclude = [];
@@ -334,7 +325,7 @@ isolated function populateCapabilityStatementRestResources(string? resourceFileP
                 }
                 'resource.searchRevInclude = searchRevInclude;
             } else {
-                LogDebug(string `${VALUE_NOT_FOUND}: searchRevInclude`);
+                log:printDebug(string `${VALUE_NOT_FOUND}: searchRevInclude`);
             }
 
             international401:CapabilityStatementRestResourceSearchParam[] resourceSearchParams = [];
@@ -382,7 +373,7 @@ isolated function populateCapabilityStatementRestResources(string? resourceFileP
             resources.push('resource);
         }
     } else {
-        LogDebug(string `${VALUE_NOT_FOUND}: restResources`);
+        log:printDebug(string `${VALUE_NOT_FOUND}: restResources`);
         return;
     }
     return resources;
@@ -399,7 +390,7 @@ isolated function populateSearchParams(string[]? configSearchParams, internation
     if typeSearchParams is international401:CapabilityStatementRestResourceSearchParam[] {
         searchParams.push(...typeSearchParams);
     } else {
-        LogDebug(string `${VALUE_NOT_FOUND}: searchParams: ${'type}`);
+        log:printDebug(string `${VALUE_NOT_FOUND}: searchParams: ${'type}`);
     }
     return searchParams;
 }

@@ -19,31 +19,37 @@ This repository provides a reference implementation of the CMS 0057-F regulation
 │   ├── interceptor.bal
 │   ├── service.bal
 │   └── utils.bal
-├── fhir-apis
-│   ├── claim-service
-│   │   ├── Ballerina.toml
-│   │   ├── Dependencies.toml
-│   │   ├── Package.md
-│   │   ├── api_config.bal
-│   │   ├── oas
-│   │   │   └── Claim.yaml
-│   │   ├── repository_connect.bal
-│   │   ├── service.bal
-│   │   └── utils.bal
-│   ├── claim-submission-service
-│   ├── coverage-service
-│   ├── medication-request-service
-│   ├── organization-service
-│   ├── patient-service
-│   ├── practitioner-service
-│   ├── questionnaire-package-service
-│   ├── questionnaire-response-service
-│   └── questionnaire-service
-```
+├── fhir-service
+│   ├── Ballerina.toml
+│   ├── Config.toml
+│   ├── Dependencies.toml
+│   ├── api_config.bal
+│   ├── conformance.bal
+│   ├── constants.bal
+│   ├── member_matcher.bal
+│   ├── mock_backend.bal
+│   ├── oas
+│   │   └── OpenAPI.yaml
+│   ├── records.bal
+│   ├── resources
+│   ├── service.bal
+│   ├── source_connect.bal
+│   └── utils.bal
+├── file-service
+│   ├── Ballerina.toml
+│   ├── Config.toml
+│   ├── Dependencies.toml
+│   ├── constants.bal
+│   ├── inMemoryStorage.bal
+│   ├── oas
+│   │   └── OpenAPI.yaml
+│   ├── records.bal
+│   ├── service.bal
+│   └── utils.bal```
 
 ## Version Information
 
-- **Ballerina**: 2201.10.2
+- **Ballerina**: 2201.12.3
 - **Node.js**: 20.11.1
 
 ## Running the Ballerina Services
@@ -51,7 +57,7 @@ This repository provides a reference implementation of the CMS 0057-F regulation
 1. **Navigate to the Ballerina Project Directory**:
 
    ```bash
-   cd reference-implementation-cms0057f/fhir-apis/<respective-service>
+   cd reference-implementation-cms0057f/fhir-service
    ```
 
    or

@@ -1,3 +1,19 @@
+// Copyright (c) 2025, WSO2 LLC. (http://www.wso2.com).
+
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+
+// http://www.apache.org/licenses/LICENSE-2.0
+
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
 import ballerina/http;
 import ballerina/log;
 import ballerinax/health.fhir.r4;
@@ -9,6 +25,10 @@ import ballerinax/health.fhir.r4.uscore501;
 final r4:FHIRError & readonly INTERNAL_ERROR = r4:createFHIRError("Internal server error", r4:ERROR,
         r4:PROCESSING, httpStatusCode = http:STATUS_INTERNAL_SERVER_ERROR);
 
+## This class implements the reference member matcher for the Da Vinci HRex Member Matcher.
+## The matcher is used to match a member's coverage with the existing patient records in the FHIR repository.
+## It uses the patient's name and coverage details to find a match in the existing patient records.
+## If a match is found, it returns the member identifier (patient ID). If no match is found, it returns an error indicating that no match was found.
 public isolated class DemoFHIRMemberMatcher {
     *hrex100:MemberMatcher;
 

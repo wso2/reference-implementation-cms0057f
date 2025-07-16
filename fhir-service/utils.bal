@@ -17,11 +17,14 @@
 import ballerina/http;
 import ballerina/log;
 import ballerina/url;
-import ballerinax/health.clients.fhir;
+import ballerina/io;
 import ballerinax/health.fhir.r4;
 import ballerinax/health.fhir.r4.davincihrex100;
 import ballerinax/health.fhir.r4.uscore501;
 import ballerinax/health.fhir.r4.validator;
+import ballerinax/health.fhir.r4.davincipas;
+import ballerinax/health.fhir.r4.international401;
+import ballerinax/health.fhir.r4.parser;
 
 isolated function getQueryParamsMap(map<r4:RequestSearchParameter[] & readonly> requestSearchParameters) returns map<string[]> {
     //TODO: Should provide ability to get the query parameters from the context as it is from the http request. 
@@ -74,40 +77,12 @@ public isolated function createOpereationOutcome(string severity, string code, s
 # + discoveryEndpoint - Discovery endpoint
 # + return - If successful, returns OpenID configuration as a json. Else returns error.
 public isolated function getOpenidConfigurations(string discoveryEndpoint) returns OpenIDConfiguration|error {
-    LogDebug("Retrieving openid configuration started");
+    log:printDebug("Retrieving openid configuration started");
     string discoveryEndpointUrl = check url:decode(discoveryEndpoint, "UTF8");
     http:Client discoveryEpClient = check new (discoveryEndpointUrl.toString());
     OpenIDConfiguration openidConfiguration = check discoveryEpClient->get("/");
-    LogDebug("Retrieving openid configuration ended");
+    log:printDebug("Retrieving openid configuration ended");
     return openidConfiguration;
-}
-
-# Debug logger.
-#
-# + msg - debug message 
-public isolated function LogDebug(string msg) {
-    log:printDebug(msg);
-}
-
-# Error logger.
-#
-# + err - error to be logged
-public isolated function LogError(error err) {
-    log:printError(err.message(), stacktrace = err.stackTrace().toString());
-}
-
-# Info logger.
-#
-# + msg - info message 
-public isolated function LogInfo(string msg) {
-    log:printInfo(msg);
-}
-
-# Warn logger.
-#
-# + msg - warn message 
-public isolated function LogWarn(string msg) {
-    log:printWarn(msg);
 }
 
 # Input parameters of the member match operation.
@@ -255,61 +230,22 @@ isolated function createMissingMandatoryParamError(string paramName) returns r4:
             httpStatusCode = http:STATUS_BAD_REQUEST);
 }
 
-isolated function setSearchParams(map<string[]>? qparams) returns string {
-    string url = "";
-    if (qparams is map<string[]>) {
-        foreach string key in qparams.keys() {
-            foreach string param in qparams.get(key) {
-                url += key + EQUALS_SIGN + param + AMPERSAND;
-            }
-        }
-    }
-    return url.endsWith("&") ? url.substring(0, url.length() - 1) : url;
-}
-
-isolated function getBundleResponse(http:Response response) returns fhir:FHIRResponse|fhir:FHIRError {
-    do {
-        int statusCode = response.statusCode;
-        json|xml responseBody = check response.getJsonPayload();
-
-        if statusCode == 200 {
-            fhir:FHIRResponse fhirResponse = {httpStatusCode: statusCode, 'resource: responseBody, serverResponseHeaders: {}};
-            return fhirResponse;
-        } else {
-            fhir:FHIRServerError fhirServerError = error("FHIR_SERVER_ERROR", httpStatusCode = statusCode, 'resource = responseBody, serverResponseHeaders = {});
-            return fhirServerError;
-        }
-    } on fail var e {
-        return error(string `FHIR_CONNECTOR_ERROR: ${e.message()}`, errorDetails = e);
-    }
-}
-
-isolated function getFhirResourceResponse(http:Response response) returns fhir:FHIRResponse|fhir:FHIRError {
-    do {
-        xml|json responseBody = check response.getJsonPayload();
-        int statusCode = response.statusCode;
-        if statusCode == 200 {
-            return {httpStatusCode: statusCode, 'resource: responseBody, serverResponseHeaders: {}};
-        } else {
-            return error("FHIR_SERVER_ERROR", httpStatusCode = statusCode, 'resource = responseBody, serverResponseHeaders = {});
-        }
-    } on fail var e {
-        return error(string `FHIR_CONNECTOR_ERROR: ${e.message()}`, errorDetails = e);
-    }
-
-}
-
 # Generator function for Smart Configuration
 # + return - smart configuration as a json or an error
 public isolated function generateSmartConfiguration() returns SmartConfiguration|error {
-    LogDebug("Generating smart configuration started");
+    log:printDebug("Generating smart configuration started");
 
     OpenIDConfiguration openIdConfigurations = {};
     string? discoveryEndpoint = configs.discoveryEndpoint;
     if discoveryEndpoint is string && discoveryEndpoint != "" {
-        openIdConfigurations = check getOpenidConfigurations(discoveryEndpoint).cloneReadOnly();
+        OpenIDConfiguration|error openidConfigurations = getOpenidConfigurations(discoveryEndpoint);
+        if openidConfigurations is error {
+            log:printWarn("Failed to get OpenID configurations from the authz server. Falling back to manual configurations");
+        } else {
+            openIdConfigurations = openidConfigurations.cloneReadOnly();
+        }
     } else {
-        LogDebug(string `${VALUE_NOT_FOUND}: discoveryEndpoint`);
+        log:printDebug(string `${VALUE_NOT_FOUND}: discoveryEndpoint`);
     }
 
     string? authorization_endpoint = configs.smartConfiguration?.authorizationEndpoint ?: openIdConfigurations.authorization_endpoint ?: ();
@@ -355,6 +291,60 @@ public isolated function generateSmartConfiguration() returns SmartConfiguration
         scopes_supported: configs.smartConfiguration?.scopesSupported ?: openIdConfigurations.scopes_supported ?: ()
     };
 
-    LogDebug("Generating smart configuration completed ");
+    log:printDebug("Generating smart configuration completed ");
     return smartConfig;
+}
+
+
+public isolated function claimSubmit(international401:Parameters payload) returns r4:FHIRError|international401:Parameters|error {
+    international401:Parameters|error 'parameters = parser:parseWithValidation(payload.toJson(), international401:Parameters).ensureType();
+
+    json claimResponseJson = check io:fileReadJson("resources/claim-response.json");
+
+    if parameters is error {
+        return r4:createFHIRError(parameters.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+    } else {
+        international401:ParametersParameter[]? 'parameter = parameters.'parameter;
+        if 'parameter is international401:ParametersParameter[] {
+            foreach var item in 'parameter {
+                if item.name == "resource" {
+                    r4:Resource? resourceResult = item.'resource;
+                    if resourceResult is r4:Resource {
+                        // r4:Bundle bundle = check parser:parse(resourceResult.toJson(), r4:Bundle).ensureType();
+                        r4:Bundle cloneWithType = check resourceResult.cloneWithType(r4:Bundle);
+                        r4:BundleEntry[]? entry = cloneWithType.entry;
+                        if entry is r4:BundleEntry[] {
+                            r4:BundleEntry bundleEntry = entry[0];
+                            anydata 'resource = bundleEntry?.'resource;
+                            davincipas:PASClaim claim = check parser:parse('resource.toJson(), davincipas:PASClaim).ensureType();
+
+                            r4:DomainResource newClaimResource = check create(CLAIM, claim.toJson());
+                            davincipas:PASClaim newClaim = check newClaimResource.cloneWithType();
+
+                            davincipas:PASClaimResponse claimResponse = check parser:parse(claimResponseJson, davincipas:PASClaimResponse).ensureType();
+                            
+                            claimResponse.patient = newClaim.patient;
+                            claimResponse.insurer = newClaim.insurer;
+                            claimResponse.created = newClaim.created;
+                            claimResponse.request = {reference: "Claim/" + <string>newClaim.id};
+
+                            r4:DomainResource newClaimResponseResource = check create(CLAIM_RESPONSE, claimResponse.toJson());
+                            davincipas:PASClaimResponse newClaimResponse = check newClaimResponseResource.cloneWithType();
+
+                            international401:ParametersParameter p = {
+                                name: "return",
+                                'resource: newClaimResponse
+                            };
+
+                            international401:Parameters parameterResponse = {
+                                'parameter: [p]
+                            };
+                            return parameterResponse.clone();
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return r4:createFHIRError("Something went wrong", r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
 }

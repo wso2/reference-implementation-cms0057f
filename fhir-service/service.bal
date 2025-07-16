@@ -63,7 +63,7 @@ service http:InterceptableService /fhir/r4/metadata on httpListener {
     isolated resource function get .() returns @http:Payload {mediaType: [r4:FHIR_MIME_TYPE_JSON, r4:FHIR_MIME_TYPE_XML]} json|r4:FHIRError {
         json|error response = capabilityStatement.toJson();
         if (response is json) {
-            LogDebug("Capability statement served at " + time:utcNow()[0].toString());
+            log:printDebug("Capability statement served at " + time:utcNow()[0].toString());
             return response;
         } else {
             return r4:createFHIRError(response.message(), r4:FATAL, r4:TRANSIENT_EXCEPTION, response.detail().toString(), cause = response);
@@ -87,7 +87,7 @@ service http:InterceptableService /fhir/r4/\.well\-known/smart\-configuration on
         json|error response = smartConfiguration.toJson();
 
         if response is json {
-            LogDebug("Smart configuration served at " + time:utcNow()[0].toString());
+            log:printDebug("Smart configuration served at " + time:utcNow()[0].toString());
             return response;
         } else {
             return r4:createFHIRError(response.message(), r4:FATAL, r4:TRANSIENT_EXCEPTION, response.detail().toString(), cause = response);

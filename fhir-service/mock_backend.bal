@@ -20,9 +20,9 @@ import ballerinax/health.fhir.r4;
 import ballerinax/health.fhir.r4.international401;
 import ballerinax/health.fhir.r4.parser;
 
-## This implementation is a mock FHIR backend which acts as a FHIR repository which has data in FHIR format.
-## In actual production scenario we will use the connectors to connect to the actual backend systems of records
-## such as EHRs, Databases, HL7 servers, X12 servers, FHIR repositories etc.
+// This implementation is a mock FHIR backend which acts as a FHIR repository which has data in FHIR format.
+// In actual productionscenariowe willuse theconnectorsto connect totheactual backendsystems of records
+// such as EHRs , Databases, HL7 servers, X12 servers, FHIR repositories etc .
 
 function init() returns error? {
     check loadData();

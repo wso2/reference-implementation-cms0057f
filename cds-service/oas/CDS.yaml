@@ -26,7 +26,7 @@ info:
     url: https://wso2.com/contact/
 
 paths:
-  /:
+  /cds-services:
     get:
       summary: Discovery endpoint
       description: Returns a list of available CDS hook services.
@@ -42,7 +42,7 @@ paths:
                       $ref: '#/components/schemas/ServiceDefinition'
                   - $ref: '#/components/schemas/Services'
 
-  /{hook_id}:
+  /cds-services/{hook_id}:
     post:
       summary: CDS Hook Service Endpoint
       description: Submits a CDS request and returns decision support cards.
@@ -69,7 +69,7 @@ paths:
                   - $ref: '#/components/schemas/CdsResponse'
                   - $ref: '#/components/schemas/CdsError'
 
-  /{hook_id}/feedback:
+  /cds-services/{hook_id}/feedback:
     post:
       summary: CDS Feedback Endpoint
       description: Submits feedback for the specified CDS hook.

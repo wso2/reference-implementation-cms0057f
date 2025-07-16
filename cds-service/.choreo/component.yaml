@@ -19,7 +19,7 @@ endpoints:
     - name: cds-service
       displayName: CDS Service
       service:
-        basePath: /cds-services
+        basePath: /
         port: 9090
       type: REST
       networkVisibilities:

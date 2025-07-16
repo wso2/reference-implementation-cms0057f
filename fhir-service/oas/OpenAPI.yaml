@@ -560,7 +560,7 @@ paths:
       security:
       - default: []
       x-auth-type: Application & Application User
-  /Claim/$submit:
+  /fhir/r4/Claim/$submit:
     post:
       summary: Create a new Claim
       tags:

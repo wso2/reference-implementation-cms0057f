@@ -157,6 +157,11 @@ public isolated function search(ResourceType resourceType, map<string[]>? search
                         results = check searchByDate(results, "created", searchParameters.get('key)[0]);
                     }
                 }
+                "authored" => {
+                    if resourceType == QUESTIONNAIRE_RESPONSE {
+                        results = check searchByDate(results, "authored", searchParameters.get('key)[0]);
+                    }
+                }
                 "type" => {
                     if resourceType == ORGANIZATION {
                         results = searchByCodeableConceptCode(results, "type", searchParameters.get('key)[0]);

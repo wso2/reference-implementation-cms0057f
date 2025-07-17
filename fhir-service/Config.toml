@@ -2,6 +2,9 @@
 ## Update the values as per your environment setup.
 exportServiceUrl = "http://localhost:8090/bulk/export"
 
+## Initial sample data is dynamically retrieved from this GitHub repository.
+sampleDataGithubUrl = "https://raw.githubusercontent.com/wso2/reference-implementation-cms0057f/refs/heads/main/fhir-service/resources/data.json"
+
 ## Following configurations are used to build the capability statement and smart configuration.
 [configs]
 discoveryEndpoint = "<discoveryEndpoint>"

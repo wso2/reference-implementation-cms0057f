@@ -319,7 +319,11 @@ public class PollingTask {
                     } else if status == 202 {
                         // update the status
                         log:printDebug("Export task in-progress.", exportId = self.exportId);
-                        string progress = check statusResponse.getHeader("X-Progress");
+                        string progress = "";
+                        if statusResponse.hasHeader("X-Progress"){
+                            progress = check statusResponse.getHeader("X-Progress");
+                        }
+                        
                         PollingEvent pollingEvent = {id: self.exportId, eventStatus: "Success", exportStatus: progress};
 
                         lock {

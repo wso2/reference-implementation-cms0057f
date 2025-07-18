@@ -58,7 +58,12 @@ public isolated function getFileAsStream(string downloadLink, http:Client status
     if statusResponse is http:Response {
         int status = statusResponse.statusCode;
         if status == 200 {
-            return check statusResponse.getByteStream();
+            stream<byte[], io:Error?>|error? byteStream = statusResponse.getByteStream();
+            if byteStream is stream<byte[], io:Error?> {
+                return byteStream;
+            } else {
+                log:printError("Byte stream is not available as payload");
+            }
         } else {
             log:printError("Error occurred while getting the status.");
         }

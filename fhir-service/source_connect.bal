@@ -127,16 +127,28 @@ public isolated function search(ResourceType resourceType, map<string[]>? search
                 }
                 "patient" => {
                     // search parameter should be patient='id' e.g., patient='123'
+                    string searchValue = searchParameters.get('key)[0];
+                    if !searchValue.startsWith("Patient/") {
+                        searchValue = string `Patient/${searchValue}`;
+                    }
                     if resourceType == ALLERGY_INTOLERENCE || resourceType == CLAIM || resourceType == CLAIM_RESPONSE ||
-                        resourceType == COVERAGE || resourceType == DIAGNOSTIC_REPORT || resourceType == ENCOUNTER ||
-                        resourceType == EXPLANATION_OF_BENEFIT || resourceType == OBSERVATION {
-                        results = searchByReference(results, "patient", string `Patient/${searchParameters.get('key)[0]}`);
+                        resourceType == DIAGNOSTIC_REPORT || resourceType == EXPLANATION_OF_BENEFIT {
+                        results = searchByReference(results, "patient", searchValue);
+                    } else if resourceType == COVERAGE {
+                        results = searchByReference(results, "beneficiary", searchValue);
+                    } else if resourceType == ENCOUNTER || resourceType == OBSERVATION {
+                        results = searchByReference(results, "subject", searchValue);
                     }
                 }
                 "subject" => {
                     // search parameter should be subject='ResourceType/id' e.g., subject='Patient/123'
                     if resourceType == QUESTIONNAIRE_RESPONSE {
                         results = searchByReference(results, "subject", searchParameters.get('key)[0]);
+                    }
+                }
+                "request" => {
+                    if resourceType == CLAIM_RESPONSE {
+                        results = searchByReference(results, "request", searchParameters.get('key)[0]);
                     }
                 }
                 "identifier" => {

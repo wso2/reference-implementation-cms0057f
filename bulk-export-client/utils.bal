@@ -52,13 +52,13 @@ public isolated function unscheduleJob(task:JobId id) returns error? {
 # + downloadLink - file location
 # + statusClientV2 - http Client instance
 # + return - byte array stream of content
-public isolated function getFileAsStream(string downloadLink, http:Client statusClientV2) returns byte[]|error? {
+public isolated function getFileAsStream(string downloadLink, http:Client statusClientV2) returns stream<byte[], io:Error?>|error? {
 
     http:Response|http:ClientError statusResponse = statusClientV2->get("/");
     if statusResponse is http:Response {
         int status = statusResponse.statusCode;
         if status == 200 {
-            return check statusResponse.getBinaryPayload();
+            return check statusResponse.getByteStream();
         } else {
             log:printError("Error occurred while getting the status.");
         }
@@ -76,9 +76,10 @@ public isolated function getFileAsStream(string downloadLink, http:Client status
 public isolated function saveFileInFS(string downloadLink, string fileName) returns error? {
 
     http:Client statusClientV2 = check new (downloadLink);
-    byte[] streamer = check getFileAsStream(downloadLink, statusClientV2) ?: [];
+    stream<byte[], io:Error?> streamer = check getFileAsStream(downloadLink, statusClientV2) ?: new();
 
-    check io:fileWriteBytes(fileName, streamer);
+    check io:fileWriteBlocksFromStream(fileName, streamer);
+    check streamer.close();
     log:printDebug(string `Successfully downloaded the file. File name: ${fileName}`);
 }
 

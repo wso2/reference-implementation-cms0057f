@@ -9,7 +9,9 @@ This repository provides a comprehensive reference implementation of the [CMS-00
 * Payer-to-Payer Data Exchange  
 * Prior Authorization
 
-The implementation is built using Ballerina, a cloud-native integration language and optimized for health data interoperability. All services are securely exposed through the WSO2 API Management platform to ensure robust API governance and access control.
+The implementation is built using Ballerina, a cloud-native integration language optimized for health data interoperability. [Ballerina's native FHIR capabilities](https://ballerina.io/use-cases/healthcare/) enable healthcare developers to build scalable and flexible healthcare solutions that can adapt to changing healthcare needs and standards.
+
+Then all the services are securely exposed through the WSO2 API Management platform to ensure robust API governance and access control.
 
 In addition to the core services, the repository includes demo applications that demonstrate the full end-to-end flows, serving as a practical guide for implementers aiming to achieve compliance with CMS-0057-F.
 
@@ -121,7 +123,7 @@ With WSO2 API Manager:
 
 To expose the services via WSO2 APIM (version 4.2.0), use the Swagger files found in each service's `/oas` directory.
 
-Refer to [Create an API from an OpenAPI Definition](https://apim.docs.wso2.com/en/latest/manage-apis/design/create-api/create-rest-api/create-a-rest-api-from-an-openapi-definition/) for detailed instructions.
+Refer to [Create an API from an OpenAPI Definition](https://apim.docs.wso2.com/en/4.2.0/design/create-api/create-rest-api/create-a-rest-api-from-an-openapi-definition/) for detailed instructions.
 
 | API Name | Swagger Definition | Backend Endpoint | Usage |
 | ----- | ----- | ----- | ----- |
@@ -130,9 +132,17 @@ Refer to [Create an API from an OpenAPI Definition](https://apim.docs.wso2.com/e
 | FileServerAPI | file-service/oas/OpenAPI.yaml | file-service endpoint [http://localhost:8090](http://localhost:8090/) | Acts as a secure file server API to store, manage, and export user data files, including clinical documents and reports, supporting patient access and data portability |
 | CDSServiceAPI | cds-service/oas/CDS.yaml | cds-service endpoint [http://localhost:9091](http://localhost:9091/) | Provides Clinical Decision Support (CDS) resources and services that assist in automating prior authorization workflows and other clinical decision-making processes for CMS-0057-F compliance. |
 
-To simplify the setup, we’ve included the `reference-implementation-cms0057f/start-services.sh` script that automatically starts the required Ballerina services and deploys the corresponding APIs to WSO2 API Manager.
+### Launch and Deploy in One Command
+
+Kickstart your Ballerina services and deploy the APIs fronting them with a single script. To simplify the setup, we’ve included the `reference-implementation-cms0057f/start-services.sh`.
+
+This script automates:
+- Starting Ballerina services
+- Deploying the corresponding APIs to WSO2 APIM.
+  
+Notes:
    - Pre-requisite: Install [APICTL](https://apim.docs.wso2.com/en/latest/install-and-setup/setup/api-controller/getting-started-with-wso2-api-controller/)
-   - If needed, you can easily customize the script to add your own API names, endpoints, or API context, making it adaptable to different environments and use cases.
+   - If needed, you can easily customize the script to add your own API names, endpoints, or API context making it adaptable to different environments and use cases.
    - Each service in this reference implementation includes a pre-populated `Config.toml`. If required, before running this sh file, update these configuration values accordingly. 
    - Make sure to run the sh file from within the reference-implementation-cms0057f itself as the tool is reading the OAS files from the repository.
    - During the run, you will be prompted to enter the APICTL environment details, APIM base URL and user credentials. 
@@ -140,43 +150,36 @@ To simplify the setup, we’ve included the `reference-implementation-cms0057f/s
 
 <br>
 
-Alternatively, these reference artifacts can be deployed in WSO2 iPaaS Devant.
+## Bringing the Setup to the Cloud: One-Click Cloud Deployment with [Devant](https://wso2.com/devant/)
 
-## Bringing the Setup to the Cloud: One-Click Cloud Deployment with Devant
+The steps outlined in the previous section describe how to deploy and test these services in a local development environment, typically using containerized WSO2 runtimes or on-premise infrastructure.
+
+Alternatively, these reference artifacts can be deployed directly into WSO2 Devant, WSO2’s fully managed AI-native Integration Platform as a Service (iPaaS). Devant enables cloud-native deployment, AI‑powered low‑code development, and integration workflows that can be exposed and managed as APIs, with built-in observability, governance, CI/CD capabilities and scalability across cloud environments.
+
+To get started with Devant, refer to the official documentation at [Devant Docs](https://wso2.com/devant/docs/).
 
 ### Deployment Architecture:
 
 <img width="600" height="472" alt="saas-arch" src="https://github.com/user-attachments/assets/8364532c-904f-441f-8554-f3baa17ef6a1" />
 
-
 ### Deploying Ballerina Services in [Devant](https://wso2.com/devant/)
 
-#### Option 01: Deploy via VSCode
+#### One Click Deployment via VSCode
 
-Open the Ballerina project from VSCode. Click Deploy to Devant.
+- Install Visual Studio Code and [Ballerina VS Code Extension](https://ballerina.io/learn/vs-code-extension/get-started/). 
+- Open the Ballerina project from VSCode.
+- Click Deploy to Devant.
 
 <img width="600" height="472" alt="Screenshot 2025-07-28 at 14 56 51" src="https://github.com/user-attachments/assets/3db9078b-aa83-40bc-9414-9cc44d8c36c5" />
-
-
-####  Option 02:  Attach a Repository from Devant.
-
-Attach your repository containing the Ballerina services in Devant and deploy the services.
-
-Refer to [attach a repository](https://wso2.com/devant/docs/references/attach-a-repository/) and [deploy your first integration](https://wso2.com/devant/docs/quick-start-guides/deploy-your-first-integration-as-api/) documentations for more information.
-
-<img width="600" height="472" alt="attach" src="https://github.com/user-attachments/assets/3243ace0-fa38-406f-9b27-c3a04a562c71" />
-
-<br>
-<img width="600" height="472" alt="attachrepo" src="https://github.com/user-attachments/assets/96e5cba8-8a5a-4af3-bc7e-d99ebb052ce2" />
-
 
 Notes:
 1. You can configure the required configuration values during the Deploy step(Choose the Configure & Deploy option).
 <img width="600" height="472" alt="config-devant" src="https://github.com/user-attachments/assets/1a1fa216-be73-42e5-ade8-f689f9e21df5" />
 
-
 2. For file-service and bulk-export-client service, the target directory can be set by adding a volume mount. Refer to [configure-storage](https://wso2.com/choreo/docs/devops-and-ci-cd/configure-storage/) for more information.  
+
 3. With Devant deployment, there is no need to deploy the APIs in APIM separately, as these cloud solutions are deploying these services as APIs. API Management capabilities are already available here.  
+
 4. For authentication and authorization, you have the option to [create an application in Asgardeo](https://wso2.com/choreo/docs/administer/configure-an-external-idp/configure-asgardeo-as-an-external-idp/) as well to consume these services.
 
 ## Try Out 
@@ -185,9 +188,9 @@ The Access to the APIs are implemented using the SMART on FHIR’s authorization
 
 SMART on FHIR’s authorization scheme uses OAuth scopes to communicate (and negotiate) access requirements. Refer to [official documentation](https://build.fhir.org/ig/HL7/smart-app-launch/scopes-and-launch-context.html) and [WSO2 implementation here](https://healthcare.docs.wso2.com/en/latest/secure-health-apis/guides/smart-on-fhir-overview/#how-smart-on-fhir-builds-secure-apis) for more information.
 
-You can try out the API calls using the, 
+You can try out the API calls using the following options based on your deployment model.
 
-### 01: APIM Devportal Try Out for local environments
+### 01: APIM devportal Try Out for local environments
 
 * Step 01: Go to the APIM developer portal.  
 * Step 02: Sign In. Click on Create New Account. Fill the form and proceed to self register.  
@@ -201,9 +204,11 @@ You can try out the API calls using the,
 * Step 07: Go to the API from Devportal and use the generated token to try out.   
 <img width="600" height="472" alt="tryout" src="https://github.com/user-attachments/assets/08c5d88b-c35c-46be-9983-f7d298a353b6" />
 
+### 02: Devant Test > Console for Devant deployments
 
+<img width="600" height="472" alt="image" src="https://github.com/user-attachments/assets/25709395-5917-42df-9396-145dbeb68867" />
 
-### 02: Directly Invoke the APIs
+### 03: Directly Invoke the APIs
 
 #### Generate an application access token:
 ```
@@ -235,17 +240,13 @@ curl --location 'https://localhost:9443/oauth2/token' \
 ```
 Using the above access tokens(application/user access tokens), the secured API endpoints can be invoked conveniently. 
 
-### 03. Devant Test > Console for Devant deployments
+### 04: Try the demo applications
 
-<img width="600" height="472" alt="image" src="https://github.com/user-attachments/assets/25709395-5917-42df-9396-145dbeb68867" />
-
-### 04. Or you can try the demo applications. Refer to the steps given below to run the demo applications.
-
-Sample React applications demonstrating real-world healthcare use cases are located in reference-implementation-cms0057f/apps directory.
+Refer to the following steps to try out the “patient access” scenario using mediclaim app. This app is developed to demonstrate a “SMART App” which will connect as a third party consumer for accessing health data by the patient users.
 
 #### Prerequisites: Install Node('^18.18.0 || >=20.0.0') & NPM.
 
-To run a React application:
+To run the React application:
 
 1. Navigate to the React Application Directory:  
    ```bash
@@ -261,11 +262,17 @@ To run a React application:
    ```
 The demo-mediclaim-app will launch in your default browser, typically accessible at [http://localhost:8080/](http://localhost:8080/). 
 
+Fill the form with the required fields to proceed with the demo scenarios.
+- Base FHIR URL: Base API URL giving access to the FHIR Services API
+- Consumer Key: Client ID of the OAuth application consuming the FHIR API
+- Consumer Secret: Consumer Secret of the OAuth application consuming the FHIR API
+- Redirect URI: http://localhost:8080/api-view
+  - Note: Make sure to give this as the Redirect URL while creating the OAuth application.
+
 <br>
-<img width="600" height="472" alt="fhir-app" src="https://github.com/user-attachments/assets/26bf8663-bf5f-4576-a72d-189413efbc2b" />
+<img width="600" height="472" alt="medi-claim" src="https://github.com/user-attachments/assets/fccd9856-ba2e-4dea-9369-ce70f8a3c885" />
 
-
-Similarly you can run the other demo apps as well. 
+Similarly, you can run the other demo apps included in reference-implementation-cms0057f/apps to try out different healthcare integration scenarios.
 
 ## Core FHIR Provisions Behind the Reference Implementation
 

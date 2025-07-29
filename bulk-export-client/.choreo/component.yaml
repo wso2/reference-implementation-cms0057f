@@ -4,7 +4,7 @@ endpoints:
     displayName: FHIR Bulkdata Export Client Service
     service:
       basePath: /bulk
-      port: 8099
+      port: 8091
     type: REST
     networkVisibilities:
       - Project

@@ -125,12 +125,12 @@ To expose the services via WSO2 APIM (version 4.2.0), use the Swagger files foun
 
 Refer to [Create an API from an OpenAPI Definition](https://apim.docs.wso2.com/en/4.2.0/design/create-api/create-rest-api/create-a-rest-api-from-an-openapi-definition/) for detailed instructions.
 
-| API Name | Swagger Definition | Backend Endpoint | Usage |
-| ----- | ----- | ----- | ----- |
-| FHIRServiceAPI | fhir-service/oas/OpenAPI.yaml | fhir-service endpoint [http://localhost:9090](http://localhost:9090/) | Provides secure access to core FHIR resources such as Patient, Observation, Encounter, and Medication. Enables compliant retrieval and management of clinical healthcare data for Patient and Provider Access use cases. |
-| BulkExportClientAPI | bulk-export-client/oas/BulkExport.yaml | bulk-export-client service endpoint [http://localhost:8099/bulk](http://localhost:8099/bulk) | Facilitates large-scale export of patient and claims data from legacy or previous payer systems, supporting the Payer-to-Payer Data Exchange requirements of CMS-0057-F |
-| FileServerAPI | file-service/oas/OpenAPI.yaml | file-service endpoint [http://localhost:8090](http://localhost:8090/) | Acts as a secure file server API to store, manage, and export user data files, including clinical documents and reports, supporting patient access and data portability |
-| CDSServiceAPI | cds-service/oas/CDS.yaml | cds-service endpoint [http://localhost:9091](http://localhost:9091/) | Provides Clinical Decision Support (CDS) resources and services that assist in automating prior authorization workflows and other clinical decision-making processes for CMS-0057-F compliance. |
+| API Name | Swagger Definition | Backend Endpoint                                                                             | Usage |
+| ----- | ----- |----------------------------------------------------------------------------------------------| ----- |
+| FHIRServiceAPI | fhir-service/oas/OpenAPI.yaml | fhir-service endpoint [http://localhost:9090](http://localhost:9090/)                        | Provides secure access to core FHIR resources such as Patient, Observation, Encounter, and Medication. Enables compliant retrieval and management of clinical healthcare data for Patient and Provider Access use cases. |
+| BulkExportClientAPI | bulk-export-client/oas/BulkExport.yaml | bulk-export-client service endpoint [http://localhost:8091/bulk](http://localhost:8091/bulk) | Facilitates large-scale export of patient and claims data from legacy or previous payer systems, supporting the Payer-to-Payer Data Exchange requirements of CMS-0057-F |
+| FileServerAPI | file-service/oas/OpenAPI.yaml | file-service endpoint [http://localhost:8090](http://localhost:8090/)                        | Acts as a secure file server API to store, manage, and export user data files, including clinical documents and reports, supporting patient access and data portability |
+| CDSServiceAPI | cds-service/oas/CDS.yaml | cds-service endpoint [http://localhost:9091](http://localhost:9091/)                         | Provides Clinical Decision Support (CDS) resources and services that assist in automating prior authorization workflows and other clinical decision-making processes for CMS-0057-F compliance. |
 
 ### Launch and Deploy in One Command
 

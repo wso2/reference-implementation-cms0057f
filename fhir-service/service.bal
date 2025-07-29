@@ -684,48 +684,48 @@ public type Observation uscore501:USCoreObservationSDOHAssessment|uscore501:USCo
 service /fhir/r4/Observation on new fhirr4:Listener(config = observationApiConfig) {
 
     // Read the current state of single resource based on its id.
-    isolated resource function get fhir/r4/Observation/[string id](r4:FHIRContext fhirContext) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+    isolated resource function get [string id](r4:FHIRContext fhirContext) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
         return getById(OBSERVATION, id);
     }
 
     // Read the state of a specific version of a resource based on its id.
-    isolated resource function get fhir/r4/Observation/[string id]/_history/[string vid](r4:FHIRContext fhirContext) returns Observation|r4:OperationOutcome|r4:FHIRError {
+    isolated resource function get [string id]/_history/[string vid](r4:FHIRContext fhirContext) returns Observation|r4:OperationOutcome|r4:FHIRError {
         return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
     }
 
     // Search for resources based on a set of criteria.
-    isolated resource function get fhir/r4/Observation(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+    isolated resource function get .(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
         map<string[]> queryParamsMap = getQueryParamsMap(fhirContext.getRequestSearchParameters());
         return search(OBSERVATION, queryParamsMap);
     }
 
     // Create a new resource.
-    isolated resource function post fhir/r4/Observation(r4:FHIRContext fhirContext, Observation observation) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+    isolated resource function post .(r4:FHIRContext fhirContext, Observation observation) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
         return create(OBSERVATION, observation.toJson());
     }
 
     // Update the current state of a resource completely.
-    isolated resource function put fhir/r4/Observation/[string id](r4:FHIRContext fhirContext, Observation observation) returns Observation|r4:OperationOutcome|r4:FHIRError {
+    isolated resource function put [string id](r4:FHIRContext fhirContext, Observation observation) returns Observation|r4:OperationOutcome|r4:FHIRError {
         return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
     }
 
     // Update the current state of a resource partially.
-    isolated resource function patch fhir/r4/Observation/[string id](r4:FHIRContext fhirContext, json patch) returns Observation|r4:OperationOutcome|r4:FHIRError {
+    isolated resource function patch [string id](r4:FHIRContext fhirContext, json patch) returns Observation|r4:OperationOutcome|r4:FHIRError {
         return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
     }
 
     // Delete a resource.
-    isolated resource function delete fhir/r4/Observation/[string id](r4:FHIRContext fhirContext) returns r4:OperationOutcome|r4:FHIRError {
+    isolated resource function delete [string id](r4:FHIRContext fhirContext) returns r4:OperationOutcome|r4:FHIRError {
         return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
     }
 
     // Retrieve the update history for a particular resource.
-    isolated resource function get fhir/r4/Observation/[string id]/_history(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+    isolated resource function get [string id]/_history(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
         return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
     }
 
     // Retrieve the update history for all resources.
-    isolated resource function get fhir/r4/Observation/_history(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+    isolated resource function get _history(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
         return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
     }
 }

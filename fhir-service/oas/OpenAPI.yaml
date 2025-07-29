@@ -1216,6 +1216,17 @@ paths:
       security:
       - default: []
       x-auth-type: Application & Application User
+    post:
+      tags:
+        - POST
+        - DiagnosticReport
+      summary: create DiagnosticReport
+      description: This operation is used to create a DiagnosticReport
+      responses:
+        "201":
+          description: create DiagnosticReport operation successful
+      security:
+        - default: []
   /fhir/r4/DiagnosticReport/{id}:
     get:
       tags:
@@ -2271,6 +2282,17 @@ paths:
       security:
       - default: []
       x-auth-type: Application & Application User
+    post:
+      tags:
+        - POST
+        - Observation
+      summary: create Observation
+      description: This operation is used to create a Observation
+      responses:
+        "201":
+          description: create Observation operation successful
+      security:
+        - default: []
   /fhir/r4/Observation/{id}:
     get:
       tags:

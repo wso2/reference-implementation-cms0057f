@@ -3,7 +3,7 @@ baseUrl = "http://localhost:9090"
 contextPath = "/fhir/r4"
 
 [clientServiceConfig]
-baseUrl = "http://localhost:8099"
+baseUrl = "http://localhost:8091"
 authEnabled = false
 targetDirectory = "/Users/thiyan/Documents/workspace/pas/reference-implementation-cms-0057-F/github/reference-implementation-cms0057f/payer-to-payer-data-exchange/new-payer/bulk-export-client/target"
 

@@ -105,7 +105,7 @@ start_services_and_deploy_apis() {
   deploy_apis "FHIRAPI" "fhir-service/oas/OpenAPI.yaml" "/fhirapi" "http://localhost:9090" 
 
   echo "Deploying BulkExportClient API"
-  deploy_apis "BulkExportClientAPI" "bulk-export-client/oas/BulkExport.yaml" "/bulkexportclient" "http://localhost:8099/bulk" 
+  deploy_apis "BulkExportClientAPI" "bulk-export-client/oas/BulkExport.yaml" "/bulkexportclient" "http://localhost:8091/bulk"
 
   echo "Deploying FileService API"
   deploy_apis "FileServiceAPI" "file-service/oas/OpenAPI.yaml" "/fileserver" "http://localhost:8090" 

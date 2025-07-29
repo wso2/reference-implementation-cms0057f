@@ -31,7 +31,7 @@ http:OAuth2ClientCredentialsGrantConfig config = {
 
 isolated http:Client statusClient = check new (sourceServerConfig.baseUrl);
 
-isolated service /bulk on new http:Listener(8099) {
+isolated service /bulk on new http:Listener(8091) {
 
     function init() returns error? {
 

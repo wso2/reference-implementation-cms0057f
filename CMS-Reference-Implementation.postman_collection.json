@@ -1,0 +1,2439 @@
+{
+	"info": {
+		"_postman_id": "bcd62017-43a8-4a83-8c87-1721163c21fa",
+		"name": "CMS Reference Implementation",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "12382020"
+	},
+	"item": [
+		{
+			"name": "CDS",
+			"item": [
+				{
+					"name": "Get - CDS Services Discovery",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{app_access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://{{gateway}}/{{cds-api-context}}/{{cds-api-version}}/cds-services",
+							"protocol": "https",
+							"host": [
+								"{{gateway}}"
+							],
+							"path": [
+								"{{cds-api-context}}",
+								"{{cds-api-version}}",
+								"cds-services"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CDS - Prescribe Medication",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{app_access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"hook\": \"order-sign\",\n  \"hookInstance\": \"98765-wxyz-43210-lmno\",\n  \"context\": {\n    \"userId\": \"PractitionerRole/456\",\n    \"patientId\": \"john-smith\",\n    \"draftOrders\": {\n      \"resourceType\": \"Bundle\",\n      \"meta\": {\n        \"profile\": [\n          \"http://hl7.org/fhir/StructureDefinition/Bundle\"\n        ]\n      },\n      \"type\": \"collection\",\n      \"entry\": [\n        {\n          \"resource\": {\n            \"resourceType\": \"MedicationRequest\",\n            \"subject\": {\n              \"reference\": \"Patient/john-smith\"\n            },\n            \"medicationCodeableConcept\": {\n              \"coding\": [\n                {\n                  \"system\": \"http://www.nlm.nih.gov/research/umls/rxnorm\",\n                  \"code\": \"1746007\",\n                  \"display\": \"Aimovig 70 mg Injection\"\n                }\n              ],\n              \"text\": \"Aimovig 70 mg Injection\"\n            },\n            \"dispenseRequest\": {\n              \"quantity\": {\n                \"value\": 1.0,\n                \"unit\": \"mL\",\n                \"system\": \"http://unitsofmeasure.org\",\n                \"code\": \"mL\"\n              },\n              \"numberOfRepeatsAllowed\": 1,\n              \"expectedSupplyDuration\": {\n                \"unit\": \"days\",\n                \"system\": \"http://unitsofmeasure.org\",\n                \"code\": \"d\",\n                \"value\": 30.0\n              }\n            },\n            \"id\": \"medication-request-001\",\n            \"intent\": \"order\",\n            \"dosageInstruction\": [\n              {\n                \"text\": \"Inject 70 mg once a month\",\n                \"timing\": {\n                  \"repeat\": {\n                    \"boundsPeriod\": {\n                      \"start\": \"2025-03-02\"\n                    },\n                    \"frequency\": 1,\n                    \"period\": 1.0,\n                    \"periodUnit\": \"mo\"\n                  }\n                },\n                \"doseAndRate\": [\n                  {\n                    \"doseQuantity\": {\n                      \"value\": 70.0,\n                      \"unit\": \"mg\",\n                      \"system\": \"http://unitsofmeasure.org\",\n                      \"code\": \"mg\"\n                    }\n                  }\n                ]\n              }\n            ],\n            \"meta\": {\n              \"lastUpdated\": \"2025-03-02T10:00:00.000Z\"\n            },\n            \"status\": \"draft\"\n          }\n        }\n      ]\n    }\n  }\n}\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://{{gateway}}/{{cds-api-context}}/{{cds-api-version}}/cds-services/prescribe-medication",
+							"protocol": "https",
+							"host": [
+								"{{gateway}}"
+							],
+							"path": [
+								"{{cds-api-context}}",
+								"{{cds-api-version}}",
+								"cds-services",
+								"prescribe-medication"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Bulk Export",
+			"item": [
+				{
+					"name": "kick-off",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let diagnostics = pm.response.json().issue[0].diagnostics;",
+									"let exportId = diagnostics.match(/ExportId:\\s*([a-f0-9\\-]+)/i)?.[1];",
+									"pm.environment.set(\"ExportId\", exportId);",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{app_access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Test-Key",
+								"value": "eyJraWQiOiJnYXRld2F5X2NlcnRpZmljYXRlX2FsaWFzIiwiYWxnIjoiUlMyNTYifQ.eyJzdWIiOiJmNDA2YTQ0NS1lNTJmLTQ1NjYtYmFmZS1mMDgwYmIxODExMDVAY2FyYm9uLnN1cGVyIiwiYXVkIjoiY2hvcmVvOmRlcGxveW1lbnQ6c2FuZGJveCIsIm9yZ2FuaXphdGlvbiI6eyJ1dWlkIjoiYzMyNjE4Y2YtMzg5ZC00NGYxLTkzZWUtYjY3YTM0NjhhYWUzIn0sImlzcyI6Imh0dHBzOlwvXC9zdHMuY2hvcmVvLmRldjo0NDNcL2FwaVwvYW1cL3B1Ymxpc2hlclwvdjJcL2FwaXNcL2ludGVybmFsLWtleSIsImtleXR5cGUiOiJTQU5EQk9YIiwic3Vic2NyaWJlZEFQSXMiOlt7InN1YnNjcmliZXJUZW5hbnREb21haW4iOm51bGwsIm5hbWUiOiJidWxrLWV4cG9ydC1jbGllbnQgLSBidWxrLWV4cG9ydC1jbGllbnQiLCJjb250ZXh0IjoiXC9jMzI2MThjZi0zODlkLTQ0ZjEtOTNlZS1iNjdhMzQ2OGFhZTNcL2Ntcy0wMDU3LWZcL2J1bGstZXhwb3J0LWNsaWVudFwvdjEuMCIsInB1Ymxpc2hlciI6ImNob3Jlb19wcm9kX2FwaW1fYWRtaW4iLCJ2ZXJzaW9uIjoidjEuMCIsInN1YnNjcmlwdGlvblRpZXIiOm51bGx9XSwiZXhwIjoxNzQyNDg4NTczLCJ0b2tlbl90eXBlIjoiSW50ZXJuYWxLZXkiLCJpYXQiOjE3NDI0ODc5NzMsImp0aSI6IjMwODI5MTk0LTIwZTgtNDk1Ni04NjBmLTJiODg3YzRjNzVkZSJ9.i8DNxJgEeh-xVKS7506RLRprGbIX5ZhODzbIetpmE-dtMMdU17vzCj1wNELBrGqXxBLU2JiFGktoZZ_mCoRrADBJOPY5KecjduOIhP8wlR839BwnWku1FYUylLpUcJT9NMsT_vvSuUjqMPooqrxynpOBF2WHKZJaHAQ_5pNIiPAKOhxsf5uEw-pGZ5S7YSQqR2P0A6rIYr_cOL1Ndp-PcS7ITOWo-2ndLgpEYzLI_TawxXKiMmWSbPFfwJ4Z_0agwSNjZcq5BIlbEmDE357_pTOrNyES3nsg5OlcdYgSsOJvbdvBiAvNcf4c3AHxHuEpGTweyMURlAkWIjUK69jzwD7JyeorI1lcdwBrcOAutglJNVMVM8oOq_-ikJ-ASoGuGsClLN1VWsKPahr5ZEmzx_nVrRd9c4V3OqhHeBDXqtrdS7wlQDTmXpEPNmKMIDCwUyLiywN5l2ePRkOP7MwRduEvd6rdbfz1MiWcdPnc9bJguNRK1fWqwQ9G7vVw9uIe-7LJ2lSg19lRaQKwbxu8tqtXt5j71aCkQTSRxi-1mInrM_tag63ldTHvLxSHCkjMrciw8wAaDZwQrGaYxu4e60MdXfN0-vHLUKIAl3OwxOKYDxvF5U1Q4aMOqk2Fu7eSr-dEFozHSZkxvjGBuQWpv87aMMJ_NRSDZqPxMmYgvic"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "[\n  {\n    \"id\": \"644d85af-aaf9-4068-ad23-1e55aedd5205\"\n  }\n]",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://{{gateway}}/{{bulkexport-api-context}}/{{bulkexport-api-version}}/export",
+							"protocol": "https",
+							"host": [
+								"{{gateway}}"
+							],
+							"path": [
+								"{{bulkexport-api-context}}",
+								"{{bulkexport-api-version}}",
+								"export"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "status",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{app_access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Test-Key",
+								"value": "eyJraWQiOiJnYXRld2F5X2NlcnRpZmljYXRlX2FsaWFzIiwiYWxnIjoiUlMyNTYifQ.eyJzdWIiOiJmNDA2YTQ0NS1lNTJmLTQ1NjYtYmFmZS1mMDgwYmIxODExMDVAY2FyYm9uLnN1cGVyIiwiYXVkIjoiY2hvcmVvOmRlcGxveW1lbnQ6c2FuZGJveCIsIm9yZ2FuaXphdGlvbiI6eyJ1dWlkIjoiYzMyNjE4Y2YtMzg5ZC00NGYxLTkzZWUtYjY3YTM0NjhhYWUzIn0sImlzcyI6Imh0dHBzOlwvXC9zdHMuY2hvcmVvLmRldjo0NDNcL2FwaVwvYW1cL3B1Ymxpc2hlclwvdjJcL2FwaXNcL2ludGVybmFsLWtleSIsImtleXR5cGUiOiJTQU5EQk9YIiwic3Vic2NyaWJlZEFQSXMiOlt7InN1YnNjcmliZXJUZW5hbnREb21haW4iOm51bGwsIm5hbWUiOiJidWxrLWV4cG9ydC1jbGllbnQgLSBidWxrLWV4cG9ydC1jbGllbnQiLCJjb250ZXh0IjoiXC9jMzI2MThjZi0zODlkLTQ0ZjEtOTNlZS1iNjdhMzQ2OGFhZTNcL2Ntcy0wMDU3LWZcL2J1bGstZXhwb3J0LWNsaWVudFwvdjEuMCIsInB1Ymxpc2hlciI6ImNob3Jlb19wcm9kX2FwaW1fYWRtaW4iLCJ2ZXJzaW9uIjoidjEuMCIsInN1YnNjcmlwdGlvblRpZXIiOm51bGx9XSwiZXhwIjoxNzQyNDg4NTczLCJ0b2tlbl90eXBlIjoiSW50ZXJuYWxLZXkiLCJpYXQiOjE3NDI0ODc5NzMsImp0aSI6IjMwODI5MTk0LTIwZTgtNDk1Ni04NjBmLTJiODg3YzRjNzVkZSJ9.i8DNxJgEeh-xVKS7506RLRprGbIX5ZhODzbIetpmE-dtMMdU17vzCj1wNELBrGqXxBLU2JiFGktoZZ_mCoRrADBJOPY5KecjduOIhP8wlR839BwnWku1FYUylLpUcJT9NMsT_vvSuUjqMPooqrxynpOBF2WHKZJaHAQ_5pNIiPAKOhxsf5uEw-pGZ5S7YSQqR2P0A6rIYr_cOL1Ndp-PcS7ITOWo-2ndLgpEYzLI_TawxXKiMmWSbPFfwJ4Z_0agwSNjZcq5BIlbEmDE357_pTOrNyES3nsg5OlcdYgSsOJvbdvBiAvNcf4c3AHxHuEpGTweyMURlAkWIjUK69jzwD7JyeorI1lcdwBrcOAutglJNVMVM8oOq_-ikJ-ASoGuGsClLN1VWsKPahr5ZEmzx_nVrRd9c4V3OqhHeBDXqtrdS7wlQDTmXpEPNmKMIDCwUyLiywN5l2ePRkOP7MwRduEvd6rdbfz1MiWcdPnc9bJguNRK1fWqwQ9G7vVw9uIe-7LJ2lSg19lRaQKwbxu8tqtXt5j71aCkQTSRxi-1mInrM_tag63ldTHvLxSHCkjMrciw8wAaDZwQrGaYxu4e60MdXfN0-vHLUKIAl3OwxOKYDxvF5U1Q4aMOqk2Fu7eSr-dEFozHSZkxvjGBuQWpv87aMMJ_NRSDZqPxMmYgvic",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "https://{{gateway}}/{{bulkexport-api-context}}/{{bulkexport-api-version}}/status?exportId={{ExportId}}&resourceType=Claim",
+							"protocol": "https",
+							"host": [
+								"{{gateway}}"
+							],
+							"path": [
+								"{{bulkexport-api-context}}",
+								"{{bulkexport-api-version}}",
+								"status"
+							],
+							"query": [
+								{
+									"key": "exportId",
+									"value": "{{ExportId}}"
+								},
+								{
+									"key": "resourceType",
+									"value": "Claim"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get File as Text",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{app_access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							},
+							{
+								"key": "Test-Key",
+								"value": "eyJraWQiOiJnYXRld2F5X2NlcnRpZmljYXRlX2FsaWFzIiwiYWxnIjoiUlMyNTYifQ.eyJzdWIiOiJmNDA2YTQ0NS1lNTJmLTQ1NjYtYmFmZS1mMDgwYmIxODExMDVAY2FyYm9uLnN1cGVyIiwiYXVkIjoiY2hvcmVvOmRlcGxveW1lbnQ6c2FuZGJveCIsIm9yZ2FuaXphdGlvbiI6eyJ1dWlkIjoiYzMyNjE4Y2YtMzg5ZC00NGYxLTkzZWUtYjY3YTM0NjhhYWUzIn0sImlzcyI6Imh0dHBzOlwvXC9zdHMuY2hvcmVvLmRldjo0NDNcL2FwaVwvYW1cL3B1Ymxpc2hlclwvdjJcL2FwaXNcL2ludGVybmFsLWtleSIsImtleXR5cGUiOiJTQU5EQk9YIiwic3Vic2NyaWJlZEFQSXMiOlt7InN1YnNjcmliZXJUZW5hbnREb21haW4iOm51bGwsIm5hbWUiOiJidWxrLWV4cG9ydC1jbGllbnQgLSBmaWxlLXNlcnZpY2UiLCJjb250ZXh0IjoiXC9jMzI2MThjZi0zODlkLTQ0ZjEtOTNlZS1iNjdhMzQ2OGFhZTNcL2Ntcy0wMDU3LWZcL2J1bGstZXhwb3J0LWNsaWVudFwvZmlsZS1zZXJ2aWNlXC92MS4wIiwicHVibGlzaGVyIjoiY2hvcmVvX3Byb2RfYXBpbV9hZG1pbiIsInZlcnNpb24iOiJ2MS4wIiwic3Vic2NyaXB0aW9uVGllciI6bnVsbH1dLCJleHAiOjE3NDI0ODg3ODAsInRva2VuX3R5cGUiOiJJbnRlcm5hbEtleSIsImlhdCI6MTc0MjQ4ODE4MCwianRpIjoiMjgzZDJiYTMtMzYwMy00M2NkLWI4NWQtYzg4NTgwNWI1MDc1In0.AOyEWqt2jE91Y0Ix_izxc30Q8x88vdxzbsFz3YBQB-4M1OS1Xyf1Ngxi3A3z_ALmvmZ0bgDNGGH8eavXeMupyYiIyQ2Sv_AShy_bBhMgJIZtnv05O3pAolNNeYV_LOynzNXBDaBMekNAwyz28CllLwU-l8lguV_HGRevSkO1rwqpmcMWTUwRVC7vn5ma4obog3-nuNawnNWZsF0zWirIXtTLFIkomGqyzdJSFJkG0Es586WgBolEWlQ5fHsC6LPmObjEAx_UbQzqhOiEzFSliNmHE5AXe4pvgJ-WwG6OmuomBogLdWSIyfodT-nE0LTpUMEowqaBVFJ5-mDBwW8YYilebpqoDEob2pOHP-_V3Z2ltORXVKaronnrnYO-wmav74Dn9TJbW5yU_B9VdKvERXs1xJE609y0sR8B82rSqY48fI8EYHqtxSr0guT8hOYzzcWgxPOL7AgBQ27F_6wYvRXvuKt4E3lYrgJZ2tMC6S780rXME1xZrg7Tujnpn1YYDVzT3-lVqIeL6HojnXO8eeqTwpx-9ZKznersQL_2OnT45iS1kDDNqkutDwnxefY47YPzJ63HvgBdyEQxXCLlnmv6RBBQXF4P30wkOBqjw8vwxfHoigCksdKJ_HckIcV4erBQNl_CQmN6gLm5Rsz-lKiCuHSJ4skdORsBJlPSH-s"
+							}
+						],
+						"url": {
+							"raw": "https://{{gateway}}/{{bulkexportfileserver-api-context}}/{{bulkexportfileserver-api-version}}/fetch?exportId={{ExportId}}&resourceType=Claim",
+							"protocol": "https",
+							"host": [
+								"{{gateway}}"
+							],
+							"path": [
+								"{{bulkexportfileserver-api-context}}",
+								"{{bulkexportfileserver-api-version}}",
+								"fetch"
+							],
+							"query": [
+								{
+									"key": "exportId",
+									"value": "{{ExportId}}"
+								},
+								{
+									"key": "resourceType",
+									"value": "Claim"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Patient Access API",
+			"item": [
+				{
+					"name": "Patient",
+					"item": [
+						{
+							"name": "Get Patient/{id}",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{app_access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "https://{{gateway}}/{{fhir-api-context}}/{{fhir-api-version}}/fhir/r4/Patient/{{patientid}}",
+									"protocol": "https",
+									"host": [
+										"{{gateway}}"
+									],
+									"path": [
+										"{{fhir-api-context}}",
+										"{{fhir-api-version}}",
+										"fhir",
+										"r4",
+										"Patient",
+										"{{patientid}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Create Patient",
+							"protocolProfileBehavior": {
+								"disabledSystemHeaders": {
+									"content-type": true
+								}
+							},
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{app_access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/fhir+json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"resourceType\": \"Patient\",\n    \"extension\": [\n        {\n            \"url\": \"http://hl7.org/fhir/us/core/StructureDefinition/us-core-race\",\n            \"extension\": [\n                {\n                    \"url\": \"ombCategory\",\n                    \"valueCoding\": {\n                        \"system\": \"urn:oid:2.16.840.1.113883.6.238\",\n                        \"code\": \"2106-3\",\n                        \"display\": \"White\"\n                    }\n                },\n                {\n                    \"url\": \"ombCategory\",\n                    \"valueCoding\": {\n                        \"system\": \"urn:oid:2.16.840.1.113883.6.238\",\n                        \"code\": \"1002-5\",\n                        \"display\": \"American Indian or Alaska Native\"\n                    }\n                },\n                {\n                    \"url\": \"ombCategory\",\n                    \"valueCoding\": {\n                        \"system\": \"urn:oid:2.16.840.1.113883.6.238\",\n                        \"code\": \"2028-9\",\n                        \"display\": \"Asian\"\n                    }\n                },\n                {\n                    \"url\": \"detailed\",\n                    \"valueCoding\": {\n                        \"system\": \"urn:oid:2.16.840.1.113883.6.238\",\n                        \"code\": \"1586-7\",\n                        \"display\": \"Shoshone\"\n                    }\n                },\n                {\n                    \"url\": \"detailed\",\n                    \"valueCoding\": {\n                        \"system\": \"urn:oid:2.16.840.1.113883.6.238\",\n                        \"code\": \"2036-2\",\n                        \"display\": \"Filipino\"\n                    }\n                },\n                {\n                    \"url\": \"text\",\n                    \"valueString\": \"Mixed\"\n                }\n            ]\n        },\n        {\n            \"url\": \"http://hl7.org/fhir/us/core/StructureDefinition/us-core-ethnicity\",\n            \"extension\": [\n                {\n                    \"url\": \"ombCategory\",\n                    \"valueCoding\": {\n                        \"system\": \"urn:oid:2.16.840.1.113883.6.238\",\n                        \"code\": \"2135-2\",\n                        \"display\": \"Hispanic or Latino\"\n                    }\n                },\n                {\n                    \"url\": \"detailed\",\n                    \"valueCoding\": {\n                        \"system\": \"urn:oid:2.16.840.1.113883.6.238\",\n                        \"code\": \"2184-0\",\n                        \"display\": \"Dominican\"\n                    }\n                },\n                {\n                    \"url\": \"detailed\",\n                    \"valueCoding\": {\n                        \"system\": \"urn:oid:2.16.840.1.113883.6.238\",\n                        \"code\": \"2148-5\",\n                        \"display\": \"Mexican\"\n                    }\n                },\n                {\n                    \"url\": \"text\",\n                    \"valueString\": \"Hispanic or Latino\"\n                }\n            ]\n        },\n        {\n            \"url\": \"http://hl7.org/fhir/us/core/StructureDefinition/us-core-birthsex\",\n            \"valueCode\": \"F\"\n        }\n    ],\n    \"gender\": \"female\",\n    \"telecom\": [\n        {\n            \"system\": \"phone\",\n            \"use\": \"home\",\n            \"value\": \"555-555-5555\"\n        },\n        {\n            \"system\": \"email\",\n            \"value\": \"amy.shaw@example.com\"\n        }\n    ],\n    \"id\": \"101\",\n    \"text\": {\n        \"status\": \"generated\",\n        \"div\": \"<div xmlns=\\\"http://www.w3.org/1999/xhtml\\\">\\n\\t\\t\\t<p>\\n\\t\\t\\t\\t<b>Generated Narrative with Details</b>\\n\\t\\t\\t</p>\\n\\t\\t\\t<p>\\n\\t\\t\\t\\t<b>id</b>: example</p>\\n\\t\\t\\t<p>\\n\\t\\t\\t\\t<b>identifier</b>: Medical Record Number = 1032702 (USUAL)</p>\\n\\t\\t\\t<p>\\n\\t\\t\\t\\t<b>active</b>: true</p>\\n\\t\\t\\t<p>\\n\\t\\t\\t\\t<b>name</b>: Amy V. Shaw </p>\\n\\t\\t\\t<p>\\n\\t\\t\\t\\t<b>telecom</b>: ph: 555-555-5555(HOME), amy.shaw@example.com</p>\\n\\t\\t\\t<p>\\n\\t\\t\\t\\t<b>gender</b>: </p>\\n\\t\\t\\t<p>\\n\\t\\t\\t\\t<b>birthsex</b>: Female</p>\\n\\t\\t\\t<p>\\n\\t\\t\\t\\t<b>birthDate</b>: Feb 20, 2007</p>\\n\\t\\t\\t<p>\\n\\t\\t\\t\\t<b>address</b>: 49 Meadow St Mounds OK 74047 US </p>\\n\\t\\t\\t<p>\\n\\t\\t\\t\\t<b>race</b>: White, American Indian or Alaska Native, Asian, Shoshone, Filipino</p>\\n\\t\\t\\t<p>\\n\\t\\t\\t\\t<b>ethnicity</b>: Hispanic or Latino, Dominican, Mexican</p>\\n\\t\\t</div>\"\n    },\n    \"identifier\": [\n        {\n            \"system\": \"http://hospital.smarthealthit.org\",\n            \"use\": \"usual\",\n            \"type\": {\n                \"coding\": [\n                    {\n                        \"system\": \"http://terminology.hl7.org/CodeSystem/v2-0203\",\n                        \"code\": \"MR\",\n                        \"display\": \"Medical Record Number\"\n                    }\n                ],\n                \"text\": \"Medical Record Number\"\n            },\n            \"value\": \"1032702\"\n        }\n    ],\n    \"address\": [\n        {\n            \"country\": \"US\",\n            \"city\": \"Mounds\",\n            \"line\": [\n                \"49 Meadow St\"\n            ],\n            \"postalCode\": \"74047\",\n            \"state\": \"OK\"\n        }\n    ],\n    \"active\": true,\n    \"birthDate\": \"2007-02-20\",\n    \"meta\": {\n        \"profile\": [\n            \"http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient\"\n        ]\n    },\n    \"name\": [\n        {\n            \"given\": [\n                \"Jack\",\n                \"V.\"\n            ],\n            \"family\": \"Shaw\"\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://{{gateway}}/{{fhir-api-context}}/{{fhir-api-version}}/fhir/r4/Patient",
+									"protocol": "https",
+									"host": [
+										"{{gateway}}"
+									],
+									"path": [
+										"{{fhir-api-context}}",
+										"{{fhir-api-version}}",
+										"fhir",
+										"r4",
+										"Patient"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Search Patient?_id={id}",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{app_access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "https://{{gateway}}/{{fhir-api-context}}/{{fhir-api-version}}/fhir/r4/Patient?_id={{patientid}}",
+									"protocol": "https",
+									"host": [
+										"{{gateway}}"
+									],
+									"path": [
+										"{{fhir-api-context}}",
+										"{{fhir-api-version}}",
+										"fhir",
+										"r4",
+										"Patient"
+									],
+									"query": [
+										{
+											"key": "_id",
+											"value": "{{patientid}}"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Allergy Intolerance",
+					"item": [
+						{
+							"name": "Get AllergyIntolerance",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{app_access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "https://{{gateway}}/{{fhir-api-context}}/{{fhir-api-version}}/fhir/r4/AllergyIntolerance/{{allergyid}}?code=7980",
+									"protocol": "https",
+									"host": [
+										"{{gateway}}"
+									],
+									"path": [
+										"{{fhir-api-context}}",
+										"{{fhir-api-version}}",
+										"fhir",
+										"r4",
+										"AllergyIntolerance",
+										"{{allergyid}}"
+									],
+									"query": [
+										{
+											"key": "code",
+											"value": "7980"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Search AllergyIntolerance",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{app_access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "https://{{gateway}}/{{fhir-api-context}}/{{fhir-api-version}}/fhir/r4/AllergyIntolerance?patient={{patientid}}&_id={{allergyid}}",
+									"protocol": "https",
+									"host": [
+										"{{gateway}}"
+									],
+									"path": [
+										"{{fhir-api-context}}",
+										"{{fhir-api-version}}",
+										"fhir",
+										"r4",
+										"AllergyIntolerance"
+									],
+									"query": [
+										{
+											"key": "patient",
+											"value": "{{patientid}}"
+										},
+										{
+											"key": "_id",
+											"value": "{{allergyid}}"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Diagnostic Report",
+					"item": [
+						{
+							"name": "Get: DiagnosticReport",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{app_access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "https://{{gateway}}/{{fhir-api-context}}/{{fhir-api-version}}/fhir/r4/DiagnosticReport/{{reportid}}",
+									"protocol": "https",
+									"host": [
+										"{{gateway}}"
+									],
+									"path": [
+										"{{fhir-api-context}}",
+										"{{fhir-api-version}}",
+										"fhir",
+										"r4",
+										"DiagnosticReport",
+										"{{reportid}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Create: DiagnosticReport",
+							"protocolProfileBehavior": {
+								"disabledSystemHeaders": {
+									"content-type": true
+								}
+							},
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{app_access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/fhir+json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"resourceType\": \"DiagnosticReport\",\n    \"code\": {\n        \"coding\": [\n            {\n                \"system\": \"http://loinc.org\",\n                \"code\": \"58410-2\",\n                \"display\": \"Complete blood count panel\"\n            }\n        ],\n        \"text\": \"Complete Blood Count (CBC)\"\n    },\n    \"subject\": {\n        \"reference\": \"Patient/102\"\n    },\n    \"result\": [\n        {\n            \"reference\": \"Observation/observation-wbc\"\n        },\n        {\n            \"reference\": \"Observation/observation-hemoglobin\"\n        }\n    ],\n    \"issued\": \"2025-06-05T12:00:00-05:00\",\n    \"effectiveDateTime\": \"2025-06-05T10:00:00-05:00\",\n    \"meta\": {\n        \"profile\": [\n            \"http://hl7.org/fhir/us/core/StructureDefinition/us-core-diagnosticreport-lab\"\n        ]\n    },\n    \"category\": [\n        {\n            \"coding\": [\n                {\n                    \"system\": \"http://terminology.hl7.org/CodeSystem/v2-0074\",\n                    \"code\": \"LAB\",\n                    \"display\": \"Laboratory\"\n                }\n            ]\n        }\n    ],\n    \"status\": \"final\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://{{gateway}}/{{fhir-api-context}}/{{fhir-api-version}}/fhir/r4/DiagnosticReport",
+									"protocol": "https",
+									"host": [
+										"{{gateway}}"
+									],
+									"path": [
+										"{{fhir-api-context}}",
+										"{{fhir-api-version}}",
+										"fhir",
+										"r4",
+										"DiagnosticReport"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Search: DiagnosticReport",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{app_access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "https://{{gateway}}/{{fhir-api-context}}/{{fhir-api-version}}/fhir/r4/DiagnosticReport?patient={{patientuuid}}",
+									"protocol": "https",
+									"host": [
+										"{{gateway}}"
+									],
+									"path": [
+										"{{fhir-api-context}}",
+										"{{fhir-api-version}}",
+										"fhir",
+										"r4",
+										"DiagnosticReport"
+									],
+									"query": [
+										{
+											"key": "patient",
+											"value": "{{patientuuid}}"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Questionnaire",
+					"item": [
+						{
+							"name": "Get: Questionnaire",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{app_access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "https://{{gateway}}/{{fhir-api-context}}/{{fhir-api-version}}/fhir/r4/Questionnaire",
+									"protocol": "https",
+									"host": [
+										"{{gateway}}"
+									],
+									"path": [
+										"{{fhir-api-context}}",
+										"{{fhir-api-version}}",
+										"fhir",
+										"r4",
+										"Questionnaire"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Create: Questionnaire - Not Working",
+							"protocolProfileBehavior": {
+								"disabledSystemHeaders": {
+									"content-type": true
+								}
+							},
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{app_access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/fhir+json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"resourceType\": \"Questionnaire\",\n    \"extension\": [\n        {\n            \"url\": \"http://hl7.org/fhir/StructureDefinition/cqf-library\",\n            \"extension\": [\n                {\n                    \"url\": \"library\",\n                    \"valueBase64Binary\": \"bGlicmFyeSBBaW1vdmlnUHJpb3JBdXRoIHZlcnNpb24gJzEuMC4wJwoKdXNpbmcgRkhJUiB2ZXJzaW9uICc0LjAuMScKCmluY2x1ZGUgRkhJUkhlbHBlcnMgdmVyc2lvbiAnNC4wLjEnCgpjb250ZXh0IFBhdGllbnQKCi8vIERlZmluZSBDaHJvbmljIE1pZ3JhaW5lIERpYWdub3NpcwpkZWZpbmUgIkNocm9uaWMgTWlncmFpbmUgRGlhZ25vc2lzIjoKICBleGlzdHMgKAogICAgW0NvbmRpdGlvbjogIjM3Nzk2MDA5Il0gLy8gU05PTUVEIGNvZGUgZm9yIE1pZ3JhaW5lCiAgICB3aGVyZSBzdGF0dXMgPSAnYWN0aXZlJwogICkKCi8vIERlZmluZSBQcmV2aW91cyBQcmV2ZW50aXZlIE1pZ3JhaW5lIFRyZWF0bWVudHMKZGVmaW5lICJQcmV2aW91cyBQcmV2ZW50aXZlIFRyZWF0bWVudHMiOgogIGV4aXN0cyAoCiAgICBbTWVkaWNhdGlvblJlcXVlc3RdCiAgICB3aGVyZSBtZWRpY2F0aW9uIGluICgKICAgICAgJ1Byb3ByYW5vbG9sJywgJ1RvcGlyYW1hdGUnLCAnQW1pdHJpcHR5bGluZScsICdCb3RveCcsICdDR1JQIEluaGliaXRvcnMnCiAgICApCiAgICBhbmQgc3RhdHVzIGluICgnY29tcGxldGVkJywgJ2FjdGl2ZScpCiAgKQoKLy8gRGVmaW5lIE1pZ3JhaW5lIEZyZXF1ZW5jeSBDcml0ZXJpYQpkZWZpbmUgIk1pZ3JhaW5lIEZyZXF1ZW5jeSBIaWdoIjoKICBleGlzdHMgKAogICAgW09ic2VydmF0aW9uXQogICAgd2hlcmUgY29kZSA9ICdtaWdyYWluZS1mcmVxdWVuY3knIGFuZCB2YWx1ZVF1YW50aXR5LnZhbHVlID49IDQKICApCgovLyBEZWZpbmUgQ29udHJhaW5kaWNhdGlvbnMgdG8gT3RoZXIgTWlncmFpbmUgTWVkaWNhdGlvbnMKZGVmaW5lICJIYXMgQ29udHJhaW5kaWNhdGlvbnMiOgogIGV4aXN0cyAoCiAgICBbQ29uZGl0aW9uXQogICAgd2hlcmUgY29kZSBpbiAoCiAgICAgICdBbGxlcmd5IHRvIGJldGEgYmxvY2tlcnMnLCAnUmVuYWwgZGlzZWFzZScsICdMaXZlciBkaXNlYXNlJwogICAgKQogICkKCi8vIERlZmluZSBJbnN1cmFuY2UgQ292ZXJhZ2UgQ2hlY2sKZGVmaW5lICJJbnN1cmFuY2UgQ292ZXJhZ2UiOgogIGV4aXN0cyAoCiAgICBbQ292ZXJhZ2VdCiAgICB3aGVyZSBwYXlvci5yZWZlcmVuY2UgPSAnT3JnYW5pemF0aW9uL2luc3VyYW5jZS1vcmcnCiAgKQoKLy8gRGVmaW5lIENyaXRlcmlhIGZvciBBcHByb3ZhbApkZWZpbmUgIlByaW9yIEF1dGhvcml6YXRpb24gQXBwcm92ZWQiOgogICJDaHJvbmljIE1pZ3JhaW5lIERpYWdub3NpcyIgYW5kCiAgIlByZXZpb3VzIFByZXZlbnRpdmUgVHJlYXRtZW50cyIgYW5kCiAgIk1pZ3JhaW5lIEZyZXF1ZW5jeSBIaWdoIiBhbmQKICAoIkhhcyBDb250cmFpbmRpY2F0aW9ucyIgb3IgIkluc3VyYW5jZSBDb3ZlcmFnZSIp\"\n                }\n            ]\n        }\n    ],\n    \"title\": \"Prior Authorization for Aimovig 70 mg Injection\",\n    \"subjectType\": [\n        \"Patient\"\n    ],\n    \"id\": \"4\",\n    \"item\": [\n        {\n            \"type\": \"boolean\",\n            \"linkId\": \"1\",\n            \"text\": \"Has the patient been diagnosed with chronic migraines?\"\n        },\n        {\n            \"type\": \"boolean\",\n            \"linkId\": \"2\",\n            \"text\": \"Has the patient tried other preventive migraine treatments?\"\n        },\n        // {\n        //     \"type\": \"string\",\n        //     \"linkId\": \"3\",\n        //     \"text\": \"Please list previous medications used for migraine prevention.\"\n        // },\n        {\n            \"type\": \"integer\",\n            \"linkId\": \"4\",\n            \"text\": \"What is the frequency of migraines per month?\"\n        },\n        {\n            \"type\": \"boolean\",\n            \"linkId\": \"5\",\n            \"text\": \"Has the patient experienced side effects or lack of effectiveness with prior treatments?\"\n        },\n        {\n            \"type\": \"boolean\",\n            \"linkId\": \"6\",\n            \"text\": \"Does the patient have any contraindications to other migraine medications?\"\n        },\n        {\n            \"type\": \"boolean\",\n            \"linkId\": \"7\",\n            \"text\": \"Does the patient have insurance coverage for Aimovig?\"\n        }\n    ],\n    \"status\": \"active\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://{{gateway}}/{{fhir-api-context}}/{{fhir-api-version}}/fhir/r4/Questionnaire",
+									"protocol": "https",
+									"host": [
+										"{{gateway}}"
+									],
+									"path": [
+										"{{fhir-api-context}}",
+										"{{fhir-api-version}}",
+										"fhir",
+										"r4",
+										"Questionnaire"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Search: Questionnaire",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{app_access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "https://{{gateway}}/{{fhir-api-context}}/{{fhir-api-version}}/fhir/r4/Questionnaire?_id={{questionnaireid}}",
+									"protocol": "https",
+									"host": [
+										"{{gateway}}"
+									],
+									"path": [
+										"{{fhir-api-context}}",
+										"{{fhir-api-version}}",
+										"fhir",
+										"r4",
+										"Questionnaire"
+									],
+									"query": [
+										{
+											"key": "_id",
+											"value": "{{questionnaireid}}"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Questionnaire Package",
+							"protocolProfileBehavior": {
+								"disabledSystemHeaders": {
+									"content-type": true
+								}
+							},
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{app_access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/fhir+json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"resourceType\": \"Parameters\",\n  \"id\": \"questionnaire-package-request\",\n  \"parameter\": [\n    {\n      \"name\": \"coverage\",\n      \"resource\": {\n        \"resourceType\": \"Coverage\",\n        \"reference\": \"Coverage/367\"\n      }\n    },\n    {\n      \"name\": \"order\",\n      \"resource\": {\n        \"resourceType\": \"MedicationRequest\",\n        \"reference\": \"MedicationRequest/1234\"\n      }\n    }\n  ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://{{gateway}}/{{fhir-api-context}}/{{fhir-api-version}}/fhir/r4/Questionnaire/questionnaire-package",
+									"protocol": "https",
+									"host": [
+										"{{gateway}}"
+									],
+									"path": [
+										"{{fhir-api-context}}",
+										"{{fhir-api-version}}",
+										"fhir",
+										"r4",
+										"Questionnaire",
+										"questionnaire-package"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Organization",
+					"item": [
+						{
+							"name": "Get: Organization",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{app_access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "https://{{gateway}}/{{fhir-api-context}}/{{fhir-api-version}}/fhir/r4/Organization/{{orgid}}",
+									"protocol": "https",
+									"host": [
+										"{{gateway}}"
+									],
+									"path": [
+										"{{fhir-api-context}}",
+										"{{fhir-api-version}}",
+										"fhir",
+										"r4",
+										"Organization",
+										"{{orgid}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Create: Organization",
+							"protocolProfileBehavior": {
+								"disabledSystemHeaders": {
+									"content-type": true
+								}
+							},
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{app_access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/fhir+json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"resourceType\": \"Organization\",\n    \"identifier\": [\n        {\n            \"system\": \"http://hl7.org/fhir/sid/us-npi\",\n            \"value\": \"1234567890\"\n        }\n    ],\n    \"address\": [\n        {\n            \"country\": \"US\",\n            \"city\": \"Insuretown\",\n            \"line\": [\n                \"456 Insurance Ave\"\n            ],\n            \"postalCode\": \"90310\",\n            \"state\": \"CA\"\n        }\n    ],\n    \"active\": true,\n    \"type\": [\n        {\n            \"coding\": [\n                {\n                    \"system\": \"http://terminology.hl7.org/CodeSystem/organization-type\",\n                    \"code\": \"pay\",\n                    \"display\": \"Payer\"\n                }\n            ]\n        }\n    ],\n    \"meta\": {\n        \"profile\": [\n            \"http://hl7.org/fhir/us/core/StructureDefinition/us-core-organization\"\n        ]\n    },\n    \"contact\": [\n        {\n            \"purpose\": {\n                \"coding\": [\n                    {\n                        \"system\": \"http://terminology.hl7.org/CodeSystem/contactentity-type\",\n                        \"code\": \"ADMIN\",\n                        \"display\": \"Administrative\"\n                    }\n                ]\n            },\n            \"name\": {\n                \"family\": \"Doe\",\n                \"given\": [\n                    \"John\"\n                ]\n            },\n            \"telecom\": [\n                {\n                    \"system\": \"phone\",\n                    \"value\": \"+1 800-555-5678\",\n                    \"use\": \"work\"\n                },\n                {\n                    \"system\": \"email\",\n                    \"value\": \"johndoe@unitedcare.com\",\n                    \"use\": \"work\"\n                }\n            ]\n        }\n    ],\n    \"name\": \"UnitedCare Health Insurance\",\n    \"telecom\": [\n        {\n            \"system\": \"phone\",\n            \"use\": \"work\",\n            \"value\": \"+1 800-555-1234\"\n        },\n        {\n            \"system\": \"email\",\n            \"use\": \"work\",\n            \"value\": \"support@unitedcare.com\"\n        }\n    ],\n    \"id\": \"50\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://{{gateway}}/{{fhir-api-context}}/{{fhir-api-version}}/fhir/r4/Organization",
+									"protocol": "https",
+									"host": [
+										"{{gateway}}"
+									],
+									"path": [
+										"{{fhir-api-context}}",
+										"{{fhir-api-version}}",
+										"fhir",
+										"r4",
+										"Organization"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Search: Organization",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{app_access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "https://{{gateway}}/{{fhir-api-context}}/{{fhir-api-version}}/fhir/r4/Organization?type=payer",
+									"protocol": "https",
+									"host": [
+										"{{gateway}}"
+									],
+									"path": [
+										"{{fhir-api-context}}",
+										"{{fhir-api-version}}",
+										"fhir",
+										"r4",
+										"Organization"
+									],
+									"query": [
+										{
+											"key": "type",
+											"value": "payer"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Observation",
+					"item": [
+						{
+							"name": "Get: Observation",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{app_access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "https://{{gateway}}/{{fhir-api-context}}/{{fhir-api-version}}/fhir/r4/Observation/63231",
+									"protocol": "https",
+									"host": [
+										"{{gateway}}"
+									],
+									"path": [
+										"{{fhir-api-context}}",
+										"{{fhir-api-version}}",
+										"fhir",
+										"r4",
+										"Observation",
+										"63231"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Create: Observation",
+							"protocolProfileBehavior": {
+								"disabledSystemHeaders": {
+									"content-type": true
+								}
+							},
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{app_access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/fhir+json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n            \"resourceType\": \"Observation\",\n            \"id\": \"63228\",\n            \"meta\": {\n                \"profile\": [\n                    \"http://hl7.org/fhir/us/core/StructureDefinition/us-core-pulse-oximetry\"\n                ]\n            },\n            \"status\": \"final\",\n            \"category\": [\n                {\n                    \"coding\": [\n                        {\n                            \"system\": \"http://terminology.hl7.org/CodeSystem/observation-category\",\n                            \"code\": \"vital-signs\",\n                            \"display\": \"Vital Signs\"\n                        }\n                    ]\n                }\n            ],\n            \"code\": {\n                \"coding\": [\n                    {\n                        \"system\": \"http://loinc.org\",\n                        \"code\": \"59408-5\",\n                        \"display\": \"Oxygen saturation in Arterial blood by Pulse oximetry\"\n                    }\n                ],\n                \"text\": \"Oxygen Saturation\"\n            },\n            \"subject\": {\n                \"reference\": \"Patient/101\"\n            },\n            \"effectivePeriod\": {\n                \"start\": \"2025-06-10T08:40:00-05:00\",\n                \"end\": \"2025-06-10T08:45:00-05:00\"\n            },\n            \"effectiveDateTime\": \"2025-06-10T08:30:00-05:00\",\n            \"valueQuantity\": {\n                \"value\": 97,\n                \"unit\": \"%\",\n                \"system\": \"http://unitsofmeasure.org\",\n                \"code\": \"%\"\n            }\n        }",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://{{gateway}}/{{fhir-api-context}}/{{fhir-api-version}}/fhir/r4/Observation",
+									"protocol": "https",
+									"host": [
+										"{{gateway}}"
+									],
+									"path": [
+										"{{fhir-api-context}}",
+										"{{fhir-api-version}}",
+										"fhir",
+										"r4",
+										"Observation"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Search: Observation",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{app_access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "https://{{gateway}}/{{fhir-api-context}}/{{fhir-api-version}}/fhir/r4/Observation?patient={{patientid}}",
+									"protocol": "https",
+									"host": [
+										"{{gateway}}"
+									],
+									"path": [
+										"{{fhir-api-context}}",
+										"{{fhir-api-version}}",
+										"fhir",
+										"r4",
+										"Observation"
+									],
+									"query": [
+										{
+											"key": "patient",
+											"value": "{{patientid}}"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Practitioner",
+					"item": [
+						{
+							"name": "Get: Practitioner",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{app_access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "https://{{gateway}}/{{fhir-api-context}}/{{fhir-api-version}}/fhir/r4/Practitioner/456",
+									"protocol": "https",
+									"host": [
+										"{{gateway}}"
+									],
+									"path": [
+										"{{fhir-api-context}}",
+										"{{fhir-api-version}}",
+										"fhir",
+										"r4",
+										"Practitioner",
+										"456"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Create: Practitioner",
+							"protocolProfileBehavior": {
+								"disabledSystemHeaders": {
+									"content-type": true
+								}
+							},
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{app_access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/fhir+json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"resourceType\": \"Practitioner\",\n    \"identifier\": [\n        {\n            \"system\": \"http://hl7.org/fhir/sid/us-npi\",\n            \"value\": \"9876543210\"\n        }\n    ],\n    \"address\": [\n        {\n            \"country\": \"US\",\n            \"city\": \"MedCity\",\n            \"line\": [\n                \"123 Medical Plaza\"\n            ],\n            \"postalCode\": \"90410\",\n            \"state\": \"CA\"\n        }\n    ],\n    \"active\": true,\n    \"qualification\": [\n        {\n            \"identifier\": [\n                {\n                    \"system\": \"http://terminology.hl7.org/CodeSystem/v2-2.7\",\n                    \"value\": \"MD12345\"\n                }\n            ],\n            \"code\": {\n                \"coding\": [\n                    {\n                        \"system\": \"http://terminology.hl7.org/CodeSystem/v2-0360/2.7\",\n                        \"code\": \"MD\",\n                        \"display\": \"Medical Doctor\"\n                    }\n                ]\n            },\n            \"issuer\": {\n                \"display\": \"California Medical Board\"\n            }\n        }\n    ],\n    \"meta\": {\n        \"profile\": [\n            \"http://hl7.org/fhir/us/core/StructureDefinition/us-core-practitioner\"\n        ]\n    },\n    \"name\": [\n        {\n            \"given\": [\n                \"James\"\n            ],\n            \"prefix\": [\n                \"Dr.\"\n            ],\n            \"family\": \"Smith\"\n        }\n    ],\n    \"telecom\": [\n        {\n            \"system\": \"phone\",\n            \"use\": \"work\",\n            \"value\": \"+1 800-555-6789\"\n        },\n        {\n            \"system\": \"email\",\n            \"use\": \"work\",\n            \"value\": \"dr.james.smith@hospital.com\"\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://{{gateway}}/{{fhir-api-context}}/{{fhir-api-version}}/fhir/r4/Practitioner",
+									"protocol": "https",
+									"host": [
+										"{{gateway}}"
+									],
+									"path": [
+										"{{fhir-api-context}}",
+										"{{fhir-api-version}}",
+										"fhir",
+										"r4",
+										"Practitioner"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Search: Practitioner",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{app_access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "https://{{gateway}}/{{fhir-api-context}}/{{fhir-api-version}}/fhir/r4/Practitioner?name=james",
+									"protocol": "https",
+									"host": [
+										"{{gateway}}"
+									],
+									"path": [
+										"{{fhir-api-context}}",
+										"{{fhir-api-version}}",
+										"fhir",
+										"r4",
+										"Practitioner"
+									],
+									"query": [
+										{
+											"key": "name",
+											"value": "james"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Questionnaire Response",
+					"item": [
+						{
+							"name": "Get: QuestionnaireResponse",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{app_access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "https://{{gateway}}/{{fhir-api-context}}/{{fhir-api-version}}/fhir/r4/QuestionnaireResponse/1121",
+									"protocol": "https",
+									"host": [
+										"{{gateway}}"
+									],
+									"path": [
+										"{{fhir-api-context}}",
+										"{{fhir-api-version}}",
+										"fhir",
+										"r4",
+										"QuestionnaireResponse",
+										"1121"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Create: QuestionnaireResponse",
+							"protocolProfileBehavior": {
+								"disabledSystemHeaders": {
+									"content-type": true
+								}
+							},
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{app_access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/fhir+json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"resourceType\": \"QuestionnaireResponse\",\n    \"questionnaire\": \"Questionnaire/4\",\n    \"status\": \"completed\",\n    \"subject\": {\n        \"reference\": \"Patient/101\"\n    },\n    \"author\": {\n        \"reference\": \"PractitionerRole/456\"\n    },\n    \"item\": [\n        {\n            \"linkId\": \"1\",\n            \"text\": \"Has the patient been diagnosed with chronic migraines?\",\n            \"answer\": [\n                {\n                    \"valueQuestionnaireResponseBoolean\": true\n                }\n            ]\n        },\n        {\n            \"linkId\": \"2\",\n            \"text\": \"Has the patient tried other preventive migraine treatments?\",\n            \"answer\": [\n                {\n                    \"valueQuestionnaireResponseBoolean\": true\n                }\n            ]\n        },\n        {\n            \"linkId\": \"3\",\n            \"text\": \"Please list previous medications used for migraine prevention.\",\n            \"answer\": [\n                {\n                    \"valueQuestionnaireResponseString\": \"Propranolol, Topiramate, Botox\"\n                }\n            ]\n        },\n        {\n            \"linkId\": \"4\",\n            \"text\": \"What is the frequency of migraines per month?\",\n            \"answer\": [\n                {\n                    \"valueQuestionnaireResponseInteger\": 8\n                }\n            ]\n        },\n        {\n            \"linkId\": \"5\",\n            \"text\": \"Has the patient experienced side effects or lack of effectiveness with prior treatments?\",\n            \"answer\": [\n                {\n                    \"valueQuestionnaireResponseBoolean\": true\n                }\n            ]\n        },\n        {\n            \"linkId\": \"6\",\n            \"text\": \"Does the patient have any contraindications to other migraine medications?\",\n            \"answer\": [\n                {\n                    \"valueQuestionnaireResponseBoolean\": false\n                }\n            ]\n        },\n        {\n            \"linkId\": \"7\",\n            \"text\": \"Does the patient have insurance coverage for Aimovig?\",\n            \"answer\": [\n                {\n                    \"valueQuestionnaireResponseBoolean\": true\n                }\n            ]\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://{{gateway}}/{{fhir-api-context}}/{{fhir-api-version}}/fhir/r4/QuestionnaireResponse",
+									"protocol": "https",
+									"host": [
+										"{{gateway}}"
+									],
+									"path": [
+										"{{fhir-api-context}}",
+										"{{fhir-api-version}}",
+										"fhir",
+										"r4",
+										"QuestionnaireResponse"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Search: QuestionnaireResponse",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{app_access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "https://{{gateway}}/{{fhir-api-context}}/{{fhir-api-version}}/fhir/r4/QuestionnaireResponse?_id=1121",
+									"protocol": "https",
+									"host": [
+										"{{gateway}}"
+									],
+									"path": [
+										"{{fhir-api-context}}",
+										"{{fhir-api-version}}",
+										"fhir",
+										"r4",
+										"QuestionnaireResponse"
+									],
+									"query": [
+										{
+											"key": "_id",
+											"value": "1121"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Claim",
+					"item": [
+						{
+							"name": "Get: Claim",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{app_access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "https://{{gateway}}/{{fhir-api-context}}/{{fhir-api-version}}/fhir/r4/Claim/12341",
+									"protocol": "https",
+									"host": [
+										"{{gateway}}"
+									],
+									"path": [
+										"{{fhir-api-context}}",
+										"{{fhir-api-version}}",
+										"fhir",
+										"r4",
+										"Claim",
+										"12341"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Create: Claim",
+							"protocolProfileBehavior": {
+								"disabledSystemHeaders": {
+									"content-type": true
+								}
+							},
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{app_access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/fhir+json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"resourceType\": \"Claim\",\n    \"identifier\": [{\n        \"system\": \"http://hospital.org/claims\",\n        \"value\": \"PA-20250302-001\"\n    }],\n    \"status\": \"active\",\n    \"type\": {\n        \"coding\": [\n            {\n                \"system\": \"http://terminology.hl7.org/CodeSystem/claim-type\",\n                \"code\": \"professional\",\n                \"display\": \"Professional\"\n            }\n        ]\n    },\n    \"use\": \"preauthorization\",\n    \"priority\": {\n        \"coding\": [\n            {\n                \"system\": \"http://terminology.hl7.org/CodeSystem/processpriority\",\n                \"code\": \"stat\",\n                \"display\": \"Immediate\"\n            }\n        ]\n    },\n    \"patient\": {\n        \"reference\": \"Patient/101\"\n    },\n    \"created\": \"2025-03-02\",\n    \"insurer\": {\n        \"reference\": \"Organization/insurance-org\"\n    },\n    \"provider\": {\n        \"reference\": \"PractitionerRole/456\"\n    },\n    \"insurance\": [\n        {\n            \"sequence\": 1,\n            \"focal\": true,\n            \"coverage\": {\n                \"reference\": \"Coverage/insurance-coverage\"\n            }\n        }\n    ],\n    \"supportingInfo\": [\n        {\n            \"sequence\": 1,\n            \"category\": {\n                \"coding\": [\n                    {\n                        \"system\": \"http://terminology.hl7.org/CodeSystem/claiminformationcategory\",\n                        \"code\": \"info\",\n                        \"display\": \"Supporting Information\"\n                    }\n                ]\n            },\n            \"valueReference\": {\n                \"reference\": \"QuestionnaireResponse/1122\"\n            }\n        }\n    ],\n    \"item\": [\n        {\n            \"sequence\": 1,\n            \"category\": {\n                \"coding\": [\n                    {\n                        \"system\": \"http://terminology.hl7.org/CodeSystem/ex-benefitcategory\",\n                        \"code\": \"pharmacy\",\n                        \"display\": \"Pharmacy\"\n                    }\n                ]\n            },\n            \"productOrService\": {\n                \"coding\": [\n                    {\n                        \"system\": \"http://www.nlm.nih.gov/research/umls/rxnorm\",\n                        \"code\": \"1746007\",\n                        \"display\": \"Aimovig 70 mg Injection\"\n                    }\n                ]\n            },\n            \"servicedDate\": \"2025-03-02\",\n            \"unitPrice\": {\n                \"value\": 600.00,\n                \"currency\": \"USD\"\n            },\n            \"quantity\": {\n                \"value\": 1\n            }\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://{{gateway}}/{{fhir-api-context}}/{{fhir-api-version}}/fhir/r4/Claim",
+									"protocol": "https",
+									"host": [
+										"{{gateway}}"
+									],
+									"path": [
+										"{{fhir-api-context}}",
+										"{{fhir-api-version}}",
+										"fhir",
+										"r4",
+										"Claim"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Search: Claim",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{app_access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "https://{{gateway}}/{{fhir-api-context}}/{{fhir-api-version}}/fhir/r4/Claim?_id=12344",
+									"protocol": "https",
+									"host": [
+										"{{gateway}}"
+									],
+									"path": [
+										"{{fhir-api-context}}",
+										"{{fhir-api-version}}",
+										"fhir",
+										"r4",
+										"Claim"
+									],
+									"query": [
+										{
+											"key": "_id",
+											"value": "12344"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Submit: Claim",
+							"protocolProfileBehavior": {
+								"disabledSystemHeaders": {
+									"content-type": true
+								}
+							},
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{app_access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/fhir+json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"resourceType\": \"Parameters\",\n  \"parameter\": [\n    {\n      \"name\": \"resource\",\n      \"resource\": {\n        \"resourceType\": \"Bundle\",\n        \"type\": \"collection\",\n        \"entry\": [\n          {\n            \"resource\": {\n              \"resourceType\": \"Claim\",\n              \"identifier\": [\n                {\n                  \"system\": \"http://hospital.org/claims\",\n                  \"value\": \"PA-20250302-001\"\n                }\n              ],\n              \"status\": \"active\",\n              \"type\": {\n                \"coding\": [\n                  {\n                    \"system\": \"http://terminology.hl7.org/CodeSystem/claim-type\",\n                    \"code\": \"professional\",\n                    \"display\": \"Professional\"\n                  }\n                ]\n              },\n              \"use\": \"preauthorization\",\n              \"priority\": {\n                \"coding\": [\n                  {\n                    \"system\": \"http://terminology.hl7.org/CodeSystem/processpriority\",\n                    \"code\": \"stat\",\n                    \"display\": \"Immediate\"\n                  }\n                ]\n              },\n              \"patient\": {\n                \"reference\": \"Patient/101\"\n              },\n              \"created\": \"2025-03-02\",\n              \"insurer\": {\n                \"reference\": \"Organization/insurance-org\"\n              },\n              \"provider\": {\n                \"reference\": \"PractitionerRole/456\"\n              },\n              \"insurance\": [\n                {\n                  \"sequence\": 1,\n                  \"focal\": true,\n                  \"coverage\": {\n                    \"reference\": \"Coverage/insurance-coverage\"\n                  }\n                }\n              ],\n              \"supportingInfo\": [\n                {\n                  \"sequence\": 1,\n                  \"category\": {\n                    \"coding\": [\n                      {\n                        \"system\": \"http://terminology.hl7.org/CodeSystem/claiminformationcategory\",\n                        \"code\": \"info\",\n                        \"display\": \"Supporting Information\"\n                      }\n                    ]\n                  },\n                  \"valueReference\": {\n                    \"reference\": \"QuestionnaireResponse/1122\"\n                  }\n                }\n              ],\n              \"item\": [\n                {\n                  \"sequence\": 1,\n                  \"category\": {\n                    \"coding\": [\n                      {\n                        \"system\": \"http://terminology.hl7.org/CodeSystem/ex-benefitcategory\",\n                        \"code\": \"pharmacy\",\n                        \"display\": \"Pharmacy\"\n                      }\n                    ]\n                  },\n                  \"productOrService\": {\n                    \"coding\": [\n                      {\n                        \"system\": \"http://www.nlm.nih.gov/research/umls/rxnorm\",\n                        \"code\": \"1746007\",\n                        \"display\": \"Aimovig 70 mg Injection\"\n                      }\n                    ]\n                  },\n                  \"servicedDate\": \"2025-03-02\",\n                  \"unitPrice\": {\n                    \"value\": 600,\n                    \"currency\": \"USD\"\n                  },\n                  \"quantity\": {\n                    \"value\": 1\n                  }\n                }\n              ]\n            }\n          }\n        ]\n      }\n    }\n  ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://{{gateway}}/{{fhir-api-context}}/{{fhir-api-version}}/fhir/r4/Claim/$submit",
+									"protocol": "https",
+									"host": [
+										"{{gateway}}"
+									],
+									"path": [
+										"{{fhir-api-context}}",
+										"{{fhir-api-version}}",
+										"fhir",
+										"r4",
+										"Claim",
+										"$submit"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Coverage",
+					"item": [
+						{
+							"name": "Get: Coverage",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{app_access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "https://{{gateway}}/{{fhir-api-context}}/{{fhir-api-version}}/fhir/r4/Coverage/367",
+									"protocol": "https",
+									"host": [
+										"{{gateway}}"
+									],
+									"path": [
+										"{{fhir-api-context}}",
+										"{{fhir-api-version}}",
+										"fhir",
+										"r4",
+										"Coverage",
+										"367"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Create: Coverage",
+							"protocolProfileBehavior": {
+								"disabledSystemHeaders": {
+									"content-type": true
+								}
+							},
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{app_access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/fhir+json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"resourceType\": \"Coverage\",\n    \"network\": \"UC-Preferred-Network\",\n    \"payor\": [\n        {\n            \"reference\": \"Organization/50\"\n        }\n    ],\n    \"class\": [\n        {\n            \"name\": \"UnitedCare Standard Plan\",\n            \"type\": {\n                \"coding\": [\n                    {\n                        \"system\": \"http://terminology.hl7.org/CodeSystem/coverage-class\",\n                        \"code\": \"group\",\n                        \"display\": \"Group\"\n                    }\n                ]\n            },\n            \"value\": \"UC-Group-001\"\n        }\n    ],\n    \"costToBeneficiary\": [\n        {\n            \"valueMoney\": {\n                \"value\": 50.0,\n                \"currency\": \"USD\"\n            },\n            \"type\": {\n                \"coding\": [\n                    {\n                        \"system\": \"http://terminology.hl7.org/CodeSystem/coverage-copay-type\",\n                        \"code\": \"copay\",\n                        \"display\": \"CoPay\"\n                    }\n                ]\n            },\n            \"valueQuantity\": {\n                \"value\": 1.0,\n                \"unit\": \"visit\",\n                \"system\": \"http://unitsofmeasure.org\",\n                \"code\": \"visit\"\n            }\n        }\n    ],\n    \"period\": {\n        \"start\": \"2025-01-01\",\n        \"end\": \"2025-12-31\"\n    },\n    \"subscriber\": {\n        \"reference\": \"Patient/101\"\n    },\n    \"subscriberId\": \"UC-123456789\",\n    \"beneficiary\": {\n        \"reference\": \"Patient/101\"\n    },\n    \"meta\": {\n        \"profile\": [\n            \"http://hl7.org/fhir/StructureDefinition/Coverage\"\n        ]\n    },\n    \"status\": \"active\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://{{gateway}}/{{fhir-api-context}}/{{fhir-api-version}}/fhir/r4/Coverage",
+									"protocol": "https",
+									"host": [
+										"{{gateway}}"
+									],
+									"path": [
+										"{{fhir-api-context}}",
+										"{{fhir-api-version}}",
+										"fhir",
+										"r4",
+										"Coverage"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Search: Coverage",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{app_access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "https://{{gateway}}/{{fhir-api-context}}/{{fhir-api-version}}/fhir/r4/Coverage?_id=367",
+									"protocol": "https",
+									"host": [
+										"{{gateway}}"
+									],
+									"path": [
+										"{{fhir-api-context}}",
+										"{{fhir-api-version}}",
+										"fhir",
+										"r4",
+										"Coverage"
+									],
+									"query": [
+										{
+											"key": "_id",
+											"value": "367"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Explanation of Benefit",
+					"item": [
+						{
+							"name": "Get: ExplanationOfBenefit",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{app_access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "https://{{gateway}}/{{fhir-api-context}}/{{fhir-api-version}}/fhir/r4/ExplanationOfBenefit/14453",
+									"protocol": "https",
+									"host": [
+										"{{gateway}}"
+									],
+									"path": [
+										"{{fhir-api-context}}",
+										"{{fhir-api-version}}",
+										"fhir",
+										"r4",
+										"ExplanationOfBenefit",
+										"14453"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Create: ExplanationOfBenefit",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{app_access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/fhir+json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"resourceType\" : \"ExplanationOfBenefit\",\r\n  \"id\" : \"EOBOutpatient1\",\r\n  \"meta\" : {\r\n    \"lastUpdated\" : \"2019-12-12T09:14:11+00:00\",\r\n    \"profile\" : [\"http://hl7.org/fhir/us/carin-bb/StructureDefinition/C4BB-ExplanationOfBenefit-Outpatient-Institutional\"]\r\n  },\r\n  \"language\" : \"en-US\",\r\n  \"text\" : {\r\n    \"status\" : \"generated\",\r\n    \"div\" : \"<div xmlns=\\\"http://www.w3.org/1999/xhtml\\\" xml:lang=\\\"en-US\\\" lang=\\\"en-US\\\"><p class=\\\"res-header-id\\\"><b>Generated Narrative: ExplanationOfBenefit EOBOutpatient1</b></p><a name=\\\"EOBOutpatient1\\\"> </a><a name=\\\"hcEOBOutpatient1\\\"> </a><a name=\\\"EOBOutpatient1-en-US\\\"> </a><div style=\\\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\\\"><p style=\\\"margin-bottom: 0px\\\">Last updated: 2019-12-12 09:14:11+0000; Language: en-US</p><p style=\\\"margin-bottom: 0px\\\">Profile: <a href=\\\"StructureDefinition-C4BB-ExplanationOfBenefit-Outpatient-Institutional.html\\\">C4BB ExplanationOfBenefit Outpatient Institutionalversion: null2.1.0)</a></p></div><p><b>identifier</b>: Unique Claim ID/AW123412341234123412341234123412</p><p><b>status</b>: Active</p><p><b>type</b>: <span title=\\\"Codes:{http://terminology.hl7.org/CodeSystem/claim-type institutional}\\\">Institutional</span></p><p><b>subType</b>: <span title=\\\"Codes:{http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBInstitutionalClaimSubType outpatient}\\\">Outpatient</span></p><p><b>use</b>: Claim</p><p><b>patient</b>: <a href=\\\"Patient-Patient2.html\\\">Member 01 Test  Male, DoB: 1943-01-01 ( An identifier for the insured of an insurance policy (this insured always has a subscriber), usually assigned by the insurance carrier.:\\u00a088800933501)</a></p><p><b>billablePeriod</b>: 2019-01-01 --&gt; 2019-10-31</p><p><b>created</b>: 2019-11-02 00:00:00+0000</p><p><b>insurer</b>: <a href=\\\"Organization-Payer1.html\\\">Organization Payer 1</a></p><p><b>provider</b>: <a href=\\\"Organization-ProviderOrganization1.html\\\">Orange Medical Group</a></p><p><b>outcome</b>: Partial Processing</p><h3>CareTeams</h3><table class=\\\"grid\\\"><tr><td style=\\\"display: none\\\">-</td><td><b>Sequence</b></td><td><b>Provider</b></td><td><b>Role</b></td><td><b>Qualification</b></td></tr><tr><td style=\\\"display: none\\\">*</td><td>1</td><td><a href=\\\"Organization-ProviderOrganization1.html\\\">Organization Orange Medical Group</a></td><td><span title=\\\"Codes:{http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBClaimCareTeamRole rendering}\\\">Rendering provider</span></td><td><span title=\\\"Codes:{http://nucc.org/provider-taxonomy 364SX0200X}\\\">Oncology Clinical Nurse Specialist</span></td></tr></table><blockquote><p><b>supportingInfo</b></p><p><b>sequence</b>: 2</p><p><b>category</b>: <span title=\\\"Codes:{http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBSupportingInfoType clmrecvddate}\\\">Claim Received Date</span></p><p><b>timing</b>: 2019-11-30</p></blockquote><blockquote><p><b>supportingInfo</b></p><p><b>sequence</b>: 3</p><p><b>category</b>: <span title=\\\"Codes:{http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBSupportingInfoType typeofbill}\\\">Type of Bill</span></p><p><b>code</b>: <span title=\\\"Codes:{https://www.nubc.org/CodeSystem/TypeOfBill Dummy}\\\">Dummy</span></p></blockquote><blockquote><p><b>supportingInfo</b></p><p><b>sequence</b>: 4</p><p><b>category</b>: <span title=\\\"Codes:{http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBSupportingInfoType pointoforigin}\\\">Point Of Origin</span></p><p><b>code</b>: <span title=\\\"Codes:{https://www.nubc.org/CodeSystem/PointOfOrigin Dummy}\\\">Dummy</span></p></blockquote><blockquote><p><b>supportingInfo</b></p><p><b>sequence</b>: 5</p><p><b>category</b>: <span title=\\\"Codes:{http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBSupportingInfoType admtype}\\\">Admission Type</span></p><p><b>code</b>: <span title=\\\"Codes:{https://www.nubc.org/CodeSystem/PriorityTypeOfAdmitOrVisit Dummy}\\\">Dummy</span></p></blockquote><blockquote><p><b>supportingInfo</b></p><p><b>sequence</b>: 6</p><p><b>category</b>: <span title=\\\"Codes:{http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBSupportingInfoType discharge-status}\\\">Discharge Status</span></p><p><b>code</b>: <span title=\\\"Codes:{https://www.nubc.org/CodeSystem/PatDischargeStatus Dummy}\\\">Dummy</span></p></blockquote><blockquote><p><b>supportingInfo</b></p><p><b>sequence</b>: 7</p><p><b>category</b>: <span title=\\\"Codes:{http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBSupportingInfoType medicalrecordnumber}\\\">Medical Record Number</span></p><p><b>value</b>: 1234-234-1243-12345678901m</p></blockquote><blockquote><p><b>supportingInfo</b></p><p><b>sequence</b>: 8</p><p><b>category</b>: <span title=\\\"Codes:{http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBSupportingInfoType patientaccountnumber}\\\">Patient Account Number</span></p><p><b>value</b>: 1234-234-1243-12345678901a</p></blockquote><h3>Diagnoses</h3><table class=\\\"grid\\\"><tr><td style=\\\"display: none\\\">-</td><td><b>Sequence</b></td><td><b>Diagnosis[x]</b></td><td><b>Type</b></td></tr><tr><td style=\\\"display: none\\\">*</td><td>1</td><td><span title=\\\"Codes:{http://hl7.org/fhir/sid/icd-10-cm S06.0X1A}\\\">Concussion w LOC of 30 minutes or less, init</span></td><td><span title=\\\"Codes:{http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBClaimDiagnosisType patientreasonforvisit}\\\">Patient Reason for Visit</span></td></tr></table><h3>Insurances</h3><table class=\\\"grid\\\"><tr><td style=\\\"display: none\\\">-</td><td><b>Focal</b></td><td><b>Coverage</b></td></tr><tr><td style=\\\"display: none\\\">*</td><td>true</td><td><a href=\\\"Coverage-Coverage3.html\\\">Coverage: identifier = Member Number; status = active; type = health insurance plan policy; subscriberId = 12345678901; dependent = 01; relationship = Self; period = 2019-01-01 --&gt; 2019-10-31; network = XYZ123-UPMC CONSUMER ADVA</a></td></tr></table><h3>Items</h3><table class=\\\"grid\\\"><tr><td style=\\\"display: none\\\">-</td><td><b>Sequence</b></td><td><b>Revenue</b></td><td><b>ProductOrService</b></td><td><b>Serviced[x]</b></td></tr><tr><td style=\\\"display: none\\\">*</td><td>1</td><td><span title=\\\"Codes:{https://www.nubc.org/CodeSystem/RevenueCodes Dummy}\\\">Dummy</span></td><td><span title=\\\"Codes:{http://terminology.hl7.org/CodeSystem/data-absent-reason not-applicable}\\\">Not Applicable</span></td><td>2019-11-02</td></tr></table><blockquote><p><b>adjudication</b></p><p><b>category</b>: <span title=\\\"Codes:{http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudicationDiscriminator benefitpaymentstatus}\\\">Benefit Payment Status</span></p><p><b>reason</b>: <span title=\\\"Codes:{http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBPayerAdjudicationStatus innetwork}\\\">In Network</span></p></blockquote><blockquote><p><b>adjudication</b></p><p><b>category</b>: <span title=\\\"Codes:{http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudicationDiscriminator billingnetworkstatus}\\\">Billing Network Status</span></p><p><b>reason</b>: <span title=\\\"Codes:{http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBPayerAdjudicationStatus innetwork}\\\">In Network</span></p></blockquote><blockquote><p><b>adjudication</b></p><p><b>category</b>: <span title=\\\"Codes:{http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication paidtoprovider}\\\">Payment Amount</span></p><h3>Amounts</h3><table class=\\\"grid\\\"><tr><td style=\\\"display: none\\\">-</td><td><b>Value</b></td><td><b>Currency</b></td></tr><tr><td style=\\\"display: none\\\">*</td><td>620</td><td>United States dollar</td></tr></table></blockquote><blockquote><p><b>adjudication</b></p><p><b>category</b>: <span title=\\\"Codes:{http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication paidbypatient}\\\">Patient Pay Amount</span></p><h3>Amounts</h3><table class=\\\"grid\\\"><tr><td style=\\\"display: none\\\">-</td><td><b>Value</b></td></tr><tr><td style=\\\"display: none\\\">*</td><td>0</td></tr></table></blockquote><blockquote><p><b>total</b></p><p><b>category</b>: <span title=\\\"Codes:{http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication paidtoprovider}\\\">Payment Amount</span></p><h3>Amounts</h3><table class=\\\"grid\\\"><tr><td style=\\\"display: none\\\">-</td><td><b>Value</b></td><td><b>Currency</b></td></tr><tr><td style=\\\"display: none\\\">*</td><td>620</td><td>United States dollar</td></tr></table></blockquote><blockquote><p><b>total</b></p><p><b>category</b>: <span title=\\\"Codes:{http://terminology.hl7.org/CodeSystem/adjudication submitted}\\\">Submitted Amount</span></p><h3>Amounts</h3><table class=\\\"grid\\\"><tr><td style=\\\"display: none\\\">-</td><td><b>Value</b></td><td><b>Currency</b></td></tr><tr><td style=\\\"display: none\\\">*</td><td>2650</td><td>United States dollar</td></tr></table></blockquote><blockquote><p><b>total</b></p><p><b>category</b>: <span title=\\\"Codes:{http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication paidbypatient}\\\">Patient Pay Amount</span></p><h3>Amounts</h3><table class=\\\"grid\\\"><tr><td style=\\\"display: none\\\">-</td><td><b>Value</b></td><td><b>Currency</b></td></tr><tr><td style=\\\"display: none\\\">*</td><td>0</td><td>United States dollar</td></tr></table></blockquote></div>\"\r\n  },\r\n  \"identifier\" : [{\r\n    \"type\" : {\r\n      \"coding\" : [{\r\n        \"system\" : \"http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBIdentifierType\",\r\n        \"code\" : \"uc\"\r\n      }]\r\n    },\r\n    \"system\" : \"https://www.xxxplan.com/fhir/EOBIdentifier\",\r\n    \"value\" : \"AW123412341234123412341234123412\"\r\n  }],\r\n  \"status\" : \"active\",\r\n  \"type\" : {\r\n    \"coding\" : [{\r\n      \"system\" : \"http://terminology.hl7.org/CodeSystem/claim-type\",\r\n      \"code\" : \"institutional\"\r\n    }],\r\n    \"text\" : \"Institutional\"\r\n  },\r\n  \"subType\" : {\r\n    \"coding\" : [{\r\n      \"system\" : \"http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBInstitutionalClaimSubType\",\r\n      \"code\" : \"outpatient\"\r\n    }],\r\n    \"text\" : \"Outpatient\"\r\n  },\r\n  \"use\" : \"claim\",\r\n  \"patient\" : {\r\n    \"reference\" : \"Patient/Patient2\"\r\n  },\r\n  \"billablePeriod\" : {\r\n    \"start\" : \"2019-01-01\",\r\n    \"end\" : \"2019-10-31\"\r\n  },\r\n  \"created\" : \"2019-11-02T00:00:00+00:00\",\r\n  \"insurer\" : {\r\n    \"reference\" : \"Organization/Payer1\",\r\n    \"display\" : \"Organization Payer 1\"\r\n  },\r\n  \"provider\" : {\r\n    \"reference\" : \"Organization/ProviderOrganization1\",\r\n    \"display\" : \"Orange Medical Group\"\r\n  },\r\n  \"outcome\" : \"partial\",\r\n  \"careTeam\" : [{\r\n    \"sequence\" : 1,\r\n    \"provider\" : {\r\n      \"reference\" : \"Organization/ProviderOrganization1\"\r\n    },\r\n    \"role\" : {\r\n      \"coding\" : [{\r\n        \"system\" : \"http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBClaimCareTeamRole\",\r\n        \"code\" : \"rendering\",\r\n        \"display\" : \"Rendering provider\"\r\n      }]\r\n    },\r\n    \"qualification\" : {\r\n      \"coding\" : [{\r\n        \"system\" : \"http://nucc.org/provider-taxonomy\",\r\n        \"code\" : \"364SX0200X\",\r\n        \"display\" : \"Oncology Clinical Nurse Specialist\"\r\n      }]\r\n    }\r\n  }],\r\n  \"supportingInfo\" : [{\r\n    \"sequence\" : 2,\r\n    \"category\" : {\r\n      \"coding\" : [{\r\n        \"system\" : \"http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBSupportingInfoType\",\r\n        \"code\" : \"clmrecvddate\"\r\n      }]\r\n    },\r\n    \"timingDate\" : \"2019-11-30\"\r\n  },\r\n  {\r\n    \"sequence\" : 3,\r\n    \"category\" : {\r\n      \"coding\" : [{\r\n        \"system\" : \"http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBSupportingInfoType\",\r\n        \"code\" : \"typeofbill\"\r\n      }]\r\n    },\r\n    \"code\" : {\r\n      \"coding\" : [{\r\n        \"system\" : \"https://www.nubc.org/CodeSystem/TypeOfBill\",\r\n        \"code\" : \"Dummy\"\r\n      }]\r\n    }\r\n  },\r\n  {\r\n    \"sequence\" : 4,\r\n    \"category\" : {\r\n      \"coding\" : [{\r\n        \"system\" : \"http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBSupportingInfoType\",\r\n        \"code\" : \"pointoforigin\"\r\n      }]\r\n    },\r\n    \"code\" : {\r\n      \"coding\" : [{\r\n        \"system\" : \"https://www.nubc.org/CodeSystem/PointOfOrigin\",\r\n        \"code\" : \"Dummy\"\r\n      }]\r\n    }\r\n  },\r\n  {\r\n    \"sequence\" : 5,\r\n    \"category\" : {\r\n      \"coding\" : [{\r\n        \"system\" : \"http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBSupportingInfoType\",\r\n        \"code\" : \"admtype\"\r\n      }]\r\n    },\r\n    \"code\" : {\r\n      \"coding\" : [{\r\n        \"system\" : \"https://www.nubc.org/CodeSystem/PriorityTypeOfAdmitOrVisit\",\r\n        \"code\" : \"Dummy\"\r\n      }]\r\n    }\r\n  },\r\n  {\r\n    \"sequence\" : 6,\r\n    \"category\" : {\r\n      \"coding\" : [{\r\n        \"system\" : \"http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBSupportingInfoType\",\r\n        \"code\" : \"discharge-status\"\r\n      }]\r\n    },\r\n    \"code\" : {\r\n      \"coding\" : [{\r\n        \"system\" : \"https://www.nubc.org/CodeSystem/PatDischargeStatus\",\r\n        \"code\" : \"Dummy\"\r\n      }]\r\n    }\r\n  },\r\n  {\r\n    \"sequence\" : 7,\r\n    \"category\" : {\r\n      \"coding\" : [{\r\n        \"system\" : \"http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBSupportingInfoType\",\r\n        \"code\" : \"medicalrecordnumber\"\r\n      }]\r\n    },\r\n    \"valueString\" : \"1234-234-1243-12345678901m\"\r\n  },\r\n  {\r\n    \"sequence\" : 8,\r\n    \"category\" : {\r\n      \"coding\" : [{\r\n        \"system\" : \"http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBSupportingInfoType\",\r\n        \"code\" : \"patientaccountnumber\"\r\n      }]\r\n    },\r\n    \"valueString\" : \"1234-234-1243-12345678901a\"\r\n  }],\r\n  \"diagnosis\" : [{\r\n    \"sequence\" : 1,\r\n    \"diagnosisCodeableConcept\" : {\r\n      \"coding\" : [{\r\n        \"system\" : \"http://hl7.org/fhir/sid/icd-10-cm\",\r\n        \"code\" : \"S06.0X1A\"\r\n      }]\r\n    },\r\n    \"type\" : [{\r\n      \"coding\" : [{\r\n        \"system\" : \"http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBClaimDiagnosisType\",\r\n        \"code\" : \"patientreasonforvisit\"\r\n      }]\r\n    }]\r\n  }],\r\n  \"insurance\" : [{\r\n    \"focal\" : true,\r\n    \"coverage\" : {\r\n      \"reference\" : \"Coverage/Coverage3\"\r\n    }\r\n  }],\r\n  \"item\" : [{\r\n    \"sequence\" : 1,\r\n    \"revenue\" : {\r\n      \"coding\" : [{\r\n        \"system\" : \"https://www.nubc.org/CodeSystem/RevenueCodes\",\r\n        \"code\" : \"Dummy\"\r\n      }]\r\n    },\r\n    \"productOrService\" : {\r\n      \"coding\" : [{\r\n        \"system\" : \"http://terminology.hl7.org/CodeSystem/data-absent-reason\",\r\n        \"code\" : \"not-applicable\",\r\n        \"display\" : \"Not Applicable\"\r\n      }]\r\n    },\r\n    \"servicedDate\" : \"2019-11-02\"\r\n  }],\r\n  \"adjudication\" : [{\r\n    \"category\" : {\r\n      \"coding\" : [{\r\n        \"system\" : \"http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudicationDiscriminator\",\r\n        \"code\" : \"benefitpaymentstatus\"\r\n      }]\r\n    },\r\n    \"reason\" : {\r\n      \"coding\" : [{\r\n        \"system\" : \"http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBPayerAdjudicationStatus\",\r\n        \"code\" : \"innetwork\"\r\n      }]\r\n    }\r\n  },\r\n  {\r\n    \"category\" : {\r\n      \"coding\" : [{\r\n        \"system\" : \"http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudicationDiscriminator\",\r\n        \"code\" : \"billingnetworkstatus\"\r\n      }]\r\n    },\r\n    \"reason\" : {\r\n      \"coding\" : [{\r\n        \"system\" : \"http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBPayerAdjudicationStatus\",\r\n        \"code\" : \"innetwork\"\r\n      }]\r\n    }\r\n  },\r\n  {\r\n    \"category\" : {\r\n      \"coding\" : [{\r\n        \"system\" : \"http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication\",\r\n        \"code\" : \"paidtoprovider\"\r\n      }],\r\n      \"text\" : \"Payment Amount\"\r\n    },\r\n    \"amount\" : {\r\n      \"value\" : 620,\r\n      \"currency\" : \"USD\"\r\n    }\r\n  },\r\n  {\r\n    \"category\" : {\r\n      \"coding\" : [{\r\n        \"system\" : \"http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication\",\r\n        \"code\" : \"paidbypatient\"\r\n      }],\r\n      \"text\" : \"Patient Pay Amount\"\r\n    },\r\n    \"amount\" : {\r\n      \"value\" : 0\r\n    }\r\n  }],\r\n  \"total\" : [{\r\n    \"category\" : {\r\n      \"coding\" : [{\r\n        \"system\" : \"http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication\",\r\n        \"code\" : \"paidtoprovider\"\r\n      }],\r\n      \"text\" : \"Payment Amount\"\r\n    },\r\n    \"amount\" : {\r\n      \"value\" : 620,\r\n      \"currency\" : \"USD\"\r\n    }\r\n  },\r\n  {\r\n    \"category\" : {\r\n      \"coding\" : [{\r\n        \"system\" : \"http://terminology.hl7.org/CodeSystem/adjudication\",\r\n        \"code\" : \"submitted\"\r\n      }],\r\n      \"text\" : \"Submitted Amount\"\r\n    },\r\n    \"amount\" : {\r\n      \"value\" : 2650,\r\n      \"currency\" : \"USD\"\r\n    }\r\n  },\r\n  {\r\n    \"category\" : {\r\n      \"coding\" : [{\r\n        \"system\" : \"http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBAdjudication\",\r\n        \"code\" : \"paidbypatient\"\r\n      }],\r\n      \"text\" : \"Patient Pay Amount\"\r\n    },\r\n    \"amount\" : {\r\n      \"value\" : 0,\r\n      \"currency\" : \"USD\"\r\n    }\r\n  }]\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://{{gateway}}/{{fhir-api-context}}/{{fhir-api-version}}/fhir/r4/ExplanationOfBenefit",
+									"protocol": "https",
+									"host": [
+										"{{gateway}}"
+									],
+									"path": [
+										"{{fhir-api-context}}",
+										"{{fhir-api-version}}",
+										"fhir",
+										"r4",
+										"ExplanationOfBenefit"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Search: ExplanationOfBenefit",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{app_access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "https://{{gateway}}/{{fhir-api-context}}/{{fhir-api-version}}/fhir/r4/ExplanationOfBenefit?_id=14453",
+									"protocol": "https",
+									"host": [
+										"{{gateway}}"
+									],
+									"path": [
+										"{{fhir-api-context}}",
+										"{{fhir-api-version}}",
+										"fhir",
+										"r4",
+										"ExplanationOfBenefit"
+									],
+									"query": [
+										{
+											"key": "_id",
+											"value": "14453"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Medication Request",
+					"item": [
+						{
+							"name": "Get: MedicationRequest",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{app_access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "https://{{gateway}}/{{fhir-api-context}}/{{fhir-api-version}}/fhir/r4/MedicationRequest/111112",
+									"protocol": "https",
+									"host": [
+										"{{gateway}}"
+									],
+									"path": [
+										"{{fhir-api-context}}",
+										"{{fhir-api-version}}",
+										"fhir",
+										"r4",
+										"MedicationRequest",
+										"111112"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Create: MedicationRequest",
+							"protocolProfileBehavior": {
+								"disabledSystemHeaders": {
+									"content-type": true
+								}
+							},
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{app_access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/fhir+json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"resourceType\": \"MedicationRequest\",\n    \"subject\": {\n        \"reference\": \"Patient/101\"\n    },\n    \"medicationReference\": {\n        \"reference\": \"Medication/aimovig-70mg\"\n    },\n    \"dispenseRequest\": {\n        \"quantity\": {\n            \"value\": 1.0,\n            \"unit\": \"injection\",\n            \"system\": \"http://unitsofmeasure.org\",\n            \"code\": \"injection\"\n        },\n        \"expectedSupplyDuration\": {\n            \"unit\": \"days\",\n            \"system\": \"http://unitsofmeasure.org\",\n            \"code\": \"d\",\n            \"value\": 30.0\n        }\n    },\n    \"requester\": {\n        \"reference\": \"Practitioner/456\"\n    },\n    \"authoredOn\": \"2025-03-02\",\n    \"medicationCodeableConcept\": {\n        \"coding\": [\n            {\n                \"system\": \"http://www.nlm.nih.gov/research/umls/rxnorm\",\n                \"code\": \"1746007\",\n                \"display\": \"Aimovig 70 mg Injection\"\n            }\n        ],\n        \"text\": \"Aimovig 70 mg Injection\"\n    },\n    \"intent\": \"order\",\n    \"dosageInstruction\": [\n        {\n            \"timing\": {\n                \"repeat\": {\n                    \"boundsPeriod\": {\n                        \"start\": \"2025-03-02\"\n                    },\n                    \"frequency\": 1,\n                    \"period\": 1.0,\n                    \"periodUnit\": \"mo\"\n                }\n            },\n            \"doseAndRate\": [\n                {\n                    \"doseQuantity\": {\n                        \"value\": 70.0,\n                        \"unit\": \"mg\",\n                        \"system\": \"http://unitsofmeasure.org\",\n                        \"code\": \"mg\"\n                    }\n                }\n            ],\n            \"text\": \"Inject 70 mg subcutaneously once a month\"\n        }\n    ],\n    \"status\": \"active\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://{{gateway}}/{{fhir-api-context}}/{{fhir-api-version}}/fhir/r4/MedicationRequest",
+									"protocol": "https",
+									"host": [
+										"{{gateway}}"
+									],
+									"path": [
+										"{{fhir-api-context}}",
+										"{{fhir-api-version}}",
+										"fhir",
+										"r4",
+										"MedicationRequest"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Search: MedicationRequest",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{app_access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "https://{{gateway}}/{{fhir-api-context}}/{{fhir-api-version}}/fhir/r4/MedicationRequest?_id=111112",
+									"protocol": "https",
+									"host": [
+										"{{gateway}}"
+									],
+									"path": [
+										"{{fhir-api-context}}",
+										"{{fhir-api-version}}",
+										"fhir",
+										"r4",
+										"MedicationRequest"
+									],
+									"query": [
+										{
+											"key": "_id",
+											"value": "111112"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Claim Response",
+					"item": [
+						{
+							"name": "Get: ClaimResponse",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{app_access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "https://{{gateway}}/{{fhir-api-context}}/{{fhir-api-version}}/fhir/r4/ClaimResponse/{{id}}",
+									"protocol": "https",
+									"host": [
+										"{{gateway}}"
+									],
+									"path": [
+										"{{fhir-api-context}}",
+										"{{fhir-api-version}}",
+										"fhir",
+										"r4",
+										"ClaimResponse",
+										"{{id}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Create: ClaimResponse",
+							"protocolProfileBehavior": {
+								"disabledSystemHeaders": {
+									"content-type": true
+								}
+							},
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{app_access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/fhir+json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"resourceType\": \"ClaimResponse\",\n    \"id\": \"12344\",\n    \"status\": \"active\",\n    \"type\": {\n        \"coding\": [\n            {\n                \"system\": \"http://terminology.hl7.org/CodeSystem/claim-type\",\n                \"code\": \"professional\",\n                \"display\": \"Professional\"\n            }\n        ]\n    },\n    \"use\": \"preauthorization\",\n    \"patient\": {\n        \"reference\": \"Patient/101\"\n    },\n    \"created\": \"2025-03-02\",\n    \"insurer\": {\n        \"reference\": \"Organization/insurance-org\"\n    },\n    \"request\": {\n        \"reference\": \"Claim/12344\"\n    },\n    \"outcome\": \"complete\",\n    \"disposition\": \"Prior authorization approved for Aimovig 70 mg Injection.\",\n    \"preAuthRef\": \"PA-20250302-001\",\n    \"preAuthPeriod\": {\n        \"start\": \"2025-03-02\",\n        \"end\": \"2025-06-02\"\n    },\n    \"payment\": {\n        \"type\": {\n            \"coding\": [\n                {\n                    \"system\": \"http://terminology.hl7.org/CodeSystem/payment-type\",\n                    \"code\": \"complete\",\n                    \"display\": \"Payment complete\"\n                }\n            ]\n        },\n        \"adjustmentReason\": {\n            \"coding\": [\n                {\n                    \"system\": \"http://terminology.hl7.org/CodeSystem/claim-adjustment-reason\",\n                    \"code\": \"45\",\n                    \"display\": \"Charge exceeds fee schedule/maximum allowable or contracted/legislated fee arrangement\"\n                }\n            ]\n        },\n        \"amount\": {\n            \"value\": 600.00,\n            \"currency\": \"USD\"\n        },\n        \"date\": \"2025-03-03\"\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://{{gateway}}/{{fhir-api-context}}/{{fhir-api-version}}/fhir/r4/ClaimResponse",
+									"protocol": "https",
+									"host": [
+										"{{gateway}}"
+									],
+									"path": [
+										"{{fhir-api-context}}",
+										"{{fhir-api-version}}",
+										"fhir",
+										"r4",
+										"ClaimResponse"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Search: ClaimResponse",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{app_access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "https://{{gateway}}/{{fhir-api-context}}/{{fhir-api-version}}/fhir/r4/ClaimResponse?patient=Patient/101&created=le2025-03-03&_id=12346",
+									"protocol": "https",
+									"host": [
+										"{{gateway}}"
+									],
+									"path": [
+										"{{fhir-api-context}}",
+										"{{fhir-api-version}}",
+										"fhir",
+										"r4",
+										"ClaimResponse"
+									],
+									"query": [
+										{
+											"key": "patient",
+											"value": "Patient/101"
+										},
+										{
+											"key": "use",
+											"value": "preauthorization",
+											"disabled": true
+										},
+										{
+											"key": "created",
+											"value": "le2025-03-03"
+										},
+										{
+											"key": "_id",
+											"value": "12346"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Member-Match",
+					"item": [
+						{
+							"name": "match-member",
+							"protocolProfileBehavior": {
+								"disabledSystemHeaders": {}
+							},
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{app_access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/fhir+json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"resourceType\": \"Parameters\",\n    \"parameter\": [\n        {\n            \"resource\": {\n                \"resourceType\": \"Patient\",\n                \"extension\": [\n                    {\n                        \"url\": \"http://hl7.org/fhir/us/core/StructureDefinition/us-core-race\",\n                        \"extension\": [\n                            {\n                                \"url\": \"ombCategory\",\n                                \"valueCoding\": {\n                                    \"system\": \"urn:oid:2.16.840.1.113883.6.238\",\n                                    \"code\": \"2106-3\",\n                                    \"display\": \"White\"\n                                }\n                            },\n                            {\n                                \"url\": \"text\",\n                                \"valueString\": \"Mixed\"\n                            }\n                        ]\n                    },\n                    {\n                        \"url\": \"http://hl7.org/fhir/us/core/StructureDefinition/us-core-ethnicity\",\n                        \"extension\": [\n                            {\n                                \"url\": \"ombCategory\",\n                                \"valueCoding\": {\n                                    \"system\": \"urn:oid:2.16.840.1.113883.6.238\",\n                                    \"code\": \"2135-2\",\n                                    \"display\": \"Hispanic or Latino\"\n                                }\n                            },\n                            {\n                                \"url\": \"text\",\n                                \"valueString\": \"Hispanic or Latino\"\n                            }\n                        ]\n                    },\n                    {\n                        \"url\": \"http://hl7.org/fhir/us/core/StructureDefinition/us-core-birthsex\",\n                        \"valueCode\": \"M\"\n                    },\n                    {\n                        \"url\": \"http://hl7.org/fhir/us/core/StructureDefinition/us-core-genderIdentity\",\n                        \"valueCodeableConcept\": {\n                            \"coding\": [\n                                {\n                                    \"system\": \"http://terminology.hl7.org/CodeSystem/v3-NullFlavor\",\n                                    \"code\": \"ASKU\",\n                                    \"display\": \"asked but unknown\"\n                                }\n                            ],\n                            \"text\": \"asked but unknown\"\n                        }\n                    }\n                ],\n                \"gender\": \"male\",\n                \"telecom\": [\n                    {\n                        \"system\": \"phone\",\n                        \"use\": \"home\",\n                        \"value\": \"555-555-5555\"\n                    },\n                    {\n                        \"system\": \"email\",\n                        \"value\": \"amy.shaw@example.com\"\n                    }\n                ],\n                \"id\": \"101\",\n                \"identifier\": [\n                    {\n                        \"system\": \"http://hospital.smarthealthit.org\",\n                        \"use\": \"usual\",\n                        \"type\": {\n                            \"coding\": [\n                                {\n                                    \"system\": \"http://terminology.hl7.org/CodeSystem/v2-0203\",\n                                    \"code\": \"MR\",\n                                    \"display\": \"Medical Record Number\"\n                                }\n                            ],\n                            \"text\": \"Medical Record Number\"\n                        },\n                        \"value\": \"1032702\"\n                    }\n                ],\n                \"address\": [\n                    {\n                        \"country\": \"US\",\n                        \"period\": {\n                            \"start\": \"2020-07-22\"\n                        },\n                        \"city\": \"Mounds\",\n                        \"line\": [\n                            \"183 Mountain View St\"\n                        ],\n                        \"postalCode\": \"74048\",\n                        \"state\": \"OK\"\n                    }\n                ],\n                \"birthDate\": \"1979-04-15\",\n                \"meta\": {\n                    \"versionId\": \"1\",\n                    \"lastUpdated\": \"2021-06-01T00:00:00Z\",\n                    \"profile\": [\n                        \"http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient\"\n                    ]\n                },\n                \"name\": [\n                    {\n                        \"given\": [\n                            \"John\"\n                        ],\n                        \"period\": {\n                            \"start\": \"2020-07-22\"\n                        },\n                        \"family\": \"Prohaska\",\n                        \"suffix\": [\n                            \"PharmD\"\n                        ]\n                    }\n                ],\n                \"implicitRules\": \"https://example.com/base\"\n            },\n            \"name\": \"MemberPatient\"\n        },\n        {\n            \"resource\": {\n                \"resourceType\": \"Coverage\",\n                \"payor\": [\n                    {\n                        \"identifier\": {\n                            \"system\": \"http://hl7.org/fhir/sid/us-npi\",\n                            \"value\": \"9876543210\"\n                        },\n                        \"display\": \"Old Health Plan\"\n                    }\n                ],\n                \"id\": \"366\",\n                \"class\": [\n                    {\n                        \"type\": {\n                            \"coding\": [\n                                {\n                                    \"system\": \"http://terminology.hl7.org/CodeSystem/coverage-class\",\n                                    \"code\": \"group\"\n                                }\n                            ]\n                        },\n                        \"value\": \"CB135\"\n                    }\n                ],\n                \"period\": {\n                    \"start\": \"2011-05-23\",\n                    \"end\": \"2012-05-23\"\n                },\n                \"beneficiary\": {\n                    \"reference\": \"Patient/101\"\n                },\n                \"meta\": {\n                    \"versionId\": \"1\",\n                    \"lastUpdated\": \"2021-06-01T00:00:00Z\"\n                },\n                \"implicitRules\": \"https://example.com/base\",\n                \"status\": \"entered-in-error\"\n            },\n            \"name\": \"CoverageToMatch\"\n        },\n        {\n            \"resource\": {\n                \"resourceType\": \"Coverage\",\n                \"payor\": [\n                    {\n                        \"identifier\": {\n                            \"system\": \"http://hl7.org/fhir/sid/us-npi\",\n                            \"value\": \"0123456789\"\n                        },\n                        \"display\": \"New Health Plan\"\n                    }\n                ],\n                \"id\": \"cAA87654\",\n                \"period\": {\n                    \"start\": \"2011-05-23\",\n                    \"end\": \"2012-05-23\"\n                },\n                \"beneficiary\": {\n                    \"reference\": \"Patient/101\"\n                },\n                \"meta\": {\n                    \"versionId\": \"1\",\n                    \"lastUpdated\": \"2021-06-01T00:00:00Z\"\n                },\n                \"implicitRules\": \"https://example.com/base\",\n                \"status\": \"active\"\n            },\n            \"name\": \"CoverageToLink\"\n        },\n        {\n            \"resource\": {\n                \"resourceType\": \"Consent\",\n                \"status\": \"active\",\n                \"scope\": {\n                    \"coding\": [\n                        {\n                            \"system\": \"http://terminology.hl7.org/CodeSystem/consentscope\",\n                            \"code\": \"patient-privacy\"\n                        }\n                    ]\n                },\n                \"category\": [\n                    {\n                        \"coding\": [\n                            {\n                                \"system\": \"http://terminology.hl7.org/CodeSystem/v3-ActCode\",\n                                \"code\": \"IDSCL\"\n                            }\n                        ]\n                    }\n                ],\n                \"patient\": {\n                    \"reference\": \"Patient/patient-1\"\n                },\n                \"performer\": [\n                    {\n                        \"reference\": \"http://example.org/Patient/example\"\n                    }\n                ],\n                \"sourceReference\": {\n                    \"reference\": \"http://example.org/DocumentReference/someconsent\"\n                },\n                \"policy\": [\n                    {\n                        \"uri\": \"http://hl7.org/fhir/us/davinci-hrex/StructureDefinition-hrex-consent.html#regular\"\n                    }\n                ],\n                \"provision\": {\n                    \"type\": \"permit\",\n                    \"period\": {\n                        \"start\": \"2022-01-01\",\n                        \"end\": \"2022-01-31\"\n                    },\n                    \"actor\": [\n                        {\n                            \"role\": {\n                                \"coding\": [\n                                    {\n                                        \"system\": \"http://terminology.hl7.org/CodeSystem/provenance-participant-type\",\n                                        \"code\": \"performer\"\n                                    }\n                                ]\n                            },\n                            \"reference\": {\n                                \"identifier\": {\n                                    \"system\": \"http://hl7.org/fhir/sid/us-npi\",\n                                    \"value\": \"9876543210\"\n                                },\n                                \"display\": \"Old Health Plan\"\n                            }\n                        }\n                    ],\n                    \"action\": [\n                        {\n                            \"coding\": [\n                                {\n                                    \"system\": \"http://terminology.hl7.org/CodeSystem/consentaction\",\n                                    \"code\": \"disclose\"\n                                }\n                            ]\n                        }\n                    ]\n                }\n            },\n            \"name\": \"Consent\"\n        }\n    ],\n    \"id\": \"member-match-in\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "https://{{gateway}}/{{fhir-api-context}}/{{fhir-api-version}}/fhir/r4/Patient/$member-match",
+									"protocol": "https",
+									"host": [
+										"{{gateway}}"
+									],
+									"path": [
+										"{{fhir-api-context}}",
+										"{{fhir-api-version}}",
+										"fhir",
+										"r4",
+										"Patient",
+										"$member-match"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Get Application Access Token",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"//------------- Response ------------------",
+							"var jsonData = pm.response.json();",
+							"pm.environment.set(\"app_access_token\", jsonData.access_token);",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"strictSSL": false
+			},
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/x-www-form-urlencoded"
+					},
+					{
+						"key": "cache-control",
+						"value": "no-cache"
+					}
+				],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "client_id",
+							"value": "{{client_id}}",
+							"type": "text"
+						},
+						{
+							"key": "grant_type",
+							"value": "client_credentials",
+							"type": "text"
+						},
+						{
+							"key": "scope",
+							"value": "{{scope}}",
+							"type": "text"
+						},
+						{
+							"key": "client_secret",
+							"value": "{{client_secret}}",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "https://localhost:9443/oauth2/token",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "9443",
+					"path": [
+						"oauth2",
+						"token"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Authorize - Get User Consent",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"// // Loading the library",
+							"// eval(pm.globals.get('pmlib_code'))",
+							"",
+							"// // JWK used by jwt signature",
+							"// const key = pm.environment.get(\"private_key\");",
+							"// const kid = pm.environment.get(\"kid\");",
+							"// const aud = pm.environment.get(\"aud\");",
+							"",
+							"",
+							"// var header = {",
+							"// \t\"kid\": kid,",
+							"//     \"typ\": \"JWT\",",
+							"// \t\"alg\": \"PS256\"",
+							"// };",
+							"",
+							"// //var nonce = jtiValue();",
+							"// //postman.setEnvironmentVariable(\"nonce\", nonce);",
+							"",
+							"// var consentID = pm.environment.get(\"consentId\");",
+							"// console.log(\"-----------\"+consentID);",
+							"// var clientId = pm.environment.get(\"client_id\");",
+							"// console.log(\"-----------\"+clientId);",
+							"// var scope = pm.environment.get(\"scope\");",
+							"// var redirect_uri = pm.environment.get(\"redirect_uri\");",
+							"// var state = pm.environment.get(\"state\");",
+							"// var nonce = pm.environment.get(\"nonce\");",
+							"",
+							"// var data = {",
+							"//   \"max_age\": 86400,",
+							"//   //\"aud\": \"https://localhost:9446/oauth2/token\",",
+							"//   \"aud\":aud,",
+							"//   \"scope\": scope,",
+							"//   \"iss\": clientId,",
+							"//   \"claims\": {",
+							"//     \"id_token\": {",
+							"//       \"acr\": {",
+							"//         \"values\": [",
+							"//           \"urn:openbanking:psd2:sca\",",
+							"//           \"urn:openbanking:psd2:ca\"",
+							"//         ],",
+							"//         \"essential\": true",
+							"//       },",
+							"//       \"openbanking_intent_id\": {",
+							"//         \"value\": consentID,",
+							"//         \"essential\": true",
+							"//       }",
+							"//     },",
+							"//     \"userinfo\": {",
+							"//       \"openbanking_intent_id\": {",
+							"//         \"value\": consentID,",
+							"//         \"essential\": true",
+							"//       }",
+							"//     }",
+							"//   },",
+							"//   \"response_type\": \"code id_token\",",
+							"//   \"redirect_uri\": redirect_uri,",
+							"//   \"state\": state,",
+							"//   \"nonce\": nonce,",
+							"//   \"client_id\": clientId",
+							"// };",
+							"",
+							"// const jws = createJws(key, data, header, 3500, \"PS256\")",
+							"// //console.log('Signed JWT: ' +jws)",
+							"// pm.environment.set(\"authorize_payload\", jws);",
+							"",
+							"",
+							"// function createJws (secret, payload, header, exp, alg) {",
+							"//   // Calculate time variables",
+							"//   var currentTime = Math.ceil((new Date()).getTime() / 1000) // the current time in seconds",
+							"//   var expirationTime = currentTime + exp",
+							"",
+							"//   const jwtHeader = Object.assign(header, { typ: 'JWT', alg})",
+							"",
+							"//   const jwtBody = Object.assign(payload,",
+							"//     {",
+							"//       iat: currentTime,",
+							"//       nbf: currentTime-5,",
+							"//       exp: expirationTime,",
+							"//       jti: jtiValue()",
+							"//     })",
+							"",
+							"//   const sHeader = JSON.stringify(jwtHeader)",
+							"//   const sPayload = JSON.stringify(jwtBody)",
+							"",
+							"//   return pmlib.rs.jws.JWS.sign(alg, sHeader, sPayload, secret)",
+							"// }",
+							"",
+							"// function jtiValue() {",
+							"//    var result           = '';",
+							"//    var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';",
+							"//    var charactersLength = characters.length;",
+							"//    for ( var i = 0; i < 10; i++ ) {",
+							"//       result += characters.charAt(Math.floor(Math.random() * charactersLength));",
+							"//    }",
+							"//    return result;",
+							"// }"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"followRedirects": false
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://localhost:9443/oauth2/authorize/?response_type=code&redirect_uri={{redirect_uri}}&state={{state}}&client_id={{client_id}}&prompt=login&nonce={{nonce}}&scope=openid fhirUser",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "9443",
+					"path": [
+						"oauth2",
+						"authorize",
+						""
+					],
+					"query": [
+						{
+							"key": "scope",
+							"value": "accounts%20openid",
+							"disabled": true
+						},
+						{
+							"key": "response_type",
+							"value": "code"
+						},
+						{
+							"key": "redirect_uri",
+							"value": "{{redirect_uri}}"
+						},
+						{
+							"key": "state",
+							"value": "{{state}}"
+						},
+						{
+							"key": "client_id",
+							"value": "{{client_id}}"
+						},
+						{
+							"key": "prompt",
+							"value": "login"
+						},
+						{
+							"key": "nonce",
+							"value": "{{nonce}}"
+						},
+						{
+							"key": "scope",
+							"value": "openid fhirUser"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get User Access Token",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"//------------- Response ------------------",
+							"var jsonData = pm.response.json();",
+							"pm.environment.set(\"user_access_token\", jsonData.access_token);",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"strictSSL": false
+			},
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/x-www-form-urlencoded"
+					},
+					{
+						"key": "cache-control",
+						"value": "no-cache"
+					}
+				],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "client_id",
+							"value": "{{client_id}}",
+							"type": "text"
+						},
+						{
+							"key": "grant_type",
+							"value": "authorization_code",
+							"type": "text"
+						},
+						{
+							"key": "code",
+							"value": "bc6e55ae-4b88-324a-a484-58f15cff32ef",
+							"type": "text"
+						},
+						{
+							"key": "scope",
+							"value": "{{scope}}",
+							"type": "text"
+						},
+						{
+							"key": "redirect_uri",
+							"value": "{{redirect_uri}}",
+							"type": "text"
+						},
+						{
+							"key": "client_secret",
+							"value": "{{client_secret}}",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "https://localhost:9443/oauth2/token",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "9443",
+					"path": [
+						"oauth2",
+						"token"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get smart-configuration",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://{{gateway}}/{{fhir-api-context}}/{{fhir-api-version}}/fhir/r4/.well-known/smart-configuration",
+					"protocol": "https",
+					"host": [
+						"{{gateway}}"
+					],
+					"path": [
+						"{{fhir-api-context}}",
+						"{{fhir-api-version}}",
+						"fhir",
+						"r4",
+						".well-known",
+						"smart-configuration"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get metadata",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://{{gateway}}/{{fhir-api-context}}/{{fhir-api-version}}/fhir/r4/metadata",
+					"protocol": "https",
+					"host": [
+						"{{gateway}}"
+					],
+					"path": [
+						"{{fhir-api-context}}",
+						"{{fhir-api-version}}",
+						"fhir",
+						"r4",
+						"metadata"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

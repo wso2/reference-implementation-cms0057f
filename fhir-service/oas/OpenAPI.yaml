@@ -3340,6 +3340,7 @@ paths:
         Returns the capability statement in JSON format.
         For more info, see [HL7 CapabilityStatement](https://hl7.org/fhir/capabilitystatement.html).
       operationId: getCapabilityStatement
+      x-auth-type: None
       responses:
         '200':
           description: Capability statement returned successfully
@@ -3379,6 +3380,7 @@ paths:
         Returns the SMART on FHIR `.well-known` configuration JSON document that describes the OAuth 2.0 endpoints
         and capabilities supported by the FHIR authorization server.
       operationId: getSmartConfiguration
+      x-auth-type: None
       responses:
         '200':
           description: SMART configuration retrieved successfully

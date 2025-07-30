@@ -107,6 +107,9 @@ start_services_and_deploy_apis() {
   echo "Deploying BulkExportClient API"
   deploy_apis "BulkExportClientAPI" "bulk-export-client/oas/BulkExport.yaml" "/bulkexportclient" "http://localhost:8091/bulk"
 
+  echo "Deploying BulkExportFileServer API"
+  deploy_apis "BulkExportFileServer" "bulk-export-client/oas/FileServer.yaml" "/bulkexport-fileserver" "http://localhost:8100/file" 
+  
   echo "Deploying FileService API"
   deploy_apis "FileServiceAPI" "file-service/oas/OpenAPI.yaml" "/fileserver" "http://localhost:8090" 
 

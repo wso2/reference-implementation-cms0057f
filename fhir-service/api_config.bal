@@ -192,8 +192,32 @@ final r4:ResourceAPIConfig patientApiConfig = {
                     min: 1
                 }
             ]
+        },
+        {
+            name: "member-match",
+            active: true,
+            parameters: [
+                {
+                    name: "MemberPatient",
+                    active: true,
+                    min: 1
+                },
+                {
+                    name: "Consent",
+                    active: true,
+                    min: 1
+                },
+                {
+                    name: "CoverageToMatch",
+                    active: true,
+                    min: 1
+                },
+                {
+                    name: "CoverageToLink",
+                    active: true
+                }
+            ]
         }
-
     ],
     serverConfig: (),
     authzConfig: (),

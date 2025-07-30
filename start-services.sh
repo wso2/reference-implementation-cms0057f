@@ -101,14 +101,15 @@ start_services_and_deploy_apis() {
 
   echo "========== 2. Deploying APIs =========="
 
+  #Create API by passing API name, OAS path, API context, backend endpoint
   echo "Deploying FHIR API"
   deploy_apis "FHIRAPI" "fhir-service/oas/OpenAPI.yaml" "/fhirapi" "http://localhost:9090" 
 
   echo "Deploying BulkExportClient API"
   deploy_apis "BulkExportClientAPI" "bulk-export-client/oas/BulkExport.yaml" "/bulkexportclient" "http://localhost:8091/bulk"
 
-  echo "Deploying BulkExportFileServer API"
-  deploy_apis "BulkExportFileServer" "bulk-export-client/oas/FileServer.yaml" "/bulkexport-fileserver" "http://localhost:8100/file" 
+  echo "Deploying BulkExportClientFileServer API"
+  deploy_apis "BulkExportClientFileServer" "bulk-export-client/oas/FileServer.yaml" "/bulkexportclient-fileserver" "http://localhost:8100/file" 
   
   echo "Deploying FileService API"
   deploy_apis "FileServiceAPI" "file-service/oas/OpenAPI.yaml" "/fileserver" "http://localhost:8090" 

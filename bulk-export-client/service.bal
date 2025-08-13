@@ -18,32 +18,13 @@ import ballerina/mime;
 import ballerina/uuid;
 import ballerinax/health.fhir.r4.international401;
 
-configurable BulkExportServerConfig sourceServerConfig = ?;
+configurable map<BulkExportServerConfig> sourceServerConfigs = ?;
 configurable BulkExportClientConfig clientServiceConfig = ?;
 configurable TargetServerConfig targetServerConfig = ?;
-
-http:OAuth2ClientCredentialsGrantConfig config = {
-    tokenUrl: sourceServerConfig.tokenUrl ?: "",
-    clientId: sourceServerConfig.clientId ?: "",
-    clientSecret: sourceServerConfig.clientSecret ?: "",
-    scopes: sourceServerConfig.scopes
-};
-
-isolated http:Client statusClient = check new (sourceServerConfig.baseUrl);
 
 isolated service /bulk on new http:Listener(8091) {
 
     function init() returns error? {
-
-        if clientServiceConfig.authEnabled {
-            lock {
-                statusClient = check new (sourceServerConfig.baseUrl, auth = config.clone());
-            }
-        } else {
-            lock {
-                statusClient = check new (sourceServerConfig.baseUrl);
-            }
-        }
 
         log:printInfo("Bulk export client Service is started...");
     }
@@ -67,25 +48,58 @@ isolated service /bulk on new http:Listener(8091) {
         boolean isSuccess = false;
         http:Response|http:ClientError status;
 
+        
         log:printInfo("Bulk exporting started. Sending Kick-off request.");
+        // Group patients by system URL
+        map<MatchedPatient[]> patientsBySystem = {};
+        foreach MatchedPatient patient in matchedPatients {
+            string systemId = patient.systemId ?: "";
+            if systemId == "" {
+                return error("System URL is required for each patient");
+            }
+            
+            if !patientsBySystem.hasKey(systemId) {
+                patientsBySystem[systemId] = [];
+            }
+            MatchedPatient[] existingPatients = patientsBySystem.get(systemId);
+            existingPatients.push(patient);
+            patientsBySystem[systemId] = existingPatients;
+        }
+        
         do {
 
             lock {
                 ExportTask exportTask = {id: taskId, lastStatus: "in-progress", pollingEvents: []};
                 isSuccess = addTaskFunction(exportTasks, exportTask);
             }
-            international401:Parameters parametersResource = populateParamsResource(matchedPatients, _outputFormat, _since, _type);
-            // kick-off request to the bulk export server
-
-            lock {
-                status = statusClient->post(string `${sourceServerConfig.contextPath}/Patient/$export`, parametersResource.clone().toJson(),
-                {
-                    Accept: "application/fhir+json",
-                    Prefer: "respond-async",
-                    "Content-Type": "application/fhir+json"
-                });
+            // Process each system separately
+            foreach string systemUrl in patientsBySystem.keys() {
+                if !sourceServerConfigs.hasKey(systemUrl) {
+                    log:printError("No configuration found for system URL: " + systemUrl);
+                    continue;
+                }
+                
+                BulkExportServerConfig serverConfig = sourceServerConfigs.get(systemUrl);
+                
+                // Get client within lock statement
+                http:Client client1 = check createHttpClient(serverConfig);
+                MatchedPatient[] systemPatients = patientsBySystem.get(systemUrl);
+                
+                international401:Parameters parametersResource = populateParamsResource(systemPatients, _outputFormat, _since, _type);
+                
+                // kick-off request to the bulk export server
+                status = client1->post(
+                    "/Patient/$export", 
+                    parametersResource.clone().toJson(),
+                    {
+                        Accept: "application/fhir+json",
+                        Prefer: "respond-async",
+                        "Content-Type": "application/fhir+json"
+                    }
+                );
+                
+                submitBackgroundJob(taskId, status);
             }
-            submitBackgroundJob(taskId, status);
 
             if isSuccess {
                 log:printInfo("Export task persisted.", exportId = taskId);

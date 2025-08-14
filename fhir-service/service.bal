@@ -29,6 +29,7 @@ import ballerinax/health.fhir.r4.davincihrex100;
 import ballerinax/health.fhir.r4.davincipas;
 import ballerinax/health.fhir.r4.international401;
 import ballerinax/health.fhir.r4.uscore501;
+import ballerina/uuid;
 
 configurable Configs configs = ?;
 configurable string exportServiceUrl = ?;
@@ -969,4 +970,371 @@ service /fhir/r4/QuestionnaireResponse on new fhirr4:Listener(config = questionn
     isolated resource function get _history(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
         return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
     }
+}
+
+public type Consent international401:Consent;
+
+# In-memory storage for consent records (in production, this would be a database)
+isolated map<Consent> consentStore = {};
+
+# Constants for consent evaluation
+const string CONSENT_EVALUATION_SUCCESS = "Consent evaluation successful";
+const string CONSENT_EVALUATION_FAILED = "Consent evaluation failed";
+const string CONSENT_NOT_FOUND = "Consent not found";
+const string CONSENT_EXPIRED = "Consent has expired";
+const string CONSENT_INVALID_POLICY = "Consent policy does not match payer capabilities";
+const string CONSENT_INVALID_PAYER = "Payer requesting retrieval does not match consent";
+const string CONSENT_INVALID_MEMBER = "Member identity does not match";
+
+service /fhir/r4/Consent on new fhirr4:Listener(config = consentApiConfig) {
+
+    // Read the current state of single resource based on its id.
+    isolated resource function get [string id](r4:FHIRContext fhirContext) returns Consent|r4:OperationOutcome|r4:FHIRError {
+        lock {
+            // Check if consent exists in the store
+            if consentStore.hasKey(id) {
+                return consentStore.get(id).clone();
+            } else {
+                return r4:createFHIRError(CONSENT_NOT_FOUND, r4:ERROR, r4:PROCESSING_NOT_FOUND, httpStatusCode = http:STATUS_NOT_FOUND);
+            }
+        }
+    }
+
+    // Search for resources based on a set of criteria.
+    isolated resource function get .(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+        // Extract search parameters from fhirContext
+        map<r4:RequestSearchParameter[]> searchParams = fhirContext.getRequestSearchParameters();
+
+        // Filter consents based on search parameters
+        lock {
+            Consent[] filteredConsents = [];
+            foreach var [id, consent] in consentStore.entries() {
+                Consent consentRecord = <Consent>consent;
+                if matchesSearchCriteria(consentRecord, searchParams.clone()) {
+                    log:printDebug("Consent matched search criteria: " + id);
+                    filteredConsents.push(consentRecord);
+                }
+            }
+            // Create bundle response
+            r4:BundleEntry[] entries = [];
+            foreach Consent consent in filteredConsents {
+                r4:BundleEntry entry = {
+                    'resource: consent,
+                    // fullUrl: "urn:uuid:" + consent?.id,
+                    search: {
+                        mode: r4:MATCH
+                    }
+                };
+                entries.push(entry);
+            }
+
+            r4:Bundle bundle = {
+                resourceType: "Bundle",
+                'type: r4:BUNDLE_TYPE_SEARCHSET,
+                total: entries.length(),
+                entry: entries
+            };
+
+            return bundle.clone();
+        }
+    }
+
+    // Create a new resource.
+    isolated resource function post .(r4:FHIRContext fhirContext, Consent consent) returns Consent|r4:OperationOutcome|r4:FHIRError {
+        // Validate consent
+        r4:FHIRError? validationError = validateConsent(consent);
+        if validationError is r4:FHIRError {
+            return validationError;
+        }
+
+        // Generate unique ID if not provided
+        if consent.id is () {
+            consent.id = uuid:createType1AsString();
+        }
+
+        // Set creation timestamp
+        consent.dateTime = time:utcNow().toString();
+
+        lock {
+            Consent|error consentCopy = consent.clone().cloneWithType();
+            if consentCopy is error {
+                return r4:createFHIRError("Failed to clone consent", r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+            }
+            // Store consent
+            consentStore[<string>consent.id] = consentCopy;
+        }
+
+        log:printInfo("Consent created with ID: " + <string>consent.id);
+        return consent;
+    }
+
+    // Update the current state of a resource completely.
+    isolated resource function put [string id](r4:FHIRContext fhirContext, Consent consent) returns Consent|r4:OperationOutcome|r4:FHIRError {
+        lock {
+            if !consentStore.hasKey(id) {
+                return r4:createFHIRError(CONSENT_NOT_FOUND, r4:ERROR, r4:PROCESSING_NOT_FOUND, httpStatusCode = http:STATUS_NOT_FOUND);
+            }
+        }
+
+        // Validate consent
+        r4:FHIRError? validationError = validateConsent(consent);
+        if validationError is r4:FHIRError {
+            return validationError;
+        }
+
+        // Ensure ID matches
+        consent.id = id;
+
+        // Update timestamp
+        consent.dateTime = time:utcNow().toString();
+        lock {
+
+            // Store updated consent
+            consentStore[<string>id] = consent.clone();
+        }
+
+        log:printInfo("Consent updated with ID: " + id);
+        return consent;
+    }
+
+    // Delete a resource.
+    isolated resource function delete [string id](r4:FHIRContext fhirContext) returns r4:OperationOutcome|r4:FHIRError {
+        lock {
+            if !consentStore.hasKey(id) {
+                return r4:createFHIRError(CONSENT_NOT_FOUND, r4:ERROR, r4:PROCESSING_NOT_FOUND, httpStatusCode = http:STATUS_NOT_FOUND);
+            }
+        }
+        lock {
+
+            // Remove consent
+            _ = consentStore.remove(<string>id);
+        }
+
+        log:printInfo("Consent deleted with ID: " + id);
+
+        r4:OperationOutcome outcome = {
+            resourceType: "OperationOutcome",
+            issue: [
+                {
+                    severity: r4:CODE_SEVERITY_INFORMATION,
+                    code: r4:INFORMATIONAL,
+                    diagnostics: "Consent successfully deleted"
+                }
+            ]
+        };
+
+        return outcome;
+    }
+
+    // Consent evaluation operation based on the guidelines
+    isolated resource function post \$consent\-evaluate(r4:FHIRContext fhirContext, international401:Parameters parameters) returns r4:FHIRError|http:Response|error {
+        // Extract consent from parameters
+        Consent? consent = extractConsentFromParameters(parameters);
+        if consent is () {
+            return r4:createFHIRError("Consent parameter not found", r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+        }
+
+        // Evaluate consent based on guidelines
+        ConsentEvaluationResult result = evaluateConsent(consent);
+
+        if result.isValid {
+            // Return success response with patient ID
+            return createSuccessResponse(result);
+        } else {
+            // Return 422 status with operation outcome
+            return createErrorResponse(result);
+        }
+    }
+}
+
+# Helper function to validate consent
+isolated function validateConsent(Consent consent) returns r4:FHIRError? {
+    // Check required fields
+    if consent.patient is () {
+        return r4:createFHIRError("Patient reference is required", r4:ERROR, r4:INVALID_REQUIRED, httpStatusCode = http:STATUS_BAD_REQUEST);
+    }
+
+    // Validate consent period if provided
+    if consent.provision?.period is r4:Period {
+        r4:Period|error period = consent.provision?.period.cloneWithType();
+        if period is error {
+            return r4:createFHIRError("Invalid period format", r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+        }
+        if period.end is r4:dateTime && period.'start is r4:dateTime {
+            if period.end < period.'start {
+                return r4:createFHIRError("Consent end date must be after start date", r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+            }
+        }
+    }
+
+    return ();
+}
+
+# Helper function to match search criteria
+isolated function matchesSearchCriteria(Consent consent, map<r4:RequestSearchParameter[]> searchParams) returns boolean {
+    // Implement search logic based on parameters
+    // This is a simplified implementation
+    if searchParams.hasKey("status") {
+        r4:RequestSearchParameter[] status = searchParams.get("status");
+        if consent.status.toString() != status[0].value {
+            return false;
+        }
+    }
+
+    if searchParams.hasKey("patient") {
+        r4:RequestSearchParameter[] patient = searchParams.get("patient");
+        if consent.patient?.reference != patient[0].value {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+# Helper function to extract consent from parameters
+isolated function extractConsentFromParameters(international401:Parameters parameters) returns Consent? {
+    if parameters.'parameter is () {
+        return ();
+    }
+    international401:ParametersParameter[]|error params = parameters.'parameter.cloneWithType();
+    if params is error {
+        return ();
+    }
+
+    foreach international401:ParametersParameter param in params {
+        Consent|error consent = param.'resource.cloneWithType();
+        if param.name == "Consent" && consent is Consent {
+            return consent;
+        }
+    }
+
+    return ();
+}
+
+# Record for consent evaluation result
+public type ConsentEvaluationResult record {|
+    boolean isValid;
+    string? patientId;
+    string? reason;
+    string? memberIdentity;
+    string? consentPolicy;
+    r4:dateTime? consentStartDate;
+    r4:dateTime? consentEndDate;
+    string? requestingPayer;
+|};
+
+# Function to evaluate consent based on guidelines
+isolated function evaluateConsent(Consent consent) returns ConsentEvaluationResult {
+    ConsentEvaluationResult result = {
+        isValid: false,
+        patientId: (),
+        reason: (),
+        memberIdentity: (),
+        consentPolicy: (),
+        consentStartDate: (),
+        consentEndDate: (),
+        requestingPayer: ()
+    };
+
+    // Extract member identity from patient reference
+    if consent.patient?.reference is string {
+        result.memberIdentity = consent.patient?.reference;
+    } else {
+        result.reason = CONSENT_INVALID_MEMBER;
+        return result;
+    }
+
+    // Check consent policy (Everything or only Non-Sensitive data)
+    if consent.provision?.code is r4:CodeableConcept[] {
+        result.consentPolicy = extractConsentPolicy(<r4:CodeableConcept[]>consent.provision?.code);
+    }
+
+    // Check date period for consent validity
+    if consent.provision?.period is r4:Period {
+        r4:Period period = <r4:Period>consent.provision?.period;
+        result.consentStartDate = period.'start;
+        result.consentEndDate = period.end;
+
+        // Check if consent is still valid
+        if period.end is r4:dateTime {
+            r4:dateTime now = time:utcToString(time:utcNow());
+            if period.end < now {
+                result.reason = CONSENT_EXPIRED;
+                return result;
+            }
+        }
+    }
+
+    // Check if requesting payer matches (simplified - in production this would check actual payer)
+    // This is a placeholder for the actual payer validation logic
+    result.requestingPayer = "payer2"; // Placeholder
+
+    // For this implementation, we'll consider consent valid if all basic checks pass
+    // In production, this would include more sophisticated validation
+    if result.memberIdentity is string && result.consentPolicy is string {
+        result.isValid = true;
+        result.patientId = result.memberIdentity;
+        result.reason = CONSENT_EVALUATION_SUCCESS;
+    } else {
+        result.reason = CONSENT_INVALID_POLICY;
+    }
+
+    return result;
+}
+
+# Helper function to extract consent policy
+isolated function extractConsentPolicy(r4:CodeableConcept[] codes) returns string? {
+    foreach r4:CodeableConcept code in codes {
+        if code.coding is r4:Coding[] {
+            foreach r4:Coding coding in <r4:Coding[]>code.coding {
+                if coding.code is string {
+                    return coding.code;
+                }
+            }
+        }
+    }
+    return ();
+}
+
+# Function to create success response
+isolated function createSuccessResponse(ConsentEvaluationResult result) returns http:Response {
+    // Create operation outcome for success
+    r4:OperationOutcome outcome = {
+        resourceType: "OperationOutcome",
+        issue: [
+            {
+                severity: r4:CODE_SEVERITY_INFORMATION,
+                code: r4:INFORMATIONAL,
+                diagnostics: result.reason
+            }
+        ]
+    };
+
+    // In a real implementation, this would return the patient ID
+    // For now, we'll return a success response
+    http:Response response = new ();
+    response.setPayload(outcome);
+    response.setHeader("Content-Type", "application/fhir+json");
+    return response;
+}
+
+# Function to create error response
+isolated function createErrorResponse(ConsentEvaluationResult result) returns http:Response {
+    // Create operation outcome for error
+    r4:OperationOutcome outcome = {
+        resourceType: "OperationOutcome",
+        issue: [
+            {
+                severity: r4:CODE_SEVERITY_ERROR,
+                code: r4:PROCESSING_BUSINESS_RULE,
+                diagnostics: result.reason
+            }
+        ]
+    };
+
+    http:Response response = new ();
+    response.setPayload(outcome);
+    response.setHeader("Content-Type", "application/fhir+json");
+    response.statusCode = http:STATUS_UNPROCESSABLE_ENTITY;
+    return response;
 }

@@ -41,3 +41,19 @@ public const CONTACT_SERVER_ADMIN = "Please contact server admin if the issue pe
 
 public const SMART_CONFIGURATION = "SmartConfiguration";
 public const SMART_CONFIGURATION_FAILED = "Smart configuration generation failed";
+
+# Constants for consent evaluation
+const string CONSENT_EVALUATION_SUCCESS = "Consent evaluation successful";
+const string CONSENT_EVALUATION_FAILED = "Consent evaluation failed";
+const string CONSENT_NOT_FOUND = "Consent not found";
+const string CONSENT_EXPIRED = "Consent has expired";
+const string CONSENT_INVALID_POLICY = "Consent policy does not match payer capabilities";
+const string CONSENT_INVALID_PAYER = "Payer requesting retrieval does not match consent";
+const string CONSENT_INVALID_MEMBER = "Member identity does not match";
+const string CONSENT_PERIOD_NOT_SPECIFIED = "Consent period not specified";
+const string CONSENT_POLICY_NOT_SUPPORTED = "Requested consent policy is not supported by this system";
+const string CONSENT_STATUS_INVALID = "Consent status must be active for evaluation";
+const string CONSENT_PROVISION_REQUIRED = "Consent provision section is required";
+const string CONSENT_DUPLICATE_FOUND = "Duplicate active consent found for the same patient and policy";
+const string CONSENT_SCOPE_INVALID = "Consent scope must be for patient privacy";
+const string CONSENT_SCOPE_REQUIRED = "Consent scope is required";

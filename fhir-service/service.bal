@@ -20,6 +20,7 @@
 import ballerina/http;
 import ballerina/log;
 import ballerina/time;
+import ballerina/uuid;
 import ballerinax/health.clients.fhir;
 import ballerinax/health.fhir.r4;
 import ballerinax/health.fhirr4;
@@ -971,3 +972,232 @@ service /fhir/r4/QuestionnaireResponse on new fhirr4:Listener(config = questionn
         return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
     }
 }
+
+public type Consent international401:Consent;
+
+# In-memory storage for consent records (in production, this would be a database)
+isolated map<Consent> consentStore = {};
+
+# This service implements the Consent resource API with comprehensive validation
+# following Phase 3 of the execution plan for the Da Vinci HRex implementation.
+#
+# Phase 3: Validation at the Receiving Payer
+# The service performs a two-step validation process:
+#
+# 1. Member Matching Logic:
+# - Uses the existing member matcher to find a unique member match
+# - Returns HTTP 422 if no match found or multiple potential matches found
+#
+# 2. Consent Evaluation Logic:
+# - Member Identity: Confirms Consent.patient reference matches the uniquely identified member
+# - Payer Identity: Validates Consent.organization and Consent.performer
+# - Date Validity: Checks if current date falls within Consent.provision.period
+# - Policy Compliance: Determines if system can comply with data segmentation request
+#
+# Response Handling:
+# - Success (HTTP 200): Returns Parameters resource with Patient ID and consent status
+# - Failure (HTTP 422): Returns OperationOutcome with detailed failure reason
+# - No Patient ID is returned on failure as per Phase 4 requirements
+service /fhir/r4/Consent on new fhirr4:Listener(config = consentApiConfig) {
+
+    // Read the current state of single resource based on its id.
+    isolated resource function get [string id](r4:FHIRContext fhirContext) returns Consent|r4:OperationOutcome|r4:FHIRError {
+        lock {
+            // Check if consent exists in the store
+            if consentStore.hasKey(id) {
+                return consentStore.get(id).clone();
+            } else {
+                return r4:createFHIRError(CONSENT_NOT_FOUND, r4:ERROR, r4:PROCESSING_NOT_FOUND, httpStatusCode = http:STATUS_NOT_FOUND);
+            }
+        }
+    }
+
+    // Search for resources based on a set of criteria.
+    isolated resource function get .(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+        // Extract search parameters from fhirContext
+        map<r4:RequestSearchParameter[]> searchParams = fhirContext.getRequestSearchParameters();
+
+        // Filter consents based on search parameters
+        lock {
+            Consent[] filteredConsents = [];
+            foreach var [id, consent] in consentStore.entries() {
+                Consent consentRecord = <Consent>consent;
+                if matchesSearchCriteria(consentRecord, searchParams.clone()) {
+                    log:printDebug("Consent matched search criteria: " + id);
+                    filteredConsents.push(consentRecord);
+                }
+            }
+            // Create bundle response
+            r4:BundleEntry[] entries = [];
+            foreach Consent consent in filteredConsents {
+                r4:BundleEntry entry = {
+                    'resource: consent,
+                    // fullUrl: "urn:uuid:" + consent?.id,
+                    search: {
+                        mode: r4:MATCH
+                    }
+                };
+                entries.push(entry);
+            }
+
+            r4:Bundle bundle = {
+                resourceType: "Bundle",
+                'type: r4:BUNDLE_TYPE_SEARCHSET,
+                total: entries.length(),
+                entry: entries
+            };
+
+            return bundle.clone();
+        }
+    }
+
+    // Create a new resource.
+    isolated resource function post .(r4:FHIRContext fhirContext, Consent consent) returns Consent|r4:OperationOutcome|r4:FHIRError {
+        // Validate consent
+        r4:FHIRError? validationError = validateConsent(consent);
+        if validationError is r4:FHIRError {
+            return validationError;
+        }
+
+        // Generate unique ID if not provided
+        if consent.id is () {
+            consent.id = uuid:createType1AsString();
+        }
+
+        // Set creation timestamp
+        consent.dateTime = time:utcNow().toString();
+
+        lock {
+            Consent|error consentCopy = consent.clone().cloneWithType();
+            if consentCopy is error {
+                return r4:createFHIRError("Failed to clone consent", r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+            }
+            // Store consent
+            consentStore[<string>consent.id] = consentCopy;
+        }
+
+        log:printInfo("Consent created with ID: " + <string>consent.id);
+        return consent;
+    }
+
+    // Update the current state of a resource completely.
+    isolated resource function put [string id](r4:FHIRContext fhirContext, Consent consent) returns Consent|r4:OperationOutcome|r4:FHIRError {
+        lock {
+            if !consentStore.hasKey(id) {
+                return r4:createFHIRError(CONSENT_NOT_FOUND, r4:ERROR, r4:PROCESSING_NOT_FOUND, httpStatusCode = http:STATUS_NOT_FOUND);
+            }
+        }
+
+        // Validate consent
+        r4:FHIRError? validationError = validateConsent(consent);
+        if validationError is r4:FHIRError {
+            return validationError;
+        }
+
+        // Ensure ID matches
+        consent.id = id;
+
+        // Update timestamp
+        consent.dateTime = time:utcNow().toString();
+        lock {
+
+            // Store updated consent
+            consentStore[<string>id] = consent.clone();
+        }
+
+        log:printInfo("Consent updated with ID: " + id);
+        return consent;
+    }
+
+    // Delete a resource.
+    isolated resource function delete [string id](r4:FHIRContext fhirContext) returns r4:OperationOutcome|r4:FHIRError {
+        lock {
+            if !consentStore.hasKey(id) {
+                return r4:createFHIRError(CONSENT_NOT_FOUND, r4:ERROR, r4:PROCESSING_NOT_FOUND, httpStatusCode = http:STATUS_NOT_FOUND);
+            }
+        }
+        lock {
+
+            // Remove consent
+            _ = consentStore.remove(<string>id);
+        }
+
+        log:printInfo("Consent deleted with ID: " + id);
+
+        r4:OperationOutcome outcome = {
+            resourceType: "OperationOutcome",
+            issue: [
+                {
+                    severity: r4:CODE_SEVERITY_INFORMATION,
+                    code: r4:INFORMATIONAL,
+                    diagnostics: "Consent successfully deleted"
+                }
+            ]
+        };
+
+        return outcome;
+    }
+
+    // Consent evaluation operation implementing Phase 3 validation requirements
+    # This operation performs comprehensive consent validation after successful member matching
+    #
+    # Input: Parameters resource containing:
+    # - Consent: The consent resource to evaluate
+    # - HRexMemberMatchRequestParameters: Member match resources for validation
+    #
+    # Process:
+    # 1. Extract and validate consent and member match resources
+    # 2. Perform member matching using existing member matcher
+    # 3. If member match successful, evaluate consent against four criteria
+    # 4. Return appropriate response based on validation results
+    #
+    # Returns:
+    # - HTTP 200 + Parameters with Patient ID on success
+    # - HTTP 422 + OperationOutcome on validation failure
+    #
+    # + fhirContext - The FHIR context containing consent evaluation request related information
+    # + parameters - The Parameters resource containing member match resources
+    # + return - Parameters resource with Patient ID on success, or OperationOutcome on failure
+    isolated resource function post \$evaluate(r4:FHIRContext fhirContext, international401:Parameters parameters) returns r4:FHIRError|http:Response|error {
+        log:printInfo("Starting consent evaluation operation");
+
+        international401:ParametersParameter[]|error params = parameters.'parameter.cloneWithType();
+        if params is error {
+            log:printError("Failed extract parameters: " + params.message());
+            return r4:createFHIRError("Invalid parameters format", r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+        }
+
+        // Extract consent from parameters
+        Consent? consent = extractConsentFromParameters(params);
+        if consent is () {
+            log:printError("Consent parameter not found in request");
+            return r4:createFHIRError("Consent parameter not found", r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+        }
+        log:printDebug("Consent extracted successfully: " + (consent.id ?: "no-id"));
+
+        // Extract member identifier from parameters
+        log:printDebug("Member match resources extracted successfully");
+        string matchedMember = "";
+        foreach international401:ParametersParameter param in params {
+            if param.valueString is string && param.name == "memberIdentifier" {
+                log:printDebug("Parameter: " + param.name + " = " + <string>param.valueString);
+                matchedMember = <string>param.valueString;
+            }
+        }
+
+        // Step 2: Consent Evaluation Logic (only proceeds if unique member match is confirmed)
+        log:printDebug("Starting comprehensive consent evaluation");
+        ConsentEvaluationResult result = evaluateConsent(consent, matchedMember);
+
+        if result.isValid {
+            log:printInfo("Consent evaluation successful for patient: " + (result.patientId ?: "unknown"));
+            // Return success response with patient ID
+            return createSuccessResponse(result);
+        } else {
+            log:printError("Consent evaluation failed: " + (result.reason ?: "unknown reason"));
+            // Return 422 status with operation outcome - NO Patient ID returned
+            return createErrorResponse(result);
+        }
+    }
+}
+

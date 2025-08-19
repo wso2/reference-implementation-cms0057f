@@ -14,6 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
+import ballerinax/health.fhir.r4;
 import ballerinax/health.fhir.r4.international401;
 
 public enum ResourceType {
@@ -305,4 +306,26 @@ public type SmartConfiguration record {|
     string revocation_endpoint?;
     string[] capabilities;
     string[] code_challenge_methods_supported;
+|};
+
+
+# Record for consent evaluation result
+#
+# + isValid - Indicates if the consent is valid
+# + patientId - The ID of the patient associated with the consent
+# + reason - The reason for the consent evaluation result
+# + memberIdentity - The identity of the member associated with the consent
+# + consentPolicy - The policy under which the consent was obtained
+# + consentStartDate - The start date of the consent period
+# + consentEndDate - The end date of the consent period
+# + requestingPayer - The identity of the requesting payer
+public type ConsentEvaluationResult record {|
+    boolean isValid;
+    string? patientId;
+    string? reason;
+    string? memberIdentity;
+    string? consentPolicy;
+    r4:dateTime? consentStartDate;
+    r4:dateTime? consentEndDate;
+    string? requestingPayer;
 |};

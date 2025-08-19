@@ -959,15 +959,29 @@ final r4:ResourceAPIConfig consentApiConfig = {
         ],
     operations: [
         {
-            name: "consent-evaluate",
+            name: "evaluate",
             active: true,
             parameters: [
                 {
                     name: "Consent",
                     active: true,
+                    scopes: ["TYPE"],
+                    min: 1
+                },
+                {
+                    name: "memberIdentifier",
+                    active: true,
+                    scopes: ["TYPE"],
                     min: 1
                 }
-            ]
+            ],
+            additionalProperties : {
+                meta : {
+                    operationLevels: {
+                        typeLevel: true
+                    }
+                }
+            }
         }
     ],
     serverConfig: (),

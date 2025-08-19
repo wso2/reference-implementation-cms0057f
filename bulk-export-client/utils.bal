@@ -26,6 +26,13 @@ import ballerinax/health.fhir.r4.international401;
 # + return - HTTP client instance or error
 public isolated function createHttpClient(BulkExportServerConfig serverConfig) returns http:Client|error {
     if serverConfig.authEnabled {
+        // Validate required fields
+        if serverConfig.tokenUrl is () || (<string>serverConfig.tokenUrl).length() == 0 {
+            return error("Missing required field: tokenUrl for OAuth2 authentication.");
+        }
+        if serverConfig.clientId is () || (<string>serverConfig.clientId).length() == 0 {
+            return error("Missing required field: clientId for OAuth2 authentication.");
+        }
         http:OAuth2ClientCredentialsGrantConfig config = {
             tokenUrl: serverConfig.tokenUrl ?: "",
             clientId: serverConfig.clientId ?: "",

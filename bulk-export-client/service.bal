@@ -82,13 +82,13 @@ isolated service /bulk on new http:Listener(8091) {
                 BulkExportServerConfig serverConfig = sourceServerConfigs.get(systemUrl);
                 
                 // Get client within lock statement
-                http:Client client1 = check createHttpClient(serverConfig);
+                http:Client httpClient = check createHttpClient(serverConfig);
                 MatchedPatient[] systemPatients = patientsBySystem.get(systemUrl);
                 
                 international401:Parameters parametersResource = populateParamsResource(systemPatients, _outputFormat, _since, _type);
                 
                 // kick-off request to the bulk export server
-                status = client1->post(
+                status = httpClient->post(
                     "/Patient/$export", 
                     parametersResource.clone().toJson(),
                     {

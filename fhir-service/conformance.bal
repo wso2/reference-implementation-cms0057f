@@ -15,10 +15,10 @@
 // under the License.
 
 import ballerina/io;
+import ballerina/log;
 import ballerina/time;
 import ballerinax/health.fhir.r4;
 import ballerinax/health.fhir.r4.international401;
-import ballerina/log;
 
 # # metadata of server and rest components as configurables
 configurable ConfigFHIRServer configFHIRServer = ?;

@@ -14,11 +14,11 @@
 // specific language governing permissions and limitations
 // under the License.
 
+import ballerina/http;
 import ballerina/log;
 import ballerinax/health.fhir.r4;
 import ballerinax/health.fhir.r4.international401;
 import ballerinax/health.fhir.r4.parser;
-import ballerina/http;
 
 // This implementation is a mock FHIR backend which acts as a FHIR repository which has data in FHIR format.
 // In actual production scenario we will use the connectors to connect to the actual backend systems of records
@@ -30,7 +30,7 @@ function init() returns error? {
 }
 
 function loadData() returns error? {
-    http:Client dataClient = check new(sampleDataGithubUrl);
+    http:Client dataClient = check new (sampleDataGithubUrl);
     json dataSet = check dataClient->get("");
 
     if dataSet is map<json> {

@@ -15,17 +15,17 @@
 // under the License.
 
 import ballerina/http;
-import ballerina/log;
-import ballerina/url;
 import ballerina/io;
+import ballerina/log;
 import ballerina/time;
+import ballerina/url;
 import ballerinax/health.fhir.r4;
 import ballerinax/health.fhir.r4.davincihrex100;
-import ballerinax/health.fhir.r4.uscore501;
-import ballerinax/health.fhir.r4.validator;
 import ballerinax/health.fhir.r4.davincipas;
 import ballerinax/health.fhir.r4.international401;
 import ballerinax/health.fhir.r4.parser;
+import ballerinax/health.fhir.r4.uscore501;
+import ballerinax/health.fhir.r4.validator;
 
 isolated function getQueryParamsMap(map<r4:RequestSearchParameter[] & readonly> requestSearchParameters) returns map<string[]> {
     //TODO: Should provide ability to get the query parameters from the context as it is from the http request. 
@@ -296,7 +296,6 @@ public isolated function generateSmartConfiguration() returns SmartConfiguration
     return smartConfig;
 }
 
-
 public isolated function claimSubmit(international401:Parameters payload) returns r4:FHIRError|international401:Parameters|error {
     international401:Parameters|error 'parameters = parser:parseWithValidation(payload.toJson(), international401:Parameters).ensureType();
 
@@ -323,7 +322,7 @@ public isolated function claimSubmit(international401:Parameters payload) return
                             davincipas:PASClaim newClaim = check newClaimResource.cloneWithType();
 
                             davincipas:PASClaimResponse claimResponse = check parser:parse(claimResponseJson, davincipas:PASClaimResponse).ensureType();
-                            
+
                             claimResponse.patient = newClaim.patient;
                             claimResponse.insurer = newClaim.insurer;
                             claimResponse.created = newClaim.created;
@@ -349,7 +348,6 @@ public isolated function claimSubmit(international401:Parameters payload) return
     }
     return r4:createFHIRError("Something went wrong", r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
 }
-
 
 # Helper function to validate consent
 #
@@ -454,7 +452,6 @@ isolated function extractConsentFromParameters(international401:ParametersParame
     return ();
 }
 
-
 # Function to evaluate consent based on comprehensive guidelines
 #
 # + consent - The consent resource to evaluate
@@ -553,7 +550,7 @@ isolated function evaluateConsent(Consent consent, string memberMatchResult) ret
         if result.consentPolicy is string {
             string policy = <string>result.consentPolicy;
             // This is a simplified check - in production you'd validate against actual system capabilities
-            if policy == "http://hl7.org/fhir/us/davinci-hrex/StructureDefinition-hrex-consent.html#regular" || 
+            if policy == "http://hl7.org/fhir/us/davinci-hrex/StructureDefinition-hrex-consent.html#regular" ||
                 policy == "http://hl7.org/fhir/us/davinci-hrex/StructureDefinition-hrex-consent.html#sensitive" {
                 // Policy is supported
                 log:printDebug("Policy compliance validation successful. Policy: " + policy);

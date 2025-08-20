@@ -25,10 +25,10 @@ import ballerinax/health.fhir.r4.uscore501;
 final r4:FHIRError & readonly INTERNAL_ERROR = r4:createFHIRError("Internal server error", r4:ERROR,
         r4:PROCESSING, httpStatusCode = http:STATUS_INTERNAL_SERVER_ERROR);
 
-## This class implements the reference member matcher for the Da Vinci HRex Member Matcher.
-## The matcher is used to match a member's coverage with the existing patient records in the FHIR repository.
-## It uses the patient's name and coverage details to find a match in the existing patient records.
-## If a match is found, it returns the member identifier (patient ID). If no match is found, it returns an error indicating that no match was found.
+# # This class implements the reference member matcher for the Da Vinci HRex Member Matcher.
+# # The matcher is used to match a member's coverage with the existing patient records in the FHIR repository.
+# # It uses the patient's name and coverage details to find a match in the existing patient records.
+# # If a match is found, it returns the member identifier (patient ID). If no match is found, it returns an error indicating that no match was found.
 public isolated class DemoFHIRMemberMatcher {
     *hrex100:MemberMatcher;
 
@@ -42,7 +42,7 @@ public isolated class DemoFHIRMemberMatcher {
 
         // Member match resources
         uscore501:USCorePatientProfile memberPatient = memberMatchResources.memberPatient;
-        hrex100:HRexConsent? _ = memberMatchResources.consent;
+        hrex100:HRexConsent? consent = memberMatchResources.consent;
         hrex100:HRexCoverage coverageToMatch = memberMatchResources.coverageToMatch;
         hrex100:HRexCoverage? _ = memberMatchResources.coverageToLink;
 
@@ -89,13 +89,20 @@ public isolated class DemoFHIRMemberMatcher {
                 return INTERNAL_ERROR;
             }
 
-            log:printDebug(oldBeneficiaryRef.substring(8));
-
-            log:printDebug(patientId);
-
             // If both beneficiaryRef and oldPatient.id are same, we can derive it as a match
             if oldBeneficiaryRef.substring(8) == patientId {
                 //match found
+
+                // Validate consent for the matched member ID
+                ConsentEvaluationResponse|error consentResponse = self.queryConsentEvaluate(self.createConsentParamsPayload(consent, patientId));
+
+                if consentResponse is error {
+                    log:printError("Failed to evaluate consent", consentResponse);
+                    return (r4:createFHIRError("Failed to evaluate consent",
+                            r4:ERROR, r4:PROCESSING,
+                            httpStatusCode = http:STATUS_INTERNAL_SERVER_ERROR));
+                }
+
                 return <hrex100:MemberIdentifier>patientId;
             }
 
@@ -169,6 +176,114 @@ public isolated class DemoFHIRMemberMatcher {
         }
 
         return nameMatchedPatients;
+
+    }
+
+    isolated function queryConsentEvaluate(international401:Parameters parameters) returns ConsentEvaluationResponse|r4:FHIRError {
+        http:Client|error consentClient = new ("http://localhost:9090");
+
+        if consentClient is error {
+            log:printError("Failed to create consent client", consentClient);
+            return r4:createFHIRError("Internal server error - failed to create client",
+                    r4:ERROR, r4:PROCESSING,
+                    httpStatusCode = http:STATUS_INTERNAL_SERVER_ERROR);
+        }
+
+        http:Response|error response = consentClient->post("/fhir/r4/Consent/$evaluate", parameters.toJson(), {
+            "Content-Type": "application/fhir+json",
+            "Accept": "application/fhir+json"
+        });
+
+        if response is error {
+            log:printError("Failed to query consent evaluate endpoint", response);
+            return r4:createFHIRError("Internal server error - failed to query consent endpoint",
+                    r4:ERROR, r4:PROCESSING,
+                    httpStatusCode = http:STATUS_INTERNAL_SERVER_ERROR);
+        }
+
+        int statusCode = response.statusCode;
+        log:printDebug(string `Consent evaluate response status: ${statusCode}`);
+
+        if statusCode == http:STATUS_OK {
+            // Success case - return the parameters response
+            json|error responsePayload = response.getJsonPayload();
+            if responsePayload is error {
+                log:printError("Failed to parse success response payload", responsePayload);
+                return r4:createFHIRError("Invalid response format",
+                        r4:ERROR, r4:PROCESSING,
+                        httpStatusCode = http:STATUS_INTERNAL_SERVER_ERROR);
+            }
+
+            international401:Parameters|error parametersResponse = responsePayload.cloneWithType();
+            if parametersResponse is error {
+                log:printError("Failed to convert response to Parameters", parametersResponse);
+                return r4:createFHIRError("Invalid Parameters response",
+                        r4:ERROR, r4:PROCESSING,
+                        httpStatusCode = http:STATUS_INTERNAL_SERVER_ERROR);
+            }
+
+            return {
+                statusCode: statusCode,
+                success: true,
+                parameters: parametersResponse
+            };
+
+        } else if statusCode == http:STATUS_UNPROCESSABLE_ENTITY {
+            // Validation failure case - return the operation outcome
+            json|error responsePayload = response.getJsonPayload();
+            if responsePayload is error {
+                log:printError("Failed to parse error response payload", responsePayload);
+                return r4:createFHIRError("Invalid error response format",
+                        r4:ERROR, r4:PROCESSING,
+                        httpStatusCode = http:STATUS_INTERNAL_SERVER_ERROR);
+            }
+
+            r4:OperationOutcome|international401:Parameters|error operationOutcome = responsePayload.cloneWithType();
+            if operationOutcome is error {
+                log:printError("Failed to convert response to OperationOutcome", operationOutcome);
+                return r4:createFHIRError("Invalid OperationOutcome response",
+                        r4:ERROR, r4:PROCESSING,
+                        httpStatusCode = http:STATUS_INTERNAL_SERVER_ERROR);
+            }
+            if operationOutcome is international401:Parameters {
+                log:printDebug(operationOutcome.toString());
+                return r4:createFHIRError("Member identity does not match",
+                        r4:ERROR, r4:PROCESSING,
+                        httpStatusCode = http:STATUS_UNPROCESSABLE_ENTITY);
+            }
+
+            return {
+                statusCode: statusCode,
+                success: false,
+                operationOutcome: <r4:OperationOutcome>operationOutcome
+            };
+
+        } else {
+            // Unexpected status code
+            log:printError(string `Unexpected status code from consent evaluate: ${statusCode}`);
+            return r4:createFHIRError(string `Unexpected response status: ${statusCode}`,
+                    r4:ERROR, r4:PROCESSING,
+                    httpStatusCode = http:STATUS_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    isolated function createConsentParamsPayload(hrex100:HRexConsent? consentResource, string memberIdentifier) returns international401:Parameters {
+        // Mocking a Parameters resource for consent evaluation
+
+        international401:Parameters parameters = {
+            id: "member-match-in",
+            'parameter: [
+                {
+                    name: "Consent",
+                    'resource: consentResource
+                },
+                {
+                    name: "memberIdentifier",
+                    valueString: memberIdentifier
+                }
+            ]
+        };
+        return parameters;
 
     }
 }

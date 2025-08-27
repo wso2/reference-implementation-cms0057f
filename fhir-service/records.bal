@@ -42,7 +42,6 @@ public enum ResourceType {
     EXPLANATION_OF_BENEFIT = "ExplanationOfBenefit"
 }
 
-
 # Holds information for OAuth2 authentication.
 #
 # + tokenUrl - Token URL of the token endpoint
@@ -62,7 +61,6 @@ type ParameterInfo record {|
     readonly string profile;
     readonly typedesc<anydata> typeDesc;
 |};
-
 
 // ######################################################################################################################
 // # Model Configs                                                                                                      #
@@ -308,7 +306,6 @@ public type SmartConfiguration record {|
     string[] code_challenge_methods_supported;
 |};
 
-
 # Record for consent evaluation result
 #
 # + isValid - Indicates if the consent is valid
@@ -329,3 +326,11 @@ public type ConsentEvaluationResult record {|
     r4:dateTime? consentEndDate;
     string? requestingPayer;
 |};
+
+// Supporting type definitions for the response
+type ConsentEvaluationResponse record {
+    int statusCode;
+    boolean success;
+    international401:Parameters? parameters = ();
+    r4:OperationOutcome? operationOutcome = ();
+};

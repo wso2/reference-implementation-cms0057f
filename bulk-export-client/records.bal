@@ -19,8 +19,7 @@
 # + clientSecret - client secret
 # + scopes - array of scopes, to access the export operation  
 # + fileServerUrl - if the server exports to different file server, this URL should be provided  
-# + contextPath - context path for the export operation, if any  
-# + defaultIntervalInSec - polling interval in seconds
+# + authEnabled - if the server requires authentication. default is false  
 public type BulkExportServerConfig record {|
     string baseUrl;
     string tokenUrl?;
@@ -28,8 +27,7 @@ public type BulkExportServerConfig record {|
     string clientSecret?;
     string[] scopes?;
     string fileServerUrl?;
-    string contextPath;
-    decimal defaultIntervalInSec = 5;
+    boolean authEnabled = false;
 |};
 
 # Server config for import FHIR resources.
@@ -54,10 +52,12 @@ public type TargetServerConfig record {|
 # + baseUrl - Base URL of the client itself. 
 # + authEnabled - true if the bulk export server requires authentication  
 # + targetDirectory - temporary directory to save the exported files
+# + defaultIntervalInSec - default interval in seconds to poll the status of the export job
 public type BulkExportClientConfig record {|
     string baseUrl;
     boolean authEnabled;
     string targetDirectory;
+    decimal defaultIntervalInSec = 5;
 |};
 
 # record to map exported resource metadata.
@@ -93,8 +93,10 @@ public type ExportSummary record {
 # + id - patient ID
 # + canonical - canonical URL
 # + identifiers - other identifiers
+# + systemId - payer's identifier 
 public type MatchedPatient record {|
     string id;
     string canonical?;
     map<string> identifiers?;
+    string systemId?;
 |};

@@ -37,7 +37,7 @@ There can be information related to patient like contract, plan etc. which are n
 
 Check `more_info_api.yaml` in `module-ballerinax-health.fhir.r4/fhirr4/ballerina/src/main/resources/fhirservice/resources/` for a sample open-api swagger.
 
-#### Step 1: Setting up  Analytics Server: Opensearch & Opensearch Dashboard
+### Step 1: Setting up  Analytics Server: Opensearch & Opensearch Dashboard
 
 A sample docker-compose file to deploy a two node Opensearch cluster along with Opensearch Dashboard is available in `analytics_opensearch_docker_compose.yml`.
 
@@ -62,13 +62,13 @@ Visit `<open_search_dashboard_host>/app/home#/` > Manage > Saved Objects > Impor
 
 The created dashboard should be available in the Dashboards section now. The main spec required metrics: `Unique number of users` and `Users with more than 1 request` are available in the dashboard, and can be filtered with a given date range.
 
-#### Step 2: Run the patient-access-api service
+### Step 2: Run the patient-access-api service
 
 After the `Config.toml` is configured properly and the dashboard is imported, you can run the service with `bal run` and after startup you can send a request to a Patient Access API and check the dashboard for visualization.
 
-> Note: If a request is sent before importing a dashboard (with the required fields in the `.ndjson`), Opensearch index fields will be created acording to the attributes sent in the first log. Any new field attributes sent in later logs, will not be shown in the dashboard, unless set manually.
+> Note: If a request is sent before importing a dashboard (with the required fields in the `.ndjson`), Opensearch index fields will be created according to the attributes sent in the first log. Any new field attributes sent in later logs, will not be shown in the dashboard, unless set manually.
 
-#### Step 3: (optional) Retrieve analytics with Opensearch APIs
+### Step 3: (optional) Retrieve analytics with Opensearch APIs
 
 Without using the Opensearch dashboards, you can retrieve the analytics data by directly calling APIs in Opensearch. Check `analytics_opensearch.postman_collection.json` for a sample postman collection to retrieve Patient Access API metrics.
 
@@ -77,11 +77,11 @@ Without using the Opensearch dashboards, you can retrieve the analytics data by 
 
 ## Publishing Analytics Data to Moesif
 
-#### Step 1: Creating a Moesif Account and retrieving an application ID
+### Step 1: Creating a Moesif Account and retrieving an application ID
 
-As the first step, go to [moesif.com](https://www.moesif.com/) and create an account. Then create a moesif application and copy the generated applicaiton ID.
+As the first step, go to [moesif.com](https://www.moesif.com/) and create an account. Then create a moesif application and copy the generated application ID.
 
-#### Step 2: Run the patient-access-api service
+### Step 2: Run the patient-access-api service
 
 Configure the `Config.toml` as follows.
 
@@ -110,7 +110,7 @@ database = "MoesifAnalyticsDB"
 ```
 Then start the service using `bal run` command.
 
-> Note: A database must be configured to retain all the data without loosing. Analytics data will be stored in the database even if the moesif publisher job is disabled. Once the job is started, all the pupublished data in the database will be published to moesif.
+> Note: A database must be configured to retain all the data without loosing. Analytics data will be stored in the database even if the moesif publisher job is disabled. Once the job is started, all the published data in the database will be published to moesif.
 
 Then you can log into your moesif account and create customized dashboards using the published data.
 

@@ -1,16 +1,20 @@
-# Patient Access API Metrics for CMS with Opensearch + Opensearch Dashboards
+# Patient Access API Metrics for CMS with Opensearch and Moesif Dashboards
 
 CMS requires Patient Access API Metrics to be published to CMS annually. This requirement can be achieved using the `AnalyticsResponseInterceptor` which comes inbuilt in the `health.fhirr4` service. Refer `module-ballerinax-health.fhir.r4/fhirr4/ballerina/src/main/resources/fhirservice/resources/analytics_README.md` to learn more.
 
 ## Overview
 
+The `AnalyticsResponseInterceptor` currently support data publishing to OpenSearch and Moesif Dashboards.
+
 Inside the Patient Access API module which imports `ballerinax.health.fhirr4`, we need to have a `Config.toml` at the same level as `Ballerina.toml` including the necessary configs. A sample Config.toml can be found in `analytics_sample_config.toml`.
 
 ### x-jwt-assertion Header :
 
-The data which is published for analytics are taken from the `x-jwt-assertion` header coming in the http request. Only the attributes in the `ballerinax.health.fhirr4.analytics.attributes` list are published.
+The data which is published for analytics dashboards (both OpenSearch and Moesif) are taken from the `x-jwt-assertion` header coming in the http request. Only the attributes in the `ballerinax.health.fhirr4.analytics.attributes` list are published.
 
 Usually this header should be generated at gateway level using the attributes in the `access_token` in the request, and pass to the backend.
+
+## Publishing Analytics Data to OpenSearch + OpenSearch Dashboard
 
 ### Analytics Server Endpoint :
 
@@ -33,7 +37,7 @@ There can be information related to patient like contract, plan etc. which are n
 
 Check `more_info_api.yaml` in `module-ballerinax-health.fhir.r4/fhirr4/ballerina/src/main/resources/fhirservice/resources/` for a sample open-api swagger.
 
-## Step 1: Setting up  Analytics Server: Opensearch & Opensearch Dashboard
+#### Step 1: Setting up  Analytics Server: Opensearch & Opensearch Dashboard
 
 A sample docker-compose file to deploy a two node Opensearch cluster along with Opensearch Dashboard is available in `analytics_opensearch_docker_compose.yml`.
 
@@ -58,15 +62,57 @@ Visit `<open_search_dashboard_host>/app/home#/` > Manage > Saved Objects > Impor
 
 The created dashboard should be available in the Dashboards section now. The main spec required metrics: `Unique number of users` and `Users with more than 1 request` are available in the dashboard, and can be filtered with a given date range.
 
-## Step 2: Run the patient-access-api service
+#### Step 2: Run the patient-access-api service
 
 After the `Config.toml` is configured properly and the dashboard is imported, you can run the service with `bal run` and after startup you can send a request to a Patient Access API and check the dashboard for visualization.
 
 > Note: If a request is sent before importing a dashboard (with the required fields in the `.ndjson`), Opensearch index fields will be created acording to the attributes sent in the first log. Any new field attributes sent in later logs, will not be shown in the dashboard, unless set manually.
 
-## Step 3: (optional) Retrieve analytics with Opensearch APIs
+#### Step 3: (optional) Retrieve analytics with Opensearch APIs
 
 Without using the Opensearch dashboards, you can retrieve the analytics data by directly calling APIs in Opensearch. Check `analytics_opensearch.postman_collection.json` for a sample postman collection to retrieve Patient Access API metrics.
+
+### Sample Opensearch Dashboard for Patient Access API Metrics
+![Sample Dashboard](analytics_sample_opensearch_dashboard.png)
+
+## Publishing Analytics Data to Moesif
+
+#### Step 1: Creating a Moesif Account and retrieving an application ID
+
+As the first step, go to [moesif.com](https://www.moesif.com/) and create an account. Then create a moesif application and copy the generated applicaiton ID.
+
+#### Step 2: Run the patient-access-api service
+
+Configure the `Config.toml` as follows.
+
+```toml
+[ballerinax.health.fhirr4.analytics]
+enabled = true
+attributes = ["fhirUser", "client_id", "iss"]
+publisher = "moesif"
+
+[ballerinax.health.fhirr4.moesifPublisherJob]
+enabled = true
+appId = "<moesif app ID>" # Add the moesif application ID that was retrieved earlier.
+url = "https://api.moesif.net/v1/actions"
+frequency = 60.0
+batchSize = 100
+maxRetries = 3 
+retryInterval = 5.0
+
+# Configuration for moesif analytics database
+[ballerinax.health.fhirr4.store]
+host = "<database host>"
+port = <database port>
+user = "<database user>"
+password = "<database password>"
+database = "MoesifAnalyticsDB"
+```
+Then start the service using `bal run` command.
+
+> Note: A database must be configured to retain all the data without loosing. Analytics data will be stored in the database even if the moesif publisher job is disabled. Once the job is started, all the pupublished data in the database will be published to moesif.
+
+Then you can log into your moesif account and create customized dashboards using the published data.
 
 # Try out with WSO2 Asgardeo & Choreo
 
@@ -74,6 +120,3 @@ In Asgardeo application, you should add the required attributes of the user to b
 > Go inside the application > `Protocol` > `Access Token` > Set Token type to `JWT` > Add required user attributes in `Access Token Attributes`
 
 In Choreo while deploying Patient Access API ballerina project, add the analytics configurations accordingly in the `Configure & Deploy` UI, and set `Pass end-user attributes to upstream` feature to `Enabled`, in order to generate the `x-jwt-assertion` header and pass it to the deployed FHIR server backend.
-
-# Sample Opensearch Dashboard for Patient Access API Metrics
-![Sample Dashboard](analytics_sample_opensearch_dashboard.png)

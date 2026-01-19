@@ -19,17 +19,18 @@ window.Config = {
     "https://c32618cf-389d-44f1-93ee-b67a3468aae3-dev.e1-us-east-azure.choreoapis.dev/cms-0057f---unitedhealth/fhir-service/v1.0",
   demoBaseUrl: "https://unitedcare.com",
   demoHospitalUrl: "https://grace-hospital.com",
+  cdsRequestUrl: "https://c32618cf-389d-44f1-93ee-b67a3468aae3-dev.e1-us-east-azure.choreoapis.dev/cms-0057f---unitedhealth/cds-service/v1.0/cds-services",
 
   medication_request:
     "/choreo-apis/cms-0057f---unitedhealth/fhir-service/v1/fhir/r4/MedicationRequest",
   prescribe_medication:
-    "/choreo-apis/cms-0057f---unitedhealth/cds-service/v1/prescribe-medication",
+    "/choreo-apis/cms-0057f---unitedhealth/cds-service/v1/cds-services/prescribe-medication",
   questionnaire_package:
     "/choreo-apis/cms-0057f---unitedhealth/fhir-service/v1/fhir/r4/Questionnaire/questionnaire-package",
   questionnaire_response:
     "/choreo-apis/cms-0057f---unitedhealth/fhir-service/v1/fhir/r4/QuestionnaireResponse",
   claim_submit:
-    "/choreo-apis/cms-0057f---unitedhealth/fhir-service/v1/Claim/$submit",
+    "/choreo-apis/cms-0057f---unitedhealth/fhir-service/v1/fhir/r4/Claim/$submit",
   practitioner_new:
     "/choreo-apis/cms-0057f---unitedhealth/fhir-service/v1/fhir/r4/Practitioner",
   patient:

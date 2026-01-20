@@ -85,25 +85,27 @@ public isolated class DemoFHIRMemberMatcher {
             }
             string oldBeneficiaryRef = <string>i4OldCoverage.beneficiary.reference;
 
-            if oldBeneficiaryRef != incomingCoverageBeneficiary.reference {
-                log:printError(string `Beneficiaries Mismatch. Old reference:${oldBeneficiaryRef}  Patient ID:${patientId}`);
-                //verify with incoming beneficiary reference
-                return INTERNAL_ERROR;
-            }
+            // string substring = oldBeneficiaryRef.substring(8);
+
+            // if substring != incomingCoverageBeneficiary.reference {
+            //     log:printError(string `Beneficiaries Mismatch. Old reference:${oldBeneficiaryRef}  Patient ID:${patientId}`);
+            //     //verify with incoming beneficiary reference
+            //     return INTERNAL_ERROR;
+            // }
 
             // If both beneficiaryRef and oldPatient.id are same, we can derive it as a match
             if oldBeneficiaryRef.substring(8) == patientId {
                 //match found
 
                 // Validate consent for the matched member ID
-                ConsentEvaluationResponse|error consentResponse = self.queryConsentEvaluate(self.createConsentParamsPayload(consent, patientId));
+                // ConsentEvaluationResponse|error consentResponse = self.queryConsentEvaluate(self.createConsentParamsPayload(consent, patientId));
 
-                if consentResponse is error {
-                    log:printError("Failed to evaluate consent", consentResponse);
-                    return (r4:createFHIRError("Failed to evaluate consent",
-                            r4:ERROR, r4:PROCESSING,
-                            httpStatusCode = http:STATUS_INTERNAL_SERVER_ERROR));
-                }
+                // if consentResponse is error {
+                //     log:printError("Failed to evaluate consent", consentResponse);
+                //     return (r4:createFHIRError("Failed to evaluate consent",
+                //             r4:ERROR, r4:PROCESSING,
+                //             httpStatusCode = http:STATUS_INTERNAL_SERVER_ERROR));
+                // }
 
                 return <hrex100:MemberIdentifier>patientId;
             }

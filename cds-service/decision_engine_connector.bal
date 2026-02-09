@@ -1,4 +1,6 @@
+import ballerina/http;
 import ballerinax/health.fhir.cds;
+import ballerinax/health.fhir.r4;
 
 # ====================================== Please do your implementations to the below methods ===========================
 #
@@ -13,64 +15,61 @@ import ballerinax/health.fhir.cds;
 #
 # ======================================================================================================================
 
+isolated http:Client httpClient = check new ("http://localhost:9090");
+
 # Handle decision service connectivity.
 #
 # + cdsRequest - CdsRequest to sent to the backend.
 # + hookId - ID of the hook being invoked.
 # + return - return CdsResponse or CdsError
-isolated function connectDecisionSystemForPrescirbeMedication(cds:CdsRequest cdsRequest, string hookId) returns cds:CdsResponse|cds:CdsError {
-    return {
-        cards: [
-            {
-                "summary": "Prior Authorization Required",
-                "indicator": "warning",
-                "detail": "This medication (Aimovig 70 mg) requires prior authorization from XYZ Health Insurance. Please complete the required documentation.",
-                "source": {
-                    "label": "UnitedCare Health Insurance ePA Service",
-                    "url": "https://xyzhealth.com/prior-auth"
-                },
-                "suggestions": [
-                    {
-                        "label": "Submit e-Prior Authorization",
-                        "uuid": "submit-epa",
-                        "actions": [
-                            {
-                                "type": "create",
-                                "description": "Submit an electronic prior authorization request for Aimovig 70 mg.",
-                                "resource": {
-                                    "resourceType": "Task",
-                                    "status": "requested",
-                                    "intent": "order",
-                                    "code": {
-                                        "coding": [
-                                            {
-                                                "system": "http://terminology.hl7.org/CodeSystem/task-code",
-                                                "code": "prior-authorization",
-                                                "display": "Submit Prior Authorization"
-                                            }
-                                        ]
-                                    },
-                                    "for": {
-                                        "reference": "Patient/101"
-                                    },
-                                    "owner": {
-                                        "reference": "Organization/50"
-                                    }
-                                }
-                            }
-                        ]
-                    }
-                ],
-                "links": [
-                    {
-                        "label": "Launch SMART App for DTR",
-                        "url": string `${EHR_DTR_APP_LINK}`,
-                        "type": "smart"
-                    }
-                ]
+isolated function connectDecisionSystemForCrdMriSpineOrderSign(cds:CdsRequest cdsRequest, string hookId) returns cds:CdsResponse|cds:CdsError {
+    lock {
+        r4:Bundle bundle = {'type: "collection"};
+        r4:BundleEntry[] entries = [];
+        map<r4:DomainResource>? prefetch = cdsRequest.clone().prefetch;
+        if prefetch is map<r4:DomainResource> {
+            foreach var item in prefetch.keys() {
+                r4:BundleEntry entry = {
+                    'resource: prefetch.get(item)
+                };
+                entries.push(entry);
             }
-        ]
-    };
+        }
+
+        cds:Context context = cdsRequest.clone().context;
+        r4:Bundle? draftOrders = context?.draftOrders;
+        if draftOrders is r4:Bundle {
+            r4:BundleEntry[]? entriesArray = draftOrders.entry;
+            if entriesArray is r4:BundleEntry[] {
+                foreach var item in entriesArray {
+                    entries.push(item);
+                }
+            }
+        }
+
+        bundle.entry = entries;
+
+        http:Response|http:ClientError response = httpClient->post("/", bundle.clone().toJson());
+        if response is error {
+            return cds:createCdsError(response.message(), 500, cause = response);
+        }
+
+        json|http:ClientError jsonPayload = response.getJsonPayload();
+        if jsonPayload is error {
+            return cds:createCdsError(jsonPayload.message(), 500, cause = jsonPayload);
+        }
+
+        PriorAuthDecision|error priorAuthDecision = jsonPayload.cloneWithType(PriorAuthDecision);
+        if priorAuthDecision is error {
+            return cds:createCdsError(priorAuthDecision.message(), 500, cause = priorAuthDecision);
+        }
+
+        cds:CdsResponse res = {cards: []};
+
+        cds:Card card = {summary: priorAuthDecision.summary, detail: priorAuthDecision.reasons[0], indicator: "critical", 'source: {label: "Rule engine"}};
+        res.cards.push(card);
+        return res.clone();
+    }
 }
 
 # Handle feedback service connectivity.
@@ -78,42 +77,20 @@ isolated function connectDecisionSystemForPrescirbeMedication(cds:CdsRequest cds
 # + feedback - Feedback record to be processed.
 # + hookId - ID of the hook being invoked.
 # + return - return CdsError, if any.
-isolated function connectFeedbackSystemForPrescirbeMedication(cds:Feedbacks feedback, string hookId) returns cds:CdsError? {
+isolated function connectFeedbackSystemForCrdMriSpineOrderSign(cds:Feedbacks feedback, string hookId) returns cds:CdsError? {
     return cds:createCdsError(string `Rule repository backend not implemented/ connected yet for ${hookId}`, 501);
 }
 
-# Handle decision service connectivity.
-#
-# + cdsRequest - CdsRequest to sent to the backend.
-# + hookId - ID of the hook being invoked.
-# + return - return CdsResponse or CdsError
-isolated function connectDecisionSystemForRadiology(cds:CdsRequest cdsRequest, string hookId) returns cds:CdsResponse|cds:CdsError {
-    return cds:createCdsError(string `Rule repository backend not implemented/ connected yet for ${hookId}`, 501);
-}
+public type PriorAuthDecision record {|
+    boolean priorAuthRequired;
+    // High-level summary of why we decided this way.
+    string summary;
+    // Detailed reasons / rule hits.
+    string[] reasons;
+    // Medical necessity status derived from clinical data in the bundle.
+    MedicalNecessityStatus medicalNecessity;
+    // Missing documentation / data points to complete the check.
+    string[] missingDocumentation;
+|};
 
-# Handle feedback service connectivity.
-#
-# + feedback - Feedback record to be processed.
-# + hookId - ID of the hook being invoked.
-# + return - return CdsError, if any.
-isolated function connectFeedbackSystemForRadiology(cds:Feedbacks feedback, string hookId) returns cds:CdsError? {
-    return cds:createCdsError(string `Rule repository backend not implemented/ connected yet for ${hookId}`, 501);
-}
-
-# Handle decision service connectivity.
-#
-# + cdsRequest - CdsRequest to sent to the backend.
-# + hookId - ID of the hook being invoked.
-# + return - return CdsResponse or CdsError
-isolated function connectDecisionSystemForRadiologyOrder(cds:CdsRequest cdsRequest, string hookId) returns cds:CdsResponse|cds:CdsError {
-    return cds:createCdsError(string `Rule repository backend not implemented/ connected yet for ${hookId}`, 501);
-}
-
-# Handle feedback service connectivity.
-#
-# + feedback - Feedback record to be processed.
-# + hookId - ID of the hook being invoked.
-# + return - return CdsError, if any.
-isolated function connectFeedbackSystemForRadiologyOrder(cds:Feedbacks feedback, string hookId) returns cds:CdsError? {
-    return cds:createCdsError(string `Rule repository backend not implemented/ connected yet for ${hookId}`, 501);
-}
+public type MedicalNecessityStatus "MET"|"NOT_MET"|"INSUFFICIENT_DATA";

@@ -3,7 +3,7 @@
 org = "ballerinax"
 name = "cds_service"
 version = "1.0.0"
-distribution = "2201.12.3"
+distribution = "2201.13.1"
 authors = ["Ballerina"]
 keywords = ["Healthcare", "FHIR", "CRD", "Da Vinci", "CDS", "Coverage Requirements Discovery"]
 template = true

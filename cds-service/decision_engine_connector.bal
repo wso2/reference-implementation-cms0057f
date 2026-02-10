@@ -15,7 +15,8 @@ import ballerinax/health.fhir.r4;
 #
 # ======================================================================================================================
 
-isolated http:Client httpClient = check new ("http://localhost:9090");
+configurable string rule_engine_url = ?;
+isolated http:Client httpClient = check new (rule_engine_url);
 
 # Handle decision service connectivity.
 #

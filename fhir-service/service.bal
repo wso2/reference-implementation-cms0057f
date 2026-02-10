@@ -21,7 +21,7 @@ import ballerina/http;
 import ballerina/log;
 import ballerina/time;
 import ballerina/uuid;
-import ballerinax/health.clients.fhir;
+import ballerinax/health.clients.fhir as fhirClient;
 import ballerinax/health.fhir.r4;
 import ballerinax/health.fhirr4;
 import ballerinax/health.fhir.r4.carinbb200;
@@ -37,6 +37,8 @@ configurable string sampleDataGithubUrl = ?;
 
 // This is used to connect to file service
 isolated http:Client exportServiceClient = check new (exportServiceUrl);
+
+final fhirClient:FHIRConnector fhirConnector = check initFhirConnector();
 
 // ######################################################################################################################
 // # Capability statement API                                                                                           #
@@ -129,20 +131,22 @@ service /fhir/r4/Patient on new fhirr4:Listener(config = patientApiConfig) {
         // Member match response profile: 
         // https://hl7.org/fhir/us/davinci-hrex/StructureDefinition-hrex-parameters-member-match-out.html
         return {
-            'parameter: {
-                name: "MemberIdentifier",
-                valueIdentifier: {
-                    'type: {
-                        coding: [
-                            {
-                                system: "http://terminology.hl7.org/3.1.0/CodeSystem-v2-0203.html",
-                                code: "MB"
-                            }
-                        ]
-                    },
-                    value: memberIdentifier
+            'parameter: [
+                {
+                    name: "MemberIdentifier",
+                    valueIdentifier: {
+                        'type: {
+                            coding: [
+                                {
+                                    system: "http://terminology.hl7.org/3.1.0/CodeSystem-v2-0203.html",
+                                    code: "MB"
+                                }
+                            ]
+                        },
+                        value: memberIdentifier
+                    }
                 }
-            }
+            ]
         };
     }
 
@@ -187,7 +191,7 @@ service /fhir/r4/Patient on new fhirr4:Listener(config = patientApiConfig) {
     }
 
     // Delete a resource.
-    isolated resource function delete [string id](r4:FHIRContext fhirContext) returns r4:FHIRError|fhir:FHIRResponse {
+    isolated resource function delete [string id](r4:FHIRContext fhirContext) returns r4:FHIRError|fhirClient:FHIRResponse {
         return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
     }
 
@@ -212,11 +216,8 @@ public type Parameters international401:Parameters;
 
 service /fhir/r4/Claim on new fhirr4:Listener(config = ClaimApiConfig) {
 
-    isolated resource function post \$submit(r4:FHIRContext fhirContext, Parameters parameters) returns error|http:Response {
-        international401:Parameters submitResult = check claimSubmit(parameters);
-        http:Response response = new;
-        response.setJsonPayload(submitResult.toJson());
-        return response;
+    isolated resource function post \$submit(r4:FHIRContext fhirContext, Parameters parameters) returns r4:FHIRError|international401:Parameters|error {
+        return claimSubmit(parameters);
     }
 
     // Read the current state of single resource based on its id.
@@ -285,12 +286,12 @@ public type ClaimResponse davincipas:PASClaimResponse;
 service /fhir/r4/ClaimResponse on new fhirr4:Listener(config = claimResponseApiConfig) {
 
     // Read the current state of single resource based on its id.
-    isolated resource function get [string id](r4:FHIRContext fhirContext) returns http:Response|r4:OperationOutcome|r4:FHIRError|error {
-        r4:DomainResource claimResponse = check getById(CLAIM_RESPONSE, id);
-        http:Response response = new;
-        response.setJsonPayload(claimResponse.toJson());
-        response.statusCode = http:STATUS_OK;
-        return response;
+    isolated resource function get [string id](r4:FHIRContext fhirContext) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        ClaimRecord|error claimResponse = getClaimResponse(fhirConnector, id);
+        if claimResponse is error {
+            return r4:createFHIRError(claimResponse.message(), r4:ERROR, r4:PROCESSING_NOT_FOUND, httpStatusCode = http:STATUS_NOT_FOUND);
+        }
+        return <r4:DomainResource>claimResponse.payload;
     }
 
     // Read the state of a specific version of a resource based on its id.
@@ -319,8 +320,12 @@ service /fhir/r4/ClaimResponse on new fhirr4:Listener(config = claimResponseApiC
     }
 
     // Update the current state of a resource completely.
-    isolated resource function put [string id](r4:FHIRContext fhirContext, ClaimResponse claimresponse) returns ClaimResponse|r4:OperationOutcome|r4:FHIRError {
-        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    isolated resource function put [string id](r4:FHIRContext fhirContext, ClaimResponse claimResponse) returns ClaimResponse|r4:OperationOutcome|r4:FHIRError {
+        string|error result = updateClaimResponse(fhirConnector, id, "active", claimResponse.toJson());
+        if result is error {
+            return r4:createFHIRError("Failed to update claim response", r4:ERROR, r4:INVALID);
+        }
+        return claimResponse;
     }
 
     // Update the current state of a resource partially.
@@ -354,7 +359,11 @@ service /fhir/r4/Coverage on new fhirr4:Listener(config = coverageApiConfig) {
 
     // Read the current state of single resource based on its id.
     isolated resource function get [string id](r4:FHIRContext fhirContext) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
-        return getById(COVERAGE, id);
+        json|error coverage = getCoverage(fhirConnector, id);
+        if coverage is error {
+            return r4:createFHIRError(coverage.message(), r4:ERROR, r4:PROCESSING_NOT_FOUND, httpStatusCode = http:STATUS_NOT_FOUND);
+        }
+        return <r4:DomainResource>coverage;
     }
 
     // Read the state of a specific version of a resource based on its id.
@@ -370,7 +379,12 @@ service /fhir/r4/Coverage on new fhirr4:Listener(config = coverageApiConfig) {
 
     // Create a new resource.
     isolated resource function post .(r4:FHIRContext fhirContext, Coverage coverage) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
-        return create(COVERAGE, coverage.toJson());
+        string|error result = createCoverage(fhirConnector, coverage.toJson());
+        if result is error {
+            return r4:createFHIRError("Failed to create coverage", r4:ERROR, r4:INVALID);
+        }
+        coverage.id = result;
+        return coverage;
     }
 
     // Update the current state of a resource completely.
@@ -1198,6 +1212,32 @@ service /fhir/r4/Consent on new fhirr4:Listener(config = consentApiConfig) {
             // Return 422 status with operation outcome - NO Patient ID returned
             return createErrorResponse(result);
         }
+    }
+}
+
+// ######################################################################################################################
+// # Subscription API                                                                                                   #
+// ######################################################################################################################
+
+public type Subscription davincipas:PASSubscription;
+
+service /fhir/r4/Subscription on new fhirr4:Listener(config = subscriptionApiConfig) {
+    isolated resource function post .(r4:FHIRContext fhirContext, Subscription subscription) returns r4:FHIRError|http:Response {
+        string|error result = createSubscription(fhirConnector, subscription);
+        if result is error {
+            return r4:createFHIRError(result.message(), r4:ERROR, r4:INVALID);
+        }
+
+        http:Response response = new;
+        response.statusCode = http:STATUS_CREATED;
+        response.setHeader("Location", result);
+        response.setJsonPayload(subscription.toJson());
+        return response;
+    }
+
+    // Read the current state of single resource based on its id.
+    isolated resource function get [string id](r4:FHIRContext fhirContext) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
     }
 }
 

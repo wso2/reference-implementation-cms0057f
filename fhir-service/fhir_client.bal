@@ -14,32 +14,44 @@
 // specific language governing permissions and limitations
 // under the License.
 
+import ballerina/http;
 import ballerinax/health.clients.fhir as fhirClient;
 
 # FHIR configuration parameters (read from Config.toml)
 configurable string baseUrl = ?;
-configurable string tokenUrl = ?;
-configurable string clientId = ?;
-configurable string clientSecret = ?;
-configurable string[] scopes = ?;
+configurable string? tokenUrl = ();
+configurable string? clientId = ();
+configurable string? clientSecret = ();
+configurable string[]? scopes = ();
 
 # Get FHIR Connector configuration for Azure Health Data Services
 #
 # + return - FHIR Connector configuration
 public isolated function getFhirConnectorConfig() returns fhirClient:FHIRConnectorConfig {
-    return {
+
+    fhirClient:FHIRConnectorConfig fhirConfig = {
         baseURL: baseUrl,
-        mimeType: fhirClient:FHIR_JSON,
-        authConfig: {
-            tokenUrl: tokenUrl,
-            clientId: clientId,
-            clientSecret: clientSecret,
-            scopes: scopes,
+        mimeType: fhirClient:FHIR_JSON
+    };
+
+    string? tokenUrlVal = tokenUrl;
+    string? clientIdVal = clientId;
+    string? clientSecretVal = clientSecret;
+    string[]? scopesVal = scopes;
+
+    if tokenUrlVal is string && clientIdVal is string && clientSecretVal is string {
+        http:OAuth2ClientCredentialsGrantConfig authConfig = {
+            tokenUrl: tokenUrlVal,
+            clientId: clientIdVal,
+            clientSecret: clientSecretVal,
+            scopes: scopesVal ?: [],
             optionalParams: {
                 "resource": baseUrl
             }
-        }
-    };
+        };
+        fhirConfig.authConfig = authConfig;
+    }
+    return fhirConfig;
 }
 
 # Initialize the FHIR Connector

@@ -16,6 +16,7 @@
 
 import ballerina/http;
 import ballerina/log;
+import ballerinax/health.clients.fhir as fhirClient;
 import ballerinax/health.fhir.r4;
 import ballerinax/health.fhir.r4.davincihrex100 as hrex100;
 import ballerinax/health.fhir.r4.international401;
@@ -33,6 +34,11 @@ configurable string CONSENT_SERVICE_BASE_URL = "http://localhost:9090";
 # # If a match is found, it returns the member identifier (patient ID). If no match is found, it returns an error indicating that no match was found.
 public isolated class DemoFHIRMemberMatcher {
     *hrex100:MemberMatcher;
+    private final fhirClient:FHIRConnector fhirConnector;
+
+    public isolated function init(fhirClient:FHIRConnector fhirConnector) {
+        self.fhirConnector = fhirConnector;
+    }
 
     public isolated function matchMember(anydata memberMatchResources) returns hrex100:MemberIdentifier|r4:FHIRError {
 
@@ -53,7 +59,7 @@ public isolated class DemoFHIRMemberMatcher {
         uscore501:USCorePatientProfileName[] name = memberPatient.name;
 
         string[] given = name[0].given ?: [];
-        r4:Bundle nameMatchedPatients = check search(PATIENT, {"given": [given[0]]});
+        r4:Bundle nameMatchedPatients = check search(self.fhirConnector, PATIENT, {"given": [given[0]]});
 
         r4:BundleEntry[]? entry = nameMatchedPatients.entry;
 
@@ -72,7 +78,7 @@ public isolated class DemoFHIRMemberMatcher {
             // Get coverage from id
             string coverageId = <string>coverageToMatch.id;
             r4:Reference incomingCoverageBeneficiary = coverageToMatch.beneficiary;
-            r4:DomainResource|r4:FHIRError oldCoverage = check getById(COVERAGE, coverageId);
+            r4:DomainResource|r4:FHIRError oldCoverage = check getById(self.fhirConnector, COVERAGE, coverageId);
 
             if oldCoverage is r4:FHIRError {
                 log:printError("FHIR read response is not a valid FHIR Resource", oldCoverage);
@@ -134,7 +140,7 @@ public isolated class DemoFHIRMemberMatcher {
         return filteredPatient;
     }
 
-    private isolated function getNameMatchedPatients(uscore501:USCorePatientProfileName[] name) returns international401:Patient[]|r4:FHIRError & readonly {
+    private isolated function getNameMatchedPatients(fhirClient:FHIRConnector fhirConnector, uscore501:USCorePatientProfileName[] name) returns international401:Patient[]|r4:FHIRError & readonly {
 
         international401:Patient[] nameMatchedPatients = [];
         string[] givenNames = [];
@@ -159,7 +165,7 @@ public isolated class DemoFHIRMemberMatcher {
             //     return INTERNAL_ERROR;
             // }
             // r4:Bundle|error searchBundle = searchRes.'resource.cloneWithType();
-            r4:FHIRError|r4:Bundle searchBundle = search(PATIENT, searchParams);
+            r4:FHIRError|r4:Bundle searchBundle = search(fhirConnector, PATIENT, searchParams);
             if searchBundle is error {
                 log:printError("FHIR search response is not a valid FHIR Bundle", searchBundle);
                 return INTERNAL_ERROR;

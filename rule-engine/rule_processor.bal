@@ -19,6 +19,16 @@ public type PriorAuthDecision record {|
     MedicalNecessityStatus medicalNecessity;
     // Missing documentation / data points to complete the check.
     string[] missingDocumentation;
+
+    // Links to payer resources (coverage policy, docs checklist, DTR launch, PA portal, etc.)
+    PriorAuthLink[] links?;
+|};
+
+public type PriorAuthLink record {|
+    string label; // e.g., "Coverage policy", "Docs checklist", "Launch DTR"
+    string url; // absolute URL
+    string 'type?; // optional: "absolute" | "smart" | "web" | "api" (your convention)
+    string description?; // optional short help text
 |};
 
 public type MedicalNecessityStatus "MET"|"NOT_MET"|"INSUFFICIENT_DATA";
@@ -40,9 +50,10 @@ public type MedicalNecessityStatus "MET"|"NOT_MET"|"INSUFFICIENT_DATA";
 # - DiagnosticReport(s) for prior imaging
 # - MedicationRequest(s), Procedure(s), DocumentReference(s)
 #
-# + bundle - Input FHIR bundle containing relevant resources
+# + bundle - Input FHIR bundle containing relevant resources  
+# + hookId - Hook Id
 # + return - PriorAuthDecision or error if mandatory data is missing/invalid
-public isolated function decidePriorAuth(r4:Bundle bundle) returns PriorAuthDecision|error {
+public isolated function decidePriorAuth(r4:Bundle bundle, string hookId) returns PriorAuthDecision|error {
     // 1) Extract key resources
     international401:ServiceRequest|error sr = getFirstServiceRequest(bundle);
     if sr is error {
@@ -116,8 +127,27 @@ public isolated function decidePriorAuth(r4:Bundle bundle) returns PriorAuthDeci
         summary: "Prior auth required for MRI spine.",
         reasons: reasons,
         medicalNecessity: medicalNecessity,
-        missingDocumentation: missingDocs
+        missingDocumentation: missingDocs,
+        links: prepareTheLinks(hookId)
     };
+}
+
+isolated function prepareTheLinks(string hookId) returns PriorAuthLink[]? {
+
+    if hook_id_questionnaire_id_map.hasKey(hookId) {
+        string questionnaireResourceId = hook_id_questionnaire_id_map.get(hookId);
+        string questionnaireResourceUrl = string `https://${fhir_server_url}/Questionnaire/${questionnaireResourceId}`;
+
+        return [
+            {
+                label: "Questionnaire url",
+                url: questionnaireResourceUrl
+            }
+        ];
+    } else {
+        return ();
+    }
+
 }
 
 // -----------------------------------------------------------------------------

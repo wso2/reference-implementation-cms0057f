@@ -50,7 +50,7 @@ isolated function connectDecisionSystemForCrdMriSpineOrderSign(cds:CdsRequest cd
 
         bundle.entry = entries;
 
-        http:Response|http:ClientError response = httpClient->post("/", bundle.clone().toJson());
+        http:Response|http:ClientError response = httpClient->post(string `/${hookId}`, bundle.clone().toJson());
         if response is error {
             return cds:createCdsError(response.message(), 500, cause = response);
         }
@@ -67,7 +67,24 @@ isolated function connectDecisionSystemForCrdMriSpineOrderSign(cds:CdsRequest cd
 
         cds:CdsResponse res = {cards: []};
 
-        cds:Card card = {summary: priorAuthDecision.summary, detail: priorAuthDecision.reasons[0], indicator: "critical", 'source: {label: "Rule engine"}};
+        cds:Card card = {
+            summary: priorAuthDecision.summary,
+            detail: priorAuthDecision.reasons[0],
+            indicator: "critical",
+            'source: {label: "WSO2 Healthcare Rule Engine"}
+        };
+
+        PriorAuthLink[]? links = priorAuthDecision.links;
+
+        cds:Link[] cdsLinks = [];
+        if links is PriorAuthLink[] {
+            foreach PriorAuthLink item in links {
+                cds:Link link = {label: item.label, 'type: cds:ABSOLUTE, url: item.url};
+                cdsLinks.push(link);
+            }
+            card.links = cdsLinks;
+        }
+
         res.cards.push(card);
         return res.clone();
     }
@@ -92,6 +109,16 @@ public type PriorAuthDecision record {|
     MedicalNecessityStatus medicalNecessity;
     // Missing documentation / data points to complete the check.
     string[] missingDocumentation;
+
+    // Links to payer resources (coverage policy, docs checklist, DTR launch, PA portal, etc.)
+    PriorAuthLink[] links?;
+|};
+
+public type PriorAuthLink record {|
+    string label; // e.g., "Coverage policy", "Docs checklist", "Launch DTR"
+    string url; // absolute URL
+    string 'type?; // optional: "absolute" | "smart" | "web" | "api" (your convention)
+    string description?; // optional short help text
 |};
 
 public type MedicalNecessityStatus "MET"|"NOT_MET"|"INSUFFICIENT_DATA";

@@ -92,11 +92,54 @@ public type ExportSummary record {
 #
 # + id - patient ID
 # + canonical - canonical URL
-# + identifiers - other identifiers
 # + systemId - payer's identifier 
 public type MatchedPatient record {|
     string id;
     string canonical?;
-    map<string> identifiers?;
     string systemId?;
+|};
+
+# Record to hold payer data exchange request.
+#
+# + memberId - Member ID
+# + requestId - Request ID
+# + oldPayerName - Old Payer Name
+# + oldPayerState - Old Payer State
+# + oldCoverageId - Old Coverage ID (optional)
+# + coverageStartDate - Coverage Start Date (optional)
+# + coverageEndDate - Coverage End Date (optional)
+# + bulkDataSyncStatus - Bulk Data Sync Status (optional)
+public type PayerDataExchangeRequest record {|
+    string requestId?;
+    string memberId;
+    string oldPayerName;
+    string oldPayerState;
+    string oldCoverageId?;
+    string coverageStartDate?;
+    string coverageEndDate?;
+    string bulkDataSyncStatus?;
+|};
+
+# Record to hold payer data exchange request result with total count.
+#
+# + totalCount - Total number of records
+# + requests - List of requests
+public type PayerDataExchangeRequestResult record {|
+    int totalCount;
+    PayerDataExchangeRequest[] requests;
+|};
+
+# Database configuration.
+#
+# + host - Database host
+# + port - Database port
+# + user - Database user
+# + password - Database password
+# + database - Database name
+public type DatabaseConfig record {|
+    string host;
+    int port;
+    string user;
+    string password;
+    string database;
 |};

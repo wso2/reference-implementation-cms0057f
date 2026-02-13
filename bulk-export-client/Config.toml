@@ -1,9 +1,3 @@
-# [sourceServerConfig]
-# baseUrl = "http://localhost:9090"
-# contextPath = "/fhir/r4"
-
-# Source server configurations (map structure)
-# You can define multiple source servers with different keys
 [sourceServerConfigs.test1]
 authEnabled = false
 baseUrl = "https://bulk-data.smarthealthit.org/eyJlcnIiOiIiLCJwYWdlIjoxMDAwMCwidGx0IjoxNSwibSI6MSwiZGVsIjowLCJzZWN1cmUiOjB9/fhir"
@@ -29,6 +23,13 @@ defaultIntervalInSec = 3.0
 
 [targetServerConfig]
 type = "file"
+
+#[databaseConfig]
+#host = "<host_name>"
+#port = <port>
+#user = "<user_name>"
+#password = "<password>"
+#database = "<database_name>"
 
 [ballerina.log]
 level = "DEBUG"

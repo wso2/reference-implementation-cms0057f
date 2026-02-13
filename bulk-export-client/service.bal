@@ -19,10 +19,10 @@ import ballerina/uuid;
 import ballerinax/health.fhir.r4.international401;
 
 configurable map<BulkExportServerConfig> sourceServerConfigs = ?;
-configurable BulkExportClientConfig clientServiceConfig = ?;
+configurable BulkExportClientConfig & readonly clientServiceConfig = ?;
 configurable TargetServerConfig targetServerConfig = ?;
 
-isolated service /bulk on new http:Listener(8091) {
+isolated service /bulk on bulkExportListener {
 
     function init() returns error? {
 
@@ -48,7 +48,6 @@ isolated service /bulk on new http:Listener(8091) {
         boolean isSuccess = false;
         http:Response|http:ClientError status;
 
-        
         log:printInfo("Bulk exporting started. Sending Kick-off request.");
         // Group patients by system URL
         map<MatchedPatient[]> patientsBySystem = {};
@@ -57,7 +56,7 @@ isolated service /bulk on new http:Listener(8091) {
             if systemId == "" {
                 return error("System URL is required for each patient");
             }
-            
+
             if !patientsBySystem.hasKey(systemId) {
                 patientsBySystem[systemId] = [];
             }
@@ -65,7 +64,7 @@ isolated service /bulk on new http:Listener(8091) {
             existingPatients.push(patient);
             patientsBySystem[systemId] = existingPatients;
         }
-        
+
         do {
 
             lock {
@@ -78,26 +77,26 @@ isolated service /bulk on new http:Listener(8091) {
                     log:printError("No configuration found for system URL: " + systemUrl);
                     continue;
                 }
-                
+
                 BulkExportServerConfig serverConfig = sourceServerConfigs.get(systemUrl);
-                
+
                 // Get client within lock statement
                 http:Client httpClient = check createHttpClient(serverConfig);
                 MatchedPatient[] systemPatients = patientsBySystem.get(systemUrl);
-                
+
                 international401:Parameters parametersResource = populateParamsResource(systemPatients, _outputFormat, _since, _type);
-                
+
                 // kick-off request to the bulk export server
                 status = httpClient->post(
-                    "/Patient/$export", 
+                    "/Patient/$export",
                     parametersResource.clone().toJson(),
                     {
-                        Accept: "application/fhir+json",
-                        Prefer: "respond-async",
-                        "Content-Type": "application/fhir+json"
-                    }
+                    Accept: "application/fhir+json",
+                    Prefer: "respond-async",
+                    "Content-Type": "application/fhir+json"
+                }
                 );
-                
+
                 submitBackgroundJob(taskId, status);
             }
 
@@ -146,6 +145,7 @@ isolated service /bulk on new http:Listener(8091) {
         return http:STATUS_ACCEPTED;
 
     }
+
 }
 
 // File API

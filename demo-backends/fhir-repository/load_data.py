@@ -4,6 +4,8 @@ import time
 
 FHIR_SERVER_URL = "http://localhost:9090/fhir/r4"
 DATA_FILE = "united-health-fhir-data-repository.json"
+API_KEY = ""  # Configure API key here if needed
+
 
 # Define order of resource loading to satisfy dependencies
 RESOURCE_ORDER = [
@@ -303,6 +305,8 @@ def load_data():
 
                 url = f"{FHIR_SERVER_URL}/{resource_type}"
                 headers = {"Content-Type": "application/fhir+json"}
+                if API_KEY:
+                    headers["Test-Key"] = API_KEY
                 
                 try:
                     response = requests.post(url, json=resource, headers=headers)

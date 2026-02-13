@@ -1011,3 +1011,36 @@ final r4:ResourceAPIConfig consentApiConfig = {
     serverConfig: (),
     authzConfig: ()
 };
+
+# ######################################################################################################################
+# Subscription API Configs                                                                                             #
+# ###################################################################################################################### 
+
+final r4:ResourceAPIConfig subscriptionApiConfig = {
+    resourceType: "Subscription",
+    profiles: ["http://hl7.org/fhir/us/davinci-pas/StructureDefinition/profile-subscription"],
+    defaultProfile: (),
+    searchParameters: [
+        {
+            name: "_id",
+            active: true,
+            information: {
+                description: "Logical id of this artifact",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Resource-id"
+            }
+        },
+        {
+            name: "status",
+            active: true,
+            information: {
+                description: "The current state of the subscription",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Subscription-status"
+            }
+        }
+    ],
+    operations: [],
+    serverConfig: (),
+    authzConfig: ()
+};

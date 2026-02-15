@@ -31,9 +31,9 @@ final mysql:Client dbClient = check new (
 public isolated function insertPayerDataExchangeRequest(PayerDataExchangeRequest request) returns string|error {
     string requestId = uuid:createType1AsString();
     sql:ParameterizedQuery query = `INSERT INTO payer_data_exchange_requests 
-                                    (request_id, member_id, old_payer_name, old_payer_state, old_coverage_id, coverage_start_date, coverage_end_date) 
+                                    (request_id, member_id, old_payer_name, old_payer_state, old_coverage_id, coverage_start_date, coverage_end_date, consent_status) 
                                     VALUES (${requestId}, ${request.memberId}, ${request.oldPayerName}, ${request.oldPayerState}, 
-                                    ${request.oldCoverageId}, ${request.coverageStartDate}, ${request.coverageEndDate})`;
+                                    ${request.oldCoverageId}, ${request.coverageStartDate}, ${request.coverageEndDate}, ${request.consent})`;
 
     sql:ExecutionResult result = check dbClient->execute(query);
 
@@ -49,7 +49,7 @@ public isolated function getPayerDataExchangeRequests(int 'limit = 10, int offse
 
     sql:ParameterizedQuery query = `SELECT request_id AS requestId, member_id AS memberId, old_payer_name AS oldPayerName, old_payer_state AS oldPayerState, 
                                     old_coverage_id AS oldCoverageId, coverage_start_date AS coverageStartDate, coverage_end_date AS coverageEndDate,
-                                    bulk_data_sync_status AS bulkDataSyncStatus
+                                    bulk_data_sync_status AS bulkDataSyncStatus, consent_status AS consent
                                     FROM payer_data_exchange_requests
                                     ORDER BY CASE WHEN bulk_data_sync_status = 'PENDING' THEN 1 ELSE 2 END, request_id ASC
                                     LIMIT ${'limit} OFFSET ${offset}`;

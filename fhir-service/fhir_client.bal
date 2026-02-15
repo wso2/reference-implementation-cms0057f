@@ -59,5 +59,5 @@ public isolated function getFhirConnectorConfig() returns fhirClient:FHIRConnect
 # + return - FHIR Connector instance or error
 public function initFhirConnector() returns fhirClient:FHIRConnector|error {
     fhirClient:FHIRConnectorConfig config = getFhirConnectorConfig();
-    return new fhirClient:FHIRConnector(config);
+    return new fhirClient:FHIRConnector(config, enableCapabilityStatementValidation = false);
 }

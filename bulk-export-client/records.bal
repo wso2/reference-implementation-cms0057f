@@ -109,6 +109,7 @@ public type MatchedPatient record {|
 # + coverageStartDate - Coverage Start Date (optional)
 # + coverageEndDate - Coverage End Date (optional)
 # + bulkDataSyncStatus - Bulk Data Sync Status (optional)
+# + consent - Consent status (optional)
 public type PayerDataExchangeRequest record {|
     string requestId?;
     string memberId;
@@ -118,6 +119,7 @@ public type PayerDataExchangeRequest record {|
     string coverageStartDate?;
     string coverageEndDate?;
     string bulkDataSyncStatus?;
+    string consent?;
 |};
 
 # Record to hold payer data exchange request result with total count.

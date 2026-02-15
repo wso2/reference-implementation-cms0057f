@@ -11,3 +11,40 @@ enabled = true
 url = "http://localhost:8082/more_info"
 username = "admin"
 password = "MoreInfo@987"
+
+
+# Sample configuration for Patient Access API Metrics with FHIR R4 Analytics
+[ballerinax.health.fhirr4.analytics]
+enabled = true # Enable or disable analytics publishing
+attributes = ["fhirUser", "client_id", "iss"]
+publisher = "opensearch" # applicable values are either “moesif” or “opensearch”
+
+# Sample configuration for Patient Access API Metrics with OpenSearch
+[ballerinax.health.fhirr4.openSearch]
+url = "http://localhost:9200/patient_access/_doc" # Opensearch format: <hostname>/<index>/_doc
+username = "admin"
+password = "Strong@pass@432"
+
+[ballerinax.health.fhirr4.openSearch.moreInfo]
+enabled = false
+url = "http://localhost:8082/more_info"
+username = "admin"
+password = "MoreInfo@987"
+
+# Sample configuration for Patient Access API Metrics with Moesif Analytics
+[ballerinax.health.fhirr4.moesifPublisherJob]
+enabled = true # Enable or disable the Moesif publisher job
+appId = "<moesif app ID>" # Moesif application ID
+url = "https://api.moesif.net/v1/actions" # Moesif API endpoint for data publishing
+frequency = 60.0
+batchSize = 100
+maxRetries = 3
+retryInterval = 5.0
+
+# Configuration for moesif analytics database
+[ballerinax.health.fhirr4.store]
+host = "localhost"
+port = 3306
+user = "<database user>"
+password = "<database password>"
+database = "MoesifAnalyticsDB"

@@ -16,11 +16,13 @@ import ballerina/http;
 import ballerina/log;
 import ballerina/mime;
 import ballerina/uuid;
-import ballerinax/health.fhir.r4.international401;
 
-configurable map<BulkExportServerConfig> sourceServerConfigs = ?;
+configurable map<BulkExportServerConfig> & readonly sourceServerConfigs = ?;
 configurable BulkExportClientConfig & readonly clientServiceConfig = ?;
 configurable TargetServerConfig targetServerConfig = ?;
+configurable ClientFhirServerConfig & readonly clientFhirServerConfig = ?;
+
+public final http:Client clientFhirClient = check createHttpClient(clientFhirServerConfig);
 
 isolated service /bulk on bulkExportListener {
 
@@ -43,76 +45,7 @@ isolated service /bulk on bulkExportListener {
             @http:Query string? _since,
             @http:Query string? _type) returns json|error {
 
-        addExportTask addTaskFunction = addExportTasktoMemory;
-        string taskId = uuid:createType1AsString();
-        boolean isSuccess = false;
-        http:Response|http:ClientError status;
-
-        log:printInfo("Bulk exporting started. Sending Kick-off request.");
-        // Group patients by system URL
-        map<MatchedPatient[]> patientsBySystem = {};
-        foreach MatchedPatient patient in matchedPatients {
-            string systemId = patient.systemId ?: "";
-            if systemId == "" {
-                return error("System URL is required for each patient");
-            }
-
-            if !patientsBySystem.hasKey(systemId) {
-                patientsBySystem[systemId] = [];
-            }
-            MatchedPatient[] existingPatients = patientsBySystem.get(systemId);
-            existingPatients.push(patient);
-            patientsBySystem[systemId] = existingPatients;
-        }
-
-        do {
-
-            lock {
-                ExportTask exportTask = {id: taskId, lastStatus: "in-progress", pollingEvents: []};
-                isSuccess = addTaskFunction(exportTasks, exportTask);
-            }
-            // Process each system separately
-            foreach string systemUrl in patientsBySystem.keys() {
-                if !sourceServerConfigs.hasKey(systemUrl) {
-                    log:printError("No configuration found for system URL: " + systemUrl);
-                    continue;
-                }
-
-                BulkExportServerConfig serverConfig = sourceServerConfigs.get(systemUrl);
-
-                // Get client within lock statement
-                http:Client httpClient = check createHttpClient(serverConfig);
-                MatchedPatient[] systemPatients = patientsBySystem.get(systemUrl);
-
-                international401:Parameters parametersResource = populateParamsResource(systemPatients, _outputFormat, _since, _type);
-
-                // kick-off request to the bulk export server
-                status = httpClient->post(
-                    "/Patient/$export",
-                    parametersResource.clone().toJson(),
-                    {
-                    Accept: "application/fhir+json",
-                    Prefer: "respond-async",
-                    "Content-Type": "application/fhir+json"
-                }
-                );
-
-                submitBackgroundJob(taskId, status);
-            }
-
-            if isSuccess {
-                log:printInfo("Export task persisted.", exportId = taskId);
-            } else {
-                log:printError("Error occurred while adding the export task to the memory.");
-            }
-
-        } on fail var e {
-            log:printError("Error occurred while scheduling the status polling task.", e);
-        }
-
-        string message = string `Export task is successfully kicked-off. ExportId: ${taskId}
-        To check the status, use: ${clientServiceConfig.baseUrl}/bulk/status?exportId=${taskId}`;
-        return createOpereationOutcome("information", "processing", message).toJson();
+        return triggerBulkExport(matchedPatients, _outputFormat, _since, _type);
 
     }
 
@@ -146,6 +79,92 @@ isolated service /bulk on bulkExportListener {
 
     }
 
+}
+
+// Refactored to accept optional serverConfig and use instance level export
+public isolated function triggerBulkExport(MatchedPatient[] matchedPatients, string? _outputFormat, string? _since, string? _type, boolean sync = false, BulkExportServerConfig? explicitConfig = (), map<string> context = {}) returns json|error {
+    addExportTask addTaskFunction = addExportTasktoMemory;
+    string taskId = uuid:createType1AsString();
+    boolean isSuccess = false;
+    http:Response|http:ClientError status;
+
+    log:printInfo("Bulk exporting started. Sending Kick-off request.");
+    // Group patients by system URL
+    map<MatchedPatient[]> patientsBySystem = {};
+    foreach MatchedPatient patient in matchedPatients {
+        string systemId = patient.systemId ?: "";
+        if systemId == "" && explicitConfig is () {
+            // If implicit config, systemId is required. If explicit, we can handle it if implied.
+            // But let's assume systemId is still useful for grouping or logging.
+            // For PDEX with explicit config, matchedPatient.systemId might be the baseUrl.
+        }
+
+        // If systemId is empty but we have explicit config, we can use a placeholder key
+        if systemId == "" {
+            systemId = "DEFAULT";
+        }
+
+        if !patientsBySystem.hasKey(systemId) {
+            patientsBySystem[systemId] = [];
+        }
+        MatchedPatient[] existingPatients = patientsBySystem.get(systemId);
+        existingPatients.push(patient);
+        patientsBySystem[systemId] = existingPatients;
+    }
+
+    do {
+
+        lock {
+            ExportTask exportTask = {id: taskId, lastStatus: "in-progress", pollingEvents: []};
+            isSuccess = addTaskFunction(exportTasks, exportTask);
+        }
+
+        // Process each system separately
+        foreach string systemUrl in patientsBySystem.keys() {
+
+            BulkExportServerConfig? serverConfig = explicitConfig;
+
+            if serverConfig is () {
+                return error("Server config for system " + systemUrl + " is not defined.");
+            }
+
+            // Get client within lock statement
+            http:Client httpClient = check createHttpClient(serverConfig);
+            MatchedPatient[] systemPatients = patientsBySystem.get(systemUrl);
+
+            // Instance level export - Iterate over patients
+            foreach MatchedPatient patient in systemPatients {
+
+                string queryString = populateQueryString(_outputFormat, _since, _type);
+                string path = string `/Patient/${patient.id}/$export${queryString}`;
+
+                // kick-off request to the bulk export server
+                // No Prefer header requested
+                status = httpClient->post(
+                    path, (),
+                    headers = {
+                    "Accept": "application/fhir+json",
+                    "Content-Type": "application/fhir+json"
+                }
+                );
+
+                submitBackgroundJob(taskId, status, sync, context);
+            }
+        }
+
+        if isSuccess {
+            log:printInfo("Export task persisted.", exportId = taskId);
+        } else {
+            log:printError("Error occurred while adding the export task to the memory.");
+        }
+
+    } on fail var e {
+        log:printError("Error occurred while scheduling the status polling task.", e);
+    }
+
+    string message = string `Export task is successfully kicked-off. ExportId: ${taskId}
+    To check the status, use: ${clientServiceConfig.baseUrl}/bulk/status?exportId=${taskId}`;
+    return createOpereationOutcome("information", "processing", message).toJson();
 }
 
 // File API

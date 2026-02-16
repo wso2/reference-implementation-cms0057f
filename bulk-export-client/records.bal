@@ -58,6 +58,8 @@ public type BulkExportClientConfig record {|
     boolean authEnabled;
     string targetDirectory;
     decimal defaultIntervalInSec = 5;
+    # + newPayerNpi - New Payer NPI
+    string newPayerNpi;
 |};
 
 # record to map exported resource metadata.
@@ -84,8 +86,8 @@ public type ExportSummary record {
     string request;
     boolean requiresAccessToken;
     OutputFile[] output;
-    string[] deleted;
-    string[] 'error;
+    OutputFile[]? deleted?;
+    OutputFile[] 'error?;
 };
 
 # Record to hold matched patients.
@@ -112,6 +114,8 @@ public type MatchedPatient record {|
 # + consent - Consent status (optional)
 public type PayerDataExchangeRequest record {|
     string requestId?;
+    # + payerId - Payer ID
+    string payerId;
     string memberId;
     string oldPayerName;
     string oldPayerState;
@@ -144,4 +148,44 @@ public type DatabaseConfig record {|
     string user;
     string password;
     string database;
+|};
+
+# Payer server configuration.
+#
+# + payerId - Payer ID
+# + payerName - Payer Name
+# + baseUrl - Base URL of the server
+# + tokenUrl - token endpoint URL
+# + clientId - client ID
+# + clientSecret - client secret
+# + scopes - array of scopes, to access the export operation	
+# + fileServerUrl - if the server exports to different file server, this URL should be provided
+# + authEnabled - if the server requires authentication. default is false
+public type PayerConfig record {|
+    string payerId;
+    string payerName;
+    string baseUrl;
+    string tokenUrl?;
+    string clientId?;
+    string clientSecret?;
+    string[] scopes?;
+    string fileServerUrl?;
+    boolean authEnabled = false;
+|};
+
+# Client FHIR server configuration.
+#
+# + baseUrl - Base URL of the server
+# + tokenUrl - token endpoint URL
+# + clientId - client ID
+# + clientSecret - client secret
+# + scopes - array of scopes, to access the export operation
+# + authEnabled - if the server requires authentication. default is false
+public type ClientFhirServerConfig record {|
+    string baseUrl;
+    string tokenUrl?;
+    string clientId?;
+    string clientSecret?;
+    string[] scopes?;
+    boolean authEnabled = false;
 |};

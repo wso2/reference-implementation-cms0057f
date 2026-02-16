@@ -19,12 +19,11 @@ import ballerina/task;
 import ballerinax/health.fhir.r4;
 import ballerinax/health.fhir.r4.international401;
 
-
 # Create HTTP client with optional authentication.
 #
 # + serverConfig - Server configuration containing auth details
 # + return - HTTP client instance or error
-public isolated function createHttpClient(BulkExportServerConfig serverConfig) returns http:Client|error {
+public isolated function createHttpClient(BulkExportServerConfig|ClientFhirServerConfig serverConfig) returns http:Client|error {
     if serverConfig.authEnabled {
         // Validate required fields
         if serverConfig.tokenUrl is () || (<string>serverConfig.tokenUrl).length() == 0 {
@@ -107,7 +106,7 @@ public isolated function getFileAsStream(string downloadLink, http:Client status
 public isolated function saveFileInFS(string downloadLink, string fileName) returns error? {
 
     http:Client statusClientV2 = check new (downloadLink);
-    stream<byte[], io:Error?> streamer = check getFileAsStream(downloadLink, statusClientV2) ?: new();
+    stream<byte[], io:Error?> streamer = check getFileAsStream(downloadLink, statusClientV2) ?: new ();
 
     check io:fileWriteBlocksFromStream(fileName, streamer);
     check streamer.close();
@@ -286,14 +285,14 @@ public isolated function addQueryParam(string queryString, string key, string va
     }
 }
 
-isolated function submitBackgroundJob(string taskId, http:Response|http:ClientError status) {
+isolated function submitBackgroundJob(string taskId, http:Response|http:ClientError status, boolean sync = false, map<string> context = {}) {
     if status is http:Response {
         log:printDebug(status.statusCode.toBalString());
 
         // get the location of the status check
         do {
-            string location = check status.getHeader("Content-location");
-            task:JobId|() _ = check executeJob(new PollingTask(taskId, location), clientServiceConfig.defaultIntervalInSec);
+            string location = check status.getHeader("content-location");
+            task:JobId|() _ = check executeJob(new PollingTask(taskId, location, "In-progress", sync, context), clientServiceConfig.defaultIntervalInSec);
             log:printDebug("Polling location recieved: " + location);
         } on fail var e {
             log:printError("Error occurred while getting the location or scheduling the Job", e);
@@ -311,6 +310,8 @@ public class PollingTask {
     string exportId;
     string lastStatus;
     string location;
+    boolean sync;
+    map<string> context;
     task:JobId jobId = {id: 0};
 
     public function execute() {
@@ -333,7 +334,7 @@ public class PollingTask {
                         // unschedule the job
                         self.setLastStaus("Completed");
                         lock {
-                            boolean _ = updateExportTaskStatusInMemory(taskMap = exportTasks, exportTaskId = self.exportId, newStatus = "Export Completed. Downloading files.");
+                            boolean _ = updateExportTaskStatusInMemory(taskMap = exportTasks, exportTaskId = self.exportId, newStatus = "Export Completed. Processing files.");
                         }
                         json payload = check statusResponse.getJsonPayload();
                         log:printDebug("Export task completed.", exportId = self.exportId, payload = payload);
@@ -342,20 +343,28 @@ public class PollingTask {
                             log:printError("Error occurred while unscheduling the job.", unscheduleJobResult);
                         }
 
-                        // download the files
-                        error? downloadFilesResult = downloadFiles(payload, self.exportId);
-                        if downloadFilesResult is error {
-                            log:printError("Error in downloading files", downloadFilesResult);
+                        if self.sync {
+                            // Sync data to FHIR server
+                            error? syncResult = syncDataToFhirServer(self.exportId, payload, self.context);
+                            if syncResult is error {
+                                log:printError("Error in syncing files", syncResult);
+                            }
+                        } else {
+                            // download the files
+                            error? downloadFilesResult = downloadFiles(payload, self.exportId);
+                            if downloadFilesResult is error {
+                                log:printError("Error in downloading files", downloadFilesResult);
+                            }
                         }
 
                     } else if status == 202 {
                         // update the status
                         log:printDebug("Export task in-progress.", exportId = self.exportId);
                         string progress = "";
-                        if statusResponse.hasHeader("X-Progress"){
+                        if statusResponse.hasHeader("X-Progress") {
                             progress = check statusResponse.getHeader("X-Progress");
                         }
-                        
+
                         PollingEvent pollingEvent = {id: self.exportId, eventStatus: "Success", exportStatus: progress};
 
                         lock {
@@ -381,10 +390,12 @@ public class PollingTask {
         }
     }
 
-    isolated function init(string exportId, string location, string lastStatus = "In-progress") {
+    isolated function init(string exportId, string location, string lastStatus = "In-progress", boolean sync = false, map<string> context = {}) {
         self.exportId = exportId;
         self.lastStatus = lastStatus;
         self.location = location;
+        self.sync = sync;
+        self.context = context;
     }
 
     public function setLastStaus(string newStatus) {

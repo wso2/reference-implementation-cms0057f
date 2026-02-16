@@ -49,7 +49,10 @@ const CoverageDetails = ({ patientId }: { patientId: string }) => {
 
   useEffect(() => {
     const fetchCoverages = async () => {
-      if (!patientId) return;
+      if (!patientId) {
+        setLoading(false);
+        return;
+      }
 
       try {
         const coverageUrl = Config.fhir + "/Coverage";

@@ -70,6 +70,7 @@ export const LandingPage = () => {
     "error" | "warning" | "info" | "success"
   >("info");
   const [openSnackbar, setOpenSnackbar] = useState(false);
+  const [coverageId, setCoverageId] = useState(""); // This need to be updated when multiple payer export is supported.
 
   const dispatch = useDispatch();
 
@@ -154,9 +155,6 @@ export const LandingPage = () => {
   };
 
   const handleStartDataExchange = async () => {
-    const coverageId = (
-      document.getElementById("coverage-id") as HTMLInputElement
-    )?.value;
 
     if (!coverageId) {
       setAlertMessage("Previous Coverage ID cannot be empty!");
@@ -167,6 +165,13 @@ export const LandingPage = () => {
 
     if (!consentAll) {
       setAlertMessage("Please provide consent before proceeding!");
+      setAlertSeverity("error");
+      setOpenSnackbar(true);
+      return;
+    }
+
+    if (coverageStartDate && coverageEndDate && coverageStartDate > coverageEndDate) {
+      setAlertMessage("Coverage start date must be before end date.");
       setAlertSeverity("error");
       setOpenSnackbar(true);
       return;
@@ -288,7 +293,8 @@ export const LandingPage = () => {
                     required
                     id="coverage-id"
                     label="Previous Coverage ID"
-                    defaultValue="367"
+                    value={coverageId}
+                    onChange={(e) => setCoverageId(e.target.value)}
                   />
                 </FormGroup>
                 <FormGroup style={{ flex: "1 1 25%" }}>

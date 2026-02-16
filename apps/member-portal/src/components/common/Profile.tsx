@@ -109,6 +109,14 @@ const Profile = ({ userName, firstName, lastName, id }: any) => {
     <div style={{ marginLeft: "10px", marginTop: "4vh", marginRight: "10px" }}>
       <div>
         <h1>{firstName + " " + lastName}</h1>
+        <h4>
+          {fetchedPatient?.birthDate
+            ? `${Math.floor((Date.now() - new Date(fetchedPatient.birthDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000))} y`
+            : ""}
+          {fetchedPatient?.gender
+            ? `, ${fetchedPatient.gender}`
+            : ""}
+        </h4>
         {/* Username: <span style={{ color: "grey" }}>{userName}</span> */}
       </div>
       <hr />

@@ -21,6 +21,7 @@ const initialState = {
   first_name: "",
   last_name: "",
   id:"",
+  coverageIds: [] as string[],
 };
 
 const loggedUserSlice = createSlice({
@@ -32,6 +33,10 @@ const loggedUserSlice = createSlice({
       state.first_name = action.payload.first_name;
       state.last_name = action.payload.last_name;
       state.id = action.payload.id;
+      state.coverageIds = action.payload.coverageIds || [];
+    },
+    updateCoverageIds(state, action) {
+      state.coverageIds = action.payload;
     },
     resetLoggedUser() {
       return initialState;
@@ -39,5 +44,5 @@ const loggedUserSlice = createSlice({
   },
 });
 
-export const { updateLoggedUser, resetLoggedUser } = loggedUserSlice.actions;
+export const { updateLoggedUser, updateCoverageIds, resetLoggedUser } = loggedUserSlice.actions;
 export default loggedUserSlice.reducer;

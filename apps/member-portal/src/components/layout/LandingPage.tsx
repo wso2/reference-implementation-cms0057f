@@ -23,20 +23,19 @@ import {
   MenuItem,
   Select,
   TextField,
-  LinearProgress,
   FormGroup,
+  FormControlLabel,
+  Checkbox,
   Snackbar,
   Alert,
+  Tooltip,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import Header from "../common/Header";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../common/AuthProvider";
 import axios from "axios";
-import {
-  BULK_EXPORT_KICKOFF_URL,
-  ORGANIZATION_SERVICE_URL,
-} from "../../configs/Constants";
+import { ORGANIZATION_SERVICE_URL } from "../../configs/Constants";
 import { useDispatch, useSelector } from "react-redux";
 import {
   updateRequestUrl,
@@ -46,8 +45,8 @@ import {
 } from "../redux/cdsRequestSlice";
 import { updateCdsResponse, resetCdsResponse } from "../redux/cdsResponseSlice";
 import Profile from "../common/Profile";
-import { updateLoggedUser } from "../redux/loggedUserSlice";
-import { memberMatchPayload } from "../constants/data";
+import CoverageDetails from "../common/CoverageDetails";
+import { updateLoggedUser, updateCoverageIds } from "../redux/loggedUserSlice";
 
 interface Payer {
   id: number;
@@ -60,16 +59,11 @@ export const LandingPage = () => {
   const { isAuthenticated } = useAuth();
   const [isPatientDataLoaded, setIsPatientDataLoaded] = useState(false);
 
-  const [exportButtonLabel, setExportButtonLabel] = useState("Export");
   const [payerList, setPayerList] = useState<Payer[]>([]);
-  const [oldMemberId, setOldMemberId] = useState("");
-  const [exportId, setExportId] = useState("");
-
-  const [error, setError] = useState("");
-  const [isExporting, setIsExporting] = useState(false);
-  const [exportPercentage, setExportPercentage] = useState("0");
-  const [isExportCompleted, setIsExportCompleted] = useState(false);
-  const [status, setStatus] = useState("Member Not Resolved.");
+  const [isExchanging, setIsExchanging] = useState(false);
+  const [consentAll, setConsentAll] = useState(false);
+  const [coverageStartDate, setCoverageStartDate] = useState("");
+  const [coverageEndDate, setCoverageEndDate] = useState("");
 
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const [alertSeverity, setAlertSeverity] = useState<
@@ -106,6 +100,20 @@ export const LandingPage = () => {
             id: loggedUser.id,
           })
         );
+
+        // Fetch coverage resources for the logged-in patient
+        try {
+          const coverageUrl = Config.patient.replace(/Patient$/, "Coverage");
+          const coverageRes = await axios.get(
+            `${coverageUrl}?patient=Patient/${loggedUser.id}`
+          );
+          const coverageIds = (coverageRes.data.entry || []).map(
+            (entry: any) => entry.resource.id
+          );
+          dispatch(updateCoverageIds(coverageIds));
+        } catch (error) {
+          console.error("Error fetching coverage resources:", error);
+        }
       }
     };
 
@@ -141,177 +149,67 @@ export const LandingPage = () => {
     setSelectedOrgId(value);
   };
 
-  const handleFetchMemberID = () => {
-    setOldMemberId("");
-    setExportButtonLabel("Export");
-    setIsExportCompleted(false);
-    handleMemberMatch();
+  const handleConsentChange = () => {
+    setConsentAll((prev) => !prev);
   };
 
-  const handleMemberMatch = () => {
-    setStatus("Matching Member ID...");
-    const payload = memberMatchPayload;
-
+  const handleStartDataExchange = async () => {
     const coverageId = (
       document.getElementById("coverage-id") as HTMLInputElement
     )?.value;
 
     if (!coverageId) {
-      setAlertMessage("Coverage ID cannot be empty!");
+      setAlertMessage("Previous Coverage ID cannot be empty!");
       setAlertSeverity("error");
-      setStatus("Member Not Resolved.");
       setOpenSnackbar(true);
       return;
     }
 
-    const coverageUrl = Config.payersAndFhirServerMappings.find(
-      (p) => p.id == selectedOrgId
-    )?.fhirServerUrl;
-
-    try {
-      axios
-        .get(coverageUrl + "/" + coverageId)
-        .then((res) => {
-          if (res.status >= 200 && res.status < 300) {
-            const coverageResource = res.data;
-            const patientResource = JSON.parse(
-              localStorage.getItem("patientResource") || "{}"
-            );
-
-            // Replace coverage and patient resource in payload
-            const payload = memberMatchPayload(
-              patientResource,
-              coverageResource
-            );
-
-            dispatch(updateRequestMethod("POST"));
-            dispatch(updateRequestUrl("/member-service/v1.0/match"));
-            dispatch(updateRequest(payload));
-            dispatch(resetCdsResponse());
-
-            axios
-              .post(Config.memberMatch + "/$member-match", payload, {
-                headers: {
-                  "Content-Type": "application/fhir+json",
-                },
-              })
-              .then((response) => {
-                dispatch(
-                  updateCdsResponse({
-                    cards: response.data,
-                    systemActions: {},
-                  })
-                );
-                if (response.status === 201) {
-                  setOldMemberId(
-                    response.data?.parameter?.valueIdentifier?.value
-                  );
-                  setError("");
-                  setStatus("Ready to Export.");
-                } else {
-                  setError("Match failed. Please retry");
-                  setAlertMessage("Match failed. Please retry!");
-                  setAlertSeverity("error");
-                  setOpenSnackbar(true);
-                }
-              })
-              .catch((error) => {
-                console.error("Error:", error);
-                setError("Match failed. Please retry");
-                setStatus("Member Not Resoved.");
-                setAlertMessage("Match failed. Please retry!");
-                setAlertSeverity("error");
-                setOpenSnackbar(true);
-              });
-          } else {
-            console.error("Error fetching coverage:", res);
-            setAlertMessage("Error fetching coverage!");
-            setAlertSeverity("error");
-            setOpenSnackbar(true);
-          }
-        })
-        .catch((err) => {
-          console.log("Error fetching coverage:", err);
-          setAlertMessage("Error fetching coverage!");
-          setAlertSeverity("error");
-          setOpenSnackbar(true);
-        });
-    } catch (error) {
-      console.error("Error:", error);
-      setAlertMessage("Error fetching coverage!");
+    if (!consentAll) {
+      setAlertMessage("Please provide consent before proceeding!");
       setAlertSeverity("error");
       setOpenSnackbar(true);
+      return;
     }
-  };
 
-  const handleSubmit = (e: { preventDefault: () => void }) => {
-    dispatch(resetCdsRequest());
-    dispatch(resetCdsResponse());
+    setIsExchanging(true);
 
-    e.preventDefault();
-    setExportButtonLabel("Exporting...");
-    setStatus("Exporting...");
+    const selectedPayer = payerList.find((p) => p.id === selectedOrgId);
 
-    setIsExporting(true);
+    const payload = {
+      memberId: loggedUser.id,
+      oldPayerName: selectedPayer?.name || "",
+      oldPayerId: String(selectedOrgId),
+      oldCoverageId: coverageId,
+      coverageStartDate: coverageStartDate || "",
+      coverageEndDate: coverageEndDate || "",
+      consent: "approved",
+    };
 
-    const postOrganizationId = async () => {
-      const memberID = oldMemberId;
-      const payload = [{ id: memberID }];
+    try {
       dispatch(updateRequestMethod("POST"));
-      dispatch(updateRequestUrl("/bulk-export-client/v1.0/export"));
-      dispatch(updateRequest({ id: memberID }));
+      dispatch(updateRequestUrl(Config.pdexExchangeUrl));
+      dispatch(updateRequest(payload));
+      dispatch(resetCdsResponse());
 
-      try {
-        const response = await axios.post(BULK_EXPORT_KICKOFF_URL, payload, {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-        dispatch(
-          updateCdsResponse({
-            cards: response.data,
-            systemActions: {},
-          })
-        );
+      const response = await axios.post(Config.pdexExchangeUrl, payload, {
+        headers: { "Content-Type": "application/json" },
+      });
 
-        const diagnostics: string = response.data.issue?.[0]?.diagnostics || "";
-        const match = diagnostics.match(/ExportId:\s([\w-]+)/);
-        if (match && match[1]) {
-          setExportId(match[1]);
-          localStorage.setItem("exportId", match[1]);
-          checkStatusUntilDownloaded(match[1]);
-        } else {
-          console.warn("Export ID not found in diagnostics message.");
-        }
-      } catch (error) {
-        console.error("Error posting data:", error);
-      }
-    };
-
-    const checkStatusUntilDownloaded = async (exportId: string) => {
-      const interval = setInterval(async () => {
-        try {
-          const response = await axios.get(Config.bulkExportStatusUrl, {
-            params: { exportId: exportId },
-          });
-          const currentStatus = response.data.lastStatus;
-
-          setStatus(currentStatus);
-
-          if (currentStatus === "Downloaded") {
-            clearInterval(interval);
-            setStatus("Export Completed.");
-            setIsExportCompleted(true);
-            setExportPercentage("100");
-            setIsExporting(false);
-          }
-        } catch (error) {
-          console.error("Error checking status:", error);
-        }
-      }, 300); // Check every 0.3 seconds
-    };
-
-    postOrganizationId();
+      dispatch(
+        updateCdsResponse({ cards: response.data, systemActions: {} })
+      );
+      setAlertMessage("Data exchange initiated successfully!");
+      setAlertSeverity("success");
+      setOpenSnackbar(true);
+    } catch (error) {
+      console.error("Error:", error);
+      setAlertMessage("Data exchange failed. Please retry!");
+      setAlertSeverity("error");
+      setOpenSnackbar(true);
+    } finally {
+      setIsExchanging(false);
+    }
   };
 
   return isAuthenticated ? (
@@ -335,23 +233,21 @@ export const LandingPage = () => {
             lastName={loggedUser.last_name}
             id={loggedUser.id}
           />
+          <CoverageDetails patientId={loggedUser.id} />
 
           <Box sx={{ mt: 4, mb: 4, ml: 2, mr: 2 }}>
             <Box>
               <Typography variant="h4">Fetch previous payer data</Typography>
               <Typography variant="h6" sx={{ mt: 2, mb: 4 }}>
                 Welcome to the UnitedCare Health Member Portal. If you haven't
-                yet synced your data with your previous, please select your
-                previous payer(s) and click 'Export' to securely transfer your
-                data to UnitedCare Health. The transfer will run in the
-                background, and you will be notified once the process is
-                complete.
+                yet synced your data with your previous payer, please select
+                your previous payer, provide consent for the data categories
+                you wish to share, and click 'Start Data Exchange' to securely
+                transfer your data to UnitedCare Health.
               </Typography>
             </Box>
 
             <Box
-              component="form"
-              onSubmit={handleSubmit}
               sx={{
                 p: 2,
                 border: "1px dashed grey",
@@ -367,17 +263,17 @@ export const LandingPage = () => {
                   marginTop: "15px",
                 }}
               >
-                <FormGroup style={{ flex: "1 1 70%" }}>
+                <FormGroup style={{ flex: "1 1 50%" }}>
                   <FormControl fullWidth variant="outlined">
                     <InputLabel id="select-payer-label">
-                      Select old payer to fetch Member ID
+                      Select previous payer
                     </InputLabel>
                     <Select
                       labelId="select-payer-label"
                       id="select-payer"
                       value={selectedOrgId}
                       onChange={selectOrgChange}
-                      label="Select old payer to fetch Member ID"
+                      label="Select previous payer"
                     >
                       {payerList.map((payer, index) => (
                         <MenuItem key={index} value={payer.id}>
@@ -387,107 +283,89 @@ export const LandingPage = () => {
                     </Select>
                   </FormControl>
                 </FormGroup>
-                <FormGroup style={{ flex: "1 1 30%" }}>
+                <FormGroup style={{ flex: "1 1 25%" }}>
                   <TextField
                     required
                     id="coverage-id"
-                    label="Coverage ID"
+                    label="Previous Coverage ID"
                     defaultValue="367"
-                  ></TextField>
+                  />
                 </FormGroup>
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "15px",
-                  marginTop: "15px",
-                }}
-              >
-                <FormGroup style={{ flex: "1 1 70%" }}>
+                <FormGroup style={{ flex: "1 1 25%" }}>
                   <TextField
-                    required
-                    id="member-id"
-                    label="Member ID"
-                    value={oldMemberId}
-                    aria-readonly
-                  ></TextField>
+                    id="coverage-start-date"
+                    label="Coverage Start Date"
+                    type="date"
+                    value={coverageStartDate}
+                    onChange={(e) => setCoverageStartDate(e.target.value)}
+                    InputLabelProps={{ shrink: true }}
+                  />
                 </FormGroup>
-                <Button
-                  variant="contained"
-                  style={{ height: "55px" }}
-                  color="primary"
-                  onClick={handleFetchMemberID}
-                >
-                  Fetch Member ID
-                </Button>
+                <FormGroup style={{ flex: "1 1 25%" }}>
+                  <TextField
+                    id="coverage-end-date"
+                    label="Coverage End Date"
+                    type="date"
+                    value={coverageEndDate}
+                    onChange={(e) => setCoverageEndDate(e.target.value)}
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </FormGroup>
               </div>
 
-              <Box
-                sx={{
-                  mt: 2,
-                  mb: 4,
-                  border: "1px solid lightGrey",
-                  padding: 2,
-                  borderRadius: 1,
-                }}
-              >
-                <Typography variant="h5">Status: {status}</Typography>
-                <Box sx={{ display: "flex", alignItems: "center" }}>
-                  <Box sx={{ width: "100%", mt: 2, height: 6 }}>
-                    <LinearProgress
-                      variant="determinate"
-                      value={+exportPercentage}
-                    />
-                  </Box>
-                  <Box sx={{ minWidth: 40, paddingLeft: 2, height: 10 }}>
-                    <Typography
-                      variant="body2"
-                      sx={{ color: "text.secondary" }}
-                    >{`${Math.round(+exportPercentage)}%`}</Typography>
-                  </Box>
-                </Box>
-                {isExportCompleted && (
-                  <Typography variant="body1" sx={{ mt: 2, color: "black" }}>
-                    Export ID: {exportId}
-                  </Typography>
-                )}
+              <Box sx={{ mt: 3, mb: 2 }}>
+                <Typography variant="h6">
+                  Consent for Data Exchange
+                </Typography>
+                <Typography
+                  variant="body2"
+                  sx={{ mt: 1, mb: 1, color: "text.secondary" }}
+                >
+                  By checking the box below, you authorize UnitedCare Health to
+                  request and receive your health records from your previous
+                  payer. This consent is valid for one year from today. You may
+                  revoke this consent at any time by contacting member services.
+                </Typography>
+                <FormGroup>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={consentAll}
+                        onChange={handleConsentChange}
+                      />
+                    }
+                    label="I consent to the transfer of all my health data from the selected previous payer."
+                  />
+                </FormGroup>
               </Box>
+
               <div
                 style={{
                   display: "flex",
                   justifyContent: "center",
-                  gap: "15px",
                   marginTop: "15px",
                 }}
               >
-                {isExportCompleted ? (
-                  <>
+                <Tooltip
+                  title={
+                    !consentAll
+                      ? "Please provide consent before starting the data exchange"
+                      : ""
+                  }
+                  arrow
+                >
+                  <span style={{ width: "100%" }}>
                     <Button
                       variant="contained"
                       color="primary"
-                      onClick={() => window.open("/exported-data", "_blank")}
-                      // sx={{ mt: 2 }}
+                      onClick={handleStartDataExchange}
+                      disabled={isExchanging || !consentAll}
                       style={{ height: "55px", width: "100%" }}
                     >
-                      View Exported Data
+                      {isExchanging ? "Exchanging..." : "Start Data Exchange"}
                     </Button>
-                  </>
-                ) : (
-                  <>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      onClick={handleSubmit}
-                      disabled={
-                        isExporting || error != "" || oldMemberId === ""
-                      }
-                      style={{ height: "55px", width: "100%" }}
-                    >
-                      {exportButtonLabel}
-                    </Button>
-                  </>
-                )}
+                  </span>
+                </Tooltip>
               </div>
             </Box>
           </Box>

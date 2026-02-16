@@ -27,7 +27,7 @@ interface PayersAndFhirServerMappings {
 declare global {
   interface Window {
     Config: {
-      patient: string;
+      fhir: string;
       organizationServiceUrl: string;
       oldPayerCoverageGet: string;
       payersAndFhirServerMappings: [PayersAndFhirServerMappings];

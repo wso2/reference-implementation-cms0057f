@@ -79,7 +79,7 @@ const Profile = ({ userName, firstName, lastName, id }: any) => {
       try {
         dispatch(resetCdsRequest());
         dispatch(resetCdsResponse());
-        const req_url = Config.patient + "/" + id;
+        const req_url = Config.fhir + "/Patient/" + id;
         dispatch(updateRequestMethod("GET"));
         dispatch(updateRequestUrl("/fhir/r4/Patient/" + id));
 

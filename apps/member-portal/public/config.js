@@ -3,7 +3,7 @@ window.configs = {
     "/choreo-apis/cms-0057-f/organization-service-yg/v1/fhir/r4/Organization?type=payer",
   oldPayerCoverageGet:
     "/choreo-apis/cms-0057-f/bulk-export-client/member-service/v1.0/previous",
-  patient: "/choreo-apis/cms-0057f---unitedhealth/fhir-service/v1/fhir/r4/Patient",
+  fhir: "/choreo-apis/cms-0057f---unitedhealth/fhir-service/v1/fhir/r4",
   pdexExchangeUrl: "/choreo-apis/cms-0057-f/pdex-exchange-service/v1/pdex-exchange",
   payersAndFhirServerMappings: [
     {

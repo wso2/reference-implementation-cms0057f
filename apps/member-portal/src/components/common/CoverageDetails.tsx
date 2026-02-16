@@ -52,7 +52,7 @@ const CoverageDetails = ({ patientId }: { patientId: string }) => {
       if (!patientId) return;
 
       try {
-        const coverageUrl = Config.patient.replace(/Patient$/, "Coverage");
+        const coverageUrl = Config.fhir + "/Coverage";
         const response = await axios.get(
           `${coverageUrl}?patient=Patient/${patientId}`
         );

@@ -103,7 +103,7 @@ export const LandingPage = () => {
 
         // Fetch coverage resources for the logged-in patient
         try {
-          const coverageUrl = Config.patient.replace(/Patient$/, "Coverage");
+          const coverageUrl = Config.fhir + "/Coverage";
           const coverageRes = await axios.get(
             `${coverageUrl}?patient=Patient/${loggedUser.id}`
           );

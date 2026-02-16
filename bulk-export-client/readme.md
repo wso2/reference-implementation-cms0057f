@@ -52,6 +52,73 @@ Downloads the exported NDJSON files once the export process is complete.
 **Response**:  
 - Downloads the NDJSON files containing the exported FHIR resources for given exportId and resourceType.
 
+### 4. Capture Payer Data Exchange Request
+Captures a new payer data exchange request.
+
+**Endpoint**:  
+`POST /pdex/capture-pdex-data`
+
+**Request Body**:
+```json
+{
+    "memberId": "12345",
+    "oldPayerName": "Old Payer",
+    "oldPayerState": "CA",
+    "oldCoverageId": "COV123",
+    "coverageStartDate": "2023-01-01",
+    "coverageEndDate": "2023-12-31",
+    "consent": "approved"
+}
+```
+
+**Curl Command**:
+```bash
+curl -X POST 'http://localhost:8091/pdex/capture-pdex-data' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "memberId": "12345",
+    "oldPayerName": "Old Payer",
+    "oldPayerState": "CA",
+    "oldCoverageId": "COV123",
+    "coverageStartDate": "2023-01-01",
+    "coverageEndDate": "2023-12-31",
+    "consent": "approved"
+}'
+```
+
+### 5. Get Payer Data Exchange Requests
+Retrieves a list of payer data exchange requests with pagination.
+
+**Endpoint**:  
+`GET /pdex/pdex-data-requests?limit=10&offset=0`
+
+**Curl Command**:
+```bash
+curl -X GET 'http://localhost:8091/pdex/pdex-data-requests?limit=10&offset=0'
+```
+
+### 6. Update Payer Data Exchange Request Status
+Updates the status of a specific payer data exchange request.
+
+**Endpoint**:  
+`PATCH /pdex/pdex-data-requests/{requestId}/status`
+
+**Request Body**:
+```json
+{
+    "status": "COMPLETED"
+}
+```
+
+**Curl Command**:
+```bash
+curl -X PATCH 'http://localhost:8091/pdex/pdex-data-requests/req-123/status' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "status": "COMPLETED"
+}'
+```
+
 ## How to Run
  - Clone the repository
  - Add configurations.

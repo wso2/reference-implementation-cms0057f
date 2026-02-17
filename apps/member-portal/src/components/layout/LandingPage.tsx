@@ -51,6 +51,7 @@ import { updateLoggedUser, updateCoverageIds } from "../redux/loggedUserSlice";
 interface Payer {
   id: number;
   name: string;
+  address: { state?: string }[];
 }
 
 export const LandingPage = () => {
@@ -129,6 +130,7 @@ export const LandingPage = () => {
         return data.entry.map((entry: any) => ({
           id: entry.resource.id,
           name: entry.resource.name,
+          address: entry.resource.address || [],
         }));
       } catch (error) {
         console.error("Error fetching organizations:", error);
@@ -182,13 +184,17 @@ export const LandingPage = () => {
     const selectedPayer = payerList.find((p) => p.id === selectedOrgId);
 
     const payload = {
-      memberId: loggedUser.id,
-      oldPayerName: selectedPayer?.name || "",
-      oldPayerId: String(selectedOrgId),
-      oldCoverageId: coverageId,
-      coverageStartDate: coverageStartDate || "",
-      coverageEndDate: coverageEndDate || "",
+      bulkDataSyncStatus: "PENDING",
       consent: "approved",
+      coverageEndDate: coverageEndDate || "",
+      coverageStartDate: coverageStartDate || "",
+      createdDate: "",
+      memberId: loggedUser.id,
+      oldCoverageId: coverageId,
+      oldPayerName: selectedPayer?.name || "",
+      oldPayerState: selectedPayer?.address?.[0]?.state || "",
+      payerId: String(selectedOrgId),
+      requestId: crypto.randomUUID(),
     };
 
     try {

@@ -19,6 +19,7 @@ import ballerina/http;
 import ballerina/io;
 import ballerina/log;
 import ballerina/time;
+import ballerina/uuid;
 import ballerinax/health.fhir.r4.international401;
 
 # Create R4:Parameters resource for $member-match operation.
@@ -379,6 +380,7 @@ isolated function createProvenance(string resourceType, string resourceId, map<s
 
     international401:Provenance provenance = {
         resourceType: "Provenance",
+        id: uuid:createType1AsString(),
         target: [
             {
                 reference: resourceType + "/" + resourceId

@@ -68,6 +68,19 @@ isolated service /pdex on bulkExportListener {
         };
     }
 
+    // Resource function to retrieve a specific payer data exchange request.
+    //
+    // @param requestId - The ID of the request to retrieve.
+    // @return The payer data exchange request details.
+    isolated resource function get 'pdex\-data\-requests/[string requestId]() returns json|error {
+        PayerDataExchangeRequest|error request = getPayerDataExchangeRequest(requestId);
+        if request is error {
+            log:printError("Error occurred while fetching payer data exchange request", request);
+            return error("Request ID not found");
+        }
+        return request;
+    }
+
     // Resource function to update payer data exchange request status.
     //
     // @param requestId - The ID of the request to update.

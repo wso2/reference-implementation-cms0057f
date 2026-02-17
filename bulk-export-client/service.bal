@@ -17,7 +17,6 @@ import ballerina/log;
 import ballerina/mime;
 import ballerina/uuid;
 
-configurable map<BulkExportServerConfig> & readonly sourceServerConfigs = ?;
 configurable BulkExportClientConfig & readonly clientServiceConfig = ?;
 configurable TargetServerConfig targetServerConfig = ?;
 configurable ClientFhirServerConfig & readonly clientFhirServerConfig = ?;

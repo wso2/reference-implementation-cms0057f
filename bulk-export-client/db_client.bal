@@ -31,8 +31,8 @@ final mysql:Client dbClient = check new (
 public isolated function insertPayerDataExchangeRequest(PayerDataExchangeRequest request) returns string|error {
     string requestId = uuid:createType1AsString();
     sql:ParameterizedQuery query = `INSERT INTO payer_data_exchange_requests 
-                                    (request_id, member_id, old_payer_name, old_payer_state, old_coverage_id, coverage_start_date, coverage_end_date, consent_status) 
-                                    VALUES (${requestId}, ${request.memberId}, ${request.oldPayerName}, ${request.oldPayerState}, 
+                                    (request_id, payer_id, member_id, old_payer_name, old_payer_state, old_coverage_id, coverage_start_date, coverage_end_date, consent_status) 
+                                    VALUES (${requestId}, ${request.payerId}, ${request.memberId}, ${request.oldPayerName}, ${request.oldPayerState}, 
                                     ${request.oldCoverageId}, ${request.coverageStartDate}, ${request.coverageEndDate}, ${request.consent})`;
 
     sql:ExecutionResult result = check dbClient->execute(query);
@@ -47,9 +47,9 @@ public isolated function getPayerDataExchangeRequests(int 'limit = 10, int offse
     sql:ParameterizedQuery countQuery = `SELECT COUNT(*) AS totalCount FROM payer_data_exchange_requests`;
     int totalCount = check dbClient->queryRow(countQuery);
 
-    sql:ParameterizedQuery query = `SELECT request_id AS requestId, member_id AS memberId, old_payer_name AS oldPayerName, old_payer_state AS oldPayerState, 
+    sql:ParameterizedQuery query = `SELECT request_id AS requestId, payer_id AS payerId, member_id AS memberId, old_payer_name AS oldPayerName, old_payer_state AS oldPayerState, 
                                     old_coverage_id AS oldCoverageId, coverage_start_date AS coverageStartDate, coverage_end_date AS coverageEndDate,
-                                    bulk_data_sync_status AS bulkDataSyncStatus, consent_status AS consent
+                                    bulk_data_sync_status AS bulkDataSyncStatus, consent_status AS consent, created_at AS createdDate
                                     FROM payer_data_exchange_requests
                                     ORDER BY CASE WHEN bulk_data_sync_status = 'PENDING' THEN 1 ELSE 2 END, request_id ASC
                                     LIMIT ${'limit} OFFSET ${offset}`;
@@ -68,4 +68,48 @@ public isolated function updatePayerDataExchangeRequestStatus(string requestId, 
         return "Status updated successfully";
     }
     return error("Failed to update status. Request ID not found.");
+}
+
+public isolated function getPayerDataExchangeRequest(string requestId) returns PayerDataExchangeRequest|error {
+    sql:ParameterizedQuery query = `SELECT request_id AS requestId, payer_id AS payerId, member_id AS memberId, old_payer_name AS oldPayerName, old_payer_state AS oldPayerState, 
+                                    old_coverage_id AS oldCoverageId, coverage_start_date AS coverageStartDate, coverage_end_date AS coverageEndDate, 
+                                    bulk_data_sync_status AS bulkDataSyncStatus, consent_status AS consent
+                                    FROM payer_data_exchange_requests WHERE request_id = ${requestId}`;
+    return dbClient->queryRow(query);
+}
+
+public isolated function getPayerConfig(string payerId) returns PayerConfig|error {
+    sql:ParameterizedQuery query = `SELECT id AS payerId, name AS payerName, fhir_server_url AS baseUrl, token_url AS tokenUrl, 
+                                    app_client_id AS clientId, app_client_secret AS clientSecret, scopes AS scopesStr
+                                    FROM payers WHERE id = ${payerId}`;
+
+    // We need to fetch into an intermediate record because scopes is stored as string but PayerConfig expects string[]
+    record {|
+        string payerId;
+        string payerName;
+        string baseUrl;
+        string? tokenUrl;
+        string? clientId;
+        string? clientSecret;
+        string? scopesStr;
+    |} result = check dbClient->queryRow(query);
+
+    string[] scopes = [];
+    string? scopesStr = result.scopesStr;
+    if scopesStr is string && scopesStr != "" {
+        scopes = re `,`.split(scopesStr);
+    }
+
+    PayerConfig config = {
+        payerId: result.payerId,
+        payerName: result.payerName,
+        baseUrl: result.baseUrl,
+        tokenUrl: result.tokenUrl,
+        clientId: result.clientId,
+        clientSecret: result.clientSecret,
+        scopes: scopes,
+        fileServerUrl: (), // Not present in payers table
+        authEnabled: true
+    };
+    return config;
 }

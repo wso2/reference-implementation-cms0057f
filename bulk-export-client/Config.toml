@@ -20,6 +20,8 @@ baseUrl = "http://localhost:8091"
 authEnabled = false
 targetDirectory = "./target"
 defaultIntervalInSec = 3.0
+newPayerNpi = "0123456789"
+newPayerName = "New Health Plan"
 
 [targetServerConfig]
 type = "file"
@@ -30,6 +32,14 @@ type = "file"
 #user = "<user_name>"
 #password = "<password>"
 #database = "<database_name>"
+
+[clientFhirServerConfig]
+baseUrl = "http://localhost:9090/fhir/r4"
+authEnabled = false
+# tokenUrl = "https://auth-server.example.com/oauth2/token"
+# clientId = "client-id"
+# clientSecret = "client-secret"
+# scopes = ["system/*.read"]
 
 [ballerina.log]
 level = "DEBUG"

@@ -58,6 +58,10 @@ public type BulkExportClientConfig record {|
     boolean authEnabled;
     string targetDirectory;
     decimal defaultIntervalInSec = 5;
+    # + newPayerNpi - New Payer NPI
+    string newPayerNpi;
+    # + newPayerName - New Payer Name
+    string newPayerName;
 |};
 
 # record to map exported resource metadata.
@@ -84,8 +88,8 @@ public type ExportSummary record {
     string request;
     boolean requiresAccessToken;
     OutputFile[] output;
-    string[] deleted;
-    string[] 'error;
+    OutputFile[]? deleted?;
+    OutputFile[] 'error?;
 };
 
 # Record to hold matched patients.
@@ -101,17 +105,20 @@ public type MatchedPatient record {|
 
 # Record to hold payer data exchange request.
 #
-# + memberId - Member ID
-# + requestId - Request ID
-# + oldPayerName - Old Payer Name
-# + oldPayerState - Old Payer State
-# + oldCoverageId - Old Coverage ID (optional)
-# + coverageStartDate - Coverage Start Date (optional)
-# + coverageEndDate - Coverage End Date (optional)
-# + bulkDataSyncStatus - Bulk Data Sync Status (optional)
-# + consent - Consent status (optional)
+# + requestId - Request ID  
+# + payerId - Payer ID  
+# + memberId - Member ID  
+# + oldPayerName - Old Payer Name  
+# + oldPayerState - Old Payer State  
+# + oldCoverageId - Old Coverage ID (optional)  
+# + coverageStartDate - Coverage Start Date (optional)  
+# + coverageEndDate - Coverage End Date (optional)  
+# + bulkDataSyncStatus - Bulk Data Sync Status (optional)  
+# + consent - Consent status (optional)  
+# + createdDate - Date of creation
 public type PayerDataExchangeRequest record {|
     string requestId?;
+    string payerId;
     string memberId;
     string oldPayerName;
     string oldPayerState;
@@ -120,6 +127,7 @@ public type PayerDataExchangeRequest record {|
     string coverageEndDate?;
     string bulkDataSyncStatus?;
     string consent?;
+    string createdDate?;
 |};
 
 # Record to hold payer data exchange request result with total count.
@@ -144,4 +152,44 @@ public type DatabaseConfig record {|
     string user;
     string password;
     string database;
+|};
+
+# Payer server configuration.
+#
+# + payerId - Payer ID
+# + payerName - Payer Name
+# + baseUrl - Base URL of the server
+# + tokenUrl - token endpoint URL
+# + clientId - client ID
+# + clientSecret - client secret
+# + scopes - array of scopes, to access the export operation	
+# + fileServerUrl - if the server exports to different file server, this URL should be provided
+# + authEnabled - if the server requires authentication. default is false
+public type PayerConfig record {|
+    string payerId;
+    string payerName;
+    string baseUrl;
+    string tokenUrl?;
+    string clientId?;
+    string clientSecret?;
+    string[] scopes?;
+    string fileServerUrl?;
+    boolean authEnabled = false;
+|};
+
+# Client FHIR server configuration.
+#
+# + baseUrl - Base URL of the server
+# + tokenUrl - token endpoint URL
+# + clientId - client ID
+# + clientSecret - client secret
+# + scopes - array of scopes, to access the export operation
+# + authEnabled - if the server requires authentication. default is false
+public type ClientFhirServerConfig record {|
+    string baseUrl;
+    string tokenUrl?;
+    string clientId?;
+    string clientSecret?;
+    string[] scopes?;
+    boolean authEnabled = false;
 |};

@@ -60,6 +60,8 @@ public type BulkExportClientConfig record {|
     decimal defaultIntervalInSec = 5;
     # + newPayerNpi - New Payer NPI
     string newPayerNpi;
+    # + newPayerName - New Payer Name
+    string newPayerName;
 |};
 
 # record to map exported resource metadata.
@@ -103,18 +105,19 @@ public type MatchedPatient record {|
 
 # Record to hold payer data exchange request.
 #
-# + memberId - Member ID
-# + requestId - Request ID
-# + oldPayerName - Old Payer Name
-# + oldPayerState - Old Payer State
-# + oldCoverageId - Old Coverage ID (optional)
-# + coverageStartDate - Coverage Start Date (optional)
-# + coverageEndDate - Coverage End Date (optional)
-# + bulkDataSyncStatus - Bulk Data Sync Status (optional)
-# + consent - Consent status (optional)
+# + requestId - Request ID  
+# + payerId - Payer ID  
+# + memberId - Member ID  
+# + oldPayerName - Old Payer Name  
+# + oldPayerState - Old Payer State  
+# + oldCoverageId - Old Coverage ID (optional)  
+# + coverageStartDate - Coverage Start Date (optional)  
+# + coverageEndDate - Coverage End Date (optional)  
+# + bulkDataSyncStatus - Bulk Data Sync Status (optional)  
+# + consent - Consent status (optional)  
+# + createdDate - Date of creation
 public type PayerDataExchangeRequest record {|
     string requestId?;
-    # + payerId - Payer ID
     string payerId;
     string memberId;
     string oldPayerName;
@@ -124,6 +127,7 @@ public type PayerDataExchangeRequest record {|
     string coverageEndDate?;
     string bulkDataSyncStatus?;
     string consent?;
+    string createdDate?;
 |};
 
 # Record to hold payer data exchange request result with total count.

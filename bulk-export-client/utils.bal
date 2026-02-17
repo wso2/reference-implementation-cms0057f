@@ -348,6 +348,13 @@ public class PollingTask {
                             error? syncResult = syncDataToFhirServer(self.exportId, payload, self.context);
                             if syncResult is error {
                                 log:printError("Error in syncing files", syncResult);
+                                lock {
+                                    _ = updateExportTaskStatusInMemory(taskMap = exportTasks, exportTaskId = self.exportId, newStatus = "Sync Failed");
+                                }
+                            } else {
+                                lock {
+                                    _ = updateExportTaskStatusInMemory(taskMap = exportTasks, exportTaskId = self.exportId, newStatus = "Synced");
+                                }
                             }
                         } else {
                             // download the files

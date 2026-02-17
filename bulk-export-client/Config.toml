@@ -21,6 +21,7 @@ authEnabled = false
 targetDirectory = "./target"
 defaultIntervalInSec = 3.0
 newPayerNpi = "0123456789"
+newPayerName = "New Health Plan"
 
 [targetServerConfig]
 type = "file"

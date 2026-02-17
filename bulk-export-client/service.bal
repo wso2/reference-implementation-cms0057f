@@ -39,6 +39,7 @@ isolated service /bulk on bulkExportListener {
     // @param _type - The types of the resource to be exported. Accept multiple values(comma seperated).
     //
     // @return The response indicating the success or failure of the export operation.
+    @deprecated
     isolated resource function post export(
             @http:Payload MatchedPatient[] matchedPatients,
             @http:Query string? _outputFormat,
@@ -56,6 +57,7 @@ isolated service /bulk on bulkExportListener {
     // @param exportId - The ID of the export task.
     //
     // @return The status of the export task.
+    @deprecated
     isolated resource function get status(string exportId) returns json|error {
 
         return getExportTaskFromMemory(exportId).toJson();
@@ -67,6 +69,7 @@ isolated service /bulk on bulkExportListener {
     // The downloaded file will be saved to the configured file path.
     //
     // @param location - The location of the file to be downloaded.
+    @deprecated
     isolated resource function get download(string location) returns http:STATUS_ACCEPTED|http:STATUS_INTERNAL_SERVER_ERROR {
 
         error? saveFileResult = saveFileInFS(location, "exportedData.json");

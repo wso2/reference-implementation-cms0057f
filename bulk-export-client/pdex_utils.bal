@@ -63,9 +63,7 @@ public isolated function createMemberMatchParams(PayerDataExchangeRequest reques
         }
     } else {
         log:printError("Error fetching patient details: ", patientResult);
-        // Continue with minimal patient or return error? 
-        // Requirements said "include...". I'll log and proceed with minimal if fetch fails, or return error?
-        // Let's proceed with minimal to be safe, but logging error.
+        return error("Failed to fetch patient details for member match: " + request.memberId);
     }
 
     paramsArr.push({name: "MemberPatient", 'resource: memberPatient});
@@ -89,7 +87,7 @@ public isolated function createMemberMatchParams(PayerDataExchangeRequest reques
         status: "active",
         subscriberId: request.memberId,
         beneficiary: {reference: "Patient/" + request.memberId},
-        payor: [{display: "New Payer"}]
+        payor: [{display: clientServiceConfig.newPayerName}]
     };
     paramsArr.push({name: "CoverageToLink", 'resource: newCoverage});
 
@@ -166,7 +164,7 @@ public isolated function createMemberMatchParams(PayerDataExchangeRequest reques
                                 system: "http://hl7.org/fhir/sid/us-npi",
                                 value: clientServiceConfig.newPayerNpi
                             },
-                            display: "New Health Plan"
+                            display: clientServiceConfig.newPayerName
                         }
                     }
                 ],
@@ -292,19 +290,29 @@ public isolated function syncDataToFhirServer(string exportId, json exportSummar
 
 isolated function processNdjsonStream(stream<byte[], io:Error?> byteStream, http:Client fhirClient, map<string> context) returns error? {
     string tempFile = check file:createTemp(suffix = ".ndjson");
-    check io:fileWriteBlocksFromStream(tempFile, byteStream);
+    error? result = ();
 
-    stream<string, io:Error?> lineStream = check io:fileReadLinesAsStream(tempFile);
+    do {
+        check io:fileWriteBlocksFromStream(tempFile, byteStream);
+        stream<string, io:Error?> lineStream = check io:fileReadLinesAsStream(tempFile);
+        check from string line in lineStream
+            do {
+                json|error resourceJson = line.fromJsonString();
+                if resourceJson is json {
+                    check processAndInsertResource(resourceJson, fhirClient, context);
+                }
+            };
+    } on fail error e {
+        result = e;
+    }
 
-    check from string line in lineStream
-        do {
-            json|error resourceJson = line.fromJsonString();
-            if resourceJson is json {
-                check processAndInsertResource(resourceJson, fhirClient, context);
-            }
-        };
+    // Cleanup temp file
+    file:Error? removeResult = file:remove(tempFile);
+    if removeResult is file:Error {
+        log:printError("Failed to remove temp file: " + tempFile, removeResult);
+    }
 
-    return null;
+    return result;
 }
 
 isolated function processAndInsertResource(json resourceJson, http:Client fhirClient, map<string> context) returns error? {
@@ -352,9 +360,11 @@ isolated function processAndInsertResource(json resourceJson, http:Client fhirCl
     http:Response|http:ClientError resp = fhirClient->post("/" + resourceType, resourceMap, headers = {"Content-Type": "application/fhir+json"});
     if resp is http:ClientError {
         log:printError("Error syncing resource " + resourceType + "/" + newId, resp);
-    } else {
+    } else if resp.statusCode == 201 || resp.statusCode == 200 {
         // Create Provenance resource
         check createProvenance(resourceType, newId, context, fhirClient);
+    } else {
+        log:printError("Failed to sync resource " + resourceType + "/" + newId + ". Status: " + resp.statusCode.toString());
     }
 
     return null;

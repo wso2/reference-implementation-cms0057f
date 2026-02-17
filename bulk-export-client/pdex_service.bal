@@ -15,6 +15,7 @@
 // under the License.
 import ballerina/http;
 import ballerina/log;
+import ballerina/url;
 import ballerinax/health.fhir.r4.international401;
 
 public listener http:Listener bulkExportListener = new (8091);
@@ -93,7 +94,16 @@ isolated service /pdex on bulkExportListener {
 
         PayerDataExchangeRequest|error request = getPayerDataExchangeRequest(requestId);
         if request is error {
+            log:printError("Error occurred while fetching payer data exchange request", request);
             return error("Request ID not found");
+        }
+
+        if request.consent != "APPROVED" {
+            return error("Consent not approved for data exchange.");
+        }
+
+        if request.bulkDataSyncStatus == "IN_PROGRESS" || request.bulkDataSyncStatus == "COMPLETED" {
+            return error("Data exchange is already " + (request.bulkDataSyncStatus ?: "processed"));
         }
 
         // 1. Fetch request details - Done (request variable)
@@ -177,7 +187,8 @@ isolated service /pdex on bulkExportListener {
         }
 
         foreach string resType in resourcesToCheck {
-            string path = string `/${resType}?patient=${memberId}&_tag=http://wso2.com/fhir/pdex-source|old-payer-data`;
+            string encodedMemberId = check url:encode(memberId, "UTF-8");
+            string path = string `/${resType}?patient=${encodedMemberId}&_tag=http://wso2.com/fhir/pdex-source|old-payer-data`;
             http:Response|http:ClientError resp = fhirClient->get(path);
             if resp is http:Response && resp.statusCode == 200 {
                 json|error payload = resp.getJsonPayload();

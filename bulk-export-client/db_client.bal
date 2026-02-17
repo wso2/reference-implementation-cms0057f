@@ -49,7 +49,7 @@ public isolated function getPayerDataExchangeRequests(int 'limit = 10, int offse
 
     sql:ParameterizedQuery query = `SELECT request_id AS requestId, payer_id AS payerId, member_id AS memberId, old_payer_name AS oldPayerName, old_payer_state AS oldPayerState, 
                                     old_coverage_id AS oldCoverageId, coverage_start_date AS coverageStartDate, coverage_end_date AS coverageEndDate,
-                                    bulk_data_sync_status AS bulkDataSyncStatus, consent_status AS consent
+                                    bulk_data_sync_status AS bulkDataSyncStatus, consent_status AS consent, created_at AS createdDate
                                     FROM payer_data_exchange_requests
                                     ORDER BY CASE WHEN bulk_data_sync_status = 'PENDING' THEN 1 ELSE 2 END, request_id ASC
                                     LIMIT ${'limit} OFFSET ${offset}`;
@@ -97,8 +97,7 @@ public isolated function getPayerConfig(string payerId) returns PayerConfig|erro
     string[] scopes = [];
     string? scopesStr = result.scopesStr;
     if scopesStr is string && scopesStr != "" {
-        scopes = [scopesStr];
-        // TODO: ideally split by comma. But given imports limitation, keeping simple.
+        scopes = re `,`.split(scopesStr);
     }
 
     PayerConfig config = {
@@ -110,7 +109,7 @@ public isolated function getPayerConfig(string payerId) returns PayerConfig|erro
         clientSecret: result.clientSecret,
         scopes: scopes,
         fileServerUrl: (), // Not present in payers table
-        authEnabled: true // Implied by NOT NULL client_id/secret
+        authEnabled: true
     };
     return config;
 }

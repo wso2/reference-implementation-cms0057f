@@ -207,7 +207,7 @@ export const LandingPage = () => {
         headers: { "Content-Type": "application/json" },
       });
 
-      setAlertMessage(response.data.message || "Data exchange initiated successfully!");
+      setAlertMessage("Data exchange initiated successfully!");
       setAlertSeverity("success");
       setOpenSnackbar(true);
     } catch (error) {

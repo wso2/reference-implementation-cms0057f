@@ -207,10 +207,7 @@ export const LandingPage = () => {
         headers: { "Content-Type": "application/json" },
       });
 
-      dispatch(
-        updateCdsResponse({ cards: response.data, systemActions: {} })
-      );
-      setAlertMessage("Data exchange initiated successfully!");
+      setAlertMessage(response.data.message || "Data exchange initiated successfully!");
       setAlertSeverity("success");
       setOpenSnackbar(true);
     } catch (error) {

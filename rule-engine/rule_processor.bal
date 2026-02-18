@@ -148,6 +148,50 @@ public isolated function decidePriorAuth(r4:Bundle bundle, string hookId) return
     };
 }
 
+# Evaluates whether prior authorization is required for a Medication Request.
+#
+# + bundle - Input FHIR bundle containing relevant resources
+# + return - PriorAuthDecision or error
+public isolated function decidePrescriptionPriorAuth(r4:Bundle bundle) returns PriorAuthDecision|error {
+    // 1) Extract MedicationRequest
+    boolean hasMedicationRequest = false;
+    r4:BundleEntry[]? entries = bundle.entry;
+    if entries is r4:BundleEntry[] {
+        foreach r4:BundleEntry entry in entries {
+            anydata res = entry?.'resource;
+            if res is map<json> {
+                if res["resourceType"] == "MedicationRequest" {
+                    hasMedicationRequest = true;
+                }
+            } else {
+                r4:DomainResource|error domainRes = res.cloneWithType(r4:DomainResource);
+                if domainRes is r4:DomainResource && domainRes.resourceType == "MedicationRequest" {
+                    hasMedicationRequest = true;
+                }
+            }
+        }
+    }
+
+    if !hasMedicationRequest {
+        return {
+            priorAuthRequired: false,
+            summary: "No MedicationRequest found.",
+            reasons: [],
+            medicalNecessity: "INSUFFICIENT_DATA",
+            missingDocumentation: []
+        };
+    }
+
+    // 2) Always require PA for this demo flow
+    return {
+        priorAuthRequired: true,
+        summary: "Prior Authorization Required",
+        reasons: ["This medication (Aimovig) requires prior authorization from UnitedCare Health Insurance. Please complete the required documentation."],
+        medicalNecessity: "INSUFFICIENT_DATA", // Not evaluating medical necessity for meds in this demo
+        missingDocumentation: []
+    };
+}
+
 isolated function prepareTheLinks(string hookId) returns PriorAuthLink[]? {
 
     if hook_id_questionnaire_id_map.hasKey(hookId) {

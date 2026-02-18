@@ -1,0 +1,5 @@
+fhir_server_url = "http://localhost:9090/fhir/r4"
+
+[hook_id_questionnaire_id_map]
+"crd-mri-spine-order-sign" = "Questionnaire-123"
+"radiology-order" = "Questionnaire-456"

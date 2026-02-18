@@ -20,7 +20,7 @@ import ballerinax/health.fhir.r4;
 configurable string fhir_server_url = ?;
 configurable map<string> & readonly hook_id_questionnaire_id_map = ?;
 
-service http:Service / on new http:Listener(9091) {
+service http:Service / on new http:Listener(9093) {
     isolated resource function post crd\-mri\-spine\-order\-sign(@http:Payload json payload) returns PriorAuthDecision|error {
         // log:printInfo(payload.toJsonString());
         // return error(string `Rule repository backend not implemented/ connected yet`);
@@ -33,5 +33,35 @@ service http:Service / on new http:Listener(9091) {
         }
 
         return decidePriorAuth(parse, "crd-mri-spine-order-sign");
+    }
+
+    isolated resource function post radiology\-order(@http:Payload json payload) returns PriorAuthDecision|error {
+        r4:Bundle|error r4Bundle = payload.cloneWithType();
+
+        if r4Bundle is error {
+            return r4Bundle;
+        }
+
+        return decidePriorAuth(r4Bundle, "radiology-order");
+    }
+
+    isolated resource function post radiology(@http:Payload json payload) returns PriorAuthDecision|error {
+        r4:Bundle|error r4Bundle = payload.cloneWithType();
+
+        if r4Bundle is error {
+            return r4Bundle;
+        }
+
+        return decidePriorAuth(r4Bundle, "radiology");
+    }
+
+    isolated resource function post prescribe\-medication(@http:Payload json payload) returns PriorAuthDecision|error {
+        r4:Bundle|error r4Bundle = payload.cloneWithType();
+
+        if r4Bundle is error {
+            return r4Bundle;
+        }
+
+        return decidePrescriptionPriorAuth(r4Bundle);
     }
 }

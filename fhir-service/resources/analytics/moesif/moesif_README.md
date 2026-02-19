@@ -22,4 +22,3 @@ Follow the steps below to publish CMS data to the Moesif analytics platform.
 
 # Sample Moesif Dashboard for Patient Access API Metrics
 ![Sample Dashboard](analytics_sample_moesif_dashboard.png)
-

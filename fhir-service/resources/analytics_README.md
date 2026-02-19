@@ -22,7 +22,7 @@ This solution expects the API calls to have a header named ```x-jwt-assertion```
 ## Configurations
 The following configuration model is used in this analytics solution. The default configuration is provided below. By default it is disabled.
 
- ```
+ ```toml
 [ballerinax.health.fhirr4.analytics]
 enabled = false
 fhirServerContext = "/fhir/r4/"
@@ -40,7 +40,7 @@ excludedApiContexts = []
 > - fhirServerContext:
 	- this is the context path of the FHIR server (mandatory). **Must match the server path and must end with the trailing slash**.
 > - jwtAttributes: 
-	- a comma-separated list of strings of the attributes that are contained in the x-jwt-assertion header that should be considered for data writing. If no values are required, the list should remain empty. The values should exactly match the claims present in the x-jwt-assertion header. Only the specified values are considered for analytics. In the above example, the ```client_id``` and ```iss``` is expected to be present in the ```x-jwt-assersion``` header.
+	- a comma-separated list of strings of the attributes that are contained in the x-jwt-assertion header that should be considered for data writing. If no values are required, the list should remain empty. The values should exactly match the claims present in the x-jwt-assertion header. Only the specified values are considered for analytics. In the above example, the ```client_id``` and ```iss``` is expected to be present in the ```x-jwt-assertion``` header.
 > - shouldPublishPayloads: 
 	- determines whether the request payloads (request/response) should be written to the log file. Disabled by default.
 > - filePath:
@@ -55,7 +55,8 @@ excludedApiContexts = []
 ## Enrich Analytics Payload Endpoint
 
 This endpoint is provided for the user to optionally add any additional data to the analytics payload from a separate backend. The configuration below is used to define the URL of this backend server and the security credentials for basic authentication. Note that this payload enrichment only applies when the ```shouldPublishPayload``` configuration is set to true.
-```
+
+```toml
 [ballerinax.health.fhirr4.analytics.enrichPayload]
 enabled = true
 url = "http://<HOST>:<PORT>/enrich-analytics-payload"

@@ -54,11 +54,11 @@ excludedApiContexts = []
 
 ## Enrich Analytics Payload Endpoint
 
-This endpoint is provided for the user to optionally add any additional data to the analytics payload from a separate backend. The configuration below is used to define the URL of this backend server and the security credentials for basic authentication. Note that this payload enrichment only applies when the ```shouldPublishPayload``` configuration is set to true.
+This endpoint is provided for the user to optionally add any additional data to the analytics payload from a separate backend. The configuration below is used to define the URL of this backend server and the security credentials for basic authentication. Note that this payload enrichment only applies when the ```shouldPublishPayloads``` configuration is set to true.
 
 ```toml
 [ballerinax.health.fhirr4.analytics.enrichPayload]
-enabled = true
+enabled = false
 url = "http://<HOST>:<PORT>/enrich-analytics-payload"
 username = ""
 password = ""

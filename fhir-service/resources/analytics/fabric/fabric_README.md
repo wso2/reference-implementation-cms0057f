@@ -3,12 +3,12 @@
 
 1. Create a Microsoft Fabric account.
 2. Install Fluent Bit if it is not already installed.
-3. Follow this documentation to link Fluent Bit with Microsoft Fabric.
+3. [Follow this documentation](https://learn.microsoft.com/en-us/fabric/real-time-intelligence/get-data-fluent?tabs=default%2Cclassic) to link Fluent Bit with Microsoft Fabric.
 4. When following the “Create a target table” topic in the above document, use the following table schema to create the table.
-* ```module-ballerinax-health.fhir.r4/fhirr4/ballerina/src/main/resources/fhirservice/resources/analytics/fabric/fabric-kql-table.kql```
+* ```module-ballerinax-health.fhir.r4/fhirr4/ballerina/src/main/resources/fhirservice/resources/analytics/fabric/fabric-kql-table-schema.kql```
 
 5. Create an ingestion mapping for the created target table using the following:
-* ```health.fhir.r4/fhirr4/ballerina/src/main/resources/fhirservice/resources/analytics/fabric/kql-ingestion-mapping.txt```
+* ```module-ballerinax-health.fhir.r4/fhirr4/ballerina/src/main/resources/fhirservice/resources/analytics/fabric/kql-ingestion-mapping.txt```
 
 6. Import the CMS dashboard template to the Fabric:
 	* Go to your workspace.
@@ -17,9 +17,9 @@
 	* Switch to editing mode.
 	* Go to “Manage” tab.
 	* Click on the “Replace with file” button and upload the dashboard template provided in the following path.
-		*	module-ballerinax-health.fhir.r4/fhirr4/ballerina/src/main/resources/fhirservice/resources/analytics/fabric-cms-dashboard-template.json
+		*	```module-ballerinax-health.fhir.r4/fhirr4/ballerina/src/main/resources/fhirservice/resources/analytics/fabric/fabric-cms-dashboard-template.json```
 
-7. Use the ```module-ballerinax-health.fhir.r4/fhirr4/ballerina/src/main/resources/fhirservice/resources/analytics/fabric-fluent-bit.conf``` Fluent Bit configuration when configuring Fluent Bit in this step. Replace the relevant placeholders with required data.
+7. Use the ```module-ballerinax-health.fhir.r4/fhirr4/ballerina/src/main/resources/fhirservice/resources/analytics/fabric/fabric-fluent-bit.conf``` Fluent Bit configuration when configuring Fluent Bit in this step. Replace the relevant placeholders with required data.
 
 	* <ABSOLUTE_PATH_TO_PARSER_FILE> - the absolute path for the ```parsers.conf``` file. This file resides in the ```module-ballerinax-health.fhir.r4/fhirr4/ballerina/src/main/resources/fhirservice/resources/analytics``` directory.
 	* <ABSOLUTE_PATH_TO_LOG_FILE> - the absolute path to the log file.

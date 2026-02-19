@@ -383,7 +383,7 @@ dependencies = [
 [[package]]
 org = "ballerinax"
 name = "cdc"
-version = "1.1.0"
+version = "1.2.0"
 dependencies = [
 	{org = "ballerina", name = "crypto"},
 	{org = "ballerina", name = "data.jsondata"},
@@ -546,7 +546,7 @@ dependencies = [
 [[package]]
 org = "ballerinax"
 name = "mysql"
-version = "1.16.1"
+version = "1.16.2"
 dependencies = [
 	{org = "ballerina", name = "crypto"},
 	{org = "ballerina", name = "io"},
@@ -569,7 +569,7 @@ modules = [
 ]
 
 [[package]]
-org = "joel"
+org = "wso2"
 name = "wso2_payer_portal_bff"
 version = "0.1.0"
 dependencies = [
@@ -589,6 +589,6 @@ dependencies = [
 	{org = "ballerinax", name = "mysql.driver"}
 ]
 modules = [
-	{org = "joel", packageName = "wso2_payer_portal_bff", moduleName = "wso2_payer_portal_bff"}
+	{org = "wso2", packageName = "wso2_payer_portal_bff", moduleName = "wso2_payer_portal_bff"}
 ]
 

@@ -1,3 +1,19 @@
+// Copyright (c) 2025, WSO2 LLC. (http://www.wso2.com).
+
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+
+// http://www.apache.org/licenses/LICENSE-2.0
+
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
 import ballerina/log;
 import ballerina/http;
 
@@ -21,11 +37,11 @@ function queryFHIRQuestionnaires(
     
     string searchPath = string `/Questionnaire?_count=${pageSize.toString()}&page=${page.toString()}`;
     
-    if (status is QuestionnaireStatus) {
+    if status is QuestionnaireStatus {
         searchPath += "&status=" + status;
     }
     
-    if (search is string && search.trim().length() > 0) {
+    if search is string && search.trim().length() > 0 {
         searchPath += "&title:contains=" + search;
     }
     
@@ -43,12 +59,12 @@ function queryFHIRQuestionnaires(
     QuestionnaireListItem[] questionnaires = [];
     json|error entriesJson = bundle.entry;
     
-    if (entriesJson is json[]) {
+    if entriesJson is json[] {
         foreach json entry in entriesJson {
             json|error resourceJson = entry.'resource;
-            if (resourceJson is json) {
+            if resourceJson is json {
                 QuestionnaireListItem|error item = parseQuestionnaireListItem(resourceJson);
-                if (item is QuestionnaireListItem) {
+                if item is QuestionnaireListItem {
                     questionnaires.push(item);
                 } else {
                     log:printWarn("Failed to parse questionnaire item: " + item.message());
@@ -70,13 +86,19 @@ function parseQuestionnaireListItem(json fhirResource) returns QuestionnaireList
     string? description = let var descVal = fhirResource.description in descVal is string ? descVal : ();
     
     string statusStr = let var statVal = fhirResource.status in statVal is string ? statVal : "unknown";
-    QuestionnaireStatus status = <QuestionnaireStatus>statusStr;
+    QuestionnaireStatus status;
+    match statusStr {
+        "active" => { status = "active"; }
+        "draft" => { status = "draft"; }
+        "retired" => { status = "retired"; }
+        _ => { status = "unknown"; }
+    }
     
     string? createdAt = ();
     string? updatedAt = ();
     
     json|error metaJson = fhirResource.meta;
-    if (metaJson is json) {
+    if metaJson is json {
         json|error lastUpdatedJson = metaJson.lastUpdated;
         if (lastUpdatedJson is string) {
             updatedAt = lastUpdatedJson;
@@ -109,14 +131,6 @@ function getFHIRQuestionnaireById(string questionnaireId) returns json|error {
 # + questionnaire - FHIR Questionnaire resource as JSON
 # + return - Created questionnaire resource as JSON or error
 function createFHIRQuestionnaire(json questionnaire) returns json|error {
-    // // Validate questionnaire before creation
-    // var validationResult = validator:validate(questionnaire, davincidtr210:DTRStdQuestionnaire);
-    // if (validationResult is error) {
-    //     log:printError("Questionnaire validation failed: " + validationResult.message());
-    //     log:printInfo(validationResult.toString());
-    //     // log:printDebug(validationResult.toString());
-    //     return error("Questionnaire validation failed: " + validationResult.message());
-    // }
     http:Response response = check fhirHttpClient->post("/Questionnaire", questionnaire);
     json result = check response.getJsonPayload();
     return result;
@@ -128,12 +142,6 @@ function createFHIRQuestionnaire(json questionnaire) returns json|error {
 # + questionnaire - Updated FHIR Questionnaire resource as JSON
 # + return - Updated questionnaire resource as JSON or error
 function updateFHIRQuestionnaire(string questionnaireId, json questionnaire) returns json|error {
-    // // Validate questionnaire before update
-    // var validationResult = validator:validate(questionnaire, davincidtr210:DTRStdQuestionnaire);
-    // if (validationResult is error) {
-    //     log:printError("Questionnaire validation failed: " + validationResult.message());
-    //     return error("Questionnaire validation failed: " + validationResult.message()); 
-    // }
     string path = "/Questionnaire/" + questionnaireId;
     http:Response response = check fhirHttpClient->put(path, questionnaire);
     json result = check response.getJsonPayload();
@@ -147,12 +155,10 @@ function updateFHIRQuestionnaire(string questionnaireId, json questionnaire) ret
 function deleteFHIRQuestionnaire(string questionnaireId) returns error? {
     string path = "/Questionnaire/" + questionnaireId;
     http:Response response = check fhirHttpClient->delete(path);
-    
     // Check if delete was successful (HTTP 204 or 200)
     int statusCode = response.statusCode;
-    if (statusCode != 200 && statusCode != 204) {
+    if statusCode != 200 && statusCode != 204 {
         return error("Failed to delete questionnaire: HTTP " + statusCode.toString());
     }
-    
     return;
 }

@@ -1,3 +1,19 @@
+// Copyright (c) 2025, WSO2 LLC. (http://www.wso2.com).
+
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+
+// http://www.apache.org/licenses/LICENSE-2.0
+
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
 import ballerina/log;
 import ballerina/http;
 import ballerina/time;
@@ -29,31 +45,27 @@ function queryPARequests(
 
     // Construct outcome parameter based on status filter
     string outcomeParam = "";
-    if (status is PARequestProcessingStatus[]) {
+    if status is PARequestProcessingStatus[] {
         string[] outcomeValues = [];
         foreach PARequestProcessingStatus s in status {
-            if (s == "Pending") {
+            if s == "Pending" {
                 outcomeValues.push("queued");
                 outcomeValues.push("partial");
-            } else if (s == "Completed") {
+            } else if s == "Completed" {
                 outcomeValues.push("complete");
-            } else if (s == "Error") {
+            } else if s == "Error" {
                 outcomeValues.push("error");
             }
         }
-        foreach string val in outcomeValues {
-            if (outcomeParam == "") {
-                outcomeParam += "outcome=" + val;
-            } else {
-                outcomeParam += ",outcome=" + val;
-            }
+        if (outcomeValues.length() > 0) {
+            outcomeParam = "outcome=" + string:'join(",", ...outcomeValues);
         }
     }
 
     // Get the claim response bundle with outcome=queued to pending for the search criteria
     string claimResponseSearchPath = string `/ClaimResponse?${outcomeParam}&_count=${pageSize.toString()}&page=${page.toString()}`;
     
-    if (search is string && search.trim().length() > 0) {
+    if search is string && search.trim().length() > 0 {
         claimResponseSearchPath += "&patient=" + search; // Search by patient ID in ClaimResponse
     }
 
@@ -62,7 +74,7 @@ function queryPARequests(
     // Extract total count from bundle
     int totalCount = 0;
     json|error totalJson = claimResponseBundle.total;
-    if (totalJson is int) {
+    if totalJson is int {
         totalCount = totalJson;
     }
 
@@ -71,34 +83,34 @@ function queryPARequests(
 
     // Process entries from the bundle
     r4:BundleEntry[]? entries = claimResponseBundle.entry;
-    if (entries is r4:BundleEntry[]) {
+    if entries is r4:BundleEntry[] {
         foreach r4:BundleEntry entry in entries {
             json resourceJson = <json>entry?.'resource;
             // Extract the request reference from ClaimResponse
             json|error requestRef = resourceJson.request;
             json|error responseIdJson = resourceJson.id;
             string responseId = responseIdJson is error ? "unknown" : <string>responseIdJson;
-            if (requestRef is json) {
+            if requestRef is json {
                 json|error refString = requestRef.reference;
-                if (refString is string) {
+                if refString is string {
                     // Fetch the actual Claim resource
                     json|http:ClientError claimResource = fhirHttpClient->get("/" + refString);
-                    if (claimResource is json) {
+                    if claimResource is json {
                         // Parse Claim to PARequestListItem
                         PARequestListItem|error paRequest = parseClaimToPARequestListItem(claimResource, responseId);
-                        if (paRequest is PARequestListItem) {
+                        if paRequest is PARequestListItem {
                             // Apply urgency filter if provided
                             boolean includeItem = true;
-                            if (urgency is PARequestUrgency[]) {
+                            if urgency is PARequestUrgency[] {
                                 includeItem = false;
                                 foreach PARequestUrgency urg in urgency {
-                                    if (paRequest.urgency == urg) {
+                                    if paRequest.urgency == urg {
                                         includeItem = true;
                                         break;
                                     }
                                 }
                             }
-                            if (includeItem) {
+                            if includeItem {
                                 paRequests.push(paRequest);
                             }
                         } else {
@@ -134,13 +146,13 @@ function parseClaimToPARequestListItem(json claimResource, string responseId) re
     // Extract patient reference
     string patientId = "";
     json|error patientJson = claimResource.patient;
-    if (patientJson is json) {
+    if patientJson is json {
         json|error refJson = patientJson.reference;
-        if (refJson is string) {
+        if refJson is string {
             // Extract ID from reference like "Patient/123"
             string:RegExp regex = re `/`;
             string[] parts = regex.split(refJson);
-            if (parts.length() > 1) {
+            if parts.length() > 1 {
                 patientId = parts[parts.length() - 1];
             }
         }
@@ -149,15 +161,15 @@ function parseClaimToPARequestListItem(json claimResource, string responseId) re
     // Extract practitioner from careTeam
     string? practitionerId = ();
     json|error careTeamJson = claimResource.careTeam;
-    if (careTeamJson is json[]) {
+    if careTeamJson is json[] {
         foreach json member in careTeamJson {
             json|error providerJson = member.provider;
-            if (providerJson is json) {
+            if providerJson is json {
                 json|error refJson = providerJson.reference;
-                if (refJson is string && refJson.includes("Practitioner")) {
+                if refJson is string && refJson.includes("Practitioner") {
                     string:RegExp regex = re `/`;
                     string[] parts = regex.split(refJson);
-                    if (parts.length() > 1) {
+                    if parts.length() > 1 {
                         practitionerId = parts[parts.length() - 1];
                     }
                     break;
@@ -169,7 +181,7 @@ function parseClaimToPARequestListItem(json claimResource, string responseId) re
     // Extract provider name from provider or insurer reference
     string provider = "Unknown Provider";
     json|error providerJson = claimResource.provider;
-    if (providerJson is json) {
+    if providerJson is json {
         json|error displayJson = providerJson.display;
         if (displayJson is string) {
             provider = displayJson;
@@ -177,7 +189,7 @@ function parseClaimToPARequestListItem(json claimResource, string responseId) re
     } else {
         // Try insurer if provider not found
         json|error insurerJson = claimResource.insurer;
-        if (insurerJson is json) {
+        if insurerJson is json {
             json|error displayJson = insurerJson.display;
             if (displayJson is string) {
                 provider = displayJson;
@@ -259,7 +271,7 @@ function getPARequestAnalytics() returns PARequestAnalytics|error {
     record {| int count; |}|error urgentResult = dbClient->queryRow(
         `SELECT count FROM pa_request_analytics WHERE urgency_type = 'Urgent'`
     );
-    if (urgentResult is record {| int count; |}) {
+    if urgentResult is record {| int count; |} {
         analytics.urgentCount = urgentResult.count;
     }
     
@@ -267,7 +279,7 @@ function getPARequestAnalytics() returns PARequestAnalytics|error {
     record {| int count; |}|error standardResult = dbClient->queryRow(
         `SELECT count FROM pa_request_analytics WHERE urgency_type = 'Standard'`
     );
-    if (standardResult is record {| int count; |}) {
+    if standardResult is record {| int count; |} {
         analytics.standardCount = standardResult.count;
     }
     
@@ -275,7 +287,7 @@ function getPARequestAnalytics() returns PARequestAnalytics|error {
     record {| int count; |}|error reAuthResult = dbClient->queryRow(
         `SELECT count FROM pa_request_analytics WHERE urgency_type = 'Re-authorization'`
     );
-    if (reAuthResult is record {| int count; |}) {
+    if reAuthResult is record {| int count; |} {
         analytics.reAuthorizationCount = reAuthResult.count;
     }
     
@@ -283,7 +295,7 @@ function getPARequestAnalytics() returns PARequestAnalytics|error {
     record {| int count; |}|error appealResult = dbClient->queryRow(
         `SELECT count FROM pa_request_analytics WHERE urgency_type = 'Appeal'`
     );
-    if (appealResult is record {| int count; |}) {
+    if appealResult is record {| int count; |} {
         analytics.appealCount = appealResult.count;
     }
     
@@ -324,7 +336,7 @@ public function getPARequestDetail(string responseId) returns PARequestDetail|er
 
     // 2. Get the PAS Claim - DONE
     r4:Reference? requestRef = claimResponse.request;
-    if (requestRef is ()) {
+    if requestRef is () {
         return error("ClaimResponse does not have a request reference");
     }
     json claim = check fhirHttpClient->get("/"+<string>requestRef.reference);
@@ -356,7 +368,7 @@ public function getPARequestDetail(string responseId) returns PARequestDetail|er
 
     QuestionnaireResponseItem [] questionnaireItems = [];
     // 8. Add AI analysis to questionnaires - TODO
-    if (questionnairesJson != ()){
+    if questionnairesJson != () {
         foreach json questionnaire in questionnairesJson {
             QuestionnaireResponseItem item = {
                 questionnaire: questionnaire,
@@ -376,11 +388,11 @@ public function getPARequestDetail(string responseId) returns PARequestDetail|er
     string priorityCode = <string>(<r4:Coding[]>(pasClaim.priority.coding))[0].code;
     string? targetDate = ();
     PARequestUrgency priority = "Standard";
-    if (priorityCode == "stat") {
+    if priorityCode == "stat" {
         priority = "Urgent";
         // Have to do in 3 days
         targetDate = check AddDurationToDate(created, "3");
-    } else if (priorityCode == "deferred") {
+    } else if priorityCode == "deferred" {
         priority = "Deferred";
         // Have to do in 30 days
         targetDate = check AddDurationToDate(created, "30");
@@ -401,7 +413,7 @@ public function getPARequestDetail(string responseId) returns PARequestDetail|er
     
     // Calculate totals - DONE
     ClaimTotals|error total = calculateClaimTotals(items, claimResponse);
-    if (total is error) {
+    if total is error {
         log:printError("Failed to calculate claim totals: " + total.message());
         return total;
     }
@@ -444,7 +456,7 @@ function getClaimResponse(string claimResId, boolean limited=true) returns inter
     }
     
     json|http:ClientError response = fhirHttpClient->get(claimResponsePath);
-    if (response is http:ClientError) {
+    if response is http:ClientError {
         log:printError("ClaimResponse not found for ClaimResponse ID " + claimResId);
         return response; // Return error to indicate not found, caller will handle as null
     }
@@ -459,7 +471,7 @@ function getClaimResponse(string claimResId, boolean limited=true) returns inter
 function getPatientIPSSummary(string patientId) returns PatientInformation|error {
     // Get patient summary using IPS $summary operation
     json|error ipsSummary = fhirHttpClient->get("/Patient/" + patientId + "/$summary");
-    if (ipsSummary is error){
+    if ipsSummary is error{
         log:printError("Failed to fetch IPS summary for patient " + patientId + ": " + ipsSummary.message());
         return ipsSummary;
     }
@@ -483,23 +495,23 @@ function parsePatientResource(ips:PatientUvIps patient) returns PatientInformati
     // Extract name - work with anydata
     string fullName = "Unknown";
     ips:PatientUvIpsName[] nameData = patient.name;
-    if (nameData.length() > 0) {
+    if nameData.length() > 0 {
         ips:PatientUvIpsName firstNameData = nameData[0];
         string[]? givenData = firstNameData.given;
         string? familyData = firstNameData.family;
         string? family = familyData is string ? familyData : ();
         string? given = ();
-        if (givenData is string[]) {
+        if givenData is string[] {
             string[] givenArray = <string[]> givenData;
             if (givenArray.length() > 0) {
                 given = givenArray[0];
             }
         }
-        if (given is string && family is string) {
+        if given is string && family is string {
             fullName = given + " " + family;
-        } else if (family is string) {
+        } else if family is string {
             fullName = family;
-        } else if (given is string) {
+        } else if given is string {
             fullName = given;
         }
     }
@@ -540,12 +552,12 @@ function parseIPSBundle(r4:Bundle ipsBundle, string patientId) returns PatientIn
     ips:MedicationStatementIPS[] medicationResources = [];
 
     foreach r4:BundleEntry entry in <r4:BundleEntry[]>ipsBundle.entry{
-        if ((<string>(<r4:uri>entry.fullUrl)).includes("Patient")){
+        if (<string>(<r4:uri>entry.fullUrl)).includes("Patient"){
             patientResource = check (entry?.'resource).cloneWithType(ips:PatientUvIps);
-        } else if ((<string>(<r4:uri>entry.fullUrl)).includes("AllergyIntolerance")){
+        } else if (<string>(<r4:uri>entry.fullUrl)).includes("AllergyIntolerance"){
             ips:AllergyIntoleranceUvIps allergyResource = check (entry?.'resource).cloneWithType(ips:AllergyIntoleranceUvIps);
             allergyResources.push(allergyResource);
-        } else if ((<string>(<r4:uri>entry.fullUrl)).includes("MedicationStatement")){
+        } else if (<string>(<r4:uri>entry.fullUrl)).includes("MedicationStatement"){
             ips:MedicationStatementIPS medicationResource = check (entry?.'resource).cloneWithType(ips:MedicationStatementIPS);
             medicationResources.push(medicationResource);
         }
@@ -558,7 +570,7 @@ function parseIPSBundle(r4:Bundle ipsBundle, string patientId) returns PatientIn
     AllergyIntolerance[] allergies = [];
     foreach ips:AllergyIntoleranceUvIps allergyResource in allergyResources {
         AllergyIntolerance? allergy = parseAllergy(allergyResource);
-        if (allergy is AllergyIntolerance) {
+        if allergy is AllergyIntolerance {
             allergies.push(allergy);
         }
     }
@@ -567,7 +579,7 @@ function parseIPSBundle(r4:Bundle ipsBundle, string patientId) returns PatientIn
     MedicationStatement[] medications = [];
     foreach ips:MedicationStatementIPS medResource in medicationResources {
         MedicationStatement? med = parseMedicationStatement(medResource);
-        if (med is MedicationStatement) {
+        if med is MedicationStatement {
             medications.push(med);
         }
     }
@@ -583,16 +595,11 @@ function parseIPSBundle(r4:Bundle ipsBundle, string patientId) returns PatientIn
 # + return - AllergyIntolerance or null
 function parseAllergy(ips:AllergyIntoleranceUvIps allergyResource) returns AllergyIntolerance? {
     ips:CodeableConceptUvIps? code = allergyResource.code;
-
     string substance = "Unknown";
-
-    if (code is ips:CodeableConceptUvIps){
+    if code is ips:CodeableConceptUvIps{
         substance = code.text ?: "Unknown";
     }
-    
-    // Extract severity/criticality
     string? severity = allergyResource.criticality;
-    
     return {
         substance: substance,
         severity: severity
@@ -604,18 +611,14 @@ function parseAllergy(ips:AllergyIntoleranceUvIps allergyResource) returns Aller
 # + medResource - IPS MedicationStatement resource
 # + return - MedicationStatement or null
 function parseMedicationStatement(ips:MedicationStatementIPS medResource) returns MedicationStatement? {
-
-    if (medResource.status != "active") {
+    if medResource.status != "active" {
         return ();
     }
-
     string medication = "";
-    // Extract medication from medicationCodeableConcept
     ips:CodeableConceptUvIps? medCodeData = medResource.medicationCodeableConcept;
-    if (medCodeData is ips:CodeableConceptUvIps) {
+    if medCodeData is ips:CodeableConceptUvIps {
         medication = medCodeData.text ?: "Unknown";
     }
-    
     return {
         medication: medication,
         status: medResource.status
@@ -627,13 +630,12 @@ function parseMedicationStatement(ips:MedicationStatementIPS medResource) return
 # + birthDate - Birth date in YYYY-MM-DD format
 # + return - Age in years or null
 function calculateAge(string birthDate) returns int? {
-
     time:Utc currentTimeUtc = time:utcNow();
     time:Civil civilTime = time:utcToCivil(currentTimeUtc);
     int year = civilTime.year;
-    if (birthDate.length() >= 4) {
+    if birthDate.length() >= 4 {
         int|error birthYear = int:fromString(birthDate.substring(0, 4));
-        if (birthYear is int) {
+        if birthYear is int {
             return year - birthYear; 
         }
     }
@@ -647,9 +649,8 @@ function calculateAge(string birthDate) returns int? {
 function getProviderInformation(r4:Reference providerRef) returns ProviderInformation|error {
     // Extract provider from careTeam
     string? practitionerId = providerRef.reference;
-
     // If PractitionerRole is in reference, fetch practitioner info or organization info based on reference type
-    if (practitionerId == ()){
+    if practitionerId == () {
         log:printError("Practitioner or Organization information is not found in the bundle");
         return error("Practitioner or Organization information is not found in the bundle");
     }
@@ -659,9 +660,9 @@ function getProviderInformation(r4:Reference providerRef) returns ProviderInform
     string resourceType = parts[0];
     practitionerId = parts[parts.length() - 1];
 
-    if (resourceType == "Organization") {
+    if resourceType == "Organization" {
         return getOrganizationInfo(<string>practitionerId);
-    } else if (resourceType == "PractitionerRole") {
+    } else if resourceType == "PractitionerRole" {
         return getPractitionerInfo(<string>practitionerId);
     } else {
         log:printError("Unknown provider reference type: " + resourceType);
@@ -683,25 +684,25 @@ function getPractitionerInfo(string practitionerId) returns ProviderInformation|
     string fullName = "Unknown Practitioner";
     string? initials = ();
     r4:HumanName[] nameData = <r4:HumanName[]>practitioner.name;
-    if (nameData.length() > 0) {
+    if nameData.length() > 0 {
         r4:HumanName firstNameData = nameData[0];
         string[]? givenData = firstNameData.given;
         string? familyData = firstNameData.family;
         string? family = familyData is string ? familyData : ();
         string? given = ();
-        if (givenData is string[]) {
+        if givenData is string[] {
             string[] givenArray = <string[]> givenData;
-            if (givenArray.length() > 0) {
+            if givenArray.length() > 0 {
                 given = givenArray[0];
             }
         }
-        if (given is string && family is string) {
+        if given is string && family is string {
             fullName = "Dr." + given + " " + family;
             initials = (given[0].toUpperAscii() + family[0].toUpperAscii());
-        } else if (family is string) {
+        } else if family is string {
             fullName = "Dr." + family;
             initials = family[0].toUpperAscii();
-        } else if (given is string) {
+        } else if given is string {
             fullName = "Dr." + given;
             initials = given[0].toUpperAscii();
         }
@@ -709,7 +710,7 @@ function getPractitionerInfo(string practitionerId) returns ProviderInformation|
 
     string speciality = "";
 
-    if (practitionerRole.specialty is r4:CodeableConcept[]){
+    if practitionerRole.specialty is r4:CodeableConcept[] {
         foreach r4:CodeableConcept item in <r4:CodeableConcept[]>practitionerRole.specialty {
             speciality += <string>item.text + " ";
         }
@@ -719,7 +720,7 @@ function getPractitionerInfo(string practitionerId) returns ProviderInformation|
 
     ProviderContact? contact = ();
 
-    if (practitioner.telecom is r4:ContactPoint[]) {
+    if practitioner.telecom is r4:ContactPoint[] {
         r4:ContactPoint[] telecoms = <r4:ContactPoint[]>practitioner.telecom;
         
         string? phone = ();
@@ -727,20 +728,20 @@ function getPractitionerInfo(string practitionerId) returns ProviderInformation|
         
         // Extract phone and email from contact points
         foreach r4:ContactPoint telecom in telecoms {
-            if (telecom.system == "phone" && phone is ()) {
+            if telecom.system == "phone" && phone is () {
                 phone = telecom.value;
-            } else if (telecom.system == "email" && email is ()) {
+            } else if telecom.system == "email" && email is () {
                 email = telecom.value;
             }
             
             // Break if we found both
-            if (phone is string && email is string) {
+            if phone is string && email is string {
                 break;
             }
         }
         
         // Create contact if we have at least one
-        if (phone is string || email is string) {
+        if phone is string || email is string {
             contact = {
                 phone: phone,
                 email: email
@@ -750,9 +751,9 @@ function getPractitionerInfo(string practitionerId) returns ProviderInformation|
     
     // Extract organization/facility information from PractitionerRole
     Facility? facility = ();
-    if (practitionerRole.organization is r4:Reference) {
+    if practitionerRole.organization is r4:Reference {
         r4:Reference orgRef = <r4:Reference>practitionerRole.organization;
-        if (orgRef.reference is string) {
+        if orgRef.reference is string {
             string:RegExp regex = re `/`;
             string[] parts = regex.split(<string>orgRef.reference);
             string orgId = parts[parts.length() - 1];
@@ -783,17 +784,15 @@ function extractFacilityInfo(string organizationId) returns Facility|error {
     
     // Extract address from the organization
     Address? address = ();
-    if (org.address is r4:Address[]) {
+    if org.address is r4:Address[] {
         r4:Address[] addresses = <r4:Address[]>org.address;
-        if (addresses.length() > 0) {
+        if addresses.length() > 0 {
             r4:Address firstAddress = addresses[0];
-            
             string[] line = [];
             if (firstAddress.line is string[]) {
                 string[] addressLines = <string[]>firstAddress.line;
                 line = addressLines;
             }
-            
             address = {
                 line: line,
                 city: firstAddress.city,
@@ -822,35 +821,34 @@ function getOrganizationInfo(string organizationId) returns ProviderInformation|
     
     // Extract contact information (phone and email)
     ProviderContact? contact = ();
-    if (org.telecom is r4:ContactPoint[]) {
+    if org.telecom is r4:ContactPoint[] {
         r4:ContactPoint[] telecoms = <r4:ContactPoint[]>org.telecom;
         
         string? phone = ();
         string? email = ();
         
         foreach r4:ContactPoint telecom in telecoms {
-            if (telecom.system == "phone" && phone is ()) {
+            if telecom.system == "phone" && phone is () {
                 phone = telecom.value;
-            } else if (telecom.system == "email" && email is ()) {
+            } else if telecom.system == "email" && email is () {
                 email = telecom.value;
             }
             
-            if (phone is string && email is string) {
+            if phone is string && email is string {
                 break;
             }
         }
         
-        if (phone is string || email is string) {
+        if phone is string || email is string {
             contact = {
                 phone: phone,
                 email: email
             };
         }
     }
-    
     // Extract facility information
     Facility? facility = check extractFacilityInfo(organizationId);
-    
+
     return {
         id: organizationId,
         name: orgName,
@@ -872,7 +870,7 @@ function extractSupportingInformation(davincipas:PASClaimSupportingInfo[]? suppo
     json[] questionnaires = [];
     json[] attachments = [];
     
-    if (supportingInfo is ()) {
+    if supportingInfo is () {
         return [admissionDate, dischargeDate, (), ()];
     }
     
@@ -881,47 +879,47 @@ function extractSupportingInformation(davincipas:PASClaimSupportingInfo[]? suppo
         r4:CodeableConcept category = info.category;
         r4:Coding[]? codings = category.coding;
         
-        if (codings is r4:Coding[] && codings.length() > 0) {
+        if codings is r4:Coding[] && codings.length() > 0 {
             string? code = codings[0].code;
             
-            if (code == "admissionDates") {
+            if code == "admissionDates" {
                 // Extract admission date from timingPeriod
-                if (info.timingPeriod is r4:Period) {
+                if info.timingPeriod is r4:Period {
                     r4:Period period = <r4:Period>info.timingPeriod;
                     admissionDate = period.'start;
                 }
-            } else if (code == "dischargeDates") {
+            } else if code == "dischargeDates" {
                 // Extract discharge date from timingPeriod
-                if (info.timingPeriod is r4:Period) {
+                if info.timingPeriod is r4:Period {
                     r4:Period period = <r4:Period>info.timingPeriod;
                     dischargeDate = period.end;
                 }
-            } else if (code == "additionalInformation") {
+            } else if code == "additionalInformation" {
                 // Extract additional information - can be Attachment or Reference
-                if (info.valueAttachment is r4:Attachment) {
+                if info.valueAttachment is r4:Attachment {
                     // Handle attachment
                     r4:Attachment attachment = <r4:Attachment>info.valueAttachment;
                     json attachmentJson = attachment.toJson();
                     attachments.push(attachmentJson);
-                } else if (info.valueReference is r4:Reference) {
+                } else if info.valueReference is r4:Reference {
                     // Handle reference - could be DocumentReference or QuestionnaireResponse
                     r4:Reference ref = <r4:Reference>info.valueReference;
                     string? reference = ref.reference;
                     
-                    if (reference is string) {
+                    if reference is string {
                         // Fetch the referenced resource
                         json|http:ClientError resourceJson = fhirHttpClient->get("/" + reference);
-                        if (resourceJson is http:ClientError) {
+                        if resourceJson is http:ClientError {
                             log:printWarn("Failed to fetch referenced resource " + reference + ": " + resourceJson.message());
                             continue;
                         }
                         string:RegExp regex = re `/`;
                         string[] parts = regex.split(reference);
                         string resourceType = parts[0];
-                        if (resourceType == "DocumentReference") {
+                        if resourceType == "DocumentReference" {
                             // Add to attachments
                             attachments.push(resourceJson);
-                        } else if (resourceType == "QuestionnaireResponse" || resourceType == "Bundle") {
+                        } else if resourceType == "QuestionnaireResponse" || resourceType == "Bundle" {
                             // Add to questionnaires
                             questionnaires.push(resourceJson);
                         } else {
@@ -930,7 +928,7 @@ function extractSupportingInformation(davincipas:PASClaimSupportingInfo[]? suppo
                         }
                     }
                 }
-            } else if (code == "freeFormMessage"){
+            } else if code == "freeFormMessage"{
                 clinicalJustification = info.valueString is string ? <string>info.valueString : "";
             }
         }
@@ -949,9 +947,9 @@ function parseClaimItems(davincipas:PASClaimItem[] pasClaimItems) returns ClaimI
     foreach davincipas:PASClaimItem pasItem in pasClaimItems {
         // Extract description from productOrService
         string? description = pasItem.productOrService.text;
-        if (description is () && pasItem.productOrService.coding is r4:Coding[]) {
+        if description is () && pasItem.productOrService.coding is r4:Coding[] {
             r4:Coding[] codings = <r4:Coding[]>pasItem.productOrService.coding;
-            if (codings.length() > 0) {
+            if codings.length() > 0 {
                 description = codings[0].display;
             }
         }
@@ -988,7 +986,7 @@ function parseClaimItems(davincipas:PASClaimItem[] pasClaimItems) returns ClaimI
 # + items - Array of claim items
 # + return - Service type string
 function extractServiceType(ClaimItem[] items) returns string {
-    if (items.length() > 0) {
+    if items.length() > 0 {
         return items[0].description ?: "Medical Service";
     }
     return "Medical Service";
@@ -999,7 +997,7 @@ function extractServiceType(ClaimItem[] items) returns string {
 # + insuranceArray - Array of PASClaimInsurance from PAS Claim resource
 # + return - Array of CoverageInformation or null
 function extractCoverageInfo(davincipas:PASClaimInsurance[]? insuranceArray) returns CoverageInformation[]? {
-    if (insuranceArray is () || insuranceArray.length() == 0) {
+    if insuranceArray is () || insuranceArray.length() == 0 {
         return ();
     }
     
@@ -1010,21 +1008,21 @@ function extractCoverageInfo(davincipas:PASClaimInsurance[]? insuranceArray) ret
         
         string serviceItemRequestType = "";
         string certificationType = "";
-        if (insurance.extension is r4:Extension[]) {
+        if insurance.extension is r4:Extension[] {
             r4:Extension[] extensions = <r4:Extension[]> insurance.extension;
 
             // Get the serviceItemRequestType from extensions
-            if (extensions.length() > 0) {
+            if extensions.length() > 0 {
                 r4:CodeableConceptExtension? codeableConceptExt = <r4:CodeableConceptExtension> extensions[0];
-                if (codeableConceptExt is r4:CodeableConceptExtension) {
+                if codeableConceptExt is r4:CodeableConceptExtension {
                     serviceItemRequestType = codeableConceptExt.valueCodeableConcept.text ?: "";
                 }
             }
 
             // Get CertificationType from extensions
-            if (extensions.length() > 1) {
+            if extensions.length() > 1 {
                 r4:CodeableConceptExtension? certTypeExt = <r4:CodeableConceptExtension> extensions[1];
-                if (certTypeExt is r4:CodeableConceptExtension) {
+                if certTypeExt is r4:CodeableConceptExtension {
                     certificationType = certTypeExt.valueCodeableConcept.text ?: "";
                 }
             }
@@ -1057,25 +1055,28 @@ function calculateClaimTotals(ClaimItem[] items, international401:ClaimResponse?
     decimal totalSubmitted = 0.0d;
     string currency = "USD";
     foreach ClaimItem item in items {
+        if (item.net is ()){
+            continue;
+        }
         r4:Money net = check item.net.cloneWithType(r4:Money);
-        totalSubmitted += <decimal>net.value;
-        currency = <string>net.currency;
+        totalSubmitted += net.value ?: 0.0d;
+        currency = net.currency ?: "USD";
         
     }
         
-    if (totalSubmitted > 0.0d) {
+    if totalSubmitted > 0.0d {
         submitted = {value: totalSubmitted, currency: currency};
     }
     
     // Extract benefit from ClaimResponse
-    if (claimResponse is international401:ClaimResponse) {
+    if claimResponse is international401:ClaimResponse {
         international401:ClaimResponseTotal[]? totals = claimResponse.total;
-        if (totals is international401:ClaimResponseTotal[]) {
+        if totals is international401:ClaimResponseTotal[] {
             foreach international401:ClaimResponseTotal tot in totals {
                 r4:CodeableConcept category = tot.category;
-                if (category.coding is r4:Coding[]) {
+                if category.coding is r4:Coding[] {
                     r4:Coding[] codings = <r4:Coding[]>category.coding;
-                    if (codings.length() > 0 && codings[0].code == "benefit") {
+                    if codings.length() > 0 && codings[0].code == "benefit" {
                         benefit = tot.amount.toJson();
                         break;
                     }
@@ -1095,13 +1096,13 @@ function calculateClaimTotals(ClaimItem[] items, international401:ClaimResponse?
 # + claimResponse - ClaimResponse or null
 # + return - Array of process notes or null
 function extractProcessNotes(international401:ClaimResponse? claimResponse) returns ProcessNote[]? {
-    if (claimResponse is ()) {
+    if claimResponse is () {
         return ();
     }
     
     ProcessNote[] notes = [];
     international401:ClaimResponseProcessNote[]? processNotes = claimResponse.processNote;
-    if (processNotes is international401:ClaimResponseProcessNote[]) {
+    if processNotes is international401:ClaimResponseProcessNote[] {
         foreach international401:ClaimResponseProcessNote noteItem in processNotes {
             ProcessNote note = {
                 number: noteItem.number,
@@ -1165,7 +1166,7 @@ public function submitPARequestAdjudication(string responseId, AdjudicationSubmi
     // 2. Modify the claimResponse with adjudication data
     
     // Update outcome based on decision
-    claimResponse.outcome = mapDecisionToOutcome(adjudication.decision);
+    claimResponse.outcome = check adjudication.decision.cloneWithType(international401:ClaimResponseOutcome);
     claimResponse.disposition = adjudication.decision;
     
     // Build item adjudications
@@ -1190,7 +1191,7 @@ public function submitPARequestAdjudication(string responseId, AdjudicationSubmi
         adjudicationArray.push(mainAdj);
         
         // Add benefit amount if approved
-        if (itemAdj.approvedAmount is decimal) {
+        if itemAdj.approvedAmount is decimal {
             international401:ClaimResponseItemAdjudication benefitAdj = {
                 category: {
                     coding: [
@@ -1215,11 +1216,6 @@ public function submitPARequestAdjudication(string responseId, AdjudicationSubmi
             adjudication: adjudicationArray
         };
         
-        // Add note reference if item has notes
-        if (itemAdj.itemNotes is string) {
-            item.noteNumber = [itemAdj.sequence];
-        }
-        
         items.push(item);
     }
     
@@ -1230,7 +1226,7 @@ public function submitPARequestAdjudication(string responseId, AdjudicationSubmi
     int noteNumber = 1;
     
     // Add reviewer notes
-    if (adjudication.reviewerNotes is string) {
+    if adjudication.reviewerNotes is string {
         international401:ClaimResponseProcessNote reviewerNote = {
             number: noteNumber,
             'type: "display",
@@ -1240,20 +1236,29 @@ public function submitPARequestAdjudication(string responseId, AdjudicationSubmi
         noteNumber += 1;
     }
     
-    // Add item-specific notes
+    // Add item-specific notes and link them to corresponding items
     foreach ItemAdjudicationSubmission itemAdj in adjudication.itemAdjudications {
-        if (itemAdj.itemNotes is string) {
+        if itemAdj.itemNotes is string {
             international401:ClaimResponseProcessNote itemNote = {
                 number: noteNumber,
                 'type: "display",
                 text: <string>itemAdj.itemNotes
             };
             processNotes.push(itemNote);
+            
+            // Find the corresponding item and assign the note reference
+            foreach international401:ClaimResponseItem item in items {
+                if item.itemSequence == itemAdj.sequence {
+                    item.noteNumber = [noteNumber];
+                    break;
+                }
+            }
+            
             noteNumber += 1;
         }
     }
     
-    if (processNotes.length() > 0) {
+    if processNotes.length() > 0 {
         claimResponse.processNote = processNotes;
     }
 
@@ -1261,7 +1266,7 @@ public function submitPARequestAdjudication(string responseId, AdjudicationSubmi
     json claimResponseJson = claimResponse.toJson();
     json|http:ClientError updateResponse = fhirHttpClient->put("/ClaimResponse/" + responseId, claimResponseJson);
     
-    if (updateResponse is http:ClientError) {
+    if updateResponse is http:ClientError {
         log:printError("Failed to update ClaimResponse: " + updateResponse.message());
         return error("Failed to update ClaimResponse: " + updateResponse.message());
     }
@@ -1271,20 +1276,4 @@ public function submitPARequestAdjudication(string responseId, AdjudicationSubmi
         status: adjudication.decision,
         message: "Adjudication submitted successfully"
     };
-}
-
-# Map decision to FHIR ClaimResponse outcome
-#
-# + decision - Decision string (e.g., "approved", "denied")
-# + return - PASClaimResponseOutcome enum value
-function mapDecisionToOutcome(string decision) returns international401:ClaimResponseOutcome {
-    if (decision.toLowerAscii().includes("approved") || decision.toLowerAscii().includes("complete")) {
-        return "complete";
-    } else if (decision.toLowerAscii().includes("error")) {
-        return "error";
-    } else if (decision.toLowerAscii().includes("partial")) {
-        return "partial";
-    } else {
-        return "queued";
-    }
 }

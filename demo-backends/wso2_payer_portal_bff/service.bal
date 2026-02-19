@@ -1,10 +1,21 @@
-// import ballerina/io;
+// Copyright (c) 2025, WSO2 LLC. (http://www.wso2.com).
+
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+
+// http://www.apache.org/licenses/LICENSE-2.0
+
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
 import ballerina/log;
 import ballerina/http;
-// import ballerinax/health.fhir.r4.validator;
-// import ballerinax/health.fhir.r4.davincidtr210;
-// // import ballerinax/health.fhir.r4.international401;
-// import ballerinax/health.fhir.r4.parser as fhirParser;
 
 listener http:Listener bff_listener = new (6091);
 
@@ -28,18 +39,16 @@ service /v1 on bff_listener {
     # http:Ok (Successful response)
     # http:InternalServerError (Internal server error)
     resource function get payers(string? search, int page = 1, int 'limit = 10) returns PayerListResponse|http:InternalServerError {
-        Payer[]|error payers = queryPayers(page, 'limit);
+        Payer[]|error payers = queryPayers(page, 'limit, search);
         if (payers is error) {
             log:printError("Failed to retrieve payers: " + payers.message());
             return http:INTERNAL_SERVER_ERROR;
         }
-
-        int|error totalCount = getTotalPayers();
+        int|error totalCount = getTotalPayers(search);
         if (totalCount is error) {
             log:printError("Failed to retrieve total payers count: " + totalCount.message());
             return http:INTERNAL_SERVER_ERROR;
         }
-        
         return {
             data: payers,
             pagination: {
@@ -61,17 +70,14 @@ service /v1 on bff_listener {
     # http:InternalServerError (Internal server error)
     resource function get payers/[string payerId]() returns Payer|http:NotFound|http:InternalServerError {
         Payer|error? payer = getPayerById(payerId);
-        
         if (payer is error) {
             log:printError("Failed to retrieve payer: " + payer.message());
             return http:INTERNAL_SERVER_ERROR;
         }
-        
         if (payer is ()) {
             log:printWarn("Payer with ID " + payerId + " not found");
             return http:NOT_FOUND;
         }
-        
         return payer;
     }
 
@@ -81,21 +87,16 @@ service /v1 on bff_listener {
     # http:Created (Payer created successfully)
     # http:Conflict (Conflict - Payer with this email already exists)
     # http:InternalServerError (Internal server error)
-    resource function post payers(@http:Payload PayerFormData payload) returns Payer|http:Conflict|http:InternalServerError {
-        Payer|error payer = createPayer(payload);
-        
-        if (payer is error) {
-            log:printError("Failed to create payer: " + payer.message());
-            
-            // Check if it's a unique constraint violation (email already exists)
-            if (payer.message().includes("duplicate") || payer.message().includes("unique")) {
+    resource function post payers(@http:Payload PayerFormData payload) returns http:Created|http:Conflict|http:InternalServerError {
+        error? result = createPayer(payload);     
+        if (result is error) {
+            log:printError("Failed to create payer: " + result.message());
+            if (result.message().includes("duplicate") || result.message().includes("unique")) {
                 return http:CONFLICT;
             }
-            
             return http:INTERNAL_SERVER_ERROR;
         }
-        
-        return payer;
+        return http:CREATED;
     }
 
     # Update a payer
@@ -105,26 +106,16 @@ service /v1 on bff_listener {
     # http:Ok (Payer updated successfully)
     # http:NotFound (Resource not found)
     # http:InternalServerError (Internal server error)
-    resource function put payers/[string payerId](@http:Payload PayerFormData payload) returns Payer|http:NotFound|http:Conflict|http:InternalServerError {
-        Payer|error? payer = updatePayer(payerId, payload);
-        
-        if (payer is error) {
-            log:printError("Failed to update payer: " + payer.message());
-            
-            // Check if it's a unique constraint violation (email already exists)
-            if (payer.message().includes("duplicate") || payer.message().includes("unique")) {
+    resource function put payers/[string payerId](@http:Payload PayerFormData payload) returns http:Ok|http:Conflict|http:InternalServerError {
+        error? result = updatePayer(payerId, payload);
+        if (result is error) {
+            log:printError("Failed to update payer: " + result.message());
+            if (result.message().includes("duplicate") || result.message().includes("unique")) {
                 return http:CONFLICT;
             }
-            
             return http:INTERNAL_SERVER_ERROR;
         }
-        
-        if (payer is ()) {
-            log:printWarn("Payer with ID " + payerId + " not found");
-            return http:NOT_FOUND;
-        }
-        
-        return payer;
+        return http:OK;
     }
 
     # Delete a payer
@@ -137,17 +128,13 @@ service /v1 on bff_listener {
     # http:InternalServerError (Internal server error)
     resource function delete payers/[string payerId]() returns http:NoContent|http:NotFound|http:InternalServerError {
         error? result = deletePayer(payerId);
-        
         if (result is error) {
             log:printError("Failed to delete payer: " + result.message());
-            
             if (result.message().includes("not found")) {
                 return http:NOT_FOUND;
             }
-            
             return http:INTERNAL_SERVER_ERROR;
-        }
-        
+        }        
         return http:NO_CONTENT;
     }
 
@@ -162,14 +149,11 @@ service /v1 on bff_listener {
     # http:InternalServerError (Internal server error)
     resource function get questionnaires(string? search, QuestionnaireStatus? status, int page = 1, int 'limit = 10) returns QuestionnaireListResponse|http:InternalServerError {
         [QuestionnaireListItem[], int]|error result = queryFHIRQuestionnaires(page, 'limit, search, status);
-        
         if (result is error) {
             log:printError("Failed to retrieve questionnaires: " + result.message());
             return http:INTERNAL_SERVER_ERROR;
         }
-        
         [QuestionnaireListItem[], int] [questionnaires, totalCount] = result;
-        
         return {
             data: questionnaires,
             pagination: {
@@ -190,18 +174,13 @@ service /v1 on bff_listener {
     # http:InternalServerError (Internal server error)
     resource function get questionnaires/[string questionnaireId]() returns json|http:NotFound|http:InternalServerError {
         json|error questionnaire = getFHIRQuestionnaireById(questionnaireId);
-        
         if (questionnaire is error) {
             log:printError("Failed to retrieve questionnaire: " + questionnaire.message());
-            
-            // Check if it's a not found error
             if (questionnaire.message().includes("not found") || questionnaire.message().includes("404")) {
                 return http:NOT_FOUND;
             }
-            
             return http:INTERNAL_SERVER_ERROR;
         }
-        
         return questionnaire;
     }
 
@@ -212,12 +191,10 @@ service /v1 on bff_listener {
     # http:InternalServerError (Internal server error)
     resource function post questionnaires(@http:Payload json payload) returns http:Created|http:InternalServerError {
         json|error questionnaire = createFHIRQuestionnaire(payload);
-        
         if (questionnaire is error) {
             log:printError("Failed to create questionnaire: " + questionnaire.message());
             return http:INTERNAL_SERVER_ERROR;
         }
-        
         return http:CREATED;
     }
 
@@ -230,18 +207,13 @@ service /v1 on bff_listener {
     # http:InternalServerError (Internal server error)
     resource function put questionnaires/[string questionnaireId](@http:Payload json payload) returns json|http:NotFound|http:InternalServerError {
         json|error questionnaire = updateFHIRQuestionnaire(questionnaireId, payload);
-        
         if (questionnaire is error) {
             log:printError("Failed to update questionnaire: " + questionnaire.message());
-            
-            // Check if it's a not found error
             if (questionnaire.message().includes("not found") || questionnaire.message().includes("404")) {
                 return http:NOT_FOUND;
             }
-            
             return http:INTERNAL_SERVER_ERROR;
         }
-        
         return questionnaire;
     }
 
@@ -254,18 +226,13 @@ service /v1 on bff_listener {
     # http:InternalServerError (Internal server error)
     resource function delete questionnaires/[string questionnaireId]() returns http:NoContent|http:NotFound|http:InternalServerError {
         error? result = deleteFHIRQuestionnaire(questionnaireId);
-        
         if (result is error) {
             log:printError("Failed to delete questionnaire: " + result.message());
-            
-            // Check if it's a not found error
             if (result.message().includes("not found") || result.message().includes("404")) {
                 return http:NOT_FOUND;
             }
-            
             return http:INTERNAL_SERVER_ERROR;
         }
-        
         return http:NO_CONTENT;
     }
 
@@ -280,16 +247,12 @@ service /v1 on bff_listener {
     # http:Ok (Successful response)
     # http:InternalServerError (Internal server error)
     resource function get pa\-requests(string? search, PARequestUrgency[]? urgency, PARequestProcessingStatus[]? status, int page = 1, int 'limit = 5) returns PARequestListResponse|http:InternalServerError {
-        // Query PA requests from FHIR
         [PARequestListItem[], int]|error result = queryPARequests(page, 'limit, search, urgency, status);
-        
         if (result is error) {
             log:printError("Failed to retrieve PA requests: " + result.message());
             return http:INTERNAL_SERVER_ERROR;
         }
-        
         [PARequestListItem[], int] [paRequests, totalCount] = result;
-
         // Get analytics from PostgreSQL
         // PARequestAnalytics|error analyticsResult = getPARequestAnalytics();
         // TODO: Discuss and implement analytics - For now, return dummy analytics data
@@ -299,7 +262,6 @@ service /v1 on bff_listener {
             reAuthorizationCount: 0,
             appealCount: 0
         };
-        
         PARequestListResponse response = {
             data: paRequests,
             pagination: {
@@ -323,18 +285,13 @@ service /v1 on bff_listener {
     # http:InternalServerError (Internal server error)
     resource function get pa\-requests/[string requestId]() returns PARequestDetail|http:NotFound|http:InternalServerError {
         PARequestDetail|error detail = getPARequestDetail(requestId);
-        
         if (detail is error) {
             log:printError("Failed to retrieve PA request detail: " + detail.message());
-            
-            // Check if it's a not found error
             if (detail.message().includes("not found") || detail.message().includes("404")) {
                 return http:NOT_FOUND;
             }
-            
             return http:INTERNAL_SERVER_ERROR;
         }
-        
         return detail;
     }
 
@@ -347,18 +304,13 @@ service /v1 on bff_listener {
     # http:InternalServerError (Internal server error)
     resource function post pa\-requests/[string requestId]/adjudication(@http:Payload AdjudicationSubmission payload) returns AdjudicationResponse|http:NotFound|http:InternalServerError {
         AdjudicationResponse|error response = submitPARequestAdjudication(requestId, payload);
-        
         if (response is error) {
             log:printError("Failed to submit adjudication: " + response.message());
-            
-            // Check if it's a not found error
             if (response.message().includes("not found") || response.message().includes("404")) {
                 return http:NOT_FOUND;
             }
-            
             return http:INTERNAL_SERVER_ERROR;
         }
-        
         return response;
     }
 

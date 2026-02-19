@@ -27,6 +27,8 @@ import ballerinax/health.fhir.r4.international401;
 // Prior Authorization Request Utility Functions
 // ============================================
 
+const string CLAIM_RESPONSE = "/ClaimResponse";
+
 # Query PA requests from FHIR Claim and ClaimResponse resources
 #
 # + page - Page number (1-indexed)
@@ -63,7 +65,7 @@ function queryPARequests(
     }
 
     // Get the claim response bundle with outcome=queued to pending for the search criteria
-    string claimResponseSearchPath = string `/ClaimResponse?${outcomeParam}&_count=${pageSize.toString()}&page=${page.toString()}`;
+    string claimResponseSearchPath = string `${CLAIM_RESPONSE}?${outcomeParam}&_count=${pageSize.toString()}&page=${page.toString()}`;
     
     if search is string && search.trim().length() > 0 {
         claimResponseSearchPath += "&patient=" + search; // Search by patient ID in ClaimResponse
@@ -450,7 +452,7 @@ public function getPARequestDetail(string responseId) returns PARequestDetail|er
 # + limited - Whether to fetch a limited set of elements
 # + return - ClaimResponse JSON or null if not found
 function getClaimResponse(string claimResId, boolean limited=true) returns international401:ClaimResponse|error{
-    string claimResponsePath = "/ClaimResponse/" + claimResId;
+    string claimResponsePath = CLAIM_RESPONSE + "/" + claimResId;
     if limited {
         claimResponsePath += "?_elements=outcome,disposition,processNote";
     }
@@ -697,7 +699,7 @@ function getPractitionerInfo(string practitionerId) returns ProviderInformation|
             }
         }
         if given is string && family is string {
-            fullName = "Dr." + given + " " + family;
+            fullName = "Dr. " + given + " " + family;
             initials = (given[0].toUpperAscii() + family[0].toUpperAscii());
         } else if family is string {
             fullName = "Dr." + family;
@@ -1264,7 +1266,7 @@ public function submitPARequestAdjudication(string responseId, AdjudicationSubmi
 
     // 3. Post the updated ClaimResponse back to the FHIR server
     json claimResponseJson = claimResponse.toJson();
-    json|http:ClientError updateResponse = fhirHttpClient->put("/ClaimResponse/" + responseId, claimResponseJson);
+    json|http:ClientError updateResponse = fhirHttpClient->put(CLAIM_RESPONSE + "/" + responseId, claimResponseJson);
     
     if updateResponse is http:ClientError {
         log:printError("Failed to update ClaimResponse: " + updateResponse.message());

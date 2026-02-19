@@ -21,6 +21,8 @@ import ballerina/http;
 // FHIR Questionnaire Utility Functions
 // ============================================
 
+const string QUESTIONNAIRE = "/Questionnaire";
+
 # Query questionnaires from FHIR server with pagination
 #
 # + page - Page number (1-indexed)
@@ -35,7 +37,7 @@ function queryFHIRQuestionnaires(
     QuestionnaireStatus? status
 ) returns [QuestionnaireListItem[], int]|error {
     
-    string searchPath = string `/Questionnaire?_count=${pageSize.toString()}&page=${page.toString()}`;
+    string searchPath = string `${QUESTIONNAIRE}?_count=${pageSize.toString()}&page=${page.toString()}`;
     
     if status is QuestionnaireStatus {
         searchPath += "&status=" + status;
@@ -121,7 +123,7 @@ function parseQuestionnaireListItem(json fhirResource) returns QuestionnaireList
 # + questionnaireId - Unique questionnaire identifier
 # + return - FHIR Questionnaire resource as JSON or error
 function getFHIRQuestionnaireById(string questionnaireId) returns json|error {
-    string path = "/Questionnaire/" + questionnaireId;
+    string path = QUESTIONNAIRE + "/" + questionnaireId;
     json result = check fhirHttpClient->get(path);
     return result;
 }
@@ -131,7 +133,7 @@ function getFHIRQuestionnaireById(string questionnaireId) returns json|error {
 # + questionnaire - FHIR Questionnaire resource as JSON
 # + return - Created questionnaire resource as JSON or error
 function createFHIRQuestionnaire(json questionnaire) returns json|error {
-    http:Response response = check fhirHttpClient->post("/Questionnaire", questionnaire);
+    http:Response response = check fhirHttpClient->post(QUESTIONNAIRE, questionnaire);
     json result = check response.getJsonPayload();
     return result;
 }
@@ -142,7 +144,7 @@ function createFHIRQuestionnaire(json questionnaire) returns json|error {
 # + questionnaire - Updated FHIR Questionnaire resource as JSON
 # + return - Updated questionnaire resource as JSON or error
 function updateFHIRQuestionnaire(string questionnaireId, json questionnaire) returns json|error {
-    string path = "/Questionnaire/" + questionnaireId;
+    string path = QUESTIONNAIRE + "/" + questionnaireId;
     http:Response response = check fhirHttpClient->put(path, questionnaire);
     json result = check response.getJsonPayload();
     return result;
@@ -153,7 +155,7 @@ function updateFHIRQuestionnaire(string questionnaireId, json questionnaire) ret
 # + questionnaireId - Unique questionnaire identifier
 # + return - Error if operation fails, () if successful
 function deleteFHIRQuestionnaire(string questionnaireId) returns error? {
-    string path = "/Questionnaire/" + questionnaireId;
+    string path = QUESTIONNAIRE + "/" + questionnaireId;
     http:Response response = check fhirHttpClient->delete(path);
     // Check if delete was successful (HTTP 204 or 200)
     int statusCode = response.statusCode;

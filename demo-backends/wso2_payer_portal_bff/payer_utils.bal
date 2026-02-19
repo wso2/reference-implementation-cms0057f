@@ -30,7 +30,7 @@ function queryPayers(int page, int pageSize, string? search = ()) returns Payer[
         dataStream = dbClient->query(
             `SELECT id, name, email, state, fhir_server_url, app_client_id, app_client_secret, token_url, scopes, created_at, updated_at 
             FROM payers 
-            WHERE name ILIKE ${searchPattern} OR email ILIKE ${searchPattern} OR state ILIKE ${searchPattern}
+            WHERE name LIKE ${searchPattern} OR email LIKE ${searchPattern} OR state LIKE ${searchPattern}
             ORDER BY created_at DESC LIMIT ${pageSize} OFFSET ${(page - 1) * pageSize}`,
             Payer
         );
@@ -61,7 +61,7 @@ function getTotalPayers(string? search = ()) returns int|error {
         string searchPattern = "%" + search + "%";
         record {| int count; |} result = check dbClient->queryRow(
             `SELECT COUNT(*) AS count FROM payers 
-            WHERE name ILIKE ${searchPattern} OR email ILIKE ${searchPattern} OR state ILIKE ${searchPattern}`
+            WHERE name LIKE ${searchPattern} OR email LIKE ${searchPattern} OR state LIKE ${searchPattern}`
         );
         return result.count;
     } else {

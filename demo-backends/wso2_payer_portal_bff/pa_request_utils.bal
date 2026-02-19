@@ -717,10 +717,10 @@ function getPractitionerInfo(string practitionerId) returns ProviderInformation|
             fullName = "Dr. " + given + " " + family;
             initials = (given[0].toUpperAscii() + family[0].toUpperAscii());
         } else if family is string {
-            fullName = "Dr." + family;
+            fullName = "Dr. " + family;
             initials = family[0].toUpperAscii();
         } else if given is string {
-            fullName = "Dr." + given;
+            fullName = "Dr. " + given;
             initials = given[0].toUpperAscii();
         }
     }

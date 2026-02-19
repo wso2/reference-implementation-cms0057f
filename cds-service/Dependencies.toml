@@ -252,6 +252,9 @@ dependencies = [
 	{org = "ballerina", name = "lang.value"},
 	{org = "ballerina", name = "observe"}
 ]
+modules = [
+	{org = "ballerina", packageName = "log", moduleName = "log"}
+]
 
 [[package]]
 org = "ballerina"
@@ -348,8 +351,10 @@ dependencies = [
 	{org = "ballerina", name = "constraint"},
 	{org = "ballerina", name = "http"},
 	{org = "ballerina", name = "lang.regexp"},
+	{org = "ballerina", name = "log"},
 	{org = "ballerinax", name = "health.fhir.cds"},
-	{org = "ballerinax", name = "health.fhir.r4"}
+	{org = "ballerinax", name = "health.fhir.r4"},
+	{org = "ballerinax", name = "health.fhir.r4.international401"}
 ]
 modules = [
 	{org = "ballerinax", packageName = "cds_service", moduleName = "cds_service"}
@@ -391,7 +396,7 @@ dependencies = [
 [[package]]
 org = "ballerinax"
 name = "health.fhir.cds"
-version = "2.0.1"
+version = "2.0.3"
 dependencies = [
 	{org = "ballerina", name = "constraint"},
 	{org = "ballerina", name = "http"},
@@ -430,17 +435,20 @@ modules = [
 [[package]]
 org = "ballerinax"
 name = "health.fhir.r4.international401"
-version = "3.0.1"
+version = "4.0.1"
 dependencies = [
 	{org = "ballerina", name = "constraint"},
 	{org = "ballerina", name = "log"},
 	{org = "ballerinax", name = "health.fhir.r4"}
 ]
+modules = [
+	{org = "ballerinax", packageName = "health.fhir.r4.international401", moduleName = "health.fhir.r4.international401"}
+]
 
 [[package]]
 org = "ballerinax"
 name = "health.fhir.r4.parser"
-version = "6.1.0"
+version = "7.1.0"
 dependencies = [
 	{org = "ballerina", name = "constraint"},
 	{org = "ballerina", name = "http"},
@@ -454,7 +462,7 @@ dependencies = [
 [[package]]
 org = "ballerinax"
 name = "health.fhir.r4.validator"
-version = "5.1.0"
+version = "6.0.0"
 dependencies = [
 	{org = "ballerina", name = "constraint"},
 	{org = "ballerina", name = "http"},

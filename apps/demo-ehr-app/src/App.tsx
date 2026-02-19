@@ -41,9 +41,10 @@ declare global {
       location: string;
       appointment: string;
       patient: string;
-      bulkExportFetch:string;
-      bulkExportKickoffUrl:string;
-      bulkExportStatusUrl:string;
+      bulkExportFetch: string;
+      bulkExportKickoffUrl: string;
+      bulkExportStatusUrl: string;
+      dtrAppUrl: string;
     };
   }
 }

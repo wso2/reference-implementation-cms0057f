@@ -19,7 +19,6 @@ import { useLocation } from "react-router-dom";
 import LoginPage from "./LoginPage";
 import { LandingPage } from "./LandingPage";
 import { Layout } from "./Layout";
-import { ExportedDataPage } from "./ExportedDataPage";
 
 interface PayersAndFhirServerMappings {
   id: number;
@@ -28,14 +27,11 @@ interface PayersAndFhirServerMappings {
 declare global {
   interface Window {
     Config: {
-      patient: string;
+      fhir: string;
       organizationServiceUrl: string;
-      bulkExportKickoffUrl: string;
-      bulkExportStatusUrl: string;
-      bulkExportFetch: string;
-      memberMatch: string;
       oldPayerCoverageGet: string;
       payersAndFhirServerMappings: [PayersAndFhirServerMappings];
+      pdexExchangeUrl: string;
     };
   }
 }
@@ -48,9 +44,6 @@ export const MainContent = () => {
   }
   if (location.pathname === "/") {
     return <Layout Component={LandingPage} />;
-  }
-  if (location.pathname.includes("/exported-data")) {
-    return <Layout Component={ExportedDataPage} />;
   }
 
   return (

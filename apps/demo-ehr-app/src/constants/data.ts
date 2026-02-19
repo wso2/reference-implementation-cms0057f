@@ -14,6 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
+import { v4 as uuidv4 } from "uuid";
 import { MEDICATION_RESPONSE } from "./localStorageVariables";
 
 export const SERVICE_CARD_DETAILS = [
@@ -1109,6 +1110,7 @@ export const CREATE_MEDICATION_REQUEST_BODY = (
 
   return {
     resourceType: "MedicationRequest",
+    id: uuidv4(),
     subject: {
       reference: `Patient/${patientId}`,
     },

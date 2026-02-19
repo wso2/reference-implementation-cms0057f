@@ -1,34 +1,28 @@
-# [sourceServerConfig]
-# baseUrl = "http://localhost:9090"
-# contextPath = "/fhir/r4"
-
-# Source server configurations (map structure)
-# You can define multiple source servers with different keys
-[sourceServerConfigs.test1]
-authEnabled = false
-baseUrl = "https://bulk-data.smarthealthit.org/eyJlcnIiOiIiLCJwYWdlIjoxMDAwMCwidGx0IjoxNSwibSI6MSwiZGVsIjowLCJzZWN1cmUiOjB9/fhir"
-tokenUrl = "https://auth-server1.example.com/oauth2/token"
-clientId = "bulk-export-client-id-1"
-clientSecret = "bulk-export-client-secret-1"
-scopes = ["system/Patient.read", "system/*.read"]
-fileServerUrl = "https://files-server1.example.com"
-
-[sourceServerConfigs.test2]
-authEnabled = false
-baseUrl = "https://bulk-data.smarthealthit.org/eyJlcnIiOiIiLCJwYWdlIjoxMDAwMCwidGx0IjoxNSwibSI6MSwiZGVsIjowLCJzZWN1cmUiOjB9/fhir"
-tokenUrl = "https://auth-server2.example.com/oauth2/token"
-clientId = "bulk-export-client-id-2"
-clientSecret = "bulk-export-client-secret-2"
-scopes = ["system/Patient.read"]
-
 [clientServiceConfig]
 baseUrl = "http://localhost:8091"
 authEnabled = false
 targetDirectory = "./target"
 defaultIntervalInSec = 3.0
+newPayerNpi = "0123456789"
+newPayerName = "New Health Plan"
 
 [targetServerConfig]
 type = "file"
+
+#[databaseConfig]
+#host = "<host_name>"
+#port = <port>
+#user = "<user_name>"
+#password = "<password>"
+#database = "<database_name>"
+
+[clientFhirServerConfig]
+baseUrl = "http://localhost:9090/fhir/r4"
+authEnabled = false
+# tokenUrl = "https://auth-server.example.com/oauth2/token"
+# clientId = "client-id"
+# clientSecret = "client-secret"
+# scopes = ["system/*.read"]
 
 [ballerina.log]
 level = "DEBUG"

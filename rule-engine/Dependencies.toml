@@ -244,7 +244,7 @@ dependencies = [
 [[package]]
 org = "ballerina"
 name = "observe"
-version = "1.6.0"
+version = "1.5.1"
 dependencies = [
 	{org = "ballerina", name = "jballerina.java"}
 ]
@@ -348,7 +348,7 @@ modules = [
 [[package]]
 org = "ballerinax"
 name = "health.fhir.r4.international401"
-version = "4.0.0"
+version = "4.0.1"
 dependencies = [
 	{org = "ballerina", name = "constraint"},
 	{org = "ballerina", name = "log"},

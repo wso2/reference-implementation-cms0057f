@@ -219,7 +219,7 @@ isolated function connectDecisionSystemForPrescribeMedication(cds:CdsRequest cds
                         coding: [
                             {
                                 system: "http://hl7.org/fhir/uv/sdc/CodeSystem/temp",
-                                code: "complete-questionnaire"
+                                code: "data-request-questionnaire"
                             }
                         ]
                     },
@@ -233,6 +233,12 @@ isolated function connectDecisionSystemForPrescribeMedication(cds:CdsRequest cds
                     input: [
                         {
                             'type: {
+                                coding: [
+                                    {
+                                        system: "http://hl7.org/fhir/uv/sdc/CodeSystem/temp",
+                                        code: "questionnaire"
+                                    }
+                                ],
                                 text: "questionnaire"
                             },
                             valueCanonical: questionnaireUrl

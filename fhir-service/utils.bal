@@ -318,7 +318,7 @@ public isolated function claimSubmit(international401:Parameters payload) return
                             anydata 'resource = bundleEntry?.'resource;
                             davincipas:PASClaim claim = check parser:parse('resource.toJson(), davincipas:PASClaim).ensureType();
 
-                            r4:DomainResource newClaimResource = check create(CLAIM, claim.toJson());
+                            r4:DomainResource newClaimResource = check create(fhirConnector, CLAIM, claim.toJson());
                             davincipas:PASClaim newClaim = check newClaimResource.cloneWithType();
 
                             davincipas:PASClaimResponse claimResponse = check parser:parse(claimResponseJson, davincipas:PASClaimResponse).ensureType();
@@ -328,7 +328,7 @@ public isolated function claimSubmit(international401:Parameters payload) return
                             claimResponse.created = newClaim.created;
                             claimResponse.request = {reference: "Claim/" + <string>newClaim.id};
 
-                            r4:DomainResource newClaimResponseResource = check create(CLAIM_RESPONSE, claimResponse.toJson());
+                            r4:DomainResource newClaimResponseResource = check create(fhirConnector, CLAIM_RESPONSE, claimResponse.toJson());
                             davincipas:PASClaimResponse newClaimResponse = check newClaimResponseResource.cloneWithType();
 
                             international401:ParametersParameter p = {

@@ -3,11 +3,16 @@
 exportServiceUrl = "http://localhost:8090/bulk/export"
 
 ## Initial sample data is dynamically retrieved from this GitHub repository.
-sampleDataGithubUrl = "https://raw.githubusercontent.com/wso2/reference-implementation-cms0057f/refs/heads/main/fhir-service/resources/data.json"
+sampleDataGithubUrl = "http://localhost:9091/data"
+
+baseUrl = "http://localhost:9090/fhir/r4"
+
+[ballerina.http]
+defaultListenerPort = 8080
 
 ## Following configurations are used to build the capability statement and smart configuration.
 [configs]
-discoveryEndpoint = "<discoveryEndpoint>"
+discoveryEndpoint = "https://api.asgardeo.io/t/wso2healthcare/oauth2/token/.well-known/openid-configuration"
 [configs.smartConfiguration]
 issuer = "<issuer>"
 jwksUri = "<jwksUri>"

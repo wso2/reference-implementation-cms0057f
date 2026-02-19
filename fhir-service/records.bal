@@ -14,8 +14,34 @@
 // specific language governing permissions and limitations
 // under the License.
 
+import ballerina/time;
 import ballerinax/health.fhir.r4;
 import ballerinax/health.fhir.r4.international401;
+
+// ============================================================================
+// Re-exported FHIR Base Types from r4
+// ============================================================================
+
+# FHIR Meta type
+public type Meta r4:Meta;
+
+# FHIR Reference type
+public type Reference r4:Reference;
+
+# FHIR Identifier type
+public type Identifier r4:Identifier;
+
+# FHIR CodeableConcept type
+public type CodeableConcept r4:CodeableConcept;
+
+# FHIR Coding type
+public type Coding r4:Coding;
+
+# FHIR Extension type
+public type Extension r4:Extension;
+
+# FHIR Period type
+public type Period r4:Period;
 
 public enum ResourceType {
     ALLERGY_INTOLERENCE = "AllergyIntolerance",
@@ -333,4 +359,153 @@ type ConsentEvaluationResponse record {
     boolean success;
     international401:Parameters? parameters = ();
     r4:OperationOutcome? operationOutcome = ();
+};
+
+// ============================================================================
+// Internal Database Models (non-FHIR)
+// ============================================================================
+
+# Internal record for storing claim data
+#
+# + claim_id - Claim ID  
+# + claimresponse_id - ClaimResponse ID  
+# + organization_id - Organization ID  
+# + patient_member_id - Patient Member ID  
+# + status - Status  
+# + payload - Payload  
+# + created_at - Created At  
+# + updated_at - Updated At
+public type ClaimRecord record {|
+    string claim_id;
+    string claimresponse_id;
+    string organization_id;
+    string patient_member_id;
+    string status;
+    json payload;
+    time:Utc created_at;
+    time:Utc updated_at;
+|};
+
+# Internal record for storing subscription data
+#
+# + id - Subscription ID  
+# + organization_id - Organization ID  
+# + status - Status  
+# + endpoint - Endpoint  
+# + auth_header - Auth Header  
+# + payload_type - Payload Type  
+# + created_at - Created At  
+# + end_datetime - End Datetime  
+# + failure_count - Failure Count
+public type SubscriptionRecord record {|
+    string id;
+    string organization_id;
+    string status;
+    string endpoint;
+    string? auth_header;
+    string payload_type;
+    time:Utc created_at;
+    time:Utc? end_datetime;
+    int failure_count;
+|};
+
+# Notification event for internal processing
+#
+# + subscriptionId - Subscription ID  
+# + claimResponseId - ClaimResponse ID  
+# + organizationId - Organization ID  
+# + eventType - Event Type  
+# + timestamp - Timestamp  
+# + payload - Payload
+public type NotificationEvent record {|
+    string subscriptionId;
+    string claimResponseId;
+    string organizationId;
+    string eventType; // handshake | event-notification | heartbeat
+    time:Utc timestamp;
+    json? payload;
+|};
+
+// ============================================================================
+// Notification Bundle Types (R4 Backport specific)
+// ============================================================================
+
+# Notification Bundle for FHIR R4 Subscription Backport
+#
+# + resourceType - Resource Type  
+# + id - ID  
+# + meta - Meta  
+# + type - Type  
+# + timestamp - Timestamp  
+# + entry - Entry
+public type NotificationBundle record {
+    string resourceType = "Bundle";
+    string id?;
+    r4:Meta meta?;
+    string 'type; // history
+    string timestamp;
+    NotificationBundleEntry[] entry;
+};
+
+# Bundle entry for notification
+#
+# + fullUrl - Full URL  
+# + resource - Resource  
+# + request - Request  
+# + response - Response
+public type NotificationBundleEntry record {
+    string fullUrl?;
+    json? 'resource?;
+    BundleRequest? request?;
+    BundleResponse? response?;
+};
+
+# Bundle request element
+#
+# + method - Method  
+# + url - URL
+public type BundleRequest record {
+    string method;
+    string url;
+};
+
+# Bundle response element
+#
+# + status - Status  
+# + location - Location
+public type BundleResponse record {
+    string status;
+    string location?;
+};
+
+# SubscriptionStatus as Parameters (R4 Backport)
+#
+# + resourceType - Resource Type  
+# + id - ID  
+# + meta - Meta  
+# + parameter - Parameter
+public type SubscriptionStatusParameters record {
+    string resourceType = "Parameters";
+    string id?;
+    r4:Meta meta?;
+    SubscriptionStatusParameter[] 'parameter;
+};
+
+# Parameter entry for SubscriptionStatus
+#
+# + name - Name  
+# + valueString - Value String  
+# + valueCode - Value Code  
+# + valueInstant - Value Instant  
+# + valueReference - Value Reference  
+# + valueCanonical - Value Canonical  
+# + part - Part
+public type SubscriptionStatusParameter record {
+    string name;
+    string? valueString?;
+    string? valueCode?;
+    string? valueInstant?;
+    r4:Reference? valueReference?;
+    string? valueCanonical?;
+    SubscriptionStatusParameter[]? part?;
 };

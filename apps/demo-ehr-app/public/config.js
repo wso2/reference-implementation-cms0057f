@@ -19,6 +19,7 @@ window.Config = {
     "https://c32618cf-389d-44f1-93ee-b67a3468aae3-dev.e1-us-east-azure.choreoapis.dev/cms-0057f---unitedhealth/fhir-service/v1.0",
   demoBaseUrl: "https://unitedcare.com",
   demoHospitalUrl: "https://grace-hospital.com",
+  dtrAppUrl: "http://localhost:9000/launch-dtr",
 
   medication_request:
     "/choreo-apis/cms-0057f---unitedhealth/fhir-service/v1/fhir/r4/MedicationRequest",

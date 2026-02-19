@@ -16,13 +16,13 @@
 
 schemaVersion: 1.2
 endpoints:
-    - name: cds-service
-      displayName: CDS Service
-      service:
-        basePath: /
-        port: 9090
-      type: REST
-      networkVisibilities:
-        - Project
-        - Public
-      schemaFilePath: oas/cds.yaml
+  - name: cds-service
+    displayName: CDS Service
+    service:
+      basePath: /
+      port: 9092
+    type: REST
+    networkVisibilities:
+      - Project
+      - Public
+    schemaFilePath: oas/cds.yaml

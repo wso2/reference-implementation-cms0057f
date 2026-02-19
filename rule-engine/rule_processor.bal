@@ -198,7 +198,7 @@ isolated function prepareTheLinks(string hookId) returns PriorAuthLink[]? {
 
     if hook_id_questionnaire_id_map.hasKey(hookId) {
         string questionnaireResourceId = hook_id_questionnaire_id_map.get(hookId);
-        string questionnaireResourceUrl = string `https://${fhir_server_url}/Questionnaire/${questionnaireResourceId}`;
+        string questionnaireResourceUrl = string `${fhir_server_url}/Questionnaire/${questionnaireResourceId}`;
 
         return [
             {

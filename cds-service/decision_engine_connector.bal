@@ -117,8 +117,6 @@ isolated function connectFeedbackSystemForCrdMriSpineOrderSign(cds:Feedbacks fee
 }
 
 configurable string payer_organization_id = ?;
-configurable string fhir_server_url = ?;
-isolated http:Client fhirClient = check new (fhir_server_url);
 
 # Handle decision service connectivity.
 #
@@ -135,7 +133,11 @@ isolated function connectDecisionSystemForPrescribeMedication(cds:CdsRequest cds
         patientId = <string>context["patientId"];
     }
 
-    string medicationRequestId = "111112";
+    if patientId == "" {
+        return cds:createCdsError("patientId missing from CDS Hook context", 400);
+    }
+
+    string medicationRequestId = "";
 
     // Query FHIR server for Coverage
 

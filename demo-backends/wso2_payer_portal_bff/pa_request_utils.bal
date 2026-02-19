@@ -17,6 +17,7 @@
 import ballerina/log;
 import ballerina/http;
 import ballerina/time;
+import ballerina/url;
 import ballerinax/health.fhir.r4;
 import ballerinax/health.fhir.r4.ips;
 import ballerinax/health.fhir.r4.parser;
@@ -64,12 +65,26 @@ function queryPARequests(
         }
     }
 
-    // Get the claim response bundle with outcome=queued to pending for the search criteria
-    string claimResponseSearchPath = string `${CLAIM_RESPONSE}?${outcomeParam}&_count=${pageSize.toString()}&page=${page.toString()}`;
+    // Build query parameters list to avoid malformed URLs
+    string[] queryParams = [];
     
-    if search is string && search.trim().length() > 0 {
-        claimResponseSearchPath += "&patient=" + search; // Search by patient ID in ClaimResponse
+    // Add outcome parameter if present
+    if outcomeParam.length() > 0 {
+        queryParams.push(outcomeParam);
     }
+    
+    // Add pagination parameters
+    queryParams.push(string `_count=${pageSize.toString()}`);
+    queryParams.push(string `page=${page.toString()}`);
+    
+    // Add patient search parameter if present (URL-encoded)
+    if search is string && search.trim().length() > 0 {
+        string encodedSearch = check url:encode(search, "UTF-8");
+        queryParams.push(string `patient=${encodedSearch}`);
+    }
+    
+    // Construct the final URL with properly formatted query string
+    string claimResponseSearchPath = CLAIM_RESPONSE + "?" + string:'join("&", ...queryParams);
 
     r4:Bundle claimResponseBundle = check fhirHttpClient->get(claimResponseSearchPath);
 
@@ -680,7 +695,7 @@ function getPractitionerInfo(string practitionerId) returns ProviderInformation|
     json practitionerRoleRes = check fhirHttpClient->get("/PractitionerRole/" + practitionerId);
     davincipas:PASPractitionerRole practitionerRole = <davincipas:PASPractitionerRole> check parser:parse(practitionerRoleRes);
 
-    json practitionerRes = check fhirHttpClient->get(<string>practitionerRole.practitioner.reference);
+    json practitionerRes = check fhirHttpClient->get("/" + <string>practitionerRole.practitioner.reference);
     davincipas:PASPractitioner practitioner = <davincipas:PASPractitioner> check parser:parse(practitionerRes);
 
     string fullName = "Unknown Practitioner";
@@ -873,7 +888,7 @@ function extractSupportingInformation(davincipas:PASClaimSupportingInfo[]? suppo
     json[] attachments = [];
     
     if supportingInfo is () {
-        return [admissionDate, dischargeDate, (), ()];
+        return [admissionDate, dischargeDate, (), (), ()];
     }
     
     foreach davincipas:PASClaimSupportingInfo info in supportingInfo {

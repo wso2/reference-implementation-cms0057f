@@ -3,7 +3,7 @@
 enabled = false
 fhirServerContext = "/fhir/r4/" # must have the trailing slash
 jwtAttributes = ["client_id", "iss"]
-shouldPublishPayloads = true
+shouldPublishPayloads = false
 filePath = "logs" # Default value is "logs". The path is relative to the server path.
 fileName = "fhir-analytics" # must not contain the file extension
 allowedApiContexts = []

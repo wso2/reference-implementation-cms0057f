@@ -17,6 +17,7 @@
 import ballerina/http;
 import ballerinax/health.fhir.cds;
 import ballerinax/health.fhir.r4;
+import ballerinax/health.fhir.r4.international401;
 
 # ====================================== Please do your implementations to the below methods ===========================
 #
@@ -115,7 +116,7 @@ isolated function connectFeedbackSystemForCrdMriSpineOrderSign(cds:Feedbacks fee
     return cds:createCdsError(string `Rule repository backend not implemented/ connected yet for ${hookId}`, 501);
 }
 
-configurable string ehr_dtr_app_link = ?;
+configurable string payer_organization_id = ?;
 configurable string fhir_server_url = ?;
 isolated http:Client fhirClient = check new (fhir_server_url);
 
@@ -134,41 +135,9 @@ isolated function connectDecisionSystemForPrescribeMedication(cds:CdsRequest cds
         patientId = <string>context["patientId"];
     }
 
-    string coverageId = "";
     string medicationRequestId = "111112";
 
     // Query FHIR server for Coverage
-    lock {
-        if patientId != "" {
-            string searchPath = string `/Coverage?patient=${patientId}&status=active`;
-            http:Response|http:ClientError response = fhirClient->get(searchPath);
-
-            if response is http:Response {
-                if response.statusCode == 200 {
-                    json|error payload = response.getJsonPayload();
-                    if payload is json {
-                        r4:Bundle|error bundle = payload.cloneWithType(r4:Bundle);
-                        if bundle is r4:Bundle {
-                            r4:BundleEntry[]? entries = bundle.entry;
-                            if entries is r4:BundleEntry[] {
-                                if entries.length() > 0 {
-                                    r4:BundleEntry firstEntry = entries[0];
-                                    anydata entryResource = firstEntry?.'resource;
-                                    r4:DomainResource|error domainResource = entryResource.cloneWithType(r4:DomainResource);
-                                    if domainResource is r4:DomainResource {
-                                        string? id = domainResource.id;
-                                        if id is string {
-                                            coverageId = id;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
 
     // Logic from previous commit for medicationRequestId extraction
     r4:Bundle? draftOrders = context?.draftOrders;
@@ -235,16 +204,64 @@ isolated function connectDecisionSystemForPrescribeMedication(cds:CdsRequest cds
                 'source: {label: "WSO2 Healthcare Rule Engine"}
             };
 
-            // Add the DTR link
-            cds:Link dtrLink = {
-                label: "Launch SMART App for DTR",
-                url: string `${ehr_dtr_app_link}?coverageId=${coverageId}&medicationRequestId=${medicationRequestId}&patientId=${patientId}`,
-                'type: "smart"
-            };
+            // Add the Task resource for DTR
+            string? questionnaireUrl = priorAuthDecision.questionnaireUrl;
+            if questionnaireUrl is string {
+                international401:Task task = {
+                    meta: {
+                        profile: ["http://hl7.org/fhir/us/davinci-crd/StructureDefinition/profile-taskquestionnaire"]
+                    },
+                    status: "requested",
+                    intent: "order",
+                    code: {
+                        coding: [
+                            {
+                                system: "http://hl7.org/fhir/uv/sdc/CodeSystem/temp",
+                                code: "complete-questionnaire"
+                            }
+                        ]
+                    },
+                    description: "Complete Prior Auth form",
+                    for: {
+                        reference: string `Patient/${patientId}`
+                    },
+                    requester: {
+                        reference: string `Organization/${payer_organization_id}`
+                    },
+                    input: [
+                        {
+                            'type: {
+                                text: "questionnaire"
+                            },
+                            valueCanonical: questionnaireUrl
+                        }
+                    ]
+                };
 
-            cds:Link[] links = card.links ?: [];
-            links.push(dtrLink);
-            card.links = links;
+                if medicationRequestId != "" {
+                    task.basedOn = [
+                        {
+                            reference: string `MedicationRequest/${medicationRequestId}`
+                        }
+                    ];
+                }
+
+                cds:Suggestion suggestion = {
+                    label: "Complete Prior Auth Questionnaire",
+                    uuid: "submit-epa-task",
+                    actions: [
+                        {
+                            'type: "create",
+                            description: "Add 'Complete Prior Auth form' to the task list",
+                            'resource: task
+                        }
+                    ]
+                };
+
+                cds:Suggestion[] suggestions = card.suggestions ?: [];
+                suggestions.push(suggestion);
+                card.suggestions = suggestions;
+            }
 
             res.cards.push(card);
         }
@@ -311,6 +328,7 @@ public type PriorAuthDecision record {|
 
     // Links to payer resources (coverage policy, docs checklist, DTR launch, PA portal, etc.)
     PriorAuthLink[] links?;
+    string questionnaireUrl?;
 |};
 
 public type PriorAuthLink record {|

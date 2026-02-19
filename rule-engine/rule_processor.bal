@@ -38,6 +38,7 @@ public type PriorAuthDecision record {|
 
     // Links to payer resources (coverage policy, docs checklist, DTR launch, PA portal, etc.)
     PriorAuthLink[] links?;
+    string questionnaireUrl?;
 |};
 
 public type PriorAuthLink record {|
@@ -188,7 +189,8 @@ public isolated function decidePrescriptionPriorAuth(r4:Bundle bundle) returns P
         summary: "Prior Authorization Required",
         reasons: ["This medication (Aimovig) requires prior authorization from UnitedCare Health Insurance. Please complete the required documentation."],
         medicalNecessity: "INSUFFICIENT_DATA", // Not evaluating medical necessity for meds in this demo
-        missingDocumentation: []
+        missingDocumentation: [],
+        questionnaireUrl: "https://fhir.payer.com/Questionnaire/aimovig-pa-questionnaire|1.0"
     };
 }
 

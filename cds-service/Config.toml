@@ -4,7 +4,7 @@
 
 rule_engine_url = "http://localhost:9093"
 fhir_server_url = "http://localhost:9090/fhir/r4"
-ehr_dtr_app_link = "http://localhost:9000/launch-dtr"
+payer_organization_id = "UnitedCare123"
 
 [ballerinax.health.fhir.r4.parser]
 validateAgainstProfile=false

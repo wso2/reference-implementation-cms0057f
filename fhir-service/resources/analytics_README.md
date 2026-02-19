@@ -1,79 +1,82 @@
-# Patient Access API Metrics for CMS with Opensearch + Opensearch Dashboards
+# CMS FHIR API Analytics
 
-CMS requires Patient Access API Metrics to be published to CMS annually. This requirement can be achieved using the `AnalyticsResponseInterceptor` which comes inbuilt in the `health.fhirr4` service. Refer `module-ballerinax-health.fhir.r4/fhirr4/ballerina/src/main/resources/fhirservice/resources/analytics_README.md` to learn more.
+CMS requires Patient Access API Metrics to be published to CMS annually. This requirement can be achieved using the `AnalyticsResponseInterceptor`, which comes inbuilt in the `health.fhirr4` service.
 
 ## Overview
 
-Inside the Patient Access API module which imports `ballerinax.health.fhirr4`, we need to have a `Config.toml` at the same level as `Ballerina.toml` including the necessary configs. A sample Config.toml can be found in `analytics_sample_config.toml`.
+This implementation contains a response interceptor that intercepts CMS FHIR requests and persists data to a configurable log file. As a sidecar, [Fluent Bit](https://fluentbit.io/) will listen to this log file where the analytics data is persisted. Fluent Bit then publishes the analytics data to different analytics solutions like Moesif and Microsoft Fabric.
 
-### x-jwt-assertion Header :
+The solution currently supports publishing CMS API data to two analytics solutions.
 
-The data which is published for analytics are taken from the `x-jwt-assertion` header coming in the http request. Only the attributes in the `ballerinax.health.fhirr4.analytics.attributes` list are published.
+1.  [Moesif](https://www.moesif.com/)
+2.  [Microsoft Fabric](https://app.fabric.microsoft.com/)
 
-Usually this header should be generated at gateway level using the attributes in the `access_token` in the request, and pass to the backend.
+This analytics solution can be extended to other analytics platforms by writing a platform-specific Fluent Bit configuration.
 
-### Analytics Server Endpoint :
+## x-jwt-assertion header
 
-Opensearch endpoint (`ballerinax.health.fhirr4.analytics.url`) to publish logs in the following format:
-```
-<opensearch_hostname>/<index>/_doc
-```
-Here the index should a value which can categorize the incoming logs. In this case we can use something like `patient_access`
+This solution expects the API calls to have a header named ```x-jwt-assertion``` with the required data that the user needs to be sent to analytics. If this header is not present, the data will not be written to the file and will not be published to the configured analytics platform.
 
-### More Info Endpoint:
+-   **Important**: to determine the FHIR user, you should include a claim named ```fhirUser``` in the ```x-jwt-assertion header```. Otherwise, the user details are not reflected in the generated dashboards. You do not need to add the key ```fhirUser``` into the ```jwtAttributes``` configuration below in this case. The implementation detects the user when it is available in the header.
+    
+## Configurations
+The following configuration model is used in this analytics solution. The default configuration is provided below. By default it is disabled.
 
-There can be information related to patient like contract, plan etc. which are not available for the FHIR R4 server. Payer can expose these info using a POST resource endpoint which accepts a json with `ballerinax.health.fhirr4.analytics.atributes` as keys, and returns more info as a json with key:value pairs like below.
-
-```
-{
-    "contract": "Contract/24351",
-    "plan": "Premium"
-}
-```
-
-Check `more_info_api.yaml` in `module-ballerinax-health.fhir.r4/fhirr4/ballerina/src/main/resources/fhirservice/resources/` for a sample open-api swagger.
-
-## Step 1: Setting up  Analytics Server: Opensearch & Opensearch Dashboard
-
-A sample docker-compose file to deploy a two node Opensearch cluster along with Opensearch Dashboard is available in `analytics_opensearch_docker_compose.yml`.
-
-Need to provide `OPENSEARCH_INITIAL_ADMIN_PASSWORD` as an environment variable. Create a `.env` file containing the password as follows in the same path where `docker-compose.yml` exists.
-
-```
-OPENSEARCH_INITIAL_ADMIN_PASSWORD=Strong@pass@432
+ ```
+[ballerinax.health.fhirr4.analytics]
+enabled = false
+fhirServerContext = "/fhir/r4/"
+jwtAttributes = ["client_id", "iss"]
+shouldPublishPayloads = false
+filePath = "logs"
+fileName = "fhir-analytics"
+allowedApiContexts = []
+excludedApiContexts = []
 ```
 
-Run `docker-compose up` where the docker-compose.yml is, to download and run the OS & OSD instances.
+* **Configuration Descriptions**:
+> - enabled: 
+	 - enable or disable analytics. Disable by default.
+> - fhirServerContext:
+	- this is the context path of the FHIR server (mandatory). **Must match the server path and must end with the trailing slash**.
+> - jwtAttributes: 
+	- a comma-separated list of strings of the attributes that are contained in the x-jwt-assertion header that should be considered for data writing. If no values are required, the list should remain empty. The values should exactly match the claims present in the x-jwt-assertion header. Only the specified values are considered for analytics. In the above example, the ```client_id``` and ```iss``` is expected to be present in the ```x-jwt-assersion``` header.
+> - shouldPublishPayloads: 
+	- determines whether the request payloads (request/response) should be written to the log file. Disabled by default.
+> - filePath:
+	- path where the log file should be created. This is relative to the server location. A nested path can also be configured if required (eg: foo/bar). If the directories are not created during the server startup, they will be automatically created. If ```filePath``` is not configured, a default directory named ```logs``` will be created.
+> - fileName:
+	- name of the log file that is created. If the file doesn’t exist in the configured path, the file will be automatically created during the server startup. If ```fileName``` is not configured, a default log file named ```fhir-analytics``` will be created inside the default ```filePath```.
+> - allowedApiContexts:
+	- a list of comma-separated regexes. If it requires allowing only a set of defined APIs through the interceptor, they should be configured in this list as comma-separated strings. These can be valid regexes.
+> - excludedApiContexts: 
+	- a list of comma-separated regexes. If it requires to not to allow only a set of defined APIs through the interceptor, they should be configured in this list as comma-separated strings. These can be valid regexes. If both lists are configured, the priority will be given to the excluded list, and the allowed list will be ignored.
 
-- Default port for Opensearch: 9200
-- Default port for Opensearch Dashboard: 5601
+## Enrich Analytics Payload Endpoint
 
-A sample Opensearch Dashboard to capture the required metrics as per the spec, can be found in `analytics_opensearch_dashboard.ndjson` which can be imported to Opensearch Dashboards as follows.
+This endpoint is provided for the user to optionally add any additional data to the analytics payload from a separate backend. The configuration below is used to define the URL of this backend server and the security credentials for basic authentication. Note that this payload enrichment only applies when the ```shouldPublishPayload``` configuration is set to true.
+```
+[ballerinax.health.fhirr4.analytics.enrichPayload]
+enabled = true
+url = "http://<HOST>:<PORT>/enrich-analytics-payload"
+username = ""
+password = ""
+```
 
-> Note: The index is set to `patient_access` in the .ndjson file. Change it if you are publishing logs under a different index (Change `analyticsServerUrl in Config.toml properly).
+* **Configuration Descriptions**:
+> - enabled:
+	- payload data enrichment will only work if this is set to true and the ```shouldPublishPayloads``` configuration is enabled.
+> - url: 
+	- the URL of the external server
+> - username:
+	- username for the basic authentication of the server
+> - password:
+	- password for the basic authentication of the server
+    
+Check ```enrich_analytics_payload_api.yaml``` in ```module-ballerinax-health.fhir.r4/fhirr4/ballerina/src/main/resources/fhirservice/resources``` for a sample open-api swagger.
 
-> When the `analytics_opensearch_dashboard.ndjson` is imported, the relevant index pattern is created along with the fields, provided in the .ndjson. Therefore make sure to have all the fields in here, since any new fields published in the log json may not be visible. (You can manually add new fields in Opensearch Dashboards if needed later.)
+## Publishing CMS Analytics Data to Moesif
+Refer to [Publish CMS Analytics to Moesif](../resources/analytics/moesif/moesif_README.md)
 
-Visit `<open_search_dashboard_host>/app/home#/` > Manage > Saved Objects > Import
-
-The created dashboard should be available in the Dashboards section now. The main spec required metrics: `Unique number of users` and `Users with more than 1 request` are available in the dashboard, and can be filtered with a given date range.
-
-## Step 2: Run the patient-access-api service
-
-After the `Config.toml` is configured properly and the dashboard is imported, you can run the service with `bal run` and after startup you can send a request to a Patient Access API and check the dashboard for visualization.
-
-> Note: If a request is sent before importing a dashboard (with the required fields in the `.ndjson`), Opensearch index fields will be created acording to the attributes sent in the first log. Any new field attributes sent in later logs, will not be shown in the dashboard, unless set manually.
-
-## Step 3: (optional) Retrieve analytics with Opensearch APIs
-
-Without using the Opensearch dashboards, you can retrieve the analytics data by directly calling APIs in Opensearch. Check `analytics_opensearch.postman_collection.json` for a sample postman collection to retrieve Patient Access API metrics.
-
-# Try out with WSO2 Asgardeo & Choreo
-
-In Asgardeo application, you should add the required attributes of the user to be included in the `access_token`.
-> Go inside the application > `Protocol` > `Access Token` > Set Token type to `JWT` > Add required user attributes in `Access Token Attributes`
-
-In Choreo while deploying Patient Access API ballerina project, add the analytics configurations accordingly in the `Configure & Deploy` UI, and set `Pass end-user attributes to upstream` feature to `Enabled`, in order to generate the `x-jwt-assertion` header and pass it to the deployed FHIR server backend.
-
-# Sample Opensearch Dashboard for Patient Access API Metrics
-![Sample Dashboard](analytics_sample_opensearch_dashboard.png)
+## Publishing CMS Analytics Data to Microsoft Fabric
+Refer to [Publish CMS Analytics to Microsoft Fabric](../resources/analytics/fabric/fabric_README.md)

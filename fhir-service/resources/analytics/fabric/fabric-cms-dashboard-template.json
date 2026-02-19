@@ -1,0 +1,225 @@
+{
+  "$schema": "https://pbiadx.powerbi.com/static/d/schema/68/dashboard.json",
+  "id": "0cc51e32-ece9-4c4b-8273-914fe1066eb5",
+  "eTag": "\"3bbdd086a0414c3e96922f0f60dad245\"",
+  "title": "CMS_Dashboard",
+  "schema_version": 68,
+  "autoRefresh": {
+    "enabled": true,
+    "defaultInterval": "10s",
+    "minInterval": "10s"
+  },
+  "tiles": [
+    {
+      "id": "c2c9a224-463d-4c34-82b1-da3fb7f51a4c",
+      "title": "Total Requests Count",
+      "visualType": "card",
+      "pageId": "856e0c26-68dc-4631-953d-88a76b07da8e",
+      "layout": {
+        "x": 0,
+        "y": 0,
+        "width": 5,
+        "height": 5
+      },
+      "queryRef": {
+        "kind": "query",
+        "queryId": "7718a47c-49dd-4676-9289-946708b2ccfb"
+      },
+      "visualOptions": {
+        "multiStat__textSize": "auto",
+        "multiStat__valueColumn": null,
+        "colorRulesDisabled": true,
+        "colorRules": []
+      }
+    },
+    {
+      "id": "44e6daaa-273a-430e-b20d-036d2bd548c1",
+      "title": "Invocation Count by User",
+      "visualType": "table",
+      "pageId": "856e0c26-68dc-4631-953d-88a76b07da8e",
+      "layout": {
+        "x": 11,
+        "y": 0,
+        "width": 13,
+        "height": 5
+      },
+      "queryRef": {
+        "kind": "query",
+        "queryId": "98ed469b-c18e-4509-b0fe-f42fb3dc2edb"
+      },
+      "visualOptions": {
+        "table__enableRenderLinks": true,
+        "colorRulesDisabled": true,
+        "crossFilterDisabled": false,
+        "drillthroughDisabled": false,
+        "crossFilter": [],
+        "drillthrough": [],
+        "table__renderLinks": [],
+        "colorRules": []
+      }
+    },
+    {
+      "id": "66657eb1-d855-4aa2-b836-f2621823e887",
+      "title": "Distinct Patient Count",
+      "visualType": "card",
+      "pageId": "856e0c26-68dc-4631-953d-88a76b07da8e",
+      "layout": {
+        "x": 5,
+        "y": 0,
+        "width": 6,
+        "height": 5
+      },
+      "queryRef": {
+        "kind": "query",
+        "queryId": "4874da80-5fe8-48f6-8356-695ded69fdca"
+      },
+      "visualOptions": {
+        "multiStat__textSize": "auto",
+        "multiStat__valueColumn": null,
+        "colorRulesDisabled": false,
+        "colorRules": []
+      }
+    },
+    {
+      "id": "e1af198b-985c-48db-a812-faf826306873",
+      "title": "New tile",
+      "visualType": "card",
+      "pageId": "856e0c26-68dc-4631-953d-88a76b07da8e",
+      "layout": {
+        "x": 0,
+        "y": 5,
+        "width": 5,
+        "height": 6
+      },
+      "queryRef": {
+        "kind": "query",
+        "queryId": "f016cb63-70a9-46c3-a393-73d556335fa7"
+      },
+      "hideTitle": true,
+      "visualOptions": {
+        "multiStat__textSize": "auto",
+        "multiStat__valueColumn": null,
+        "colorRulesDisabled": true,
+        "colorRules": []
+      }
+    },
+    {
+      "id": "63e91580-cffa-46c3-a53f-340dc4243bf1",
+      "title": "Recent Logs",
+      "visualType": "table",
+      "pageId": "856e0c26-68dc-4631-953d-88a76b07da8e",
+      "layout": {
+        "x": 5,
+        "y": 5,
+        "width": 19,
+        "height": 6
+      },
+      "queryRef": {
+        "kind": "query",
+        "queryId": "15f793a9-001d-4cdf-b6c3-0c489b25bca8"
+      },
+      "visualOptions": {
+        "table__enableRenderLinks": true,
+        "colorRulesDisabled": true,
+        "crossFilterDisabled": false,
+        "drillthroughDisabled": false,
+        "crossFilter": [],
+        "drillthrough": [],
+        "table__renderLinks": [],
+        "colorRules": []
+      }
+    }
+  ],
+  "baseQueries": [],
+  "parameters": [
+    {
+      "kind": "duration",
+      "id": "3be8345a-33e6-44e7-b9ff-796eb2ffe711",
+      "displayName": "Time range",
+      "description": "",
+      "beginVariableName": "_startTime",
+      "endVariableName": "_endTime",
+      "defaultValue": {
+        "kind": "dynamic",
+        "count": 1,
+        "unit": "hours"
+      },
+      "showOnPages": {
+        "kind": "all"
+      }
+    }
+  ],
+  "dataSources": [
+    {
+      "kind": "kusto-trident",
+      "id": "71056816-a464-41e0-a7c1-6b675b27b80e",
+      "name": "CMS",
+      "clusterUri": "https://trd-dyzateytrb51eyek7p.z2.kusto.fabric.microsoft.com",
+      "database": "1d03278e-1e77-43ee-b1a3-7cca925fb4c8",
+      "workspace": "eb0b9506-027f-4de2-b0e0-7911c96908f4",
+      "scopeId": "kusto-trident"
+    },
+    {
+      "kind": "kusto-trident",
+      "id": "02b5373a-adc9-4860-adfe-f891b8900db6",
+      "name": "CMS-dashboard",
+      "clusterUri": "https://trd-dyzateytrb51eyek7p.z2.kusto.fabric.microsoft.com",
+      "database": "1d03278e-1e77-43ee-b1a3-7cca925fb4c8",
+      "workspace": "eb0b9506-027f-4de2-b0e0-7911c96908f4",
+      "scopeId": "kusto-trident"
+    }
+  ],
+  "pages": [
+    {
+      "name": "Page 1",
+      "id": "856e0c26-68dc-4631-953d-88a76b07da8e"
+    }
+  ],
+  "queries": [
+    {
+      "dataSource": {
+        "kind": "inline",
+        "dataSourceId": "71056816-a464-41e0-a7c1-6b675b27b80e"
+      },
+      "text": "// Please enter your KQL query (Example):\nCMSDataTest\n| count\n",
+      "id": "7718a47c-49dd-4676-9289-946708b2ccfb",
+      "usedVariables": []
+    },
+    {
+      "dataSource": {
+        "kind": "inline",
+        "dataSourceId": "71056816-a464-41e0-a7c1-6b675b27b80e"
+      },
+      "text": "// Please enter your KQL query (Example):\nCMSDataTest\n| where isnotnull( user_id) and isnotempty( user_id)\n| summarize RowCount = count() by user_id\n",
+      "id": "98ed469b-c18e-4509-b0fe-f42fb3dc2edb",
+      "usedVariables": []
+    },
+    {
+      "dataSource": {
+        "kind": "inline",
+        "dataSourceId": "71056816-a464-41e0-a7c1-6b675b27b80e"
+      },
+      "text": "CMSDataTest\n| where isnotnull(user_id)\n| summarize DistinctUserCount = dcount(user_id)",
+      "id": "4874da80-5fe8-48f6-8356-695ded69fdca",
+      "usedVariables": []
+    },
+    {
+      "dataSource": {
+        "kind": "inline",
+        "dataSourceId": "71056816-a464-41e0-a7c1-6b675b27b80e"
+      },
+      "text": "// Please enter your KQL query (Example):\nCMSDataTest\n| where isnotnull( user_id) and isnotempty( user_id)\n| summarize RowCount = count() by user_id\n| where RowCount > 1\n| count",
+      "id": "f016cb63-70a9-46c3-a393-73d556335fa7",
+      "usedVariables": []
+    },
+    {
+      "dataSource": {
+        "kind": "inline",
+        "dataSourceId": "71056816-a464-41e0-a7c1-6b675b27b80e"
+      },
+      "text": "// Please enter your KQL query (Example):\nCMSDataTest\n| where isnotnull( request_uri ) and isnotempty( request_uri )\n",
+      "id": "15f793a9-001d-4cdf-b6c3-0c489b25bca8",
+      "usedVariables": []
+    }
+  ]
+}

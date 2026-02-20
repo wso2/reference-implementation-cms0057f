@@ -722,7 +722,10 @@ const RequirementCard = ({
                         const patientId = localStorage.getItem(
                           SELECTED_PATIENT_ID
                         );
-                        const dtrUrl = `${window.Config.dtrAppUrl}?questionnaire=${questionnaireUrl}&medicationRequestId=${medicationRequestId}&patientId=${patientId}`;
+                        const coverageId = task.input?.find(
+                          (i: any) => i.type?.text === "coverage"
+                        )?.valueReference?.reference?.split("/")[1];
+                        const dtrUrl = `${window.Config.dtrAppUrl}?questionnaire=${questionnaireUrl}&medicationRequestId=${medicationRequestId}&patientId=${patientId}&coverageId=${coverageId}`;
 
                         return (
                           <div key={index} style={{ marginBottom: "10px" }}>

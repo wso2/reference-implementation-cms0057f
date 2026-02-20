@@ -45,6 +45,7 @@ declare global {
       bulkExportKickoffUrl: string;
       bulkExportStatusUrl: string;
       dtrAppUrl: string;
+      fhirServerUrl: string;
     };
   }
 }

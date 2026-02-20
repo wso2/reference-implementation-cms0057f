@@ -173,11 +173,12 @@ const PrescribeForm = ({
       })
     );
 
+    const Config = window.Config;
     const payload = CHECK_PAYER_REQUIREMENTS_REQUEST_BODY(
       patientId,
-      practionerId
+      practionerId,
+      Config.fhirServerUrl
     );
-    const Config = window.Config;
 
     setCdsCards([]);
     localStorage.setItem(CDS_HOOK, "order-sign");

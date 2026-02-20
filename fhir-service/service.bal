@@ -54,12 +54,16 @@ isolated function invokePatientExport(string patientId, map<string[]> queryParam
 
     http:Response response = new;
     response.statusCode = exportResponse.httpStatusCode;
-    // Forward only the headers required for the async $export flow
-    string[] exportHeaders = ["content-location", "content-length", "content-encoding", "retry-after", "content-type"];
-    foreach string h in exportHeaders {
-        string? headerValue = exportResponse.serverResponseHeaders[h];
-        if headerValue is string {
-            response.setHeader(h, headerValue);
+    // Forward only the headers required for the async $export flow (case-insensitive match)
+    map<boolean> exportHeaderSet = {
+        "content-location": true,
+        "content-length": true,
+        "content-encoding": true,
+        "content-type": true
+    };
+    foreach var [headerName, headerValue] in exportResponse.serverResponseHeaders.entries() {
+        if exportHeaderSet.hasKey(headerName.toLowerAscii()) {
+            response.setHeader(headerName, headerValue);
         }
     }
     json|xml exportPayload = exportResponse.'resource;

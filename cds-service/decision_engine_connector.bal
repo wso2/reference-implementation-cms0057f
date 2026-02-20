@@ -140,6 +140,38 @@ isolated function connectDecisionSystemForPrescribeMedication(cds:CdsRequest cds
     string medicationRequestId = "";
 
     // Query FHIR server for Coverage
+    string coverageId = "";
+    string fhirServerUrl = "";
+    if cdsRequest["fhirServer"] is string {
+        fhirServerUrl = <string>cdsRequest["fhirServer"];
+    }
+    
+    if fhirServerUrl != "" {
+        http:Client|error fhirClient = new(fhirServerUrl);
+        if fhirClient is http:Client {
+            string coveragePath = string `/Coverage?patient=${patientId}`;
+            http:Response|error coverageRes = fhirClient->get(coveragePath);
+            if coverageRes is http:Response && coverageRes.statusCode == 200 {
+                json|error coverageJson = coverageRes.getJsonPayload();
+                if coverageJson is json {
+                    json[]|error entries = coverageJson.entry.ensureType();
+                    if entries is json[] && entries.length() > 0 {
+                        json entry = entries[0];
+                        json|error resourceObj = entry.'resource.ensureType();
+                        if resourceObj is map<json> {
+                            if resourceObj["id"] is string {
+                                coverageId = <string>resourceObj["id"];
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if coverageId == "" {
+        return cds:createCdsError("Failed to fetch Coverage for the patient", 500);
+    }
 
     // Logic from previous commit for medicationRequestId extraction
     r4:Bundle? draftOrders = context?.draftOrders;
@@ -242,6 +274,20 @@ isolated function connectDecisionSystemForPrescribeMedication(cds:CdsRequest cds
                                 text: "questionnaire"
                             },
                             valueCanonical: questionnaireUrl
+                        },
+                        {
+                            'type: {
+                                coding: [
+                                    {
+                                        system: "http://hl7.org/fhir/fhir-types",
+                                        code: "Coverage"
+                                    }
+                                ],
+                                text: "coverage"
+                            },
+                            valueReference: {
+                                reference: string `Coverage/${coverageId}`
+                            }
                         }
                     ]
                 };

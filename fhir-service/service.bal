@@ -59,7 +59,8 @@ isolated function invokePatientExport(string patientId, map<string[]> queryParam
         "content-location": true,
         "content-length": true,
         "content-encoding": true,
-        "content-type": true
+        "content-type": true,
+        "retry-after": true
     };
     foreach var [headerName, headerValue] in exportResponse.serverResponseHeaders.entries() {
         if exportHeaderSet.hasKey(headerName.toLowerAscii()) {

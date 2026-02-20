@@ -45,7 +45,7 @@ isolated function invokePatientExport(string patientId, map<string[]> queryParam
         fhirConnector->callOperation(PATIENT, "$export", requestMode, id = patientId, queryParameters = queryParameters);
 
     if exportResponse is fhirClient:FHIRError {
-        int statusCode = http:STATUS_BAD_REQUEST;
+        int statusCode = http:STATUS_INTERNAL_SERVER_ERROR;
         if exportResponse is fhirClient:FHIRServerError {
             statusCode = exportResponse.detail().httpStatusCode;
         }
@@ -54,11 +54,14 @@ isolated function invokePatientExport(string patientId, map<string[]> queryParam
 
     http:Response response = new;
     response.statusCode = exportResponse.httpStatusCode;
-
-    foreach var [headerName, headerValue] in exportResponse.serverResponseHeaders.entries() {
-        response.setHeader(headerName, headerValue);
+    // Forward only the headers required for the async $export flow
+    string[] exportHeaders = ["content-location", "content-length", "content-encoding", "retry-after", "content-type"];
+    foreach string h in exportHeaders {
+        string? headerValue = exportResponse.serverResponseHeaders[h];
+        if headerValue is string {
+            response.setHeader(h, headerValue);
+        }
     }
-
     json|xml exportPayload = exportResponse.'resource;
     if exportPayload is json {
         response.setJsonPayload(exportPayload);
@@ -227,7 +230,7 @@ service /fhir/r4/Patient on new fhirr4:Listener(config = patientApiConfig) {
                         }
                     }
                 } else {
-                    filteredResourceTypes = consentedResourceTypes;
+                    filteredResourceTypes = consentedTypeSet.keys();
                 }
 
                 if filteredResourceTypes.length() == 0 {

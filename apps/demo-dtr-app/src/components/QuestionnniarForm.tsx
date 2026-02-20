@@ -49,7 +49,7 @@ export default function QuestionnniarForm({
 }) {
   const dispatch = useDispatch();
   const [questions, setQuestions] = useState<
-    { linkId: string; text: { value: string }; type: string }[]
+    { linkId: string; text: { value: string } | string; type: string }[]
   >([]);
   const [questionnaireID, setQuestionnaireID] = useState<string | null>(null);
   const [formData, setFormData] = useState<{
@@ -108,10 +108,10 @@ export default function QuestionnniarForm({
         setOpenSnackbar(true);
 
         const questionnaire = response.data;
-        setQuestions(questionnaire.parameter[0].resource.entry[0].item || []);
-        setQuestionnaireID(
-          questionnaire.parameter[0].resource.entry[0].id || null
-        );
+        const questionnaireResource = questionnaire.parameter?.[0]?.resource?.entry?.[0]?.resource || {};
+        const items = questionnaireResource.item || [];
+        setQuestions(items);
+        setQuestionnaireID(questionnaireResource.id || null);
 
         dispatch(
           updateCdsResponse({
@@ -185,7 +185,7 @@ export default function QuestionnniarForm({
       },
       item: questions.map((question) => ({
         linkId: question.linkId,
-        text: question.text.value,
+        text: typeof question.text === 'string' ? question.text : question.text?.value,
         answer: [
           {
             valueQuestionnaireResponseBoolean:
@@ -323,7 +323,7 @@ export default function QuestionnniarForm({
               key={index}
             >
               <Form.Label>
-                {question.text.value} <span style={{ color: "red" }}>*</span>
+                {typeof question.text === 'string' ? question.text : question.text?.value} <span style={{ color: "red" }}>*</span>
               </Form.Label>
               {renderFormField(question)}
             </Form.Group>

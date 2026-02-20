@@ -187,8 +187,7 @@ service /fhir/r4/Patient on new fhirr4:Listener(config = patientApiConfig) {
         return response;
     }
 
-    isolated resource function get [string id]/\$export(r4:FHIRContext fhirContext,
-            international401:Parameters parameters) returns r4:FHIRError|http:Response|error {
+    isolated resource function get [string id]/\$export(r4:FHIRContext fhirContext) returns r4:FHIRError|http:Response|error {
 
         log:printDebug("Patient-level export invoked for patient id: " + id);
         r4:ConsentContext? consentContext = fhirContext.getConsentContext();
@@ -220,8 +219,9 @@ service /fhir/r4/Patient on new fhirr4:Listener(config = patientApiConfig) {
                     foreach string requestTypeParam in requestTypeParams {
                         string[] requestedTypes = re `,`.split(requestTypeParam);
                         foreach string requestedType in requestedTypes {
-                            string normalizedType = requestedType.trim();
-                            if normalizedType != "" && consentedTypeSet.hasKey(normalizedType) {
+                            final string normalizedType = requestedType.trim();
+                            if normalizedType != "" && consentedTypeSet.hasKey(normalizedType)
+                            && !filteredResourceTypes.some(isolated function(string t) returns boolean => t == normalizedType) {
                                 filteredResourceTypes.push(normalizedType);
                             }
                         }

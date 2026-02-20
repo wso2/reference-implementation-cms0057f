@@ -64,8 +64,10 @@ isolated function invokePatientExport(string patientId, map<string[]> queryParam
     }
     json|xml exportPayload = exportResponse.'resource;
     if exportPayload is json {
-        response.setJsonPayload(exportPayload);
-    } else {
+        if exportPayload != () {
+            response.setJsonPayload(exportPayload);
+        }
+    } else if exportPayload is xml {
         response.setXmlPayload(exportPayload);
     }
     return response;
@@ -241,9 +243,16 @@ service /fhir/r4/Patient on new fhirr4:Listener(config = patientApiConfig) {
                 string filteredTypeParam = string:'join(",", ...filteredResourceTypes);
                 queryParameters["_type"] = [filteredTypeParam];
                 log:printDebug("$export param: _type = " + filteredTypeParam);
+            } else {
+                // Consent exists but specifies no allowed resource types; deny export.
+                log:printDebug("Consent context exists but no consented resource types specified. Denying export.");
+                return r4:createFHIRError("No consented resource types available for export", r4:ERROR,
+                        r4:INVALID, httpStatusCode = http:STATUS_FORBIDDEN);
             }
 
         }
+        // If no consent context exists, proceed with the export request as is. Meaning all resource types specified in the request (if any) will be exported.
+        // By default, if the _type parameter is not specified, all resource types are exported as per the FHIR specification.
         log:printDebug("Invoking export with query parameters: " + queryParameters.toString());
         return invokePatientExport(id, queryParameters, fhirClient:GET);
 

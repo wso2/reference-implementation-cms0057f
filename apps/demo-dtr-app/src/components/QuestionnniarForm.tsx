@@ -30,6 +30,9 @@ import {
 } from "../redux/cdsRequestSlice";
 import { updateCdsResponse, resetCdsResponse } from "../redux/cdsResponseSlice";
 
+const getQuestionText = (text: { value: string } | string | undefined): string =>
+  typeof text === "string" ? text : (text?.value ?? "");
+
 export default function QuestionnniarForm({
   coverageId,
   medicationRequestId,
@@ -49,7 +52,7 @@ export default function QuestionnniarForm({
 }) {
   const dispatch = useDispatch();
   const [questions, setQuestions] = useState<
-    { linkId: string; text: { value: string }; type: string }[]
+    { linkId: string; text: { value: string } | string; type: string }[]
   >([]);
   const [questionnaireID, setQuestionnaireID] = useState<string | null>(null);
   const [formData, setFormData] = useState<{
@@ -108,10 +111,21 @@ export default function QuestionnniarForm({
         setOpenSnackbar(true);
 
         const questionnaire = response.data;
-        setQuestions(questionnaire.parameter[0].resource.entry[0].item || []);
-        setQuestionnaireID(
-          questionnaire.parameter[0].resource.entry[0].id || null
+        const questionnaireParam = questionnaire.parameter?.find(
+          (p: any) => p.name === "PackageBundle"
         );
+        const questionnaireResource =
+          questionnaireParam?.resource?.entry?.[0]?.resource ?? {};
+        const rawItems: any[] = questionnaireResource.item ?? [];
+        const items = rawItems.filter(
+          (item): item is { linkId: string; text: { value: string } | string; type: string } =>
+            typeof item.linkId === "string" && item.type !== undefined
+        );
+        if (items.length === 0) {
+          console.warn("Questionnaire parsed successfully but contained no items.", questionnaireResource);
+        }
+        setQuestions(items);
+        setQuestionnaireID(questionnaireResource.id ?? null);
 
         dispatch(
           updateCdsResponse({
@@ -185,7 +199,7 @@ export default function QuestionnniarForm({
       },
       item: questions.map((question) => ({
         linkId: question.linkId,
-        text: question.text.value,
+        text: getQuestionText(question.text),
         answer: [
           {
             valueQuestionnaireResponseBoolean:
@@ -323,7 +337,7 @@ export default function QuestionnniarForm({
               key={index}
             >
               <Form.Label>
-                {question.text.value} <span style={{ color: "red" }}>*</span>
+                {getQuestionText(question.text)} <span style={{ color: "red" }}>*</span>
               </Form.Label>
               {renderFormField(question)}
             </Form.Group>

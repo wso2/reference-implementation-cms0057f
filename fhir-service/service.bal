@@ -145,12 +145,12 @@ service http:InterceptableService /fhir/r4/_export on httpListener {
     }
 
     // Check export job status
-    isolated resource function get status/[string jobId](http:Request request) returns fhirClient:FHIRResponse|fhirClient:FHIRError {
+    isolated resource function get status/[string jobId](http:Request request) returns http:Response|fhirClient:FHIRError {
         return fhirConnector->proxy("/_export/status/" + jobId, request);
     }
 
     // Download export file
-    resource function get download/[string jobId]/[string fileName](http:Request request) returns fhirClient:FHIRResponse|r4:FHIRError {
+    resource function get download/[string jobId]/[string fileName](http:Request request) returns http:Response|fhirClient:FHIRError {
         return fhirConnector->proxy("/_export/download/" + jobId + "/" + fileName, request);
     }
 }

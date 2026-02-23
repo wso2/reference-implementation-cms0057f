@@ -1,13 +1,17 @@
-# Sample configuration for Patient Access API Metrics with FHIR R4 Analytics
+## Following configurations are used for analytics.
 [ballerinax.health.fhirr4.analytics]
-enabled = true
-attributes = ["fhirUser", "client_id", "iss"]
-url = "http://localhost:9200/patient_access/_doc" # Opensearch format: <hostname>/<index>/_doc
-username = "admin"
-password = "Strong@pass@432"
+enabled = false
+fhirServerContext = "/fhir/r4/" # must have the trailing slash
+jwtAttributes = ["client_id", "iss"]
+shouldPublishPayloads = false
+filePath = "logs" # Default value is "logs". The path is relative to the server path.
+fileName = "fhir-analytics" # must not contain the file extension
+allowedApiContexts = []
+excludedApiContexts = []
 
-[ballerinax.health.fhirr4.analytics.moreInfo]
-enabled = true
-url = "http://localhost:8082/more_info"
-username = "admin"
-password = "MoreInfo@987"
+## Following configurations are used to enrich the analytics payload by calling an external service.
+[ballerinax.health.fhirr4.analytics.enrichPayload]
+enabled = false
+url = "http://<HOST>:<PORT>/enrich-analytics-payload" # The URL of the external service to call for enriching the analytics payload.
+username = ""
+password = ""

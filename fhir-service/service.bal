@@ -137,6 +137,24 @@ service http:InterceptableService /fhir/r4/\.well\-known/smart\-configuration on
     }
 }
 
+// # Export Endpoints Service (for async bulk data export)
+service http:InterceptableService /fhir/r4/_export on httpListener {
+
+    public function createInterceptors() returns [fhirr4:FHIRResponseErrorInterceptor] {
+        return [new fhirr4:FHIRResponseErrorInterceptor()];
+    }
+
+    // Check export job status
+    isolated resource function get status/[string jobId](http:Request request) returns fhirClient:FHIRResponse|fhirClient:FHIRError {
+        return fhirConnector->proxy("/_export/status/" + jobId, request);
+    }
+
+    // Download export file
+    resource function get download/[string jobId]/[string fileName]() returns fhirClient:FHIRResponse|r4:FHIRError {
+        return fhirConnector->proxy("/_export/download/" + jobId, request);
+    }
+}
+
 // ######################################################################################################################
 // # Patient API                                                                                                        #
 // ###################################################################################################################### 

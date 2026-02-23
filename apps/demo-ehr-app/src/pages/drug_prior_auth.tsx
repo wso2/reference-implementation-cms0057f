@@ -169,15 +169,15 @@ const QuestionnniarForm = ({
         text: question.text,
         answer: [
           {
-            valueQuestionnaireResponseBoolean:
+            valueBoolean:
               typeof formData[question.linkId] === "boolean"
                 ? (formData[question.linkId] as boolean)
                 : undefined,
-            valueQuestionnaireResponseInteger:
+            valueInteger:
               typeof formData[question.linkId] === "number"
                 ? (formData[question.linkId] as number)
                 : undefined,
-            valueQuestionnaireResponseString:
+            valueString:
               typeof formData[question.linkId] === "string"
                 ? (formData[question.linkId] as string)
                 : undefined,
@@ -197,9 +197,9 @@ const QuestionnniarForm = ({
       linkId: string;
       text: string;
       answer: {
-        valueQuestionnaireResponseBoolean?: boolean;
-        valueQuestionnaireResponseNumber?: number;
-        valueQuestionnaireResponseString?: string;
+        valueBoolean?: boolean;
+        valueNumber?: number;
+        valueString?: string;
       }[];
     }[];
   }) => {

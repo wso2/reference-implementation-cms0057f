@@ -150,8 +150,8 @@ service http:InterceptableService /fhir/r4/_export on httpListener {
     }
 
     // Download export file
-    resource function get download/[string jobId]/[string fileName]() returns fhirClient:FHIRResponse|r4:FHIRError {
-        return fhirConnector->proxy("/_export/download/" + jobId, request);
+    resource function get download/[string jobId]/[string fileName](http:Request request) returns fhirClient:FHIRResponse|r4:FHIRError {
+        return fhirConnector->proxy("/_export/download/" + jobId + "/" + fileName, request);
     }
 }
 

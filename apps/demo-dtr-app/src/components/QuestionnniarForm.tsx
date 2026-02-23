@@ -174,11 +174,6 @@ export default function QuestionnniarForm({
 
     return {
       resourceType: "QuestionnaireResponse",
-      meta: {
-        profile: [
-          "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/dtr-questionnaireresponse",
-        ],
-      },
       extension: [
         {
           url: "http://hl7.org/fhir/us/davinci-dtr/StructureDefinition/questionnaireresponse-item-mapping-extension",

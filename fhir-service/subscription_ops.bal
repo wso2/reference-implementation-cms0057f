@@ -16,15 +16,15 @@
 
 import ballerina/log;
 import ballerinax/health.clients.fhir as fhirClient;
-import ballerinax/health.fhir.r4;
-import ballerinax/health.fhir.r4.davincipas;
+import ballerinax/health.fhir.r4.international401;
+import ballerinax/health.fhir.r4.parser;
 
 # Create subscription in Azure FHIR Server
 #
 # + fhirConnector - Azure FHIR Connector instance
 # + subscription - PASSubscription resource to create
 # + return - Created subscription ID or error
-public isolated function createSubscription(fhirClient:FHIRConnector fhirConnector, davincipas:PASSubscription subscription)
+public isolated function createSubscription(fhirClient:FHIRConnector fhirConnector, international401:Subscription subscription)
         returns string|error {
 
     // Convert to JSON for FHIR connector
@@ -56,7 +56,7 @@ public isolated function createSubscription(fhirClient:FHIRConnector fhirConnect
 # + id - Subscription ID
 # + return - PASSubscription resource or error
 public isolated function getSubscription(fhirClient:FHIRConnector fhirConnector, string id)
-        returns davincipas:PASSubscription|error {
+        returns international401:Subscription|error {
 
     fhirClient:FHIRResponse|fhirClient:FHIRError response = fhirConnector->getById("Subscription", id);
 
@@ -64,7 +64,7 @@ public isolated function getSubscription(fhirClient:FHIRConnector fhirConnector,
         return error(string `Subscription ${id} not found: ${response.message()}`);
     }
 
-    return toPASSubscription(<json>response.'resource);
+    return trap parser:parse((<json>response.'resource).toJson(), international401:Subscription).ensureType(international401:Subscription);
 }
 
 # Get active subscriptions by organization ID from Azure FHIR Server
@@ -73,12 +73,11 @@ public isolated function getSubscription(fhirClient:FHIRConnector fhirConnector,
 # + organizationId - Organization NPI
 # + return - Array of PASSubscription resources or error
 public isolated function getActiveSubscriptionsByOrg(fhirClient:FHIRConnector fhirConnector, string organizationId)
-        returns davincipas:PASSubscription[]|error {
+        returns international401:Subscription[]|error {
 
-    // Search for active subscriptions with organization filter
+    // Search for active subscriptions with organization filter via constructed ID
     map<string[]> searchParams = {
-        "status": ["active"],
-        "criteria": [string `ClaimResponse?insurer:identifier=${organizationId}`]
+        "_id": [string `PasSubscription-${organizationId}`]
     };
 
     fhirClient:FHIRResponse|fhirClient:FHIRError response = fhirConnector->search(
@@ -174,102 +173,6 @@ public isolated function subscriptionExists(fhirClient:FHIRConnector fhirConnect
     return false;
 }
 
-# Convert FHIR JSON resource to PASSubscription
-#
-# + fhirResource - FHIR resource
-# + return - PASSubscription resource
-public isolated function toPASSubscription(json fhirResource) returns davincipas:PASSubscription|error {
-    string id = check fhirResource.id.ensureType();
-    string statusStr = check fhirResource.status.ensureType();
-    string reason = "";
-    string criteria = "";
-
-    json|error reasonJson = fhirResource.reason;
-    if reasonJson is string {
-        reason = reasonJson;
-    }
-
-    json|error criteriaJson = fhirResource.criteria;
-    if criteriaJson is string {
-        criteria = criteriaJson;
-    }
-
-    // Extract channel
-    davincipas:PASSubscriptionChannel channel = {
-        'type: davincipas:CODE_TYPE_REST_HOOK
-    };
-
-    json|error channelJson = fhirResource.channel;
-    if channelJson is json {
-        json|error ep = channelJson.endpoint;
-        if ep is string {
-            channel.endpoint = ep;
-        }
-
-        json|error channelType = channelJson.'type;
-        if channelType is string {
-            channel.'type = <davincipas:PASSubscriptionChannelType>channelType;
-        }
-
-        json|error payloadJson = channelJson.payload;
-        if payloadJson is string {
-            channel.payload = <davincipas:PASSubscriptionChannelPayload>payloadJson;
-        }
-
-        json|error headers = channelJson.header;
-        if headers is json[] {
-            string[] headerArr = [];
-            foreach json header in headers {
-                if header is string {
-                    headerArr.push(header);
-                }
-            }
-            channel.header = headerArr;
-        }
-    }
-
-    // Extract extensions
-    r4:Extension[] extensions = [];
-    json|error extJson = fhirResource.extension;
-    if extJson is json[] {
-        foreach json ext in extJson {
-            json|error url = ext.url;
-            json|error valueString = ext.valueString;
-            json|error valueInteger = ext.valueInteger;
-
-            string extUrl = url is string ? url : "";
-
-            if valueString is string {
-                r4:StringExtension strExt = {
-                    url: extUrl,
-                    valueString: valueString
-                };
-                extensions.push(strExt);
-            } else if valueInteger is int {
-                r4:IntegerExtension intExt = {
-                    url: extUrl,
-                    valueInteger: valueInteger
-                };
-                extensions.push(intExt);
-            }
-        }
-    }
-
-    davincipas:PASSubscription subscription = {
-        id: id,
-        status: <davincipas:PASSubscriptionStatus>statusStr,
-        reason: reason,
-        criteria: criteria,
-        channel: channel
-    };
-
-    if extensions.length() > 0 {
-        subscription.extension = extensions;
-    }
-
-    return subscription;
-}
-
 # Extract organization ID from Subscription resource
 #
 # + fhirResource - FHIR resource
@@ -297,13 +200,30 @@ public isolated function extractOrganizationIdFromSubscription(json fhirResource
             if url is string && url.endsWith("backport-filter-criteria") {
                 json|error criteria = ext.valueString;
                 if criteria is string {
-                    // Parse "ClaimResponse?insurer:identifier=<orgId>"
+                    // Parse "org-identifier=<orgId>"
                     int? eqIndex = criteria.indexOf("=");
                     if eqIndex is int {
                         return criteria.substring(eqIndex + 1);
                     }
                 }
             }
+        }
+    }
+
+    // Fallback: Check base criteria element
+    json|error criteriaStr = fhirResource.criteria;
+    if criteriaStr is string {
+        int? eqIndex = criteriaStr.indexOf("=");
+        if eqIndex is int {
+            return criteriaStr.substring(eqIndex + 1);
+        }
+    }
+
+    // Fallback: Check if ID has the expected prefix
+    json|error id = fhirResource.id;
+    if id is string {
+        if id.startsWith("PasSubscription-") {
+            return id.substring(16);
         }
     }
 
@@ -314,11 +234,12 @@ public isolated function extractOrganizationIdFromSubscription(json fhirResource
 #
 # + bundle - FHIR Bundle
 # + organizationId - Organization ID
-# + return - Array of PASSubscription resources
+# + return - Array of Subscription resources
 isolated function extractSubscriptionsFromBundle(json bundle, string organizationId)
-        returns davincipas:PASSubscription[]|error {
+        returns international401:Subscription[]|error {
 
-    davincipas:PASSubscription[] subscriptions = [];
+    // TODO: Migrate to Davinci PAS Subscription profile. Currently using base profile due to a issue with the Davinci PAS lib.
+    international401:Subscription[] subscriptions = [];
     json|error entries = bundle.entry;
 
     if entries is json[] {
@@ -328,9 +249,11 @@ isolated function extractSubscriptionsFromBundle(json bundle, string organizatio
                 // Extract organization and filter
                 string|error orgId = extractOrganizationIdFromSubscription('resource);
                 if orgId is string && orgId == organizationId {
-                    davincipas:PASSubscription|error sub = toPASSubscription('resource);
-                    if sub is davincipas:PASSubscription {
+                    international401:Subscription|error sub = trap parser:parse('resource.toJson(), international401:Subscription).ensureType(international401:Subscription);
+                    if sub is international401:Subscription {
                         subscriptions.push(sub);
+                    } else {
+                        log:printError(string `Failed to parse Subscription resource: ${sub.message()}`);
                     }
                 }
             }

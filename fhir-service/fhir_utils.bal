@@ -15,7 +15,7 @@
 // under the License.
 
 import ballerinax/health.fhir.r4;
-import ballerinax/health.fhir.r4.davincipas;
+import ballerinax/health.fhir.r4.international401;
 
 # Extract NPIs from Claim resource
 #
@@ -89,7 +89,7 @@ public function isValidStatusTransition(string oldStatus, string newStatus) retu
 #
 # + subscription - PASSubscription resource
 # + return - Authorization header value or nil
-public isolated function extractAuthHeader(davincipas:PASSubscription subscription) returns string? {
+public isolated function extractAuthHeader(international401:Subscription subscription) returns string? {
     string[]? headers = subscription.channel.header;
     if headers is string[] {
         foreach string header in headers {
@@ -105,7 +105,7 @@ public isolated function extractAuthHeader(davincipas:PASSubscription subscripti
 #
 # + subscription - PASSubscription resource
 # + return - Payload type (defaults to "full-resource")
-public isolated function extractPayloadType(davincipas:PASSubscription subscription) returns string {
+public isolated function extractPayloadType(international401:Subscription subscription) returns string {
     r4:Extension[]? extensions = subscription.channel.extension;
     if extensions is r4:Extension[] {
         foreach r4:Extension ext in extensions {
@@ -126,7 +126,7 @@ public isolated function extractPayloadType(davincipas:PASSubscription subscript
 #
 # + subscription - PASSubscription resource
 # + return - Organization ID or error
-public isolated function extractOrganizationId(davincipas:PASSubscription subscription) returns string|error {
+public isolated function extractOrganizationId(international401:Subscription subscription) returns string|error {
     // First check main extensions for organization-identifier
     r4:Extension[]? extensions = subscription.extension;
     if extensions is r4:Extension[] {

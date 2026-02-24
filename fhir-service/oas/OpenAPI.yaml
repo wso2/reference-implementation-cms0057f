@@ -2732,6 +2732,73 @@ paths:
       security:
         - default: []
       x-auth-type: Application & Application User
+
+  /_export/status/{jobId}:
+    get:
+      operationId: getExportJobStatus
+      tags:
+        - GET
+        - Export
+      parameters:
+        - name: jobId
+          in: path
+          description: Export job identifier
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Export job status retrieved successfully
+          content:
+            application/fhir+json:
+              schema:
+                type: object
+        "500":
+          description: InternalServerError
+          content:
+            application/fhir+json:
+              schema:
+                $ref: "#/components/schemas/FHIRError"
+      security:
+        - default: []
+      x-auth-type: Application & Application User
+
+  /_export/download/{jobId}/{fileName}:
+    get:
+      operationId: downloadExportFile
+      tags:
+        - GET
+        - Export
+      parameters:
+        - name: jobId
+          in: path
+          description: Export job identifier
+          required: true
+          schema:
+            type: string
+        - name: fileName
+          in: path
+          description: Export file name
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Export file downloaded successfully
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        "500":
+          description: InternalServerError
+          content:
+            application/fhir+json:
+              schema:
+                $ref: "#/components/schemas/FHIRError"
+      security:
+        - default: []
+      x-auth-type: Application & Application User
   /Patient:
     get:
       tags:

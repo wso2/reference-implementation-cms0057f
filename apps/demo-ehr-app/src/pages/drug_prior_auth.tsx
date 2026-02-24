@@ -41,6 +41,9 @@ const useQuery = () => {
   return new URLSearchParams(useLocation().search);
 };
 
+const getQuestionText = (text: { value: string } | string | undefined): string =>
+  typeof text === "string" ? text : (text?.value ?? "");
+
 const QuestionnniarForm = ({
   questionnaireId,
   isQuestionnaireResponseSubmited,
@@ -54,7 +57,7 @@ const QuestionnniarForm = ({
 }) => {
   const dispatch = useDispatch();
   const [questions, setQuestions] = useState<
-    { linkId: string; text: string; type: string }[]
+    { linkId: string; text: { value: string } | string; type: string }[]
   >([]);
   const [formData, setFormData] = useState<{
     [key: string]: string | number | boolean;
@@ -116,9 +119,20 @@ const QuestionnniarForm = ({
         setOpenSnackbar(true);
 
         const questionnaire = response.data;
-        setQuestions(
-          questionnaire.parameter[0].resource.entry[0].resource.item || []
+        const questionnaireParam = questionnaire.parameter?.find(
+          (p: any) => p.name === "PackageBundle"
         );
+        const questionnaireResource =
+          questionnaireParam?.resource?.entry?.[0]?.resource ?? {};
+        const rawItems: any[] = questionnaireResource.item ?? [];
+        const items = rawItems.filter(
+          (item): item is { linkId: string; text: { value: string } | string; type: string } =>
+            typeof item.linkId === "string" && item.type !== undefined
+        );
+        if (items.length === 0) {
+          console.warn("Questionnaire parsed successfully but contained no items.", questionnaireResource);
+        }
+        setQuestions(items);
 
         dispatch(
           updateCdsResponse({
@@ -166,7 +180,7 @@ const QuestionnniarForm = ({
       },
       item: questions.map((question) => ({
         linkId: question.linkId,
-        text: question.text,
+        text: getQuestionText(question.text),
         answer: [
           {
             valueBoolean:
@@ -260,7 +274,7 @@ const QuestionnniarForm = ({
 
   const renderFormField = (question: {
     linkId: string;
-    text: string;
+    text: { value: string } | string;
     type: string;
   }) => {
     switch (question.type) {
@@ -318,7 +332,7 @@ const QuestionnniarForm = ({
               key={index}
             >
               <Form.Label>
-                {question.text} <span style={{ color: "red" }}>*</span>
+                {getQuestionText(question.text)} <span style={{ color: "red" }}>*</span>
               </Form.Label>
               {renderFormField(question)}
             </Form.Group>

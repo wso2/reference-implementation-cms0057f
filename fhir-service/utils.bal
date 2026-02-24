@@ -15,10 +15,10 @@
 // under the License.
 
 import ballerina/http;
-import ballerina/io;
 import ballerina/log;
 import ballerina/time;
 import ballerina/url;
+import ballerina/uuid;
 import ballerinax/health.fhir.r4;
 import ballerinax/health.fhir.r4.davincihrex100;
 import ballerinax/health.fhir.r4.davincipas;
@@ -296,50 +296,61 @@ public isolated function generateSmartConfiguration() returns SmartConfiguration
     return smartConfig;
 }
 
-public isolated function claimSubmit(international401:Parameters payload) returns r4:FHIRError|international401:Parameters|error {
+public isolated function claimSubmit(international401:Parameters payload) returns r4:FHIRError|r4:Bundle|error {
     international401:Parameters|error 'parameters = parser:parseWithValidation(payload.toJson(), international401:Parameters).ensureType();
 
-    json claimResponseJson = check io:fileReadJson("resources/claim-response.json");
-
-    if parameters is error {
-        return r4:createFHIRError(parameters.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+    if 'parameters is error {
+        return r4:createFHIRError('parameters.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
     } else {
-        international401:ParametersParameter[]? 'parameter = parameters.'parameter;
+        international401:ParametersParameter[]? 'parameter = 'parameters.'parameter;
         if 'parameter is international401:ParametersParameter[] {
             foreach var item in 'parameter {
                 if item.name == "resource" {
                     r4:Resource? resourceResult = item.'resource;
                     if resourceResult is r4:Resource {
-                        // r4:Bundle bundle = check parser:parse(resourceResult.toJson(), r4:Bundle).ensureType();
                         r4:Bundle cloneWithType = check resourceResult.cloneWithType(r4:Bundle);
                         r4:BundleEntry[]? entry = cloneWithType.entry;
                         if entry is r4:BundleEntry[] {
+                            if entry.length() == 0 || entry[0]?.'resource is () {
+                                return r4:createFHIRError("Bundle entry missing claim resource", r4:ERROR, r4:INVALID,
+                                    httpStatusCode = http:STATUS_BAD_REQUEST);
+                            }
                             r4:BundleEntry bundleEntry = entry[0];
                             anydata 'resource = bundleEntry?.'resource;
-                            davincipas:PASClaim claim = check parser:parse('resource.toJson(), davincipas:PASClaim).ensureType();
+                            international401:Claim claim = check parser:parse('resource.toJson(), international401:Claim).ensureType();
+                            claim.id = uuid:createType1AsString();
 
                             r4:DomainResource newClaimResource = check create(fhirConnector, CLAIM, claim.toJson());
-                            davincipas:PASClaim newClaim = check newClaimResource.cloneWithType();
+                            international401:Claim newClaim = check newClaimResource.cloneWithType();
 
-                            davincipas:PASClaimResponse claimResponse = check parser:parse(claimResponseJson, davincipas:PASClaimResponse).ensureType();
-
-                            claimResponse.patient = newClaim.patient;
-                            claimResponse.insurer = newClaim.insurer;
-                            claimResponse.created = newClaim.created;
-                            claimResponse.request = {reference: "Claim/" + <string>newClaim.id};
+                            davincipas:PASClaimResponse claimResponse = {
+                                id: uuid:createType1AsString(),
+                                request: {reference: "Claim/" + <string>newClaim.id},
+                                patient: newClaim.patient,
+                                insurer: <r4:Reference>newClaim.insurer,
+                                created: newClaim.created,
+                                'type: newClaim.'type,
+                                use: newClaim.use,
+                                requestor: newClaim.provider,
+                                outcome: "partial",
+                                disposition: "Prior authorization request is pending review.",
+                                status: "active"
+                            };
 
                             r4:DomainResource newClaimResponseResource = check create(fhirConnector, CLAIM_RESPONSE, claimResponse.toJson());
                             davincipas:PASClaimResponse newClaimResponse = check newClaimResponseResource.cloneWithType();
 
-                            international401:ParametersParameter p = {
-                                name: "return",
-                                'resource: newClaimResponse
+                            r4:BundleEntry bundleEntryResponse = {
+                                'resource: newClaimResponse,
+                                fullUrl: "urn:uuid:" + <string>newClaimResponse.id
                             };
 
-                            international401:Parameters parameterResponse = {
-                                'parameter: [p]
+                            r4:Bundle responseBundle = {
+                                'type: r4:BUNDLE_TYPE_COLLECTION,
+                                entry: [bundleEntryResponse]
                             };
-                            return parameterResponse.clone();
+
+                            return responseBundle.clone();
                         }
                     }
                 }

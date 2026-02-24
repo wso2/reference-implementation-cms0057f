@@ -735,6 +735,7 @@ const RequirementCard = ({
                               size="sm"
                               style={{ marginTop: "5px" }}
                               onClick={() => {
+                                loadQuestionnaires();
                                 window.open(
                                   dtrUrl,
                                   "_blank",

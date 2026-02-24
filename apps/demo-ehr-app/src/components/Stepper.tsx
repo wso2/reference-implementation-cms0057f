@@ -82,14 +82,15 @@ export default function HorizontalNonLinearStepper() {
   const Config = window.Config;
 
   const patientId = localStorage.getItem(SELECTED_PATIENT_ID);
-  const timestamp = localStorage.getItem(TIMESTAMP);
 
   const loadQuestionnaireResponse = () => {
+    const timestamp = localStorage.getItem(TIMESTAMP);
+    let url = Config.questionnaire_response + `?subject=Patient/${patientId}`;
+    if (timestamp) {
+      url += `&authored=ge${timestamp}`;
+    }
     axios
-      .get(
-        Config.questionnaire_response +
-          `?subject=Patient/${patientId}&authored=ge${timestamp}`
-      )
+      .get(url)
       .then(async (response) => {
         if (response.data.entry.length > 0) {
           const questionnaireResponse = response.data.entry[0].resource;

@@ -2685,6 +2685,53 @@ paths:
             application/fhir+json:
               schema:
                 type: object
+
+  /Patient/{id}/$export:
+    get:
+      operationId: getPatientExport
+      tags:
+        - GET
+        - Patient
+      parameters:
+        - name: id
+          in: path
+          description: logical identifier
+          required: true
+          schema:
+            type: string
+        - name: _type
+          in: query
+          description: Resource types to include in export (comma-separated)
+          required: false
+          schema:
+            type: string
+      responses:
+        "202":
+          description: Accepted
+          headers:
+            Content-Location:
+              description: URL to poll export job status
+              schema:
+                type: string
+            Retry-After:
+              description: Suggested retry interval in seconds
+              schema:
+                type: string
+        "403":
+          description: Forbidden
+          content:
+            application/fhir+json:
+              schema:
+                $ref: "#/components/schemas/FHIRError"
+        "500":
+          description: InternalServerError
+          content:
+            application/fhir+json:
+              schema:
+                $ref: "#/components/schemas/FHIRError"
+      security:
+        - default: []
+      x-auth-type: Application & Application User
   /Patient:
     get:
       tags:

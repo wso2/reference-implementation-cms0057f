@@ -60,6 +60,15 @@ const ClaimForm = () => {
   >("info");
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
+  const pollIntervalRef = React.useRef<any>(null);
+
+  useEffect(() => {
+    return () => {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+      }
+    };
+  }, []);
 
   const savedPatientId = localStorage.getItem(SELECTED_PATIENT_ID);
   const loggedUser = useSelector((state: any) => state.loggedUser);
@@ -245,11 +254,11 @@ const ClaimForm = () => {
 
             if (claimId) {
               const webhookUrl = Config.webhookServerUrl || "http://localhost:9099";
-              const pollInterval = setInterval(() => {
+              pollIntervalRef.current = setInterval(() => {
                 axios.get(`${webhookUrl}/claim-status/${claimId}`)
                   .then(pollRes => {
                     if (pollRes.status === 200 && pollRes.data.outcome === "complete") {
-                      clearInterval(pollInterval);
+                      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
                       setAlertMessage("Prior Authorization Status: Completed");
                       setAlertSeverity("success");
                       setShowSuccessAnimation(true);

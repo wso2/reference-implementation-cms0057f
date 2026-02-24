@@ -94,13 +94,11 @@ public isolated function storeClaimResponse(
 #
 # + fhirConnector - FHIR Connector instance
 # + claimResponseId - ClaimResponse ID
-# + newStatus - New status
 # + payload - Updated ClaimResponse JSON
 # + return - Organization ID for correlation or error
 public isolated function updateClaimResponse(
         fhirClient:FHIRConnector fhirConnector,
         string claimResponseId,
-        string newStatus,
         json payload
 ) returns string|error {
 
@@ -115,14 +113,12 @@ public isolated function updateClaimResponse(
     string organizationId = check extractOrganizationIdFromResource(<json>getResponse.'resource);
 
     // Update the ClaimResponse
-    fhirClient:FHIRResponse|fhirClient:FHIRError updateResponse = fhirConnector->update(payload);
+    fhirClient:FHIRResponse|fhirClient:FHIRError updateResponse = fhirConnector->update(payload, returnPreference = "representation");
 
     if updateResponse is fhirClient:FHIRError {
         log:printError(string `Failed to update ClaimResponse ${claimResponseId}: ${updateResponse.message()}`);
         return error(string `Failed to update ClaimResponse: ${updateResponse.message()}`);
     }
-
-    log:printInfo(string `Updated ClaimResponse ${claimResponseId} to status ${newStatus} in FHIR`);
     return organizationId;
 }
 
@@ -167,7 +163,7 @@ public isolated function getClaim(fhirClient:FHIRConnector fhirConnector, string
 public isolated function getClaimResponsesByOrg(fhirClient:FHIRConnector fhirConnector, string organizationId) returns json[]|error {
     // Search using extension filter for organization ID
     map<string[]> searchParams = {
-        "insurer:identifier": [organizationId]
+        "requestor:identifier": [organizationId]
     };
 
     fhirClient:FHIRResponse|fhirClient:FHIRError response = fhirConnector->search(
@@ -237,10 +233,10 @@ isolated function extractOrganizationIdFromResource(json fhirResource) returns s
         }
     }
 
-    // Fallback: try to get from insurer reference identifier
-    json|error insurer = fhirResource.insurer;
-    if insurer is json {
-        json|error identifier = insurer.identifier;
+    // Fallback: try to get from requestor reference identifier (the provider)
+    json|error requestor = fhirResource.requestor;
+    if requestor is json {
+        json|error identifier = requestor.identifier;
         if identifier is json {
             json|error value = identifier.value;
             if value is string {

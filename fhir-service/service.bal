@@ -408,11 +408,11 @@ service /fhir/r4/ClaimResponse on new fhirr4:Listener(config = claimResponseApiC
 
     // Read the current state of single resource based on its id.
     isolated resource function get [string id](r4:FHIRContext fhirContext) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
-        ClaimRecord|error claimResponse = getClaimResponse(fhirConnector, id);
-        if claimResponse is error {
+        r4:DomainResource|r4:FHIRError claimResponse = getById(fhirConnector, CLAIM_RESPONSE, id);
+        if claimResponse is r4:FHIRError {
             return r4:createFHIRError(claimResponse.message(), r4:ERROR, r4:PROCESSING_NOT_FOUND, httpStatusCode = http:STATUS_NOT_FOUND);
         }
-        return <r4:DomainResource>claimResponse.payload;
+        return claimResponse;
     }
 
     // Read the state of a specific version of a resource based on its id.
@@ -442,10 +442,22 @@ service /fhir/r4/ClaimResponse on new fhirr4:Listener(config = claimResponseApiC
 
     // Update the current state of a resource completely.
     isolated resource function put [string id](r4:FHIRContext fhirContext, ClaimResponse claimResponse) returns ClaimResponse|r4:OperationOutcome|r4:FHIRError {
-        string|error result = updateClaimResponse(fhirConnector, id, "active", claimResponse.toJson());
-        if result is error {
+        string|error organizationId = updateClaimResponse(fhirConnector, id, claimResponse.toJson());
+        if organizationId is error {
             return r4:createFHIRError("Failed to update claim response", r4:ERROR, r4:INVALID);
         }
+
+        // Trigger notification for the updated ClaimResponse
+        international401:ClaimResponse|error intClaimResponse = claimResponse.cloneWithType(international401:ClaimResponse);
+        if intClaimResponse is international401:ClaimResponse {
+            error? notifyResult = sendNotifications(fhirConnector, id, organizationId, intClaimResponse);
+            if notifyResult is error {
+                log:printError(string `Failed to send notification for ClaimResponse ${id}: ${notifyResult.message()}`);
+            }
+        } else {
+            log:printError(string `Failed to cast ClaimResponse ${id} to international401:ClaimResponse for notifications`);
+        }
+
         return claimResponse;
     }
 
@@ -1366,7 +1378,7 @@ service /fhir/r4/Consent on new fhirr4:Listener(config = consentApiConfig) {
 // # Subscription API                                                                                                   #
 // ######################################################################################################################
 
-public type Subscription davincipas:PASSubscription;
+public type Subscription international401:Subscription;
 
 service /fhir/r4/Subscription on new fhirr4:Listener(config = subscriptionApiConfig) {
     isolated resource function post .(r4:FHIRContext fhirContext, Subscription subscription) returns r4:FHIRError|http:Response {

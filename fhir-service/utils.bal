@@ -311,6 +311,10 @@ public isolated function claimSubmit(international401:Parameters payload) return
                         r4:Bundle cloneWithType = check resourceResult.cloneWithType(r4:Bundle);
                         r4:BundleEntry[]? entry = cloneWithType.entry;
                         if entry is r4:BundleEntry[] {
+                            if entry.length() == 0 || entry[0]?.'resource is () {
+                                return r4:createFHIRError("Bundle entry missing claim resource", r4:ERROR, r4:INVALID,
+                                    httpStatusCode = http:STATUS_BAD_REQUEST);
+                            }
                             r4:BundleEntry bundleEntry = entry[0];
                             anydata 'resource = bundleEntry?.'resource;
                             international401:Claim claim = check parser:parse('resource.toJson(), international401:Claim).ensureType();
@@ -342,7 +346,7 @@ public isolated function claimSubmit(international401:Parameters payload) return
                             };
 
                             r4:Bundle responseBundle = {
-                                'type: "collection",
+                                'type: r4:BUNDLE_TYPE_COLLECTION,
                                 entry: [bundleEntryResponse]
                             };
 

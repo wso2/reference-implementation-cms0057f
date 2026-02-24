@@ -200,16 +200,25 @@ const ClaimForm = () => {
       .then((response) => {
         if (response.status >= 200 && response.status < 300) {
           console.log("Claim submitted successfully:", response.data);
-          if (
-            response.data.parameter[0].resource.outcome &&
-            response.data.parameter[0].resource.outcome === "complete"
-          ) {
+
+          let outcome = null;
+          if (response.data.resourceType === "Bundle" && response.data.entry?.length > 0) {
+            const claimResp = response.data.entry.find((e: any) => e.resource?.resourceType === "ClaimResponse");
+            outcome = claimResp?.resource?.outcome;
+          } else if (response.data.resourceType === "Parameters" && response.data.parameter?.length > 0) {
+            outcome = response.data.parameter[0].resource?.outcome;
+          }
+
+          if (outcome === "complete") {
             setAlertMessage("Prior Authorization Status: Completed");
             setAlertSeverity("success");
             setShowSuccessAnimation(true);
+          } else if (outcome === "partial") {
+            setAlertMessage("Prior Authorization Status: Pending");
+            setAlertSeverity("warning");
           } else {
-            console.log("Prior Authorization error:", response.data.issue);
-            setAlertMessage("Prior Authorization");
+            console.log("Prior Authorization error:", response.data);
+            setAlertMessage("Prior Authorization error");
             setAlertSeverity("error");
           }
         } else {

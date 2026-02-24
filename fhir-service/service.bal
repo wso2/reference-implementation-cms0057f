@@ -217,7 +217,7 @@ public type Parameters international401:Parameters;
 
 service /fhir/r4/Claim on new fhirr4:Listener(config = ClaimApiConfig) {
 
-    isolated resource function post \$submit(r4:FHIRContext fhirContext, Parameters parameters) returns r4:FHIRError|international401:Parameters|error {
+    isolated resource function post \$submit(r4:FHIRContext fhirContext, Parameters parameters) returns r4:FHIRError|r4:Bundle|error {
         return claimSubmit(parameters);
     }
 

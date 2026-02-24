@@ -94,13 +94,11 @@ public isolated function storeClaimResponse(
 #
 # + fhirConnector - FHIR Connector instance
 # + claimResponseId - ClaimResponse ID
-# + newStatus - New status
 # + payload - Updated ClaimResponse JSON
 # + return - Organization ID for correlation or error
 public isolated function updateClaimResponse(
         fhirClient:FHIRConnector fhirConnector,
         string claimResponseId,
-        string newStatus,
         json payload
 ) returns string|error {
 
@@ -121,8 +119,6 @@ public isolated function updateClaimResponse(
         log:printError(string `Failed to update ClaimResponse ${claimResponseId}: ${updateResponse.message()}`);
         return error(string `Failed to update ClaimResponse: ${updateResponse.message()}`);
     }
-
-    log:printInfo(string `Updated ClaimResponse ${claimResponseId} to status ${newStatus} in FHIR`);
     return organizationId;
 }
 

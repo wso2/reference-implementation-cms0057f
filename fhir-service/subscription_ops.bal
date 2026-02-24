@@ -77,6 +77,7 @@ public isolated function getActiveSubscriptionsByOrg(fhirClient:FHIRConnector fh
 
     // Search for active subscriptions with organization filter via constructed ID
     map<string[]> searchParams = {
+        //TODO: Remove this once issue in searching subscriptions by filter criteria is resolved
         "_id": [string `PasSubscription-${organizationId}`]
     };
 

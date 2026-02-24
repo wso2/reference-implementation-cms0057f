@@ -322,7 +322,7 @@ service /fhir/r4/ClaimResponse on new fhirr4:Listener(config = claimResponseApiC
 
     // Update the current state of a resource completely.
     isolated resource function put [string id](r4:FHIRContext fhirContext, ClaimResponse claimResponse) returns ClaimResponse|r4:OperationOutcome|r4:FHIRError {
-        string|error organizationId = updateClaimResponse(fhirConnector, id, "active", claimResponse.toJson());
+        string|error organizationId = updateClaimResponse(fhirConnector, id, claimResponse.toJson());
         if organizationId is error {
             return r4:createFHIRError("Failed to update claim response", r4:ERROR, r4:INVALID);
         }

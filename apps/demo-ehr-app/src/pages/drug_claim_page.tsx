@@ -202,11 +202,37 @@ const ClaimForm = () => {
           console.log("Claim submitted successfully:", response.data);
 
           let outcome = null;
+          let claimId = null;
           if (response.data.resourceType === "Bundle" && response.data.entry?.length > 0) {
             const claimResp = response.data.entry.find((e: any) => e.resource?.resourceType === "ClaimResponse");
             outcome = claimResp?.resource?.outcome;
+            const reference = claimResp?.resource?.request?.reference;
+            if (reference) {
+              claimId = reference.startsWith("Claim/") ? reference.substring(6) : reference;
+            }
           } else if (response.data.resourceType === "Parameters" && response.data.parameter?.length > 0) {
             outcome = response.data.parameter[0].resource?.outcome;
+            const reference = response.data.parameter[0].resource?.request?.reference;
+            if (reference) {
+              claimId = reference.startsWith("Claim/") ? reference.substring(6) : reference;
+            }
+          }
+
+          if (claimId) {
+            const webhookUrl = Config.webhookServerUrl || "http://localhost:9099";
+            const patientName = formData.patient || "Unknown Patient";
+            const providerName = formData.provider || "Unknown Provider";
+            const medicationRef = formData.medication || "Unknown Medication";
+
+            axios.post(`${webhookUrl}/claim`, {
+              id: claimId,
+              patientName: patientName,
+              providerName: providerName,
+              medicationRef: medicationRef,
+              date: new Date().toISOString().split("T")[0],
+              outcome: outcome,
+              status: outcome === 'complete' ? 'active' : 'draft'
+            }).catch(err => console.error("Failed to register claim for tracking", err));
           }
 
           if (outcome === "complete") {
@@ -214,8 +240,26 @@ const ClaimForm = () => {
             setAlertSeverity("success");
             setShowSuccessAnimation(true);
           } else if (outcome === "partial") {
-            setAlertMessage("Prior Authorization Status: Pending");
+            setAlertMessage("Prior Authorization Status: Pending. Waiting for updates...");
             setAlertSeverity("warning");
+
+            if (claimId) {
+              const webhookUrl = Config.webhookServerUrl || "http://localhost:9099";
+              const pollInterval = setInterval(() => {
+                axios.get(`${webhookUrl}/claim-status/${claimId}`)
+                  .then(pollRes => {
+                    if (pollRes.status === 200 && pollRes.data.outcome === "complete") {
+                      clearInterval(pollInterval);
+                      setAlertMessage("Prior Authorization Status: Completed");
+                      setAlertSeverity("success");
+                      setShowSuccessAnimation(true);
+                    }
+                  })
+                  .catch(() => {
+                    // Ignore 404s while waiting
+                  });
+              }, 3000);
+            }
           } else {
             console.log("Prior Authorization error:", response.data);
             setAlertMessage("Prior Authorization error");

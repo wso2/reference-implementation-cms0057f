@@ -46,6 +46,7 @@ declare global {
       bulkExportStatusUrl: string;
       dtrAppUrl: string;
       fhirServerUrl: string;
+      webhookServerUrl: string;
     };
   }
 }

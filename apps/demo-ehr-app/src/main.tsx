@@ -45,6 +45,7 @@ import { AuthProvider } from "./components/AuthProvider.tsx";
 import PatientEncounterV2 from "./pages/patient_encounter_v2.tsx";
 import { DoctorViewPage } from "./pages/doctor_view.tsx";
 import { PatientHistoryPage } from "./pages/patient_history.tsx";
+import PriorAuthList from "./pages/prior_auth_list.tsx";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <Provider store={store}>
@@ -122,6 +123,10 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
                   <Route
                     path="patient-history"
                     element={<PatientHistoryPage />}
+                  />
+                  <Route
+                    path="prior-auth-list"
+                    element={<PriorAuthList />}
                   />
                 </Route>
 

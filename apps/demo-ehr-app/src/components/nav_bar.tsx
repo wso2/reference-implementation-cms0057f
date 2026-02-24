@@ -177,7 +177,7 @@ export default function NavBar() {
                       bg="grey"
                       boxShadow="md"
                       borderRadius="10"
-                      width="90px"
+                      minWidth="130px"
                       zIndex={1}
                       display="flex"
                       flexDirection="column"

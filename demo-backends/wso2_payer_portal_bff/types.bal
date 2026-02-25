@@ -172,6 +172,7 @@ type QuestionnaireResponseItem record {
 # + processNotes - field description
 public type PARequestDetail record {
     string id;
+    string responseId;
     string status;
     string use?;
     string created;

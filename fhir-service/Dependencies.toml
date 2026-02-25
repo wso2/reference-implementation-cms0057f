@@ -50,9 +50,10 @@ dependencies = [
 [[package]]
 org = "ballerina"
 name = "data.csv"
-version = "0.8.1"
+version = "0.8.2"
 dependencies = [
-	{org = "ballerina", name = "jballerina.java"}
+	{org = "ballerina", name = "jballerina.java"},
+	{org = "ballerina", name = "log"}
 ]
 
 [[package]]
@@ -558,14 +559,16 @@ modules = [
 [[package]]
 org = "ballerinax"
 name = "health.fhirr4"
-version = "3.0.3"
+version = "3.0.5"
 dependencies = [
+	{org = "ballerina", name = "file"},
 	{org = "ballerina", name = "http"},
 	{org = "ballerina", name = "io"},
 	{org = "ballerina", name = "jballerina.java"},
 	{org = "ballerina", name = "jwt"},
 	{org = "ballerina", name = "lang.regexp"},
 	{org = "ballerina", name = "log"},
+	{org = "ballerina", name = "task"},
 	{org = "ballerina", name = "time"},
 	{org = "ballerina", name = "url"},
 	{org = "ballerinai", name = "observe"},

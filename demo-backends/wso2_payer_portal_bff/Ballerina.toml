@@ -3,6 +3,7 @@ org = "wso2"
 name = "wso2_payer_portal_bff"
 version = "0.1.0"
 title = "wso2-payer-portal-bff"
+distribution = "2201.12.7"
 
 [build-options]
 sticky = true

@@ -133,7 +133,7 @@ function getFHIRQuestionnaireById(string questionnaireId) returns json|error {
 # + questionnaire - FHIR Questionnaire resource as JSON
 # + return - Created questionnaire resource as JSON or error
 function createFHIRQuestionnaire(json questionnaire) returns json|error {
-    http:Response response = check fhirHttpClient->post(QUESTIONNAIRE, questionnaire);
+    http:Response response = check fhirHttpClient->post(QUESTIONNAIRE, questionnaire, headers = {"Content-Type": "application/fhir+json"});
     json result = check response.getJsonPayload();
     return result;
 }

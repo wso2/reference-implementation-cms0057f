@@ -52,7 +52,7 @@ function queryPARequests(
         string[] outcomeValues = [];
         foreach PARequestProcessingStatus s in status {
             if s == "Pending" {
-                outcomeValues.push("queued");
+                // outcomeValues.push("queued"); TODO: Add later after the support is added in the FHIR server
                 outcomeValues.push("partial");
             } else if s == "Completed" {
                 outcomeValues.push("complete");
@@ -440,6 +440,7 @@ public function getPARequestDetail(string responseId) returns PARequestDetail|er
     
     PARequestDetail detail = {
         id: claimId,
+        responseId: responseId,
         status: status,
         use: use,
         created: created,
@@ -1180,21 +1181,23 @@ public function submitPARequestAdjudication(string responseId, AdjudicationSubmi
     // 1. Fetch Existing ClaimResponse 
     international401:ClaimResponse claimResponse = check getClaimResponse(responseId, limited = false);
 
+    davincipas:PASClaimResponse pasClaimResponse = check claimResponse.cloneWithType(davincipas:PASClaimResponse);
+
     // 2. Modify the claimResponse with adjudication data
     
     // Update outcome based on decision
-    claimResponse.outcome = check adjudication.decision.cloneWithType(international401:ClaimResponseOutcome);
-    claimResponse.disposition = adjudication.decision;
+    pasClaimResponse.outcome = check adjudication.decision.cloneWithType(davincipas:PASClaimResponseOutcome);
+    pasClaimResponse.disposition = adjudication.decision;
     
     // Build item adjudications
-    international401:ClaimResponseItem[] items = [];
+    davincipas:PASClaimResponseItem[] items = [];
     foreach ItemAdjudicationSubmission itemAdj in adjudication.itemAdjudications {
         
         // Create adjudication array for this item
-        international401:ClaimResponseItemAdjudication[] adjudicationArray = [];
+        davincipas:PASClaimResponseItemAdjudication[] adjudicationArray = [];
         
         // Add the main adjudication category
-        international401:ClaimResponseItemAdjudication mainAdj = {
+        davincipas:PASClaimResponseItemAdjudication mainAdj = {
             category: {
                 coding: [
                     {
@@ -1209,7 +1212,7 @@ public function submitPARequestAdjudication(string responseId, AdjudicationSubmi
         
         // Add benefit amount if approved
         if itemAdj.approvedAmount is decimal {
-            international401:ClaimResponseItemAdjudication benefitAdj = {
+            davincipas:PASClaimResponseItemAdjudication benefitAdj = {
                 category: {
                     coding: [
                         {
@@ -1228,7 +1231,7 @@ public function submitPARequestAdjudication(string responseId, AdjudicationSubmi
         }
         
         // Create the item response
-        international401:ClaimResponseItem item = {
+        davincipas:PASClaimResponseItem item = {
             itemSequence: itemAdj.sequence,
             adjudication: adjudicationArray
         };
@@ -1236,15 +1239,15 @@ public function submitPARequestAdjudication(string responseId, AdjudicationSubmi
         items.push(item);
     }
     
-    claimResponse.item = items;
+    pasClaimResponse.item = items;
     
     // Build process notes
-    international401:ClaimResponseProcessNote[] processNotes = [];
+    davincipas:PASClaimResponseProcessNote[] processNotes = [];
     int noteNumber = 1;
     
     // Add reviewer notes
     if adjudication.reviewerNotes is string {
-        international401:ClaimResponseProcessNote reviewerNote = {
+        davincipas:PASClaimResponseProcessNote reviewerNote = {
             number: noteNumber,
             'type: "display",
             text: <string>adjudication.reviewerNotes
@@ -1256,7 +1259,7 @@ public function submitPARequestAdjudication(string responseId, AdjudicationSubmi
     // Add item-specific notes and link them to corresponding items
     foreach ItemAdjudicationSubmission itemAdj in adjudication.itemAdjudications {
         if itemAdj.itemNotes is string {
-            international401:ClaimResponseProcessNote itemNote = {
+            davincipas:PASClaimResponseProcessNote itemNote = {
                 number: noteNumber,
                 'type: "display",
                 text: <string>itemAdj.itemNotes
@@ -1264,7 +1267,7 @@ public function submitPARequestAdjudication(string responseId, AdjudicationSubmi
             processNotes.push(itemNote);
             
             // Find the corresponding item and assign the note reference
-            foreach international401:ClaimResponseItem item in items {
+            foreach davincipas:PASClaimResponseItem item in items {
                 if item.itemSequence == itemAdj.sequence {
                     item.noteNumber = [noteNumber];
                     break;
@@ -1276,12 +1279,14 @@ public function submitPARequestAdjudication(string responseId, AdjudicationSubmi
     }
     
     if processNotes.length() > 0 {
-        claimResponse.processNote = processNotes;
+        pasClaimResponse.processNote = processNotes;
     }
 
     // 3. Post the updated ClaimResponse back to the FHIR server
-    json claimResponseJson = claimResponse.toJson();
-    json|http:ClientError updateResponse = fhirHttpClient->put(CLAIM_RESPONSE + "/" + responseId, claimResponseJson);
+    // json claimResponseJson = pasClaimResponse.toJson();
+    json|http:ClientError updateResponse = fhirHttpClient->put(string`${CLAIM_RESPONSE}/${responseId}`, pasClaimResponse, 
+                                            headers = {"Content-Type": "application/fhir+json"}
+                                        );
     
     if updateResponse is http:ClientError {
         log:printError("Failed to update ClaimResponse: " + updateResponse.message());
@@ -1289,7 +1294,7 @@ public function submitPARequestAdjudication(string responseId, AdjudicationSubmi
     }
     
     return {
-        id: <string>claimResponse.id,
+        id: <string>pasClaimResponse.id,
         status: adjudication.decision,
         message: "Adjudication submitted successfully"
     };

@@ -1023,6 +1023,10 @@ export const CLAIM_REQUEST_BODY = (
                 },
                 provider: {
                   reference: `${provider}`,
+                  identifier: {
+                    system: "http://hl7.org/fhir/sid/us-npi",
+                    value: "N123456"
+                  }
                 },
                 insurance: [
                   {

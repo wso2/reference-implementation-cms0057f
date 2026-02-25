@@ -17,7 +17,6 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { Container, Table, Spinner, Badge } from "react-bootstrap";
 import NavBar from "../components/nav_bar";
-import "../App.css";
 
 interface PriorAuth {
     id: string;
@@ -67,7 +66,7 @@ export default function PriorAuthList() {
         <>
             <NavBar />
             <Container className="mt-5 prior-auth-container p-4">
-                <h2 className="mb-4 text-center">Prior Authorizations Dashboard</h2>
+                <h2 className="mb-4 text-center">Prior Authorizations</h2>
                 {loading ? (
                     <div className="text-center mt-5">
                         <Spinner animation="border" variant="primary" />
@@ -79,7 +78,6 @@ export default function PriorAuthList() {
                                 <tr>
                                     <th>Claim ID</th>
                                     <th>Patient</th>
-                                    <th>Provider</th>
                                     <th>Medication</th>
                                     <th>Submission Date</th>
                                     <th>Status</th>
@@ -91,7 +89,6 @@ export default function PriorAuthList() {
                                         <tr key={auth.id}>
                                             <td>{auth.id}</td>
                                             <td>{auth.patientName}</td>
-                                            <td>{auth.providerName}</td>
                                             <td>{auth.medicationRef}</td>
                                             <td>{auth.date}</td>
                                             <td>{getStatusBadge(auth.outcome)}</td>

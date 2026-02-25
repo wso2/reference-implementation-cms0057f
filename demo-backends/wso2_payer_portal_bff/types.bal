@@ -39,6 +39,8 @@ public type PayerFormData record {
     string name;
     # Contact email
     string email;
+    # Mailing address
+    string? address;
     # State of operation
     string state?;
     # FHIR server base URL
@@ -47,8 +49,8 @@ public type PayerFormData record {
     string app_client_id;
     # OAuth client secret for FHIR server
     string app_client_secret;
-    # Token URL for obtaining access tokens
-    string token_url;
+    # SMART on FHIR configuration URL
+    string smart_config_url;
     # Optional scopes for OAuth token request
     string? scopes;
 };
@@ -154,6 +156,7 @@ type QuestionnaireResponseItem record {
 # PA Request Detail - Complete information for a specific PA request
 #
 # + id - field description  
+# + responseId - field description
 # + status - field description  
 # + use - field description  
 # + created - field description  

@@ -21,7 +21,6 @@ import ballerina/url;
 import ballerinax/health.fhir.r4;
 import ballerinax/health.fhir.r4.ips;
 import ballerinax/health.fhir.r4.parser;
-import ballerinax/health.fhir.r4.davincipas;
 import ballerinax/health.fhir.r4.international401;
 
 // ============================================
@@ -53,7 +52,7 @@ function queryPARequests(
         foreach PARequestProcessingStatus s in status {
             if s == "Pending" {
                 // outcomeValues.push("queued"); TODO: Add later after the support is added in the FHIR server
-                outcomeValues.push("partial");
+                outcomeValues.push("queued");
             } else if s == "Completed" {
                 outcomeValues.push("complete");
             } else if s == "Error" {
@@ -357,7 +356,7 @@ public function getPARequestDetail(string responseId) returns PARequestDetail|er
         return error("ClaimResponse does not have a request reference");
     }
     json claim = check fhirHttpClient->get("/"+<string>requestRef.reference);
-    davincipas:PASClaim pasClaim = <davincipas:PASClaim> check parser:parse(claim);
+    international401:Claim pasClaim = <international401:Claim> check parser:parse(claim);
     
     // 3. Extract patient ID from claim - DONE
     string patientId = "";
@@ -373,7 +372,7 @@ public function getPARequestDetail(string responseId) returns PARequestDetail|er
     ProviderInformation providerInfo = check getProviderInformation(pasClaim.provider);
     
     // 6. Parse claim items - DONE
-    ClaimItem[] items = check parseClaimItems(pasClaim.item);
+    ClaimItem[] items = check parseClaimItems(<international401:ClaimItem[]>pasClaim.item);
 
     // 7. Get the supporting information - DONE
     [string?, string?, string?, json[]?, json[]?] supportingInfo = check extractSupportingInformation(pasClaim.supportingInfo);
@@ -694,10 +693,10 @@ function getProviderInformation(r4:Reference providerRef) returns ProviderInform
 # + return - ProviderInformation or error
 function getPractitionerInfo(string practitionerId) returns ProviderInformation|error {
     json practitionerRoleRes = check fhirHttpClient->get("/PractitionerRole/" + practitionerId);
-    davincipas:PASPractitionerRole practitionerRole = <davincipas:PASPractitionerRole> check parser:parse(practitionerRoleRes);
+    international401:PractitionerRole practitionerRole = <international401:PractitionerRole> check parser:parse(practitionerRoleRes);
 
-    json practitionerRes = check fhirHttpClient->get("/" + <string>practitionerRole.practitioner.reference);
-    davincipas:PASPractitioner practitioner = <davincipas:PASPractitioner> check parser:parse(practitionerRes);
+    json practitionerRes = check fhirHttpClient->get("/" + <string>practitionerRole.practitioner?.reference);
+    international401:Practitioner practitioner = <international401:Practitioner> check parser:parse(practitionerRes);
 
     string fullName = "Unknown Practitioner";
     string? initials = ();
@@ -795,10 +794,10 @@ function getPractitionerInfo(string practitionerId) returns ProviderInformation|
 # + return - Facility or error
 function extractFacilityInfo(string organizationId) returns Facility|error {
     json organizationJson = check fhirHttpClient->get("/Organization/" + organizationId);
-    davincipas:PASOrganization org = check organizationJson.cloneWithType(davincipas:PASOrganization);
+    international401:Organization org = check organizationJson.cloneWithType(international401:Organization);
 
     // Extract organization name
-    string orgName = org.name;
+    string orgName = org.name ?: "Unknown Facility";
     
     // Extract address from the organization
     Address? address = ();
@@ -832,10 +831,10 @@ function extractFacilityInfo(string organizationId) returns Facility|error {
 # + return - ProviderInformation or error
 function getOrganizationInfo(string organizationId) returns ProviderInformation|error {
     json organizationJson = check fhirHttpClient->get("/Organization/" + organizationId);
-    davincipas:PASOrganization org = check organizationJson.cloneWithType(davincipas:PASOrganization);
+    international401:Organization org = check organizationJson.cloneWithType(international401:Organization);
     
     // Extract organization name
-    string orgName = org.name;
+    string orgName = org.name ?: "Unknown Organization";
     
     // Extract contact information (phone and email)
     ProviderContact? contact = ();
@@ -881,7 +880,7 @@ function getOrganizationInfo(string organizationId) returns ProviderInformation|
 #
 # + supportingInfo - Array of PASClaimSupportingInfo from PAS Claim resource
 # + return - Tuple containing [admissionDate, dischargeDate, clinicalJustification, questionnaires, attachments] or error
-function extractSupportingInformation(davincipas:PASClaimSupportingInfo[]? supportingInfo) returns [string?, string?, string?, json[]?, json[]?]|error {
+function extractSupportingInformation(international401:ClaimSupportingInfo[]? supportingInfo) returns [string?, string?, string?, json[]?, json[]?]|error {
     string? admissionDate = ();
     string? dischargeDate = ();
     string? clinicalJustification = ();
@@ -892,7 +891,7 @@ function extractSupportingInformation(davincipas:PASClaimSupportingInfo[]? suppo
         return [admissionDate, dischargeDate, (), (), ()];
     }
     
-    foreach davincipas:PASClaimSupportingInfo info in supportingInfo {
+    foreach international401:ClaimSupportingInfo info in supportingInfo {
         // Check category code
         r4:CodeableConcept category = info.category;
         r4:Coding[]? codings = category.coding;
@@ -959,10 +958,10 @@ function extractSupportingInformation(davincipas:PASClaimSupportingInfo[]? suppo
 #
 # + pasClaimItems - Array of PASClaimItem from PAS Claim resource
 # + return - Array of ClaimItems or error
-function parseClaimItems(davincipas:PASClaimItem[] pasClaimItems) returns ClaimItem[]|error {
+function parseClaimItems(international401:ClaimItem[] pasClaimItems) returns ClaimItem[]|error {
     ClaimItem[] items = [];
     
-    foreach davincipas:PASClaimItem pasItem in pasClaimItems {
+    foreach international401:ClaimItem pasItem in pasClaimItems {
         // Extract description from productOrService
         string? description = pasItem.productOrService.text;
         if description is () && pasItem.productOrService.coding is r4:Coding[] {
@@ -1014,14 +1013,14 @@ function extractServiceType(ClaimItem[] items) returns string {
 #
 # + insuranceArray - Array of PASClaimInsurance from PAS Claim resource
 # + return - Array of CoverageInformation or null
-function extractCoverageInfo(davincipas:PASClaimInsurance[]? insuranceArray) returns CoverageInformation[]? {
+function extractCoverageInfo(international401:ClaimInsurance[]? insuranceArray) returns CoverageInformation[]? {
     if insuranceArray is () || insuranceArray.length() == 0 {
         return ();
     }
     
     CoverageInformation[] coverageList = [];
     
-    foreach davincipas:PASClaimInsurance insurance in insuranceArray {
+    foreach international401:ClaimInsurance insurance in insuranceArray {
         string coverageRef = insurance.coverage.reference ?: "";
         
         string serviceItemRequestType = "";
@@ -1181,23 +1180,23 @@ public function submitPARequestAdjudication(string responseId, AdjudicationSubmi
     // 1. Fetch Existing ClaimResponse 
     international401:ClaimResponse claimResponse = check getClaimResponse(responseId, limited = false);
 
-    davincipas:PASClaimResponse pasClaimResponse = check claimResponse.cloneWithType(davincipas:PASClaimResponse);
+    international401:ClaimResponse pasClaimResponse = check claimResponse.cloneWithType(international401:ClaimResponse);
 
     // 2. Modify the claimResponse with adjudication data
     
     // Update outcome based on decision
-    pasClaimResponse.outcome = check adjudication.decision.cloneWithType(davincipas:PASClaimResponseOutcome);
+    pasClaimResponse.outcome = check adjudication.decision.cloneWithType(international401:ClaimResponseOutcome);
     pasClaimResponse.disposition = adjudication.decision;
     
     // Build item adjudications
-    davincipas:PASClaimResponseItem[] items = [];
+    international401:ClaimResponseItem[] items = [];
     foreach ItemAdjudicationSubmission itemAdj in adjudication.itemAdjudications {
         
         // Create adjudication array for this item
-        davincipas:PASClaimResponseItemAdjudication[] adjudicationArray = [];
+        international401:ClaimResponseItemAdjudication[] adjudicationArray = [];
         
         // Add the main adjudication category
-        davincipas:PASClaimResponseItemAdjudication mainAdj = {
+        international401:ClaimResponseItemAdjudication mainAdj = {
             category: {
                 coding: [
                     {
@@ -1212,7 +1211,7 @@ public function submitPARequestAdjudication(string responseId, AdjudicationSubmi
         
         // Add benefit amount if approved
         if itemAdj.approvedAmount is decimal {
-            davincipas:PASClaimResponseItemAdjudication benefitAdj = {
+            international401:ClaimResponseItemAdjudication benefitAdj = {
                 category: {
                     coding: [
                         {
@@ -1231,7 +1230,7 @@ public function submitPARequestAdjudication(string responseId, AdjudicationSubmi
         }
         
         // Create the item response
-        davincipas:PASClaimResponseItem item = {
+        international401:ClaimResponseItem item = {
             itemSequence: itemAdj.sequence,
             adjudication: adjudicationArray
         };
@@ -1242,12 +1241,12 @@ public function submitPARequestAdjudication(string responseId, AdjudicationSubmi
     pasClaimResponse.item = items;
     
     // Build process notes
-    davincipas:PASClaimResponseProcessNote[] processNotes = [];
+    international401:ClaimResponseProcessNote[] processNotes = [];
     int noteNumber = 1;
     
     // Add reviewer notes
     if adjudication.reviewerNotes is string {
-        davincipas:PASClaimResponseProcessNote reviewerNote = {
+        international401:ClaimResponseProcessNote reviewerNote = {
             number: noteNumber,
             'type: "display",
             text: <string>adjudication.reviewerNotes
@@ -1259,7 +1258,7 @@ public function submitPARequestAdjudication(string responseId, AdjudicationSubmi
     // Add item-specific notes and link them to corresponding items
     foreach ItemAdjudicationSubmission itemAdj in adjudication.itemAdjudications {
         if itemAdj.itemNotes is string {
-            davincipas:PASClaimResponseProcessNote itemNote = {
+            international401:ClaimResponseProcessNote itemNote = {
                 number: noteNumber,
                 'type: "display",
                 text: <string>itemAdj.itemNotes
@@ -1267,7 +1266,7 @@ public function submitPARequestAdjudication(string responseId, AdjudicationSubmi
             processNotes.push(itemNote);
             
             // Find the corresponding item and assign the note reference
-            foreach davincipas:PASClaimResponseItem item in items {
+            foreach international401:ClaimResponseItem item in items {
                 if item.itemSequence == itemAdj.sequence {
                     item.noteNumber = [noteNumber];
                     break;

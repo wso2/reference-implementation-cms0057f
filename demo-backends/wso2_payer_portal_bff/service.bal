@@ -106,8 +106,8 @@ service /v1 on bff_listener {
     # http:Ok (Payer updated successfully)
     # http:NotFound (Resource not found)
     # http:InternalServerError (Internal server error)
-    resource function put payers/[string payerId](@http:Payload PayerFormData payload) returns http:Ok|http:Conflict|http:InternalServerError {
-        error? result = updatePayer(payerId, payload);
+    resource function put payers/[string payerId](@http:Payload PayerFormData payload) returns Payer|http:Conflict|http:InternalServerError {
+        Payer|error? result = updatePayer(payerId, payload);
         if (result is error) {
             log:printError("Failed to update payer: " + result.message());
             if (result.message().includes("duplicate") || result.message().includes("unique")) {
@@ -115,7 +115,11 @@ service /v1 on bff_listener {
             }
             return http:INTERNAL_SERVER_ERROR;
         }
-        return http:OK;
+        if (result is ()) {
+            log:printWarn("Payer with ID " + payerId + " not found");
+            return http:INTERNAL_SERVER_ERROR;
+        }
+        return result;
     }
 
     # Delete a payer
@@ -312,6 +316,18 @@ service /v1 on bff_listener {
             return http:INTERNAL_SERVER_ERROR;
         }
         return response;
+    }
+
+    resource function get patients/[string patientId]() returns json|http:NotFound|http:InternalServerError {
+        json|error patient = getFHIRPatientById(patientId);
+        if (patient is error) {
+            log:printError("Failed to retrieve patient: " + patient.message());
+            if (patient.message().includes("not found") || patient.message().includes("404")) {
+                return http:NOT_FOUND;
+            }
+            return http:INTERNAL_SERVER_ERROR;
+        }
+        return patient;
     }
 
 }

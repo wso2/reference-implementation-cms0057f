@@ -52,7 +52,7 @@ function queryPARequests(
         foreach PARequestProcessingStatus s in status {
             if s == "Pending" {
                 // outcomeValues.push("queued"); TODO: Add later after the support is added in the FHIR server
-                outcomeValues.push("queued");
+                outcomeValues.push("partial");
             } else if s == "Completed" {
                 outcomeValues.push("complete");
             } else if s == "Error" {

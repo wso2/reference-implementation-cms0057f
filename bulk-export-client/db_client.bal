@@ -13,7 +13,10 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
+
+import ballerina/log;
 import ballerina/sql;
+import ballerina/http;
 import ballerina/uuid;
 import ballerinax/mysql;
 import ballerinax/mysql.driver as _;
@@ -31,68 +34,122 @@ final mysql:Client dbClient = check new (
 public isolated function insertPayerDataExchangeRequest(PayerDataExchangeRequest request) returns string|error {
     string requestId = uuid:createType1AsString();
     sql:ParameterizedQuery query = `INSERT INTO payer_data_exchange_requests 
-                                    (request_id, payer_id, member_id, old_payer_name, old_payer_state, old_coverage_id, coverage_start_date, coverage_end_date, consent_status) 
-                                    VALUES (${requestId}, ${request.payerId}, ${request.memberId}, ${request.oldPayerName}, ${request.oldPayerState}, 
+                                    (request_id, payer_id, member_id, old_coverage_id, coverage_start_date, coverage_end_date, consent_status) 
+                                    VALUES (${requestId}, ${request.payerId}, ${request.memberId}, 
                                     ${request.oldCoverageId}, ${request.coverageStartDate}, ${request.coverageEndDate}, ${request.consent})`;
 
-    sql:ExecutionResult result = check dbClient->execute(query);
+    sql:ExecutionResult|sql:Error result = dbClient->execute(query);
 
-    if result.affectedRowCount > 0 {
-        return requestId;
+    if result is sql:ExecutionResult {
+        if result.affectedRowCount > 0 {
+            return requestId;
+        }
+        return error("Failed to insert payer data exchange request.");
+    } else {
+        log:printDebug("Database error during insert", 'error = result);
+        return error("An internal error occurred while processing the request.");
     }
-    return error("Failed to insert payer data exchange request");
 }
 
 public isolated function getPayerDataExchangeRequests(int 'limit = 10, int offset = 0) returns PayerDataExchangeRequestResult|error {
     sql:ParameterizedQuery countQuery = `SELECT COUNT(*) AS totalCount FROM payer_data_exchange_requests`;
-    int totalCount = check dbClient->queryRow(countQuery);
+    int|sql:Error totalCount = dbClient->queryRow(countQuery);
 
-    sql:ParameterizedQuery query = `SELECT request_id AS requestId, payer_id AS payerId, member_id AS memberId, old_payer_name AS oldPayerName, old_payer_state AS oldPayerState, 
-                                    old_coverage_id AS oldCoverageId, coverage_start_date AS coverageStartDate, coverage_end_date AS coverageEndDate,
-                                    bulk_data_sync_status AS bulkDataSyncStatus, consent_status AS consent, created_at AS createdDate
-                                    FROM payer_data_exchange_requests
-                                    ORDER BY CASE WHEN bulk_data_sync_status = 'PENDING' THEN 1 ELSE 2 END, request_id ASC
+    if totalCount is sql:Error {
+        log:printDebug("Database error fetching count", 'error = totalCount);
+        return error("An internal error occurred while fetching the data.");
+    }
+
+    sql:ParameterizedQuery query = `SELECT 
+                                        r.request_id AS requestId, 
+                                        r.payer_id AS payerId, 
+                                        r.member_id AS memberId, 
+                                        p.name AS oldPayerName, 
+                                        p.state AS oldPayerState, 
+                                        r.old_coverage_id AS oldCoverageId, 
+                                        r.coverage_start_date AS coverageStartDate, 
+                                        r.coverage_end_date AS coverageEndDate,
+                                        r.bulk_data_sync_status AS bulkDataSyncStatus, 
+                                        r.consent_status AS consent, 
+                                        r.created_at AS createdDate
+                                    FROM payer_data_exchange_requests r
+                                    LEFT JOIN payers p ON r.payer_id = p.id
+                                    ORDER BY CASE WHEN r.bulk_data_sync_status = 'PENDING' THEN 1 ELSE 2 END, r.request_id ASC
                                     LIMIT ${'limit} OFFSET ${offset}`;
-    stream<PayerDataExchangeRequest, error?> resultStream = dbClient->query(query);
-    PayerDataExchangeRequest[] requests = check from PayerDataExchangeRequest request in resultStream
+                                    
+    stream<PayerDataExchangeRequest, sql:Error?> resultStream = dbClient->query(query);
+    PayerDataExchangeRequest[]|error requests = from PayerDataExchangeRequest request in resultStream
         select request;
+
+    if requests is error {
+        log:printDebug("Database error fetching requests", 'error = requests);
+        return error("An internal error occurred while fetching the data.");
+    }
 
     return {totalCount: totalCount, requests: requests};
 }
 
 public isolated function updatePayerDataExchangeRequestStatus(string requestId, string status) returns string|error {
     sql:ParameterizedQuery query = `UPDATE payer_data_exchange_requests SET bulk_data_sync_status = ${status} WHERE request_id = ${requestId}`;
-    sql:ExecutionResult result = check dbClient->execute(query);
+    sql:ExecutionResult|sql:Error result = dbClient->execute(query);
 
-    if result.affectedRowCount > 0 {
-        return "Status updated successfully";
+    if result is sql:ExecutionResult {
+        if result.affectedRowCount > 0 {
+            return "Status updated successfully";
+        }
+        return error("Failed to update status. Request ID not found.");
+    } else {
+        log:printDebug("Database error during status update", 'error = result);
+        return error("An internal error occurred while updating the status.");
     }
-    return error("Failed to update status. Request ID not found.");
 }
 
 public isolated function getPayerDataExchangeRequest(string requestId) returns PayerDataExchangeRequest|error {
-    sql:ParameterizedQuery query = `SELECT request_id AS requestId, payer_id AS payerId, member_id AS memberId, old_payer_name AS oldPayerName, old_payer_state AS oldPayerState, 
-                                    old_coverage_id AS oldCoverageId, coverage_start_date AS coverageStartDate, coverage_end_date AS coverageEndDate, 
-                                    bulk_data_sync_status AS bulkDataSyncStatus, consent_status AS consent
-                                    FROM payer_data_exchange_requests WHERE request_id = ${requestId}`;
-    return dbClient->queryRow(query);
+    sql:ParameterizedQuery query = `SELECT 
+                                        r.request_id AS requestId, 
+                                        r.payer_id AS payerId, 
+                                        r.member_id AS memberId, 
+                                        p.name AS oldPayerName, 
+                                        p.state AS oldPayerState, 
+                                        r.old_coverage_id AS oldCoverageId, 
+                                        r.coverage_start_date AS coverageStartDate, 
+                                        r.coverage_end_date AS coverageEndDate, 
+                                        r.bulk_data_sync_status AS bulkDataSyncStatus, 
+                                        r.consent_status AS consent, 
+                                        r.created_at AS createdDate
+                                    FROM payer_data_exchange_requests r
+                                    LEFT JOIN payers p ON r.payer_id = p.id
+                                    WHERE r.request_id = ${requestId}`;
+                                    
+    PayerDataExchangeRequest|sql:Error result = dbClient->queryRow(query);
+    
+    if result is sql:Error {
+        log:printDebug("Database error fetching request details", 'error = result);
+        return error("An internal error occurred while fetching the request details.");
+    }
+    
+    return result;
 }
 
 public isolated function getPayerConfig(string payerId) returns PayerConfig|error {
-    sql:ParameterizedQuery query = `SELECT id AS payerId, name AS payerName, fhir_server_url AS baseUrl, token_url AS tokenUrl, 
+    sql:ParameterizedQuery query = `SELECT id AS payerId, name AS payerName, fhir_server_url AS baseUrl, smart_config_url AS smartConfigUrl,
                                     app_client_id AS clientId, app_client_secret AS clientSecret, scopes AS scopesStr
                                     FROM payers WHERE id = ${payerId}`;
 
-    // We need to fetch into an intermediate record because scopes is stored as string but PayerConfig expects string[]
     record {|
         string payerId;
         string payerName;
         string baseUrl;
-        string? tokenUrl;
-        string? clientId;
-        string? clientSecret;
+        string smartConfigUrl;
+        string clientId;
+        string clientSecret;
         string? scopesStr;
-    |} result = check dbClient->queryRow(query);
+    |}|sql:Error result = dbClient->queryRow(query);
+
+    if result is sql:Error {
+        log:printDebug("Database error fetching payer config", 'error = result);
+        return error("An internal error occurred while fetching the payer configuration.");
+    }
 
     string[] scopes = [];
     string? scopesStr = result.scopesStr;
@@ -100,15 +157,36 @@ public isolated function getPayerConfig(string payerId) returns PayerConfig|erro
         scopes = re `,`.split(scopesStr);
     }
 
+    string defaultTokenUrl = result.baseUrl + "/token";
+    // From the smartConfigUrl, call the .well-known/smart-configuration endpoint to get the token URL
+    http:Client smartConfigClient = check new (result.smartConfigUrl);
+    http:Response|error smartConfigResponse = smartConfigClient->get("/.well-known/smart-configuration");
+    if smartConfigResponse is http:Response {
+        var payload = smartConfigResponse.getJsonPayload();
+        if payload is json {
+            map<json> payloadMap = <map<json>>payload;
+            string tokenUrl = <string>payloadMap["token_endpoint"];
+            if tokenUrl != "" {
+                defaultTokenUrl = tokenUrl;
+            } else {
+                log:printWarn("Token endpoint not found in SMART configuration, falling back to default token URL");
+            }
+        } else {
+            log:printWarn("Failed to parse SMART configuration response, falling back to default token URL");
+        }
+    } else {
+        log:printWarn("Failed to fetch SMART configuration, falling back to default token URL");
+    }
+
     PayerConfig config = {
         payerId: result.payerId,
         payerName: result.payerName,
         baseUrl: result.baseUrl,
-        tokenUrl: result.tokenUrl,
+        tokenUrl: defaultTokenUrl,
         clientId: result.clientId,
         clientSecret: result.clientSecret,
         scopes: scopes,
-        fileServerUrl: (), // Not present in payers table
+        fileServerUrl: (),
         authEnabled: true
     };
     return config;

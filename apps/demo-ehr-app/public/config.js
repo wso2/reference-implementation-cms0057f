@@ -37,6 +37,8 @@ window.Config = {
     "/choreo-apis/cms-0057f---unitedhealth/fhir-service/v1/fhir/r4/Practitioner",
   patient:
     "/choreo-apis/cms-0057f---unitedhealth/fhir-service/v1/fhir/r4/Patient",
+  claim:
+    "/choreo-apis/cms-paas/fhir-service-fm/v1/Claim",
   bulkExportFetch:
     "/choreo-apis/cms-0057-f/bulk-export-client/file-service/v1.0/fetch",
   bulkExportKickoffUrl:

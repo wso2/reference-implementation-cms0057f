@@ -331,7 +331,7 @@ public isolated function claimSubmit(international401:Parameters payload) return
                                 created: newClaim.created,
                                 'type: newClaim.'type,
                                 use: newClaim.use,
-                                requestor: newClaim.provider,
+                                requestor: claim.provider,
                                 outcome: "partial",
                                 disposition: "Prior authorization request is pending review.",
                                 status: "active"

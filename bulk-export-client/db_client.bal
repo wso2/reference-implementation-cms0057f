@@ -46,7 +46,7 @@ public isolated function insertPayerDataExchangeRequest(PayerDataExchangeRequest
         }
         return error("Failed to insert payer data exchange request.");
     } else {
-        log:printDebug("Database error during insert", 'error = result);
+        log:printError("Database error during insert", 'error = result);
         return error("An internal error occurred while processing the request.");
     }
 }
@@ -56,7 +56,7 @@ public isolated function getPayerDataExchangeRequests(int 'limit = 10, int offse
     int|sql:Error totalCount = dbClient->queryRow(countQuery);
 
     if totalCount is sql:Error {
-        log:printDebug("Database error fetching count", 'error = totalCount);
+        log:printError("Database error fetching count", 'error = totalCount);
         return error("An internal error occurred while fetching the data.");
     }
 
@@ -82,7 +82,7 @@ public isolated function getPayerDataExchangeRequests(int 'limit = 10, int offse
         select request;
 
     if requests is error {
-        log:printDebug("Database error fetching requests", 'error = requests);
+        log:printError("Database error fetching requests", 'error = requests);
         return error("An internal error occurred while fetching the data.");
     }
 
@@ -99,7 +99,7 @@ public isolated function updatePayerDataExchangeRequestStatus(string requestId, 
         }
         return error("Failed to update status. Request ID not found.");
     } else {
-        log:printDebug("Database error during status update", 'error = result);
+        log:printError("Database error during status update", 'error = result);
         return error("An internal error occurred while updating the status.");
     }
 }
@@ -124,7 +124,7 @@ public isolated function getPayerDataExchangeRequest(string requestId) returns P
     PayerDataExchangeRequest|sql:Error result = dbClient->queryRow(query);
     
     if result is sql:Error {
-        log:printDebug("Database error fetching request details", 'error = result);
+        log:printError("Database error fetching request details", 'error = result);
         return error("An internal error occurred while fetching the request details.");
     }
     
@@ -147,7 +147,7 @@ public isolated function getPayerConfig(string payerId) returns PayerConfig|erro
     |}|sql:Error result = dbClient->queryRow(query);
 
     if result is sql:Error {
-        log:printDebug("Database error fetching payer config", 'error = result);
+        log:printError("Database error fetching payer config", 'error = result);
         return error("An internal error occurred while fetching the payer configuration.");
     }
 
@@ -159,23 +159,28 @@ public isolated function getPayerConfig(string payerId) returns PayerConfig|erro
 
     string defaultTokenUrl = result.baseUrl + "/token";
     // From the smartConfigUrl, call the .well-known/smart-configuration endpoint to get the token URL
-    http:Client smartConfigClient = check new (result.smartConfigUrl);
-    http:Response|error smartConfigResponse = smartConfigClient->get("/.well-known/smart-configuration");
-    if smartConfigResponse is http:Response {
-        var payload = smartConfigResponse.getJsonPayload();
-        if payload is json {
-            map<json> payloadMap = <map<json>>payload;
-            string tokenUrl = <string>payloadMap["token_endpoint"];
-            if tokenUrl != "" {
-                defaultTokenUrl = tokenUrl;
+    http:Client|error smartConfigClient = new (result.smartConfigUrl);
+    if smartConfigClient is error {
+        log:printError("Failed to create HTTP client for SMART configuration", 'error = smartConfigClient);
+        log:printWarn("Falling back to default token URL");
+    } else {
+        http:Response|error smartConfigResponse = smartConfigClient->get("/.well-known/smart-configuration");
+        if smartConfigResponse is http:Response {
+            var payload = smartConfigResponse.getJsonPayload();
+            if payload is json {
+                map<json> payloadMap = <map<json>>payload;
+                string tokenUrl = <string>payloadMap["token_endpoint"];
+                if tokenUrl != "" {
+                    defaultTokenUrl = tokenUrl;
+                } else {
+                    log:printWarn("Token endpoint not found in SMART configuration, falling back to default token URL");
+                }
             } else {
-                log:printWarn("Token endpoint not found in SMART configuration, falling back to default token URL");
+                log:printWarn("Failed to parse SMART configuration response, falling back to default token URL");
             }
         } else {
-            log:printWarn("Failed to parse SMART configuration response, falling back to default token URL");
+            log:printWarn("Failed to fetch SMART configuration, falling back to default token URL");
         }
-    } else {
-        log:printWarn("Failed to fetch SMART configuration, falling back to default token URL");
     }
 
     PayerConfig config = {

@@ -28,7 +28,7 @@ function queryPayers(int page, int pageSize, string? search = ()) returns Payer[
     if search is string && search.trim().length() > 0 {
         string searchPattern = "%" + search + "%";
         dataStream = dbClient->query(
-            `SELECT id, name, email, address, state, fhir_server_url, app_client_id, app_client_secret, token_url, scopes, created_at, updated_at 
+            `SELECT id, name, email, address, state, fhir_server_url, app_client_id, app_client_secret, smart_config_url, scopes, created_at, updated_at 
             FROM payers 
             WHERE name LIKE ${searchPattern} OR email LIKE ${searchPattern} OR state LIKE ${searchPattern}
             ORDER BY created_at DESC LIMIT ${pageSize} OFFSET ${(page - 1) * pageSize}`,
@@ -36,7 +36,7 @@ function queryPayers(int page, int pageSize, string? search = ()) returns Payer[
         );
     } else {
         dataStream = dbClient->query(
-            `SELECT id, name, email, address, state, fhir_server_url, app_client_id, app_client_secret, token_url, scopes, created_at, updated_at 
+            `SELECT id, name, email, address, state, fhir_server_url, app_client_id, app_client_secret, smart_config_url, scopes, created_at, updated_at 
             FROM payers 
             ORDER BY created_at DESC LIMIT ${pageSize} OFFSET ${(page - 1) * pageSize}`,
             Payer
@@ -72,7 +72,7 @@ function getTotalPayers(string? search = ()) returns int|error {
 
 function getPayerById(string payerId) returns Payer|error? {
     Payer|error? payer = dbClient->queryRow(
-        `SELECT id, name, email, address, state, fhir_server_url, app_client_id, app_client_secret, token_url, scopes, created_at, updated_at FROM payers WHERE id = ${payerId}`,
+        `SELECT id, name, email, address, state, fhir_server_url, app_client_id, app_client_secret, smart_config_url, scopes, created_at, updated_at FROM payers WHERE id = ${payerId}`,
         Payer
     );
     if (payer is error) {

@@ -19,15 +19,6 @@ import ballerina/http;
 
 listener http:Listener bff_listener = new (6091);
 
-@http:ServiceConfig {
-    cors: {
-        allowOrigins: ["*"],
-        allowMethods: ["GET", "POST", "OPTIONS", "PUT"],
-        allowHeaders: ["Content-Type", "Authorization", "Accept", "Origin"],
-        allowCredentials: true,
-        maxAge: 84900
-    }
-}
 service /v1 on bff_listener {
     
     # List all payers

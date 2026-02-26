@@ -32,6 +32,7 @@ declare global {
       prescribe_medication: string;
       questionnaire_package: string;
       questionnaire_response: string;
+      claim: string;
       claim_submit: string;
       radiology_order: string;
       book_imaging_center: string;

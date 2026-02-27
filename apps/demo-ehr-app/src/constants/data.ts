@@ -1044,9 +1044,9 @@ export const CLAIM_REQUEST_BODY = (
                       coding: [
                         {
                           system:
-                            "http://terminology.hl7.org/CodeSystem/claiminformationcategory",
-                          code: "info",
-                          display: "Supporting Information",
+                            "http://hl7.org/fhir/us/davinci-pas/CodeSystem/PASTempCodes",
+                          code: "additionalInformation",
+                          display: "Additional Information",
                         },
                       ],
                     },

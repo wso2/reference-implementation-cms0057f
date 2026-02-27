@@ -49,7 +49,7 @@ import CoverageDetails from "../common/CoverageDetails";
 import { updateLoggedUser, updateCoverageIds } from "../redux/loggedUserSlice";
 
 interface Payer {
-  id: number;
+  id: string;
   name: string;
   address: { state?: string }[];
 }
@@ -76,7 +76,7 @@ export const LandingPage = () => {
   const dispatch = useDispatch();
 
   // State to manage selected options
-  const [selectedOrgId, setSelectedOrgId] = useState<number>(50);
+  const [selectedOrgId, setSelectedOrgId] = useState<string>("");
   const Config = window.Config;
   const loggedUser = useSelector((state: any) => state.loggedUser);
 
@@ -127,10 +127,9 @@ export const LandingPage = () => {
       try {
         const response = await fetch(ORGANIZATION_SERVICE_URL);
         const data = await response.json();
-        return data.entry.map((entry: any) => ({
-          id: entry.resource.id,
-          name: entry.resource.name,
-          address: entry.resource.address || [],
+        return data.data.map((item: any) => ({
+          id: item.id,
+          name: item.name,
         }));
       } catch (error) {
         console.error("Error fetching organizations:", error);

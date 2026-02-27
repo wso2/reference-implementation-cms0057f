@@ -92,8 +92,11 @@ export default function NavBar() {
             }
             cursor="pointer"
           >
-            <Box overflow="hidden" marginLeft={10}>
+            <Box overflow="hidden" marginLeft={10} display="flex" alignItems="center">
               <img src="/EHealthLogo.png" alt="Demo Logo" height={75} />
+              <Box marginLeft={3} color="#058790" fontSize="20px" fontWeight={700}>
+                DTR App
+              </Box>
             </Box>
           </Box>
           <Box display="flex" alignItems="center" marginRight={5}>

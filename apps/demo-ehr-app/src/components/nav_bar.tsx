@@ -104,8 +104,8 @@ export default function NavBar() {
               // borderRadius="100%"
               overflow="hidden"
               marginLeft={10}
-              // backgroundColor={"white"}
-              // padding={5}
+            // backgroundColor={"white"}
+            // padding={5}
             >
               <img src="/EHealthLogo.png" alt="Demo Logo" height={100} />
             </Box>
@@ -177,7 +177,7 @@ export default function NavBar() {
                       bg="grey"
                       boxShadow="md"
                       borderRadius="10"
-                      width="90px"
+                      minWidth="130px"
                       zIndex={1}
                       display="flex"
                       flexDirection="column"
@@ -191,6 +191,14 @@ export default function NavBar() {
                         color="inherit"
                       >
                         Profile
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          window.location.href = "/dashboard/prior-auth-list";
+                        }}
+                        color="inherit"
+                      >
+                        Prior Auths
                       </Button>
                       <Button
                         onClick={async () => {

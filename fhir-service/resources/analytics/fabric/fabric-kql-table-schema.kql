@@ -1,0 +1,16 @@
+.create table CMSData (
+   request_time: datetime,
+   request_uri: string,
+   request_verb: string,
+   request_headers: dynamic,
+   request_body: dynamic,
+   response_time: datetime,
+   response_status: int,
+   response_headers: dynamic,
+   response_body: dynamic,
+   user_id: string,
+   company_id: string,
+   transaction_id: string,
+   trace_id: string,
+   metadata: dynamic
+)

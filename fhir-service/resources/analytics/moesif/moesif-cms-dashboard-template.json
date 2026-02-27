@@ -1,0 +1,350 @@
+{
+  "dashboards": [
+    {
+      "_id": "698ab141cc1f526aed5c849d",
+      "name": "Patient Access Dashboard",
+      "dashboard_ids": [],
+      "workspace_ids": [
+        [
+          "698aba84f162f02cf73e8286",
+          "698abab3f162f02cf73e828a",
+          "698abb25cc1f526aed5c872c"
+        ],
+        [
+          "698abd03cc1f526aed5c873c",
+          "698abefaf162f02cf73e8350"
+        ]
+      ],
+      "parent": null,
+      "sort_order": 16
+    }
+  ],
+  "workspaces": [
+    {
+      "_id": "698aba84f162f02cf73e8286",
+      "type": "events",
+      "name": "Total Requests",
+      "args": "",
+      "es_query": {
+        "size": 0,
+        "aggs": {
+          "seg": {
+            "filter": {
+              "match_all": {}
+            },
+            "aggs": {
+              "weight|sum": {
+                "sum": {
+                  "field": "weight",
+                  "missing": 1
+                }
+              }
+            }
+          }
+        }
+      },
+      "dateRange": {
+        "from": "-12w",
+        "to": "now"
+      },
+      "view": "segment",
+      "funnel_query": {},
+      "urlQuery": "?seg[metrics][0][id]=03cb56f7&seg[metrics][0][metricName]=sum%28events%29&seg[metrics][0][customName]=Total%20Requests&seg[chartType]=bar"
+    },
+    {
+      "_id": "698abab3f162f02cf73e828a",
+      "type": "events",
+      "name": "Patient Count",
+      "args": "",
+      "es_query": {
+        "post_filter": {
+          "bool": {
+            "should": [
+              {
+                "exists": {
+                  "field": "user_id.raw"
+                }
+              },
+              {
+                "exists": {
+                  "field": "user_id"
+                }
+              }
+            ]
+          }
+        },
+        "size": 0,
+        "aggs": {
+          "seg": {
+            "filter": {
+              "bool": {
+                "should": [
+                  {
+                    "exists": {
+                      "field": "user_id.raw"
+                    }
+                  },
+                  {
+                    "exists": {
+                      "field": "user_id"
+                    }
+                  }
+                ]
+              }
+            },
+            "aggs": {
+              "user_id|cardinality": {
+                "cardinality": {
+                  "field": "user_id.raw"
+                }
+              }
+            }
+          }
+        }
+      },
+      "dateRange": {
+        "from": "-12w",
+        "to": "now"
+      },
+      "view": "segment",
+      "funnel_query": {},
+      "urlQuery": "?evtcf[filtersGroups][0][filters][0][id]=f0&evtcf[filtersGroups][0][filters][0][field]=user_id.raw&evtcf[filtersGroups][0][filters][0][name]=&evtcf[filtersGroups][0][filters][0][op]=exists&evtcf[filtersGroups][0][filters][0][value]=&seg[metrics][0][id]=9c95d58f&seg[metrics][0][metricName]=count%28distinct%28user_id%29%29&seg[metrics][0][customName]=Distinct%20user%20count&seg[chartType]=bar"
+    },
+    {
+      "_id": "698abb25cc1f526aed5c872c",
+      "type": "events",
+      "name": "Invocation Count by Patient",
+      "args": "",
+      "es_query": {
+        "post_filter": {
+          "bool": {
+            "should": [
+              {
+                "exists": {
+                  "field": "user_id.raw"
+                }
+              },
+              {
+                "exists": {
+                  "field": "user_id"
+                }
+              }
+            ]
+          }
+        },
+        "size": 0,
+        "aggs": {
+          "seg": {
+            "filter": {
+              "bool": {
+                "should": [
+                  {
+                    "exists": {
+                      "field": "user_id.raw"
+                    }
+                  },
+                  {
+                    "exists": {
+                      "field": "user_id"
+                    }
+                  }
+                ]
+              }
+            },
+            "aggs": {
+              "user_id.raw": {
+                "terms": {
+                  "field": "user_id.raw",
+                  "size": 5,
+                  "min_doc_count": 1,
+                  "order": {
+                    "weight|sum": "desc"
+                  },
+                  "missing": "(none)"
+                },
+                "aggs": {
+                  "weight|sum": {
+                    "sum": {
+                      "field": "weight",
+                      "missing": 1
+                    }
+                  }
+                }
+              },
+              "weight|sum": {
+                "sum": {
+                  "field": "weight",
+                  "missing": 1
+                }
+              }
+            }
+          }
+        }
+      },
+      "dateRange": {
+        "from": "-12w",
+        "to": "now"
+      },
+      "view": "segment",
+      "funnel_query": {},
+      "urlQuery": "?evtcf[filtersGroups][0][filters][0][id]=f0&evtcf[filtersGroups][0][filters][0][field]=user_id.raw&evtcf[filtersGroups][0][filters][0][name]=&evtcf[filtersGroups][0][filters][0][op]=exists&evtcf[filtersGroups][0][filters][0][value]=&seg[groups][0][field]=user_id.raw&seg[groups][0][func]=terms&seg[groups][0][by]=metric&seg[metrics][0][metricName]=sum%28events%29&seg[metrics][0][customName]=Count&seg[chartType]=table"
+    },
+    {
+      "_id": "698abd03cc1f526aed5c873c",
+      "type": "users",
+      "name": "Patients with Requests > 1",
+      "args": "",
+      "es_query": {
+        "size": 0,
+        "query": {
+          "bool": {
+            "must": [
+              {
+                "exists": {
+                  "field": "user_id"
+                }
+              },
+              {
+                "function_score": {
+                  "boost_mode": "replace",
+                  "min_score": 2,
+                  "query": {
+                    "has_child": {
+                      "type": "usermetric",
+                      "query": {
+                        "nested": {
+                          "path": "hourly.raw_events",
+                          "ignore_unmapped": true,
+                          "score_mode": "sum",
+                          "query": {
+                            "function_score": {
+                              "boost_mode": "replace",
+                              "functions": [
+                                {
+                                  "field_value_factor": {
+                                    "field": "hourly.raw_events.weight",
+                                    "missing": 1
+                                  }
+                                }
+                              ],
+                              "query": {
+                                "terms": {
+                                  "hourly.raw_events.event_type.raw": [
+                                    "api_call"
+                                  ]
+                                }
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "score_mode": "sum"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "from": 0,
+        "aggs": {
+          "seg": {
+            "filter": {
+              "match_all": {}
+            },
+            "aggs": {
+              "user_id|cardinality": {
+                "cardinality": {
+                  "field": "user_id"
+                }
+              }
+            }
+          },
+          "countagg": {
+            "cardinality": {
+              "field": "user_id"
+            }
+          }
+        }
+      },
+      "dateRange": {
+        "from": "-12w",
+        "to": "now"
+      },
+      "view": "segment",
+      "funnel_query": {},
+      "urlQuery": "?entFilters[filtersGroups][0][filters][0][id]=f0&entFilters[filtersGroups][0][filters][0][field]=user_id&entFilters[filtersGroups][0][filters][0][name]=&entFilters[filtersGroups][0][filters][0][op]=exists&entFilters[filtersGroups][0][filters][0][value]=&behaviorFilters[filtersGroups][0][filters][0][id]=f0&behaviorFilters[filtersGroups][0][filters][0][field]=event_type&behaviorFilters[filtersGroups][0][filters][0][name]=&behaviorFilters[filtersGroups][0][filters][0][op]=contains&behaviorFilters[filtersGroups][0][filters][0][value][0]=api_call&behaviorFilters[filtersGroups][0][count]=2&behaviorFilters[filtersGroups][0][countOp]=gte&seg[metrics][0][field]=user_id&seg[metrics][0][func]=cardinality&seg[metrics][0][customName]=Patients%20with%20Requests%20%3E%201&seg[chartType]=bar"
+    },
+    {
+      "_id": "698abefaf162f02cf73e8350",
+      "type": "events",
+      "name": "Recent Logs",
+      "args": "",
+      "es_query": {
+        "size": 50,
+        "_source": [
+          "id",
+          "_id",
+          "org_id",
+          "app_id",
+          "user_id",
+          "user.created",
+          "company_id",
+          "company.created",
+          "anonymous_id",
+          "identified_user_id",
+          "event_type",
+          "action_name",
+          "weight",
+          "direction",
+          "duration_ms",
+          "request.time",
+          "request.uri",
+          "request.route",
+          "request.verb",
+          "request.ip_address",
+          "request.user_agent.name",
+          "response.status",
+          "response.time",
+          "insights.anomaly",
+          "insights.event_anomaly",
+          "request.graphql.operation_name",
+          "request.graphql.definitions",
+          "jsonrpc.request.method",
+          "jsonrpc.request.params.call__method",
+          "jsonrpc.response.error",
+          "vtype_ids",
+          "blocked_by",
+          "span.id",
+          "span.status",
+          "span.parent_id",
+          "trace_id",
+          "log.severity",
+          "resource",
+          "request.time",
+          "user_id",
+          "metadata.client_id",
+          "metadata.iss",
+          "request.verb",
+          "response.status",
+          "request.route"
+        ],
+        "sort": [
+          {
+            "request.time": {
+              "order": "desc",
+              "unmapped_type": "long"
+            }
+          }
+        ]
+      },
+      "dateRange": {
+        "from": "-12w",
+        "to": "now"
+      },
+      "view": "table",
+      "funnel_query": {},
+      "urlQuery": "?shown_fields[0]=request.time&shown_fields[1]=user_id.raw&shown_fields[2]=metadata.client_id.raw&shown_fields[3]=metadata.iss.raw&shown_fields[4]=request.verb.raw&shown_fields[5]=response.status&shown_fields[6]=request.route.raw"
+    }
+  ]
+}

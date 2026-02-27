@@ -23,6 +23,8 @@ configurable string? tokenUrl = ();
 configurable string? clientId = ();
 configurable string? clientSecret = ();
 configurable string[]? scopes = ();
+configurable boolean urlRewrite = false;
+configurable string? replacementURL = ();
 
 # Get FHIR Connector configuration for Azure Health Data Services
 #
@@ -31,7 +33,9 @@ public isolated function getFhirConnectorConfig() returns fhirClient:FHIRConnect
 
     fhirClient:FHIRConnectorConfig fhirConfig = {
         baseURL: baseUrl,
-        mimeType: fhirClient:FHIR_JSON
+        mimeType: fhirClient:FHIR_JSON,
+        urlRewrite: urlRewrite,
+        replacementURL: replacementURL
     };
 
     string? tokenUrlVal = tokenUrl;

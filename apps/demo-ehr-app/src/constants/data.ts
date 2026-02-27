@@ -14,6 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
+import { v4 as uuidv4 } from "uuid";
 import { MEDICATION_RESPONSE } from "./localStorageVariables";
 
 export const SERVICE_CARD_DETAILS = [
@@ -1022,6 +1023,10 @@ export const CLAIM_REQUEST_BODY = (
                 },
                 provider: {
                   reference: `${provider}`,
+                  identifier: {
+                    system: "http://hl7.org/fhir/sid/us-npi",
+                    value: "N123456"
+                  }
                 },
                 insurance: [
                   {
@@ -1039,9 +1044,9 @@ export const CLAIM_REQUEST_BODY = (
                       coding: [
                         {
                           system:
-                            "http://terminology.hl7.org/CodeSystem/claiminformationcategory",
-                          code: "info",
-                          display: "Supporting Information",
+                            "http://hl7.org/fhir/us/davinci-pas/CodeSystem/PASTempCodes",
+                          code: "additionalInformation",
+                          display: "Additional Information",
                         },
                       ],
                     },
@@ -1109,6 +1114,7 @@ export const CREATE_MEDICATION_REQUEST_BODY = (
 
   return {
     resourceType: "MedicationRequest",
+    id: uuidv4(),
     subject: {
       reference: `Patient/${patientId}`,
     },
@@ -1175,11 +1181,13 @@ export const CREATE_MEDICATION_REQUEST_BODY = (
 
 export const CHECK_PAYER_REQUIREMENTS_REQUEST_BODY = (
   patientId: string,
-  practitionerId: string
+  practitionerId: string,
+  fhirServerUrl: string
 ) => {
   return {
     hook: "order-sign",
     hookInstance: "98765-wxyz-43210-lmno",
+    fhirServer: fhirServerUrl,
     context: {
       userId: `PractitionerRole/${practitionerId}`,
       patientId: `${patientId}`,

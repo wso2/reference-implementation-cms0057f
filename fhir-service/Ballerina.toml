@@ -2,7 +2,7 @@
 org = "wso2"
 name = "fhir.service"
 version = "1.0.0"
-distribution = "2201.12.3"
+distribution = "2201.12.11"
 keywords = ["Healthcare", "FHIR", "r4"]
 
 [build-options]

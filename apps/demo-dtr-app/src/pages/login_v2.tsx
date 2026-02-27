@@ -60,7 +60,7 @@ function LoginPage() {
               style={{ width: "450px", marginBottom: "20px" }}
             />
             <h1 style={{ color: "#4C585B" }}>Welcome</h1>
-            <p style={{ color: "#4C585B" }}>UnitedCare DTR App</p>
+            <p style={{ color: "#4C585B" }}>EHealth DTR App</p>
             <Button
               variant="success"
               style={{

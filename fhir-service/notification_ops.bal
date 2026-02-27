@@ -19,7 +19,7 @@ import ballerina/log;
 import ballerina/time;
 import ballerina/uuid;
 import ballerinax/health.clients.fhir as fhirClient;
-import ballerinax/health.fhir.r4.davincipas;
+import ballerinax/health.fhir.r4;
 import ballerinax/health.fhir.r4.international401;
 
 # Send notification for ClaimResponse update
@@ -39,7 +39,7 @@ public isolated function sendNotifications(
     log:printInfo(string `Sending notifications for ClaimResponse ${claimResponseId}`);
 
     // Get active subscriptions
-    davincipas:PASSubscription[] subscriptions =
+    international401:Subscription[] subscriptions =
         check getActiveSubscriptionsByOrg(fhirConnector, organizationId);
 
     if subscriptions.length() == 0 {
@@ -48,7 +48,7 @@ public isolated function sendNotifications(
     }
 
     // Send notification to each subscription
-    foreach davincipas:PASSubscription sub in subscriptions {
+    foreach international401:Subscription sub in subscriptions {
         error? result = sendNotification(sub, claimResponseId, claimResponse);
         if result is error {
             log:printError(string `Failed to send notification to ${sub.id ?: "unknown"}: ${result.message()}`);
@@ -63,7 +63,7 @@ public isolated function sendNotifications(
 # + claimResponse - ClaimResponse resource
 # + return - Error if sending fails
 isolated function sendNotification(
-        davincipas:PASSubscription subscription,
+        international401:Subscription subscription,
         string claimResponseId,
         international401:ClaimResponse claimResponse
 ) returns error? {
@@ -121,7 +121,7 @@ isolated function sendNotification(
 # + return - True if successful
 public isolated function sendHandshakeNotification(
         string subscriptionId,
-        davincipas:PASSubscription subscription
+        international401:Subscription subscription
 ) returns boolean|error {
 
     string endpoint = subscription.channel.endpoint ?: "";
@@ -197,7 +197,7 @@ public isolated function sendHandshakeNotification(
 # + claimResponse - ClaimResponse resource
 # + return - Notification bundle
 isolated function buildNotificationBundle(
-        davincipas:PASSubscription subscription,
+        international401:Subscription subscription,
         string claimResponseId,
         international401:ClaimResponse claimResponse
 ) returns NotificationBundle|error {
@@ -268,12 +268,22 @@ isolated function buildNotificationBundle(
     // Add ClaimResponse if full-resource payload
     string payloadType = extractPayloadType(subscription);
     if payloadType == "full-resource" {
+        r4:BundleEntry bundleEntryResponse = {
+            'resource: claimResponse,
+            fullUrl: string `urn:uuid:${claimResponseId}`
+        };
+
+        r4:Bundle responseBundle = {
+            'type: r4:BUNDLE_TYPE_COLLECTION,
+            entry: [bundleEntryResponse]
+        };
+
         entries.push({
-            fullUrl: string `ClaimResponse/${claimResponseId}`,
-            'resource: claimResponse.toJson(),
+            fullUrl: string `urn:uuid:${uuid:createType1AsString()}`,
+            'resource: responseBundle.toJson(),
             request: {
                 method: "PUT",
-                url: string `ClaimResponse/${claimResponseId}`
+                url: string `Bundle/${claimResponseId}`
             },
             response: {
                 status: "200"

@@ -173,11 +173,12 @@ const PrescribeForm = ({
       })
     );
 
+    const Config = window.Config;
     const payload = CHECK_PAYER_REQUIREMENTS_REQUEST_BODY(
       patientId,
-      practionerId
+      practionerId,
+      Config.fhirServerUrl
     );
-    const Config = window.Config;
 
     setCdsCards([]);
     localStorage.setItem(CDS_HOOK, "order-sign");
@@ -674,8 +675,8 @@ const RequirementCard = ({
                   requirementsResponsCard.indicator === "warning"
                     ? CHIP_COLOR_WARNING
                     : requirementsResponsCard.indicator === "critical"
-                    ? CHIP_COLOR_CRITICAL
-                    : CHIP_COLOR_INFO,
+                      ? CHIP_COLOR_CRITICAL
+                      : CHIP_COLOR_INFO,
                 color: "black",
                 borderRadius: "30px",
                 fontSize: "12px",
@@ -703,9 +704,53 @@ const RequirementCard = ({
               <ul>
                 {requirementsResponsCard.suggestions &&
                   requirementsResponsCard.suggestions.map(
-                    (suggestion, index) => (
-                      <li key={index}>{suggestion.label}</li>
-                    )
+                    (suggestion, index) => {
+                      // Check for Task resource in suggestion actions
+                      const taskAction = suggestion.actions?.find(
+                        (action) =>
+                          (action.resource as any)?.resourceType === "Task"
+                      );
+
+                      if (taskAction) {
+                        const task = taskAction.resource as any;
+                        const questionnaireUrl = task.input?.find(
+                          (i: any) => i.type?.text === "questionnaire"
+                        )?.valueCanonical;
+                        const medicationRequestId = task.basedOn?.[0]?.reference?.split(
+                          "/"
+                        )[1];
+                        const patientId = localStorage.getItem(
+                          SELECTED_PATIENT_ID
+                        );
+                        const coverageId = task.input?.find(
+                          (i: any) => i.type?.text === "coverage"
+                        )?.valueReference?.reference?.split("/")[1];
+                        const dtrUrl = `${window.Config.dtrAppUrl}?questionnaire=${questionnaireUrl}&medicationRequestId=${medicationRequestId}&patientId=${patientId}&coverageId=${coverageId}`;
+
+                        return (
+                          <div key={index} style={{ marginBottom: "10px" }}>
+                            <li>{suggestion.label}</li>
+                            <Button
+                              variant="primary"
+                              size="sm"
+                              style={{ marginTop: "5px" }}
+                              onClick={() => {
+                                loadQuestionnaires();
+                                window.open(
+                                  dtrUrl,
+                                  "_blank",
+                                  "noopener,noreferrer"
+                                );
+                              }}
+                            >
+                              Launch DTR
+                            </Button>
+                          </div>
+                        );
+                      }
+
+                      return <li key={index}>{suggestion.label}</li>;
+                    }
                   )}
               </ul>
             </div>

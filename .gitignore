@@ -67,3 +67,5 @@ node_modules/
 **/npm/
 **/dist/
 **/.devcontainer.json
+**/.vite
+**/.ai

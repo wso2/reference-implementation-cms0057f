@@ -32,6 +32,7 @@ declare global {
       prescribe_medication: string;
       questionnaire_package: string;
       questionnaire_response: string;
+      claim: string;
       claim_submit: string;
       radiology_order: string;
       book_imaging_center: string;
@@ -41,9 +42,12 @@ declare global {
       location: string;
       appointment: string;
       patient: string;
-      bulkExportFetch:string;
-      bulkExportKickoffUrl:string;
-      bulkExportStatusUrl:string;
+      bulkExportFetch: string;
+      bulkExportKickoffUrl: string;
+      bulkExportStatusUrl: string;
+      dtrAppUrl: string;
+      fhirServerUrl: string;
+      webhookServerUrl: string;
     };
   }
 }

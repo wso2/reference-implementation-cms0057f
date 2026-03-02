@@ -217,6 +217,12 @@ final r4:ResourceAPIConfig patientApiConfig = {
                     active: true
                 }
             ]
+        },
+        {
+            name: "summary",
+            active: true,
+            parameters: [
+            ]
         }
     ],
     serverConfig: (),

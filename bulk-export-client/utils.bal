@@ -23,25 +23,128 @@ import ballerinax/health.fhir.r4.international401;
 #
 # + serverConfig - Server configuration containing auth details
 # + return - HTTP client instance or error
-public isolated function createHttpClient(BulkExportServerConfig|ClientFhirServerConfig serverConfig) returns http:Client|error {
-    if serverConfig.authEnabled {
-        // Validate required fields
-        if serverConfig.tokenUrl is () || (<string>serverConfig.tokenUrl).length() == 0 {
+public isolated function createHttpClient(BulkExportServerConfig|ClientFhirServerConfig|PayerConfig serverConfig) returns http:Client|error {
+    map<json> configMap = check serverConfig.cloneWithType();
+    
+    boolean authEnabled = false;
+    if configMap.hasKey("authEnabled") {
+        authEnabled = check configMap.get("authEnabled").ensureType();
+    }
+    
+    string baseUrl = "";
+    if configMap.hasKey("baseUrl") {
+        baseUrl = check configMap.get("baseUrl").ensureType();
+    }
+    
+    if authEnabled {
+        string tokenUrl = "";
+        if configMap.hasKey("tokenUrl") {
+            tokenUrl = check configMap.get("tokenUrl").ensureType();
+        }
+        if tokenUrl.length() == 0 {
             return error("Missing required field: tokenUrl for OAuth2 authentication.");
         }
-        if serverConfig.clientId is () || (<string>serverConfig.clientId).length() == 0 {
+        
+        string clientId = "";
+        if configMap.hasKey("clientId") {
+            clientId = check configMap.get("clientId").ensureType();
+        }
+        if clientId.length() == 0 {
             return error("Missing required field: clientId for OAuth2 authentication.");
         }
+        
+        string clientSecret = "";
+        if configMap.hasKey("clientSecret") {
+            clientSecret = check configMap.get("clientSecret").ensureType();
+        }
+        
+        string[]? scopes = ();
+        if configMap.hasKey("scopes") {
+            json scopesJson = configMap.get("scopes");
+            if scopesJson is json[] {
+                scopes = check scopesJson.cloneWithType();
+            }
+        }
+        
         http:OAuth2ClientCredentialsGrantConfig config = {
-            tokenUrl: serverConfig.tokenUrl ?: "",
-            clientId: serverConfig.clientId ?: "",
-            clientSecret: serverConfig.clientSecret ?: "",
-            scopes: serverConfig.scopes
+            tokenUrl: tokenUrl,
+            clientId: clientId,
+            clientSecret: clientSecret,
+            scopes: scopes
         };
-        return check new (serverConfig.baseUrl, auth = config);
+        return check new (baseUrl, auth = config);
     } else {
-        return check new (serverConfig.baseUrl);
+        return check new (baseUrl);
     }
+}
+
+# Fetch target payer config dynamically.
+#
+# + payerId - Payer ID to retrieve configuration for.
+# + return - PayerConfig instance or error
+public isolated function getTargetPayerConfig(string payerId) returns PayerConfig|error {
+    string bffUrl = clientServiceConfig.bffUrl;
+    http:Client bffClient = check new (bffUrl);
+    
+    // Call <BFF_URL>/payers/<payer_id>
+    http:Response|error bffResponse = bffClient->get("/payers/" + payerId);
+    if bffResponse is error {
+        log:printError("Error fetching payer config from BFF", 'error = bffResponse);
+        return error("Failed to retrieve payer config from BFF.");
+    }
+    
+    if bffResponse.statusCode != 200 {
+        return error("BFF returned non-200 status code: " + bffResponse.statusCode.toString());
+    }
+    
+    json payload = check bffResponse.getJsonPayload();
+    map<json> payloadMap = <map<json>>payload;
+    
+    string payerName = <string>payloadMap["name"];
+    string fhirServerUrl = <string>payloadMap["fhir_server_url"];
+    string clientId = <string>payloadMap["app_client_id"];
+    string clientSecret = <string>payloadMap["app_client_secret"];
+    string smartConfigUrl = <string>payloadMap["smart_config_url"];
+    
+    string[] scopes = [];
+    if payloadMap["scopes"] != null {
+        // Handle scopes appropriately if needed. Assuming comma separated if present.
+        string scopesStr = <string>payloadMap["scopes"];
+        if scopesStr != "" {
+            scopes = re `,`.split(scopesStr);
+        }
+    }
+    
+    string defaultTokenUrl = fhirServerUrl + "/token";
+    http:Client|error smartConfigClient = new (smartConfigUrl);
+    if smartConfigClient is error {
+        log:printWarn("Failed to create HTTP client for SMART configuration", 'error = smartConfigClient);
+    } else {
+        http:Response|error smartConfigResponse = smartConfigClient->get("/.well-known/smart-configuration");
+        if smartConfigResponse is http:Response {
+            var smartPayload = smartConfigResponse.getJsonPayload();
+            if smartPayload is json {
+                map<json> smartPayloadMap = <map<json>>smartPayload;
+                string tokenUrl = <string>smartPayloadMap["token_endpoint"];
+                if tokenUrl != "" {
+                    defaultTokenUrl = tokenUrl;
+                }
+            }
+        }
+    }
+
+    PayerConfig config = {
+        payerId: payerId,
+        payerName: payerName,
+        baseUrl: fhirServerUrl,
+        tokenUrl: defaultTokenUrl,
+        clientId: clientId,
+        clientSecret: clientSecret,
+        scopes: scopes,
+        fileServerUrl: (),
+        authEnabled: true
+    };
+    return config;
 }
 
 # Schedule Ballerina task .

@@ -78,6 +78,32 @@ isolated function invokePatientExport(string patientId, map<string[]> queryParam
     return response;
 }
 
+isolated function invokePatientSummary(string patientId, map<string[]> queryParameters) returns r4:FHIRError|http:Response|error {
+    fhirClient:FHIRResponse|fhirClient:FHIRError summaryResponse =
+        fhirConnector->callOperation(PATIENT, "$summary", fhirClient:GET, id = patientId, queryParameters = queryParameters);
+
+    if summaryResponse is fhirClient:FHIRError {
+        int statusCode = http:STATUS_INTERNAL_SERVER_ERROR;
+        if summaryResponse is fhirClient:FHIRServerError {
+            statusCode = summaryResponse.detail().httpStatusCode;
+        }
+        return r4:createFHIRError(summaryResponse.message(), r4:ERROR, r4:PROCESSING, httpStatusCode = statusCode);
+    }
+
+    http:Response response = new;
+    response.statusCode = summaryResponse.httpStatusCode;
+    
+    json|xml summaryPayload = summaryResponse.'resource;
+    if summaryPayload is json {
+        if summaryPayload != () {
+            response.setJsonPayload(summaryPayload);
+        }
+    } else if summaryPayload is xml {
+        response.setXmlPayload(summaryPayload);
+    }
+    return response;
+}
+
 // ######################################################################################################################
 // # Capability statement API                                                                                           #
 // ###################################################################################################################### 
@@ -279,6 +305,20 @@ service /fhir/r4/Patient on new fhirr4:Listener(config = patientApiConfig) {
         log:printDebug("Invoking export with query parameters: " + queryParameters.toString());
         return invokePatientExport(id, queryParameters, fhirClient:GET);
 
+    }
+
+    // Implementation of the $summary operation
+    isolated resource function get [string id]/\$summary(r4:FHIRContext fhirContext) returns r4:FHIRError|http:Response|error {
+        log:printDebug("Patient-level summary invoked for patient id: " + id);
+        map<string[]> queryParameters = {};
+
+        r4:FHIRRequest? fhirRequest = fhirContext.getFHIRRequest();
+        if fhirRequest !is () {
+            queryParameters = getQueryParamsMap(fhirRequest.getSearchParameters());
+        }
+
+        log:printDebug("Invoking summary with query parameters: " + queryParameters.toString());
+        return invokePatientSummary(id, queryParameters);
     }
 
     // Read the current state of single resource based on its id.

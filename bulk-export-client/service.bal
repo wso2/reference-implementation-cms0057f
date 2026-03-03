@@ -147,8 +147,8 @@ public isolated function triggerBulkExport(MatchedPatient[] matchedPatients, str
 
                 // kick-off request to the bulk export server
                 // No Prefer header requested
-                status = httpClient->post(
-                    path, (),
+                status = httpClient->get(
+                    path,
                     headers = {
                     "Accept": "application/fhir+json",
                     "Content-Type": "application/fhir+json"

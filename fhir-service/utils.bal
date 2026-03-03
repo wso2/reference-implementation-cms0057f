@@ -834,15 +834,6 @@ isolated function updateCommunicationRequestAndClaim(international401:Parameters
 
     r4:DomainResource communicationRequestJson = check getById(fhirConnector, COMMUNICATION_REQUEST, commReqId);
     davincipas:PASCommunicationRequest communicationRequest = check communicationRequestJson.cloneWithType();
-    communicationRequest.status = "completed";
-    r4:DomainResource|r4:FHIRError updatedComReqJson = 
-        check update(fhirConnector, COMMUNICATION_REQUEST, communicationRequest.toJson());
-    if updatedComReqJson is r4:FHIRError {
-        log:printError("Failed to update CommunicationRequest: " + updatedComReqJson.message());
-        return createOpereationOutcome(r4:CODE_SEVERITY_ERROR, r4:ERROR, 
-            "Failed to update CommunicationRequest");
-    }
-    log:printDebug(string `CommunicationRequest ${commReqId} updated to completed status successfully`);
 
     // get claim id
     string claimId = "";
@@ -887,6 +878,16 @@ isolated function updateCommunicationRequestAndClaim(international401:Parameters
 
     r4:DomainResource _ = check update(fhirConnector, CLAIM, claim.toJson());
     log:printDebug(string `Claim ${claimId} updated successfully`);
+
+    communicationRequest.status = "completed";
+    r4:DomainResource|r4:FHIRError updatedComReqJson = 
+        check update(fhirConnector, COMMUNICATION_REQUEST, communicationRequest.toJson());
+    if updatedComReqJson is r4:FHIRError {
+        log:printError("Failed to update CommunicationRequest: " + updatedComReqJson.message());
+        return createOpereationOutcome(r4:CODE_SEVERITY_ERROR, r4:ERROR, 
+            "Failed to update CommunicationRequest");
+    }
+    log:printDebug(string `CommunicationRequest ${commReqId} updated to completed status successfully`);
     
     r4:OperationOutcome outcome = {
         resourceType: "OperationOutcome",

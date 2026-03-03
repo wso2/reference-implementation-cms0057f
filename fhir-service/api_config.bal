@@ -406,6 +406,39 @@ final r4:ResourceAPIConfig ClaimApiConfig = {
                     min: 0
                 }
             ]
+        },
+        {
+            name: "submit-attachment",
+            active: true,
+            parameters: [
+                {
+                    name: "Attachment",
+                    active: true,
+                    min: 1,
+                    parts: [
+                        {
+                            name: "Content",
+                            active: true,
+                            min: 1
+                        },
+                        {
+                            name: "Code",
+                            active: true,
+                            min: 0
+                        },
+                        {
+                            name: "LineItem",
+                            active: true,
+                            min: 0
+                        }
+                    ]
+                },
+                {
+                    name: "TrackingId",
+                    active: true,
+                    min: 1
+                }
+            ]
         }
 
     ],
@@ -1119,6 +1152,25 @@ final r4:ResourceAPIConfig subscriptionApiConfig = {
         }
     ],
     operations: [],
+    serverConfig: (),
+    authzConfig: ()
+};
+
+# ######################################################################################################################
+# Communication Request API Configs                                                                                            #
+# ######################################################################################################################
+
+final r4:ResourceAPIConfig communicationRequestApiConfig = {
+    resourceType: "CommunicationRequest",
+    profiles: [
+        "http://hl7.org/fhir/us/davinci-pas/StructureDefinition/profile-communicationrequest"
+    ],
+    defaultProfile: (),
+    searchParameters: [
+    ],
+    operations: [
+
+    ],
     serverConfig: (),
     authzConfig: ()
 };

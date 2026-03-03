@@ -71,3 +71,21 @@ public isolated function search(fhirClient:FHIRConnector fhirConnector, Resource
 
     return r4:createFHIRError("Failed to search resources", r4:ERROR, r4:PROCESSING, httpStatusCode = http:STATUS_INTERNAL_SERVER_ERROR);
 }
+
+public isolated function update(fhirClient:FHIRConnector fhirConnector, ResourceType resourceType, json payload) returns r4:DomainResource|r4:FHIRError {
+    fhirClient:FHIRResponse|fhirClient:FHIRError response = fhirConnector->update(payload, returnPreference = "representation");
+
+    if response is fhirClient:FHIRError {
+        return r4:createFHIRError(response.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+    }
+
+    if response.'resource is json {
+        r4:DomainResource|error resourceResult = response.'resource.cloneWithType();
+        if resourceResult is error {
+            return r4:createFHIRError("Failed to clone resource: " + resourceResult.message(), r4:ERROR, r4:PROCESSING, httpStatusCode = http:STATUS_INTERNAL_SERVER_ERROR);
+        }
+        return resourceResult;
+    }
+
+    return r4:createFHIRError("Failed to update resource", r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_INTERNAL_SERVER_ERROR);
+}

@@ -360,6 +360,95 @@ public isolated function claimSubmit(international401:Parameters payload) return
     return r4:createFHIRError("Something went wrong", r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
 }
 
+public isolated function submitAttachments(international401:Parameters payload) 
+    returns r4:FHIRError|davincipas:PASClaimSupportingInfo[]|error {
+
+    international401:Parameters|error 'parameters = 
+        parser:parseWithValidation(payload.toJson(), international401:Parameters).ensureType();
+
+    if 'parameters is error {
+        return r4:createFHIRError('parameters.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+    } else {
+        string trackingId = "";
+        international401:ParametersParameter[]? 'parameter = 'parameters.'parameter;
+        davincipas:PASClaimSupportingInfo[] supportingInfoList = [];
+        if 'parameter is international401:ParametersParameter[] {
+            foreach var item in 'parameter {
+                if item.name == "Attachment" {
+                    r4:ParametersParameter[]? parts = item.part;
+                    if parts is () {
+                        return r4:createFHIRError("Attachment parameter must have parts", r4:ERROR, r4:INVALID, 
+                            httpStatusCode = http:STATUS_BAD_REQUEST);
+                    }
+                    foreach r4:ParametersParameter part in parts {
+                        r4:Resource? resourceResult = part.'resource;
+                        if resourceResult is r4:Resource {
+                            // if resource type is DocumentReference, then create a DocumentReference 
+                            // resource in the FHIR server.
+                            if resourceResult.resourceType == "DocumentReference" {
+                                international401:DocumentReference documentReferenceResource = 
+                                    check parser:parse(resourceResult.toJson(), international401:DocumentReference)
+                                    .ensureType();
+                                documentReferenceResource.id = uuid:createType1AsString();
+                                // create document reference resource in the FHIR server
+                                r4:DomainResource _ = check create(fhirConnector, DOCUMENT_REFERENCE, 
+                                    documentReferenceResource.toJson());
+                                // create supporting info
+                                davincipas:PASClaimSupportingInfo supportingInfo = {
+                                    valueReference: {reference: "DocumentReference/" + 
+                                        <string>documentReferenceResource.id},
+                                    sequence: 1, // todo
+                                    category: {
+                                        coding: [
+                                            {
+                                                system: "http://terminology.hl7.org/CodeSystem/claiminformationcategory",
+                                                code: "info",
+                                                display: "Supporting Information"
+                                            }
+                                        ]
+                                    }
+                                };
+                                supportingInfoList.push(supportingInfo);
+
+                            } else if resourceResult.resourceType == "QuestionnaireResponse" {
+                                international401:QuestionnaireResponse questionnaireResponseResource = 
+                                    check parser:parse(resourceResult.toJson(), international401:QuestionnaireResponse)
+                                    .ensureType();
+
+                                davincipas:PASClaimSupportingInfo supportingInfo = {
+                                    valueReference: {reference: "QuestionnaireResponse/" + 
+                                        <string>questionnaireResponseResource.id},
+                                    sequence: 1,
+                                    category: {
+                                        coding: [
+                                            {
+                                                system: "http://terminology.hl7.org/CodeSystem/claiminformationcategory",
+                                                code: "info",
+                                                display: "Supporting Information"
+                                            }
+                                        ]
+                                    }
+                                };
+                                supportingInfoList.push(supportingInfo);
+                            }
+                        }
+                    }
+                }
+                if item.name == "TrackingId" {
+                    if item.valueString is string {
+                        trackingId = item.valueString ?: "";
+                    }
+                }
+            }
+        }
+        if trackingId != "" && supportingInfoList.length() > 0 {
+            return supportingInfoList.clone();
+        }
+    }
+    return r4:createFHIRError("Something went wrong", r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+}
+
+
 # Helper function to validate consent
 #
 # + consent - The consent resource to validate
@@ -722,4 +811,101 @@ isolated function checkForDuplicateConsent(Consent consent) returns r4:FHIRError
         }
     }
     return ();
+}
+
+ 
+isolated function updateCommunicationRequestAndClaim(international401:Parameters parameters,
+    davincipas:PASClaimSupportingInfo[] supportingInfo) returns r4:OperationOutcome|error {
+
+    international401:ParametersParameter[]? 'parameter = 'parameters.'parameter;
+    if 'parameter is international401:ParametersParameter[] {
+        foreach var item in 'parameter {
+            if item.name == "TrackingId" {
+                if item.valueString is string {
+                    string commReqId = item.valueString ?: "";
+                    r4:DomainResource communicationRequestJson = 
+                        check getById(fhirConnector, COMMUNICATION_REQUEST, commReqId);
+                    davincipas:PASCommunicationRequest communicationRequest = 
+                        check communicationRequestJson.cloneWithType();
+
+                    communicationRequest.status = "completed";
+
+                    r4:DomainResource|r4:FHIRError updatedComReqJson = 
+                        check update(fhirConnector, COMMUNICATION_REQUEST, communicationRequest.toJson());
+                    if updatedComReqJson is r4:FHIRError {
+                        log:printError("Failed to update CommunicationRequest: " + updatedComReqJson.message());
+                        return createOpereationOutcome(r4:CODE_SEVERITY_ERROR, r4:ERROR, 
+                            "Failed to update CommunicationRequest");
+                    }
+                    log:printDebug(string `CommunicationRequest ${commReqId} updated to completed status successfully`);
+
+                    // get claim id
+                    string claimId = "";
+                    r4:Reference[]? about = communicationRequest.about;
+                    if about is r4:Reference[] && about.length() > 0 {
+                        string? calimRef = about[0].reference;
+                        if calimRef is string {
+                            string:RegExp slash = re `/`;
+                            string[] refParts = slash.split(calimRef);
+                            if refParts.length() == 2 {
+                                claimId = refParts[1];
+                            }
+                        }
+                    }
+                    if claimId == "" {
+                        log:printError("Failed to find linked claim reference in CommunicationRequest");
+                        return createOpereationOutcome(r4:CODE_SEVERITY_ERROR, r4:ERROR, 
+                            "Failed to find linked claim reference in CommunicationRequest");
+                    }
+
+
+                    r4:DomainResource claimResource = check getById(fhirConnector, CLAIM, claimId);
+                    davincipas:PASClaim claim = check claimResource.cloneWithType();
+
+                    davincipas:PASClaimSupportingInfo[] existingSupportingInfo = claim.supportingInfo ?: [];
+                    // get last supporting info sequence number and increment for new supporting info.
+                    // sort supporting info by sequence number and then add new supporting info to the end of the list.
+                    int maxSequence = 0;
+                    foreach davincipas:PASClaimSupportingInfo info in existingSupportingInfo {
+                        if info.sequence is int {
+                            if info.sequence > maxSequence {
+                                maxSequence = info.sequence;
+                            }
+                        }
+                    }
+                    foreach davincipas:PASClaimSupportingInfo info in supportingInfo {
+                        info.sequence += maxSequence;
+                        existingSupportingInfo.push(info);
+                    }
+                    claim.supportingInfo = existingSupportingInfo;
+
+                    r4:DomainResource _ = check update(fhirConnector, CLAIM, claim.toJson());
+                    log:printDebug(string `Claim ${claimId} updated successfully`);
+                    
+                    r4:OperationOutcome outcome = {
+                        resourceType: "OperationOutcome",
+                        issue: [
+                            {
+                                severity: r4:CODE_SEVERITY_INFORMATION,
+                                code: r4:INFORMATIONAL,
+                                diagnostics: "Submit attachment successful. CommunicationRequest status updated to " +
+                                    " completed."
+                            }
+                        ]
+                    };
+                    return outcome;
+                    
+                } else {
+                    log:printError("TrackingId parameter is invalid");
+                    return createOpereationOutcome(r4:CODE_SEVERITY_ERROR, r4:ERROR, "TrackingId parameter is invalid");
+                }
+            } else {
+                log:printError("TrackingId parameter is missing");
+                return createOpereationOutcome(r4:CODE_SEVERITY_ERROR, r4:ERROR, "TrackingId parameter is missing");
+            }
+        }
+        
+    }
+    log:printError("TrackingId parameter is missing");
+    return createOpereationOutcome(r4:CODE_SEVERITY_ERROR, r4:ERROR, "TrackingId parameter is missing");
 }

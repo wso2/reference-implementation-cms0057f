@@ -22,6 +22,7 @@ import ballerinax/health.fhir.r4;
 import ballerinax/health.fhir.r4.ips;
 import ballerinax/health.fhir.r4.parser;
 import ballerinax/health.fhir.r4.international401;
+import ballerina/uuid;
 
 // ============================================
 // Prior Authorization Request Utility Functions
@@ -1296,5 +1297,112 @@ public function submitPARequestAdjudication(string responseId, AdjudicationSubmi
         id: <string>pasClaimResponse.id,
         status: adjudication.decision,
         message: "Adjudication submitted successfully"
+    };
+}
+
+// ============================================
+// Request Additional Information Submission Functions
+// ============================================
+
+# Submit PA request additional information request
+#
+# + responseId - PA response (ClaimResponse) ID to submit additional information for
+# + additionalInformation - Additional information submission data
+# + return - AdditionalInfoResponse or error
+public function submitPARequestAdditionalInfo(string responseId, AdditionalInformation additionalInformation) 
+    returns AdditionalInfoResponse|error {
+    // Fetch existing ClaimResponse
+    international401:ClaimResponse claimResponse = check getClaimResponse(responseId, limited = false);
+    
+    // create communication request for additional information using the data from additionalInformation and 
+    // link it to the claim response
+    json[] payload = [];
+    foreach string code in additionalInformation.informationCodes {
+        json payloadItem = {
+            contentString: code
+        };
+        payload.push(payloadItem);
+    }
+
+    json? subjectJson = ();
+    if claimResponse.patient is r4:Reference {
+        subjectJson = (<r4:Reference>claimResponse.patient).toJson();
+    }
+
+    json[] about = [];
+    if claimResponse.request is r4:Reference {
+        about.push((<r4:Reference>claimResponse.request).toJson());
+    }
+
+    json communicationRequest = {
+        resourceType: "CommunicationRequest",
+        id: uuid:createType1AsString(),
+        meta: {
+            profile: ["http://hl7.org/fhir/us/davinci-pas/StructureDefinition/profile-communicationrequest"]
+        },
+        status: "active",
+        category: [
+            {
+                coding: [
+                    {
+                        "system": "http://terminology.hl7.org/CodeSystem/communication-category",
+                        "code": "instruction"
+                    }
+                ]
+            }
+        ],
+        priority: additionalInformation.priority,
+        occurrenceDateTime: time:utcToString(time:utcNow()),
+        subject: subjectJson,
+        about: about,
+        reasonCode: [{
+            coding: [{
+                system: "http://terminology.hl7.org/CodeSystem/v3-ActReason",
+                code: "priorAuthorization"
+            }]
+        }],
+        
+        payload: payload
+    };
+
+    json|http:ClientError communicationResponse = fhirHttpClient->post("/CommunicationRequest", communicationRequest, 
+        headers = {"Content-Type": "application/fhir+json"});
+    if communicationResponse is http:ClientError {
+        log:printError("Failed to create CommunicationRequest: " + communicationResponse.message());
+        return error("Failed to create CommunicationRequest: " + communicationResponse.message());
+    }
+
+    string commId = "";
+    if communicationResponse is json {
+        json|error commIdJson = communicationResponse.id;
+        if commIdJson is string {
+            commId = commIdJson;
+        }
+    }
+
+    if commId.length() == 0 {
+        return error("CommunicationRequest ID not found in response");
+    }
+
+    log:printDebug(string `Communication request created with id: ${commId}`);
+    
+    r4:Reference[] commRefs = [];
+    if claimResponse.communicationRequest is r4:Reference[] {
+        commRefs = <r4:Reference[]>claimResponse.communicationRequest;
+    }
+    commRefs.push({ reference: "CommunicationRequest/" + commId });
+    claimResponse.communicationRequest = commRefs;
+
+    json claimResponseJson = claimResponse.toJson();
+    json|http:ClientError updateResponse = fhirHttpClient->put(CLAIM_RESPONSE + "/" + responseId, claimResponseJson, headers = {"Content-Type": "application/fhir+json"});
+    if updateResponse is http:ClientError {
+        log:printError("Failed to update ClaimResponse with CommunicationRequest: " + updateResponse.message());
+        return error("Failed to update ClaimResponse with CommunicationRequest: " + updateResponse.message());
+    }
+    log:printDebug("ClaimResponse updated with CommunicationRequest reference: " + commId);
+    return {
+        id: <string>claimResponse.id,
+        status: claimResponse.status,
+        message: "Additional information request submitted successfully"
     };
 }

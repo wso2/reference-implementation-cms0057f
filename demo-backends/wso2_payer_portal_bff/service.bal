@@ -309,6 +309,27 @@ service /v1 on bff_listener {
         return response;
     }
 
+    # Request additional information for a PA request
+    #
+    # + requestId - PA claim response identifier
+    # + return - returns can be any of following types 
+    # http:Ok (Adjudication submitted successfully)
+    # http:NotFound (PA request not found)
+    # http:InternalServerError (Internal server error)
+    resource function post pa\-requests/[string requestId]/additional\-info(@http:Payload AdditionalInformation payload) 
+        returns http:Ok|http:NotFound|http:InternalServerError {
+
+        AdditionalInfoResponse|error result = submitPARequestAdditionalInfo(requestId, payload);
+        if (result is error) {
+            log:printError("Failed to submit additional info: " + result.message());
+            if (result.message().includes("not found") || result.message().includes("404")) {
+                return http:NOT_FOUND;
+            }
+            return http:INTERNAL_SERVER_ERROR;
+        }
+        return http:OK;
+    }
+
     resource function get patients/[string patientId]() returns json|http:NotFound|http:InternalServerError {
         json|error patient = getFHIRPatientById(patientId);
         if (patient is error) {

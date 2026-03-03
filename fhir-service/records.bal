@@ -48,6 +48,7 @@ public enum ResourceType {
     CARE_PLAN = "CarePlan",
     CLAIM = "Claim",
     CLAIM_RESPONSE = "ClaimResponse",
+    COMMUNICATION_REQUEST = "CommunicationRequest",
     CONDITION = "Condition",
     COVERAGE = "Coverage",
     DEVICE = "Device",

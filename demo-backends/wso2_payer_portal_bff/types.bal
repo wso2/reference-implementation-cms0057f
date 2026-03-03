@@ -460,3 +460,31 @@ type ResourceEntry record {
     r4:Meta meta;
     r4:Reference request;
 };
+
+public type CommunicationRequestStatus "draft" | "active" | "on-hold" | "revoked" | "completed" | "entered-in-error" | 
+    "unknown";
+
+# Request priority
+public type PARequestPriority "routine"|"urgent"|"asap"|"stat";
+
+# Additional Info Response
+#
+# + informationCodes - information codes
+# + reasonCode - reason code (FHIR CodeableConcept)
+# + priority - request priority
+public type AdditionalInformation record {
+    string[] informationCodes;
+    json? reasonCode; // FHIR CodeableConcept
+    PARequestPriority priority;
+};
+
+# AdditionalInfo Response
+#
+# + id - id of the additional info response
+# + status - status of the additional info response
+# + message - message of the additional info response
+public type AdditionalInfoResponse record {
+    string id;
+    string status;
+    string message;
+};

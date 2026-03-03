@@ -2732,7 +2732,29 @@ paths:
       security:
         - default: []
       x-auth-type: Application & Application User
-
+  /Patient/{id}/$summary:
+    get:
+      tags:
+        - GET
+        - Patient
+        - Operation
+      parameters:
+        - name: id
+          in: path
+          description: logical identifier
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Patient IPS $summary operation successful
+          content:
+            application/fhir+json:
+              schema:
+                $ref: "#/components/schemas/Bundle"
+      security:
+        - default: []
+      x-auth-type: Application & Application User
   /_export/status/{jobId}:
     get:
       operationId: getExportJobStatus
@@ -3211,6 +3233,330 @@ paths:
       responses:
         "200":
           description: patch Practitioner operation successful
+      security:
+        - default: []
+      x-auth-type: Application & Application User
+  /PractitionerRole:
+    get:
+      tags:
+        - GET
+        - PractitionerRole
+      parameters:
+        - name: email
+          in: query
+          description:
+            "Multiple Resources: \r\n\r\n* [Patient](patient.html): A value\
+            \ in an email contact\r\n* [Person](person.html): A value in an email contact\r\
+            \n* [Practitioner](practitioner.html): A value in an email contact\r\n*\
+            \ [PractitionerRole](practitionerrole.html): A value in an email contact\r\
+            \n* [RelatedPerson](relatedperson.html): A value in an email contact"
+          required: false
+          schema:
+            type: string
+          x-wso2-oh-fhirType: token
+        - name: phone
+          in: query
+          description:
+            "Multiple Resources: \r\n\r\n* [Patient](patient.html): A value\
+            \ in a phone contact\r\n* [Person](person.html): A value in a phone contact\r\
+            \n* [Practitioner](practitioner.html): A value in a phone contact\r\n* [PractitionerRole](practitionerrole.html):\
+            \ A value in a phone contact\r\n* [RelatedPerson](relatedperson.html): A\
+            \ value in a phone contact"
+          required: false
+          schema:
+            type: string
+          x-wso2-oh-fhirType: token
+        - name: telecom
+          in: query
+          description:
+            "Multiple Resources: \r\n\r\n* [Patient](patient.html): The value\
+            \ in any kind of telecom details of the patient\r\n* [Person](person.html):\
+            \ The value in any kind of contact\r\n* [Practitioner](practitioner.html):\
+            \ The value in any kind of contact\r\n* [PractitionerRole](practitionerrole.html):\
+            \ The value in any kind of contact\r\n* [RelatedPerson](relatedperson.html):\
+            \ The value in any kind of contact"
+          required: false
+          schema:
+            type: string
+          x-wso2-oh-fhirType: token
+        - name: active
+          in: query
+          description: Whether this practitioner role record is in active use
+          required: false
+          schema:
+            type: string
+          x-wso2-oh-fhirType: token
+        - name: date
+          in: query
+          description:
+            The period during which the practitioner is authorized to perform
+            in these role(s)
+          required: false
+          schema:
+            type: string
+          x-wso2-oh-fhirType: date
+        - name: endpoint
+          in: query
+          description:
+            Technical endpoints providing access to services operated for
+            the practitioner with this role
+          required: false
+          schema:
+            type: string
+          x-wso2-oh-fhirType: reference
+        - name: identifier
+          in: query
+          description: A practitioner's Identifier
+          required: false
+          schema:
+            type: string
+          x-wso2-oh-fhirType: token
+        - name: location
+          in: query
+          description: One of the locations at which this practitioner provides care
+          required: false
+          schema:
+            type: string
+          x-wso2-oh-fhirType: reference
+        - name: organization
+          in: query
+          description:
+            The identity of the organization the practitioner represents
+            / acts on behalf of
+          required: false
+          schema:
+            type: string
+          x-wso2-oh-fhirType: reference
+        - name: practitioner
+          in: query
+          description:
+            Practitioner that is able to provide the defined services for
+            the organization
+          required: false
+          schema:
+            type: string
+          x-wso2-oh-fhirType: reference
+        - name: role
+          in: query
+          description: The practitioner can perform this role at for the organization
+          required: false
+          schema:
+            type: string
+          x-wso2-oh-fhirType: token
+        - name: service
+          in: query
+          description:
+            The list of healthcare services that this worker provides for
+            this role's Organization/Location(s)
+          required: false
+          schema:
+            type: string
+          x-wso2-oh-fhirType: reference
+        - name: specialty
+          in: query
+          description: The practitioner has this specialty at an organization
+          required: false
+          schema:
+            type: string
+          x-wso2-oh-fhirType: token
+        - $ref: "#/components/parameters/_lastUpdatedParam"
+        - $ref: "#/components/parameters/_securityParam"
+        - $ref: "#/components/parameters/_tagParam"
+        - $ref: "#/components/parameters/_idParam"
+        - $ref: "#/components/parameters/_sourceParam"
+        - $ref: "#/components/parameters/_profileParam"
+      responses:
+        "200":
+          description: search PractitionerRole operation successful
+          content:
+            application/fhir+json:
+              schema:
+                $ref: "#/components/schemas/Bundle"
+      security:
+        - default: []
+      x-auth-type: Application & Application User
+    post:
+      tags:
+        - POST
+        - PractitionerRole
+      requestBody:
+        content:
+          application/fhir+json:
+            schema:
+              $ref: "#/components/schemas/PractitionerRole"
+        required: true
+      responses:
+        "201":
+          description: create PractitionerRole operation successful
+          content:
+            application/fhir+json:
+              schema:
+                $ref: "#/components/schemas/PractitionerRole"
+      security:
+        - default: []
+      x-auth-type: Application & Application User
+  /PractitionerRole/{id}:
+    get:
+      tags:
+        - GET
+        - PractitionerRole
+      parameters:
+        - name: id
+          in: path
+          description: logical identifier
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: read PractitionerRole operation successful
+          content:
+            application/fhir+json:
+              schema:
+                $ref: "#/components/schemas/PractitionerRole"
+      security:
+        - default: []
+      x-auth-type: Application & Application User
+    put:
+      tags:
+        - PUT
+        - PractitionerRole
+      parameters:
+        - name: id
+          in: path
+          description: logical identifier
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: update PractitionerRole operation successful
+      security:
+        - default: []
+      x-auth-type: Application & Application User
+    delete:
+      tags:
+        - DELETE
+        - PractitionerRole
+      parameters:
+        - name: id
+          in: path
+          description: logical identifier
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: delete PractitionerRole operation successful
+      security:
+        - default: []
+      x-auth-type: Application & Application User
+    patch:
+      tags:
+        - PATCH
+        - PractitionerRole
+      parameters:
+        - name: id
+          in: path
+          description: logical identifier
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: patch PractitionerRole operation successful
+      security:
+        - default: []
+      x-auth-type: Application & Application User
+  # History Operations
+  /PractitionerRole/_history:
+    get:
+      tags:
+        - GET
+        - PractitionerRole
+        - History
+      responses:
+        "200":
+          description: PractitionerRole history operation successful
+          content:
+            application/fhir+json:
+              schema:
+                $ref: "#/components/schemas/Bundle"
+      security:
+        - default: []
+      x-auth-type: Application & Application User
+  /PractitionerRole/{id}/_history:
+    get:
+      tags:
+        - GET
+        - PractitionerRole
+        - History
+      parameters:
+        - name: id
+          in: path
+          description: logical identifier
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: PractitionerRole resource history operation successful
+          content:
+            application/fhir+json:
+              schema:
+                $ref: "#/components/schemas/Bundle"
+      security:
+        - default: []
+      x-auth-type: Application & Application User
+  /PractitionerRole/{id}/_history/{vid}:
+    get:
+      tags:
+        - GET
+        - PractitionerRole
+        - History
+      parameters:
+        - name: id
+          in: path
+          description: logical identifier
+          required: true
+          schema:
+            type: string
+        - name: vid
+          in: path
+          description: version identifier
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: read PractitionerRole version operation successful
+          content:
+            application/fhir+json:
+              schema:
+                $ref: "#/components/schemas/PractitionerRole"
+      security:
+        - default: []
+      x-auth-type: Application & Application User
+  # FHIR Operations
+  /PractitionerRole/$validate:
+    post:
+      tags:
+        - POST
+        - PractitionerRole
+        - Operation
+      requestBody:
+        content:
+          application/fhir+json:
+            schema:
+              $ref: "#/components/schemas/Parameters"
+        required: true
+      responses:
+        "200":
+          description: validate PractitionerRole operation successful
+          content:
+            application/fhir+json:
+              schema:
+                $ref: "#/components/schemas/OperationOutcome"
       security:
         - default: []
       x-auth-type: Application & Application User

@@ -35,6 +35,10 @@ export default function PriorAuthList() {
 
     useEffect(() => {
         fetchPriorAuths();
+        const intervalId = setInterval(() => {
+            fetchPriorAuths();
+        }, 5000);
+        return () => clearInterval(intervalId);
     }, []);
 
     const fetchPriorAuths = async () => {

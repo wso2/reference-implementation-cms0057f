@@ -22,11 +22,10 @@ import Button from "react-bootstrap/Button";
 import { useDispatch, useSelector } from "react-redux";
 import { CLAIM_REQUEST_BODY, PATIENT_DETAILS } from "../constants/data";
 import { useAuth } from "../components/AuthProvider";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { Alert, Snackbar } from "@mui/material";
 import { selectPatient } from "../redux/patientSlice";
-import Lottie from "react-lottie";
-import successAnimation from "../animations/success-animation.json"; // Add your animation JSON file here
+
 import { updateIsProcess } from "../redux/currentStateSlice";
 import {
   StepStatus,
@@ -54,12 +53,13 @@ const ClaimForm = () => {
       };
     }) => state.medicationFormData
   );
+  const navigate = useNavigate();
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const [alertSeverity, setAlertSeverity] = useState<
     "error" | "warning" | "info" | "success"
   >("info");
   const [openSnackbar, setOpenSnackbar] = useState(false);
-  const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
+
   const pollIntervalRef = React.useRef<any>(null);
 
   useEffect(() => {
@@ -244,41 +244,19 @@ const ClaimForm = () => {
             }).catch(err => console.error("Failed to register claim for tracking", err));
           }
 
-          if (outcome === "complete") {
-            setAlertMessage("Prior Authorization Status: Completed");
-            setAlertSeverity("success");
-            setShowSuccessAnimation(true);
-          } else if (outcome === "partial") {
-            setAlertMessage("Prior Authorization Status: Pending. Waiting for updates...");
-            setAlertSeverity("warning");
-
-            if (claimId) {
-              const webhookUrl = Config.webhookServerUrl || "http://localhost:9099";
-              pollIntervalRef.current = setInterval(() => {
-                axios.get(`${webhookUrl}/claim-status/${claimId}`)
-                  .then(pollRes => {
-                    if (pollRes.status === 200 && pollRes.data.outcome === "complete") {
-                      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-                      setAlertMessage("Prior Authorization Status: Completed");
-                      setAlertSeverity("success");
-                      setShowSuccessAnimation(true);
-                    }
-                  })
-                  .catch(() => {
-                    // Ignore 404s while waiting
-                  });
-              }, 3000);
-            }
+          if (outcome === "complete" || outcome === "partial") {
+            navigate("/dashboard/prior-auth-list");
           } else {
             console.log("Prior Authorization error:", response.data);
             setAlertMessage("Prior Authorization error");
             setAlertSeverity("error");
+            setOpenSnackbar(true);
           }
         } else {
           setAlertMessage("Error submitting claim");
           setAlertSeverity("error");
+          setOpenSnackbar(true);
         }
-        setOpenSnackbar(true);
 
         localStorage.setItem(CLAIM_RESPONSE, JSON.stringify(response.data));
         dispatch(
@@ -301,14 +279,6 @@ const ClaimForm = () => {
     setOpenSnackbar(false);
   };
 
-  const defaultOptions = {
-    loop: false,
-    autoplay: true,
-    animationData: successAnimation,
-    rendererSettings: {
-      preserveAspectRatio: "xMidYMid slice",
-    },
-  };
 
   return (
     <Card style={{ marginTop: "30px", padding: "20px" }}>
@@ -447,22 +417,13 @@ const ClaimForm = () => {
               />
             </Form.Group>
           </div>
-          {showSuccessAnimation && (
-            <div style={{ textAlign: "center", marginTop: "50px" }}>
-              <Lottie options={defaultOptions} height={70} width={70} />
-              <br />
-              <h5>Prior Authorization Approved.</h5>
-            </div>
-          )}
-          {!showSuccessAnimation && (
-            <Button
-              variant="success"
-              style={{ marginTop: "30px", marginRight: "20px", float: "right" }}
-              onClick={handleSubmit}
-            >
-              Submit Claim
-            </Button>
-          )}
+          <Button
+            variant="success"
+            style={{ marginTop: "30px", marginRight: "20px", float: "right" }}
+            onClick={handleSubmit}
+          >
+            Submit Claim
+          </Button>
         </Form>
       </Card.Body>
       <Snackbar

@@ -49,8 +49,9 @@ import CoverageDetails from "../common/CoverageDetails";
 import { updateLoggedUser, updateCoverageIds } from "../redux/loggedUserSlice";
 
 interface Payer {
-  id: number;
+  id: string;
   name: string;
+  address: { state?: string }[];
 }
 
 export const LandingPage = () => {
@@ -75,7 +76,7 @@ export const LandingPage = () => {
   const dispatch = useDispatch();
 
   // State to manage selected options
-  const [selectedOrgId, setSelectedOrgId] = useState<number>(50);
+  const [selectedOrgId, setSelectedOrgId] = useState<string>("");
   const Config = window.Config;
   const loggedUser = useSelector((state: any) => state.loggedUser);
 
@@ -126,9 +127,9 @@ export const LandingPage = () => {
       try {
         const response = await fetch(ORGANIZATION_SERVICE_URL);
         const data = await response.json();
-        return data.entry.map((entry: any) => ({
-          id: entry.resource.id,
-          name: entry.resource.name,
+        return data.data.map((item: any) => ({
+          id: item.id,
+          name: item.name,
         }));
       } catch (error) {
         console.error("Error fetching organizations:", error);
@@ -182,13 +183,17 @@ export const LandingPage = () => {
     const selectedPayer = payerList.find((p) => p.id === selectedOrgId);
 
     const payload = {
-      memberId: loggedUser.id,
-      oldPayerName: selectedPayer?.name || "",
-      oldPayerId: String(selectedOrgId),
-      oldCoverageId: coverageId,
-      coverageStartDate: coverageStartDate || "",
-      coverageEndDate: coverageEndDate || "",
+      bulkDataSyncStatus: "PENDING",
       consent: "approved",
+      coverageEndDate: coverageEndDate || "",
+      coverageStartDate: coverageStartDate || "",
+      createdDate: "",
+      memberId: loggedUser.id,
+      oldCoverageId: coverageId,
+      oldPayerName: selectedPayer?.name || "",
+      oldPayerState: selectedPayer?.address?.[0]?.state || "",
+      payerId: String(selectedOrgId),
+      requestId: crypto.randomUUID(),
     };
 
     try {
@@ -201,9 +206,6 @@ export const LandingPage = () => {
         headers: { "Content-Type": "application/json" },
       });
 
-      dispatch(
-        updateCdsResponse({ cards: response.data, systemActions: {} })
-      );
       setAlertMessage("Data exchange initiated successfully!");
       setAlertSeverity("success");
       setOpenSnackbar(true);

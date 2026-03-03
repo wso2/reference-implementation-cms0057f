@@ -31,7 +31,7 @@ USER 10001
 
 WORKDIR /home/ballerina
 
-COPY --chown=10001:choreo fhir.service.jar /home/ballerina
+# COPY --chown=10001:choreo fhir.service.jar /home/ballerina
 
 COPY --chown=10001:choreo entrypoint.sh /home/ballerina/entrypoint.sh
 RUN chmod +x /home/ballerina/entrypoint.sh

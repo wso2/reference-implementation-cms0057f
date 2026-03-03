@@ -62,6 +62,8 @@ public type BulkExportClientConfig record {|
     string newPayerNpi;
     # + newPayerName - New Payer Name
     string newPayerName;
+    # + bffUrl - BFF URL
+    string bffUrl;
 |};
 
 # record to map exported resource metadata.

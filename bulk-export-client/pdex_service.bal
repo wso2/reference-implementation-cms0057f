@@ -111,7 +111,7 @@ isolated service /pdex on bulkExportListener {
             return error("Request ID not found");
         }
 
-        if request.consent != "APPROVED" {
+        if !(request.consent ?: "").equalsIgnoreCaseAscii("APPROVED") {
             return error("Consent not approved for data exchange.");
         }
 
@@ -136,7 +136,7 @@ isolated service /pdex on bulkExportListener {
             clientSecret: payerConfig.clientSecret,
             scopes: payerConfig.scopes,
             fileServerUrl: payerConfig.fileServerUrl,
-            authEnabled: false
+            authEnabled: true
         };
 
         http:Client httpClient = check createHttpClient(serverConfig);

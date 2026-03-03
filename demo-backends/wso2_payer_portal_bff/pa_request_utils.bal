@@ -1355,7 +1355,7 @@ public function submitPARequestAdditionalInfo(string responseId, AdditionalInfor
         occurrenceDateTime: time:utcToString(time:utcNow()),
         subject: subjectJson,
         about: about,
-        reasonCode: [{
+        reasonCode: additionalInformation.reasonCode ?: [{
             coding: [{
                 system: "http://terminology.hl7.org/CodeSystem/v3-ActReason",
                 code: "priorAuthorization"
@@ -1401,8 +1401,8 @@ public function submitPARequestAdditionalInfo(string responseId, AdditionalInfor
     }
     log:printDebug("ClaimResponse updated with CommunicationRequest reference: " + commId);
     return {
-        id: <string>claimResponse.id,
-        status: claimResponse.status,
+        id: commId,
+        status: "active",
         message: "Additional information request submitted successfully"
     };
 }

@@ -27,11 +27,13 @@ isolated service /pdex on bulkExportListener {
     // @param payload - The payload containing the payer data exchange request.
     // @return The response indicating the success or failure of the operation.
     isolated resource function post 'capture\-pdex\-data(@http:Payload PayerDataExchangeRequest payload) returns json|error {
+        log:printDebug("Capturing payer data exchange request.", payerId = payload.payerId, oldPayerName = payload.oldPayerName);
         string|error result = insertPayerDataExchangeRequest(payload);
         if result is error {
             log:printError("Error occurred while inserting payer data exchange request", result);
             return result;
         }
+        log:printDebug("Payer data exchange request captured.", requestId = result);
         return {requestId: result, message: "Payer data exchange request captured successfully"};
     }
 
@@ -41,6 +43,7 @@ isolated service /pdex on bulkExportListener {
     // @param offset - The number of records to skip (default 0).
     // @return The list of payer data exchange requests with pagination details.
     isolated resource function get 'pdex\-data\-requests(int 'limit = 10, int offset = 0) returns json|error {
+        log:printDebug("Fetching payer data exchange requests.", pageLimit = 'limit.toString(), offset = offset.toString());
         PayerDataExchangeRequestResult|error result = getPayerDataExchangeRequests('limit, offset);
         if result is error {
             log:printError("Error occurred while retrieving payer data exchange requests", result);
@@ -60,6 +63,8 @@ isolated service /pdex on bulkExportListener {
             previous = string `${baseUrl}?limit=${'limit}&offset=${prevOffset}`;
         }
 
+        log:printDebug("Returning payer data exchange request page.", resultCount = result.requests.length().toString(), totalCount = result.totalCount.toString());
+
         return {
             count: result.totalCount,
             next: next,
@@ -73,6 +78,7 @@ isolated service /pdex on bulkExportListener {
     // @param requestId - The ID of the request to retrieve.
     // @return The payer data exchange request details.
     isolated resource function get 'pdex\-data\-requests/[string requestId]() returns json|error {
+        log:printDebug("Fetching payer data exchange request by ID.", requestId = requestId);
         PayerDataExchangeRequest|error request = getPayerDataExchangeRequest(requestId);
         if request is error {
             log:printError("Error occurred while fetching payer data exchange request", request);
@@ -87,6 +93,7 @@ isolated service /pdex on bulkExportListener {
     // @param payload - The payload containing the new status.
     // @return The response indicating the success or failure of the operation.
     isolated resource function patch 'pdex\-data\-requests/[string requestId]/status(@http:Payload map<string> payload) returns json|error {
+        log:printDebug("Updating payer data exchange request status.", requestId = requestId);
         string? status = payload["status"];
         if status is () {
             return error("Status is required in the payload");
@@ -96,6 +103,7 @@ isolated service /pdex on bulkExportListener {
             log:printError("Error occurred while updating payer data exchange request status", result);
             return result;
         }
+        log:printDebug("Payer data exchange request status updated.", requestId = requestId, status = status);
         return {message: result};
     }
 
@@ -104,12 +112,15 @@ isolated service /pdex on bulkExportListener {
     // @param requestId - The ID of the request to trigger.
     // @return The response indicating the success or failure of the operation.
     isolated resource function post 'trigger\-data\-exchange/[string requestId]() returns json|error {
+        log:printDebug("Trigger data exchange invoked.", requestId = requestId);
 
         PayerDataExchangeRequest|error request = getPayerDataExchangeRequest(requestId);
         if request is error {
             log:printError("Error occurred while fetching payer data exchange request", request);
             return error("Request ID not found");
         }
+
+        log:printDebug("Loaded payer data exchange request.", requestId = requestId, payerId = request.payerId, consent = request.consent ?: "");
 
         if !(request.consent ?: "").equalsIgnoreCaseAscii("APPROVED") {
             return error("Consent not approved for data exchange.");
@@ -126,6 +137,7 @@ isolated service /pdex on bulkExportListener {
         // Fetch payer configuration/connection details from DB.
 
         PayerConfig payerConfig = check getPayerConfig(request.payerId);
+        log:printDebug("Loaded payer configuration for member match.", requestId = requestId, payerId = request.payerId, baseUrl = payerConfig.baseUrl);
 
         // Map PayerConfig to BulkExportServerConfig
         // Ideally we should use PayerConfig everywhere but for now mapping to existing type.
@@ -142,8 +154,10 @@ isolated service /pdex on bulkExportListener {
         http:Client httpClient = check createHttpClient(serverConfig);
 
         international401:Parameters memberMatchParams = check createMemberMatchParams(request, httpClient);
+        log:printDebug("Created member match parameters.", requestId = requestId);
 
         // Call $member-match
+        log:printDebug("Calling member-match endpoint.", requestId = requestId, path = "/Patient/$member-match");
         http:Response|http:ClientError matchResponse = httpClient->post("/Patient/$member-match", memberMatchParams, mediaType = "application/fhir+json");
 
         if matchResponse is http:ClientError {
@@ -156,9 +170,12 @@ isolated service /pdex on bulkExportListener {
             return error("Member match failed");
         }
 
+        log:printDebug("Member match succeeded.", requestId = requestId, statusCode = matchResponse.statusCode.toString());
+
         json matchPayload = check matchResponse.getJsonPayload();
         // Extract MatchedPatient from response
         MatchedPatient matchedPatient = check extractMatchedPatient(matchPayload, payerConfig.baseUrl);
+        log:printDebug("Extracted matched patient.", requestId = requestId, patientId = matchedPatient.id, systemId = matchedPatient.systemId ?: "");
 
         string? _outputFormat = ();
         string? _since = request.coverageStartDate;
@@ -171,6 +188,8 @@ isolated service /pdex on bulkExportListener {
             "payerId": request.payerId
         };
 
+        log:printDebug("Triggering bulk export for matched patient.", requestId = requestId, exportTypes = _type);
+
         json|error exportResult = triggerBulkExport([matchedPatient], _outputFormat, _since, _type, true, serverConfig, context);
 
         if exportResult is error {
@@ -179,6 +198,7 @@ isolated service /pdex on bulkExportListener {
 
         // Update status to IN_PROGRESS
         _ = check updatePayerDataExchangeRequestStatus(requestId, "IN_PROGRESS");
+        log:printDebug("Updated data exchange status to IN_PROGRESS.", requestId = requestId);
 
         return exportResult;
     }
@@ -191,6 +211,7 @@ isolated service /pdex on bulkExportListener {
     // @return The synced data from FHIR server.
     isolated resource function get 'synced\-data(string payerId, string memberId, string[]? resourceTypes) returns json|error {
         // Query FHIR server for resources with the specific tag and maybe memberId
+        log:printDebug("Fetching synced data.", payerId = payerId, memberId = memberId);
         http:Client fhirClient = clientFhirClient;
         json[] results = [];
         string[] resourcesToCheck = ["ExplanationOfBenefit", "Coverage", "Condition", "Immunization", "Procedure", "Encounter", "Observation"];
@@ -199,9 +220,12 @@ isolated service /pdex on bulkExportListener {
             resourcesToCheck = resourceTypes;
         }
 
+        log:printDebug("Resolved resource types to query.", resourceCount = resourcesToCheck.length().toString());
+
         foreach string resType in resourcesToCheck {
             string encodedMemberId = check url:encode(memberId, "UTF-8");
             string path = string `/${resType}?patient=${encodedMemberId}&_tag=http://wso2.com/fhir/pdex-source|old-payer-data`;
+            log:printDebug("Querying resource type for synced data.", resourceType = resType, path = path);
             http:Response|http:ClientError resp = fhirClient->get(path);
             if resp is http:Response && resp.statusCode == 200 {
                 json|error payload = resp.getJsonPayload();
@@ -220,8 +244,14 @@ isolated service /pdex on bulkExportListener {
                         }
                     }
                 }
+            } else if resp is http:Response {
+                log:printDebug("FHIR query returned non-200 status.", resourceType = resType, statusCode = resp.statusCode.toString());
+            } else {
+                log:printDebug("FHIR query failed.", resourceType = resType, reason = resp.message());
             }
         }
+
+        log:printDebug("Completed synced data fetch.", resultCount = results.length().toString());
 
         return results;
     }

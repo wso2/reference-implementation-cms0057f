@@ -91,6 +91,7 @@ public isolated function triggerBulkExport(MatchedPatient[] matchedPatients, str
     http:Response|http:ClientError status;
 
     log:printInfo("Bulk exporting started. Sending Kick-off request.");
+    log:printDebug("Preparing bulk export task.", taskId = taskId, patientCount = matchedPatients.length().toString(), sync = sync.toString());
     // Group patients by system URL
     map<MatchedPatient[]> patientsBySystem = {};
     foreach MatchedPatient patient in matchedPatients {
@@ -113,6 +114,7 @@ public isolated function triggerBulkExport(MatchedPatient[] matchedPatients, str
         existingPatients.push(patient);
         patientsBySystem[systemId] = existingPatients;
     }
+    log:printDebug("Patients grouped by system.", taskId = taskId, systemCount = patientsBySystem.keys().length().toString());
 
     do {
 
@@ -123,6 +125,7 @@ public isolated function triggerBulkExport(MatchedPatient[] matchedPatients, str
 
         // Process each system separately
         foreach string systemUrl in patientsBySystem.keys() {
+            log:printDebug("Processing grouped patient set.", taskId = taskId, systemUrl = systemUrl);
 
             BulkExportServerConfig? serverConfig = explicitConfig;
 
@@ -133,12 +136,14 @@ public isolated function triggerBulkExport(MatchedPatient[] matchedPatients, str
             // Get client within lock statement
             http:Client httpClient = check createHttpClient(serverConfig);
             MatchedPatient[] systemPatients = patientsBySystem.get(systemUrl);
+            log:printDebug("Resolved patients for system.", taskId = taskId, systemUrl = systemUrl, patientCount = systemPatients.length().toString());
 
             // Instance level export - Iterate over patients
             foreach MatchedPatient patient in systemPatients {
 
                 string queryString = populateQueryString(_outputFormat, _since, _type);
                 string path = string `/Patient/${patient.id}/$export${queryString}`;
+                log:printDebug("Sending kick-off request for patient.", taskId = taskId, systemUrl = systemUrl, patientId = patient.id, path = path);
 
                 // kick-off request to the bulk export server
                 // No Prefer header requested
@@ -149,6 +154,12 @@ public isolated function triggerBulkExport(MatchedPatient[] matchedPatients, str
                     "Content-Type": "application/fhir+json"
                 }
                 );
+
+                if status is http:Response {
+                    log:printDebug("Kick-off request completed.", taskId = taskId, systemUrl = systemUrl, patientId = patient.id);
+                } else {
+                    log:printDebug("Kick-off request failed before polling.", taskId = taskId, systemUrl = systemUrl, patientId = patient.id, reason = status.message());
+                }
 
                 submitBackgroundJob(taskId, status, sync, context);
             }
@@ -184,6 +195,7 @@ isolated service /file on new http:Listener(8100) {
 
         log:printInfo("Downloading file for member: " + exportId + " and resource type: " + resourceType);
         string filePath = clientServiceConfig.targetDirectory + file:pathSeparator + exportId + file:pathSeparator + resourceType + "-exported.ndjson";
+        log:printDebug("Resolved download file path.", exportId = exportId, resourceType = resourceType, filePath = filePath);
 
         mime:Entity entity = new;
         entity.setFileAsEntityBody(filePath);

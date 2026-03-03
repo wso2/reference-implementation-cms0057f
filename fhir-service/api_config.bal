@@ -567,6 +567,25 @@ final r4:ResourceAPIConfig practitionerApiConfig = {
 };
 
 # ######################################################################################################################
+# PractitionerRole API Configs                                                                                         #
+# ######################################################################################################################
+
+final r4:ResourceAPIConfig practitionerRoleApiConfig = {
+    resourceType: "PractitionerRole",
+    profiles: [
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-practitionerrole"
+    ],
+    defaultProfile: (),
+    searchParameters: [
+    ],
+    operations: [
+
+    ],
+    serverConfig: (),
+    authzConfig: ()
+};
+
+# ######################################################################################################################
 # Allergy Intolerance API Configs                                                                                      #
 # ######################################################################################################################
 

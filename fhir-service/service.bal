@@ -809,6 +809,69 @@ service /fhir/r4/Practitioner on new fhirr4:Listener(config = practitionerApiCon
 }
 
 // ######################################################################################################################
+// # PractitionerRole API                                                                                               #
+// ######################################################################################################################
+
+public type PractitionerRole uscore501:USCorePractitionerRoleProfile;
+
+service /fhir/r4/PractitionerRole on new fhirr4:Listener(config = practitionerRoleApiConfig) {
+
+    // Read the current state of single resource based on its id.
+    isolated resource function get [string id](r4:FHIRContext fhirContext) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return getById(fhirConnector, PRACTITIONER_ROLE, id);
+    }
+
+    // Read the state of a specific version of a resource based on its id.
+    isolated resource function get [string id]/_history/[string vid](r4:FHIRContext fhirContext) returns PractitionerRole|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    // Search for resources based on a set of criteria.
+    isolated resource function get .(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+        map<string[]> queryParamsMap = getQueryParamsMap(fhirContext.getRequestSearchParameters());
+        return search(fhirConnector, PRACTITIONER_ROLE, queryParamsMap);
+    }
+
+    // Create a new resource.
+    isolated resource function post .(r4:FHIRContext fhirContext, PractitionerRole practitionerRole) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return create(fhirConnector, PRACTITIONER_ROLE, practitionerRole.toJson());
+    }
+
+    // Update the current state of a resource completely.
+    isolated resource function put [string id](r4:FHIRContext fhirContext, PractitionerRole practitionerRole) returns PractitionerRole|r4:OperationOutcome|r4:FHIRError {
+        r4:DomainResource|r4:FHIRError result = update(fhirConnector, PRACTITIONER_ROLE, id, practitionerRole.toJson());
+        if result is r4:FHIRError {
+            return result;
+        }
+        PractitionerRole|error p = result.cloneWithType(PractitionerRole);
+        if p is error {
+            return r4:createFHIRError(p.message(), r4:ERROR, r4:INVALID);
+        }
+        return p;
+    }
+
+    // Update the current state of a resource partially.
+    isolated resource function patch [string id](r4:FHIRContext fhirContext, json patch) returns PractitionerRole|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    // Delete a resource.
+    isolated resource function delete fhir/r4/PractitionerRole/[string id](r4:FHIRContext fhirContext) returns r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    // Retrieve the update history for a particular resource.
+    isolated resource function get fhir/r4/PractitionerRole/[string id]/_history(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    // Retrieve the update history for all resources.
+    isolated resource function get fhir/r4/PractitionerRole/_history(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+}
+
+// ######################################################################################################################
 // # Allergy Intolerance API                                                                                            #
 // ######################################################################################################################
 
@@ -1105,7 +1168,15 @@ service /fhir/r4/Questionnaire on new fhirr4:Listener(config = questionnaireApiC
 
     // Update the current state of a resource completely.
     isolated resource function put [string id](r4:FHIRContext fhirContext, Questionnaire questionnaire) returns Questionnaire|r4:OperationOutcome|r4:FHIRError {
-        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+        r4:DomainResource|r4:FHIRError result = update(fhirConnector, QUESTIONNAIRE, id, questionnaire.toJson());
+        if result is r4:FHIRError {
+            return result;
+        }
+        Questionnaire|error q = result.cloneWithType(Questionnaire);
+        if q is error {
+            return r4:createFHIRError(q.message(), r4:ERROR, r4:INVALID);
+        }
+        return q;
     }
 
     // Update the current state of a resource partially.
@@ -1115,7 +1186,7 @@ service /fhir/r4/Questionnaire on new fhirr4:Listener(config = questionnaireApiC
 
     // Delete a resource.
     isolated resource function delete [string id](r4:FHIRContext fhirContext) returns r4:OperationOutcome|r4:FHIRError {
-        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+        return deleteResource(fhirConnector, QUESTIONNAIRE, id);
     }
 
     // Retrieve the update history for a particular resource.

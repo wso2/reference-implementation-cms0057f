@@ -1,9 +1,7 @@
 FROM --platform=linux/amd64 ubuntu:24.04
 
-USER root
-
-RUN groupadd troupe \
-    && useradd -s /bin/bash -c '10001' -g troupe -M -N '10001'
+RUN groupadd -g 10001 choreo && \
+    useradd -u 10001 -g choreo -s /usr/sbin/nologin -M choreo
 
 RUN apt-get update \
     && apt-get install -y openjdk-21-jdk \
@@ -29,15 +27,13 @@ RUN apt-get update \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-USER '10001'
+USER 10001
 
 WORKDIR /home/ballerina
 
-COPY --chown=10001:troupe fhir.service.jar /home/ballerina
+COPY --chown=10001:choreo fhir.service.jar /home/ballerina
 
-COPY --chown=10001:troupe entrypoint.sh /home/ballerina/entrypoint.sh
+COPY --chown=10001:choreo entrypoint.sh /home/ballerina/entrypoint.sh
 RUN chmod +x /home/ballerina/entrypoint.sh
 
 ENTRYPOINT ["/home/ballerina/entrypoint.sh"]
-
-

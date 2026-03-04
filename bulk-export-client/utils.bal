@@ -25,17 +25,17 @@ import ballerinax/health.fhir.r4.international401;
 # + return - HTTP client instance or error
 public isolated function createHttpClient(BulkExportServerConfig|ClientFhirServerConfig|PayerConfig serverConfig) returns http:Client|error {
     map<json> configMap = check serverConfig.cloneWithType();
-    
+
     boolean authEnabled = false;
     if configMap.hasKey("authEnabled") {
         authEnabled = check configMap.get("authEnabled").ensureType();
     }
-    
+
     string baseUrl = "";
     if configMap.hasKey("baseUrl") {
         baseUrl = check configMap.get("baseUrl").ensureType();
     }
-    
+
     if authEnabled {
         string tokenUrl = "";
         if configMap.hasKey("tokenUrl") {
@@ -44,7 +44,7 @@ public isolated function createHttpClient(BulkExportServerConfig|ClientFhirServe
         if tokenUrl.length() == 0 {
             return error("Missing required field: tokenUrl for OAuth2 authentication.");
         }
-        
+
         string clientId = "";
         if configMap.hasKey("clientId") {
             clientId = check configMap.get("clientId").ensureType();
@@ -52,12 +52,12 @@ public isolated function createHttpClient(BulkExportServerConfig|ClientFhirServe
         if clientId.length() == 0 {
             return error("Missing required field: clientId for OAuth2 authentication.");
         }
-        
+
         string clientSecret = "";
         if configMap.hasKey("clientSecret") {
             clientSecret = check configMap.get("clientSecret").ensureType();
         }
-        
+
         string[]? scopes = ();
         if configMap.hasKey("scopes") {
             json scopesJson = configMap.get("scopes");
@@ -65,7 +65,7 @@ public isolated function createHttpClient(BulkExportServerConfig|ClientFhirServe
                 scopes = check scopesJson.cloneWithType();
             }
         }
-        
+
         http:OAuth2ClientCredentialsGrantConfig config = {
             tokenUrl: tokenUrl,
             clientId: clientId,
@@ -85,27 +85,27 @@ public isolated function createHttpClient(BulkExportServerConfig|ClientFhirServe
 public isolated function getTargetPayerConfig(string payerId) returns PayerConfig|error {
     string bffUrl = clientServiceConfig.bffUrl;
     http:Client bffClient = check new (bffUrl);
-    
+
     // Call <BFF_URL>/payers/<payer_id>
     http:Response|error bffResponse = bffClient->get("/payers/" + payerId);
     if bffResponse is error {
         log:printError("Error fetching payer config from BFF", 'error = bffResponse);
         return error("Failed to retrieve payer config from BFF.");
     }
-    
+
     if bffResponse.statusCode != 200 {
         return error("BFF returned non-200 status code: " + bffResponse.statusCode.toString());
     }
-    
+
     json payload = check bffResponse.getJsonPayload();
     map<json> payloadMap = <map<json>>payload;
-    
+
     string payerName = <string>payloadMap["name"];
     string fhirServerUrl = <string>payloadMap["fhir_server_url"];
     string clientId = <string>payloadMap["app_client_id"];
     string clientSecret = <string>payloadMap["app_client_secret"];
     string smartConfigUrl = <string>payloadMap["smart_config_url"];
-    
+
     string[] scopes = [];
     if payloadMap["scopes"] != null {
         // Handle scopes appropriately if needed. Assuming comma separated if present.
@@ -114,7 +114,7 @@ public isolated function getTargetPayerConfig(string payerId) returns PayerConfi
             scopes = re `,`.split(scopesStr);
         }
     }
-    
+
     string defaultTokenUrl = fhirServerUrl + "/token";
     http:Client|error smartConfigClient = new (smartConfigUrl);
     if smartConfigClient is error {
@@ -388,14 +388,14 @@ public isolated function addQueryParam(string queryString, string key, string va
     }
 }
 
-isolated function submitBackgroundJob(string taskId, http:Response|http:ClientError status, boolean sync = false, map<string> context = {}) {
+isolated function submitBackgroundJob(string taskId, http:Response|http:ClientError status, BulkExportServerConfig serverConfig, boolean sync = false, map<string> context = {}) {
     if status is http:Response {
         log:printDebug(status.statusCode.toBalString());
 
         // get the location of the status check
         do {
             string location = check status.getHeader("content-location");
-            task:JobId|() _ = check executeJob(new PollingTask(taskId, location, "In-progress", sync, context), clientServiceConfig.defaultIntervalInSec);
+            task:JobId|() _ = check executeJob(new PollingTask(taskId, location, "In-progress", serverConfig, sync, context), clientServiceConfig.defaultIntervalInSec);
             log:printDebug("Polling location recieved: " + location);
         } on fail var e {
             log:printError("Error occurred while getting the location or scheduling the Job", e);
@@ -413,13 +413,16 @@ public class PollingTask {
     string exportId;
     string lastStatus;
     string location;
+    BulkExportServerConfig serverConfig;
     boolean sync;
     map<string> context;
     task:JobId jobId = {id: 0};
 
     public function execute() {
         do {
-            http:Client statusClientV2 = check new (self.location);
+            BulkExportServerConfig pollingServerConfig = check self.serverConfig.cloneWithType();
+            pollingServerConfig.baseUrl = self.location;
+            http:Client statusClientV2 = check createHttpClient(pollingServerConfig);
 
             log:printDebug("Polling the export task status.", exportId = self.exportId);
             if self.lastStatus == "In-progress" {
@@ -500,10 +503,11 @@ public class PollingTask {
         }
     }
 
-    isolated function init(string exportId, string location, string lastStatus = "In-progress", boolean sync = false, map<string> context = {}) {
+    isolated function init(string exportId, string location, string lastStatus = "In-progress", BulkExportServerConfig serverConfig = {baseUrl: ""}, boolean sync = false, map<string> context = {}) {
         self.exportId = exportId;
         self.lastStatus = lastStatus;
         self.location = location;
+        self.serverConfig = serverConfig;
         self.sync = sync;
         self.context = context;
     }

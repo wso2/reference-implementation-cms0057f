@@ -161,7 +161,7 @@ public isolated function triggerBulkExport(MatchedPatient[] matchedPatients, str
                     log:printDebug("Kick-off request failed before polling.", taskId = taskId, systemUrl = systemUrl, patientId = patient.id, reason = status.message());
                 }
 
-                submitBackgroundJob(taskId, status, sync, context);
+                submitBackgroundJob(taskId, status, serverConfig, sync, context);
             }
         }
 

@@ -185,7 +185,8 @@ isolated service /pdex on bulkExportListener {
 
         map<string> context = {
             "oldPayerName": request.oldPayerName,
-            "payerId": request.payerId
+            "payerId": request.payerId,
+            "requestId": requestId
         };
 
         log:printDebug("Triggering bulk export for matched patient.", requestId = requestId, exportTypes = _type);

@@ -395,6 +395,7 @@ isolated function submitBackgroundJob(string taskId, http:Response|http:ClientEr
         // get the location of the status check
         do {
             string location = check status.getHeader("content-location");
+            log:printDebug("Scheduling polling task.", exportId = taskId, location = location, sync = sync.toString(), authEnabled = serverConfig.authEnabled.toString());
             task:JobId|() _ = check executeJob(new PollingTask(taskId, location, "In-progress", serverConfig, sync, context), clientServiceConfig.defaultIntervalInSec);
             log:printDebug("Polling location recieved: " + location);
         } on fail var e {
@@ -422,6 +423,7 @@ public class PollingTask {
         do {
             BulkExportServerConfig pollingServerConfig = check self.serverConfig.cloneWithType();
             pollingServerConfig.baseUrl = self.location;
+            log:printDebug("Creating polling HTTP client.", exportId = self.exportId, location = self.location, authEnabled = pollingServerConfig.authEnabled.toString());
             http:Client statusClientV2 = check createHttpClient(pollingServerConfig);
 
             log:printDebug("Polling the export task status.", exportId = self.exportId);
@@ -434,6 +436,7 @@ public class PollingTask {
                 addPollingEvent addPollingEventFuntion = addPollingEventToMemory;
                 if statusResponse is http:Response {
                     int status = statusResponse.statusCode;
+                    log:printDebug("Received polling status response.", exportId = self.exportId, statusCode = status.toString());
                     if status == 200 {
                         // update the status
                         // extract payload
@@ -451,22 +454,41 @@ public class PollingTask {
 
                         if self.sync {
                             // Sync data to FHIR server
+                            log:printDebug("Starting sync path for completed export.", exportId = self.exportId);
                             error? syncResult = syncDataToFhirServer(self.exportId, payload, self.serverConfig, self.context);
                             if syncResult is error {
                                 log:printError("Error in syncing files", syncResult);
                                 lock {
                                     _ = updateExportTaskStatusInMemory(taskMap = exportTasks, exportTaskId = self.exportId, newStatus = "Sync Failed");
                                 }
+                                if self.context.hasKey("requestId") {
+                                    string requestId = self.context.get("requestId");
+                                    string|error updateResult = updatePayerDataExchangeRequestStatus(requestId, "FAILED");
+                                    if updateResult is error {
+                                        log:printError("Failed to update data exchange status to FAILED.", updateResult);
+                                    }
+                                }
                             } else {
+                                log:printDebug("Completed sync path for export.", exportId = self.exportId);
                                 lock {
                                     _ = updateExportTaskStatusInMemory(taskMap = exportTasks, exportTaskId = self.exportId, newStatus = "Synced");
+                                }
+                                if self.context.hasKey("requestId") {
+                                    string requestId = self.context.get("requestId");
+                                    _ = check updatePayerDataExchangeRequestStatus(requestId, "COMPLETED");
+                                    log:printDebug("Updated data exchange status to COMPLETED.", requestId = requestId, exportId = self.exportId);
+                                } else {
+                                    log:printDebug("Skipping data exchange status update as requestId is unavailable.", exportId = self.exportId);
                                 }
                             }
                         } else {
                             // download the files
+                            log:printDebug("Starting download path for completed export.", exportId = self.exportId);
                             error? downloadFilesResult = downloadFiles(payload, self.exportId);
                             if downloadFilesResult is error {
                                 log:printError("Error in downloading files", downloadFilesResult);
+                            } else {
+                                log:printDebug("Completed download path for export.", exportId = self.exportId);
                             }
                         }
 
@@ -497,6 +519,8 @@ public class PollingTask {
             } else if self.lastStatus == "Completed" {
                 // This is a rare occurance; if the job is not unscheduled properly, it will keep polling the status.
                 log:printDebug("Export task completed.", exportId = self.exportId);
+            } else {
+                log:printDebug("Polling task encountered unexpected status.", exportId = self.exportId, lastStatus = self.lastStatus);
             }
         } on fail var e {
             log:printError("Error occurred while polling the export task status.", e);

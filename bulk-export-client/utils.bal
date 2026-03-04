@@ -395,7 +395,7 @@ isolated function submitBackgroundJob(string taskId, http:Response|http:ClientEr
         // get the location of the status check
         do {
             string location = check status.getHeader("content-location");
-            task:JobId|() _ = check executeJob(new PollingTask(taskId, location, "In-progress", sync, context), clientServiceConfig.defaultIntervalInSec);
+            task:JobId|() _ = check executeJob(new PollingTask(taskId, location, "In-progress", serverConfig, sync, context), clientServiceConfig.defaultIntervalInSec);
             log:printDebug("Polling location recieved: " + location);
         } on fail var e {
             log:printError("Error occurred while getting the location or scheduling the Job", e);
@@ -413,13 +413,16 @@ public class PollingTask {
     string exportId;
     string lastStatus;
     string location;
+    BulkExportServerConfig serverConfig;
     boolean sync;
     map<string> context;
     task:JobId jobId = {id: 0};
 
     public function execute() {
         do {
-            http:Client statusClientV2 = check new (self.location);
+            BulkExportServerConfig pollingServerConfig = check self.serverConfig.cloneWithType();
+            pollingServerConfig.baseUrl = self.location;
+            http:Client statusClientV2 = check createHttpClient(pollingServerConfig);
 
             log:printDebug("Polling the export task status.", exportId = self.exportId);
             if self.lastStatus == "In-progress" {
@@ -500,10 +503,11 @@ public class PollingTask {
         }
     }
 
-    isolated function init(string exportId, string location, string lastStatus = "In-progress", boolean sync = false, map<string> context = {}) {
+    isolated function init(string exportId, string location, string lastStatus = "In-progress", BulkExportServerConfig serverConfig = {baseUrl: ""}, boolean sync = false, map<string> context = {}) {
         self.exportId = exportId;
         self.lastStatus = lastStatus;
         self.location = location;
+        self.serverConfig = serverConfig;
         self.sync = sync;
         self.context = context;
     }

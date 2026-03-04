@@ -64,7 +64,7 @@ function HomePage() {
                                 style={{ borderRadius: "20px", padding: "8px 24px", fontWeight: "bold" }}
                                 onClick={(e) => { e.stopPropagation(); navigate("/patient-encounter"); }}
                             >
-                                Go to Patients &rarr;
+                                Patients &rarr;
                             </Button>
                         </Card.Body>
                     </Card>
@@ -86,7 +86,7 @@ function HomePage() {
                                 style={{ borderRadius: "20px", padding: "8px 24px", fontWeight: "bold" }}
                                 onClick={(e) => { e.stopPropagation(); navigate("/provider-data-access"); }}
                             >
-                                Go to Data Sync &rarr;
+                                Data Sync &rarr;
                             </Button>
                         </Card.Body>
                     </Card>

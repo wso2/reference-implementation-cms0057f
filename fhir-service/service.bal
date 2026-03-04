@@ -39,6 +39,7 @@ configurable string sampleDataGithubUrl = ?;
 isolated http:Client exportServiceClient = check new (exportServiceUrl);
 
 final fhirClient:FHIRConnector fhirConnector = check initFhirConnector();
+final http:Client fhirHttpClient = check new (baseUrl);
 
 isolated function invokePatientExport(string patientId, map<string[]> queryParameters, fhirClient:RequestMode requestMode) returns r4:FHIRError|http:Response|error {
     fhirClient:FHIRResponse|fhirClient:FHIRError exportResponse =
@@ -171,13 +172,13 @@ service http:InterceptableService /fhir/r4/_export on httpListener {
     }
 
     // Check export job status
-    isolated resource function get status/[string jobId](http:Request request) returns http:Response|fhirClient:FHIRError {
-        return fhirConnector->proxy("/_export/status/" + jobId, request);
+    isolated resource function get status/[string jobId](http:Request request) returns http:Response|error {
+        return fhirHttpClient->forward("/_export/status/" + jobId, request);
     }
 
     // Download export file
-    resource function get download/[string jobId]/[string fileName](http:Request request) returns http:Response|fhirClient:FHIRError {
-        return fhirConnector->proxy("/_export/download/" + jobId + "/" + fileName, request);
+    resource function get download/[string jobId]/[string fileName](http:Request request) returns http:Response|error {
+        return fhirHttpClient->forward("/_export/download/" + jobId + "/" + fileName, request);
     }
 }
 

@@ -466,6 +466,13 @@ public class PollingTask {
                                 lock {
                                     _ = updateExportTaskStatusInMemory(taskMap = exportTasks, exportTaskId = self.exportId, newStatus = "Synced");
                                 }
+                                if self.context.hasKey("requestId") {
+                                    string requestId = self.context.get("requestId");
+                                    _ = check updatePayerDataExchangeRequestStatus(requestId, "COMPLETED");
+                                    log:printDebug("Updated data exchange status to COMPLETED.", requestId = requestId, exportId = self.exportId);
+                                } else {
+                                    log:printDebug("Skipping data exchange status update as requestId is unavailable.", exportId = self.exportId);
+                                }
                             }
                         } else {
                             // download the files

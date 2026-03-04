@@ -48,6 +48,10 @@ declare global {
       dtrAppUrl: string;
       fhirServerUrl: string;
       webhookServerUrl: string;
+      organization: string;
+      group: string;
+      npi: string;
+      payers: { id: string; name: string }[];
     };
   }
 }

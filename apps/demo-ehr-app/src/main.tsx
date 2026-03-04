@@ -42,11 +42,13 @@ import DeviceOrderPageV2 from "./pages/device_order_page_v2.tsx";
 import DrugClaimPage from "./pages/drug_claim_page.tsx";
 import LoginV2 from "./pages/login_v2.tsx";
 import { AuthProvider } from "./components/AuthProvider.tsx";
+import HomePage from "./pages/home_page.tsx";
 import PatientEncounterV2 from "./pages/patient_encounter_v2.tsx";
 import { DoctorViewPage } from "./pages/doctor_view.tsx";
 import { PatientHistoryPage } from "./pages/patient_history.tsx";
 import PriorAuthList from "./pages/prior_auth_list.tsx";
 import PriorAuthView from "./pages/prior_auth_view.tsx";
+import ProviderDataAccess from "./pages/provider_data_access.tsx";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <Provider store={store}>
@@ -58,7 +60,9 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
               <Routes>
                 <Route path="/login" element={<LoginV2 />} />
                 <Route path="/" element={<Layout />}>
-                  <Route index element={<PatientEncounterV2 />} />
+                  <Route index element={<HomePage />} />
+                  <Route path="patient-encounter" element={<PatientEncounterV2 />} />
+                  <Route path="provider-data-access" element={<ProviderDataAccess />} />
                 </Route>
                 <Route path="dashboard/*" element={<Layout />}>
                   <Route index element={<PractionerDashBoard />} />

@@ -2821,6 +2821,157 @@ paths:
       security:
         - default: []
       x-auth-type: Application & Application User
+  /Group:
+    get:
+      tags:
+        - GET
+        - Group
+      parameters:
+        - name: managing-entity
+          in: query
+          description: Entity that is the custodian of the Group's record
+          required: false
+          schema:
+            type: string
+          x-wso2-oh-fhirType: reference
+        - $ref: "#/components/parameters/_lastUpdatedParam"
+        - $ref: "#/components/parameters/_securityParam"
+        - $ref: "#/components/parameters/_tagParam"
+        - $ref: "#/components/parameters/_idParam"
+        - $ref: "#/components/parameters/_sourceParam"
+        - $ref: "#/components/parameters/_profileParam"
+      responses:
+        "200":
+          description: search Group operation successful
+          content:
+            application/fhir+json:
+              schema:
+                $ref: "#/components/schemas/Bundle"
+      security:
+        - default: []
+      x-auth-type: Application & Application User
+    post:
+      summary: Create a new Group
+      tags:
+        - POST
+        - Group
+      requestBody:
+        required: true
+        content:
+          application/fhir+json:
+            schema:
+              type: object
+      responses:
+        "201":
+          description: Successfully created Group
+  /Group/{id}:
+    get:
+      tags:
+        - GET
+        - Group
+      parameters:
+        - name: id
+          in: path
+          description: logical identifier
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: read Group operation successful
+          content:
+            application/fhir+json:
+              schema:
+                type: object
+      security:
+        - default: []
+      x-auth-type: Application & Application User
+    put:
+      tags:
+        - PUT
+        - Group
+      parameters:
+        - name: id
+          in: path
+          description: logical identifier
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: update Group operation successful
+      security:
+        - default: []
+      x-auth-type: Application & Application User
+    delete:
+      tags:
+        - DELETE
+        - Group
+      parameters:
+        - name: id
+          in: path
+          description: logical identifier
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: delete Group operation successful
+      security:
+        - default: []
+      x-auth-type: Application & Application User
+  /Group/{id}/$export:
+    get:
+      tags:
+        - GET
+        - Group
+        - Operation
+      parameters:
+        - name: id
+          in: path
+          description: logical identifier
+          required: true
+          schema:
+            type: string
+        - name: _outputFormat
+          in: query
+          description: Output format (must be application/fhir+ndjson or similar)
+          required: false
+          schema:
+            type: string
+        - name: _since
+          in: query
+          description: Only export resources modified after this instant
+          required: false
+          schema:
+            type: string
+        - name: _type
+          in: query
+          description: Comma separated list of resource types to export
+          required: false
+          schema:
+            type: string
+      responses:
+        "202":
+          description: Group export operation accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  transactionTime:
+                    type: string
+                  exportUrls:
+                    type: object
+        "400":
+          description: Bad request
+          content:
+            application/fhir+json:
+              schema:
+                $ref: "#/components/schemas/FHIRError"
+      security:
+        - default: []
+      x-auth-type: Application & Application User
   /Patient:
     get:
       tags:

@@ -447,6 +447,18 @@ public class PollingTask {
                         }
                         json payload = check statusResponse.getJsonPayload();
                         log:printDebug("Export task completed.", exportId = self.exportId, payload = payload);
+                        
+                        // Store export summary in database if requestId is available
+                        if self.context.hasKey("requestId") {
+                            string requestId = self.context.get("requestId");
+                            string|error summaryUpdateResult = updatePayerDataExchangeRequestSummary(requestId, payload.toJsonString());
+                            if summaryUpdateResult is error {
+                                log:printError("Failed to update export summary.", summaryUpdateResult);
+                            } else {
+                                log:printDebug("Export summary updated in database.", requestId = requestId, exportId = self.exportId);
+                            }
+                        }
+                        
                         error? unscheduleJobResult = unscheduleJob(self.jobId);
                         if unscheduleJobResult is error {
                             log:printError("Error occurred while unscheduling the job.", unscheduleJobResult);

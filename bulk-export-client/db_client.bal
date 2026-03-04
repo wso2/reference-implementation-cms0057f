@@ -71,7 +71,8 @@ public isolated function getPayerDataExchangeRequests(int 'limit = 10, int offse
                                         r.coverage_end_date AS coverageEndDate,
                                         r.bulk_data_sync_status AS bulkDataSyncStatus, 
                                         r.consent_status AS consent, 
-                                        r.created_at AS createdDate
+                                        r.created_at AS createdDate, 
+                                        r.export_summary AS exportSummary
                                     FROM payer_data_exchange_requests r
                                     LEFT JOIN payers p ON r.payer_id = p.id
                                     ORDER BY CASE WHEN r.bulk_data_sync_status = 'PENDING' THEN 1 ELSE 2 END, r.request_id ASC
@@ -116,7 +117,8 @@ public isolated function getPayerDataExchangeRequest(string requestId) returns P
                                         r.coverage_end_date AS coverageEndDate, 
                                         r.bulk_data_sync_status AS bulkDataSyncStatus, 
                                         r.consent_status AS consent, 
-                                        r.created_at AS createdDate
+                                        r.created_at AS createdDate, 
+                                        r.export_summary AS exportSummary
                                     FROM payer_data_exchange_requests r
                                     LEFT JOIN payers p ON r.payer_id = p.id
                                     WHERE r.request_id = ${requestId}`;
@@ -129,6 +131,21 @@ public isolated function getPayerDataExchangeRequest(string requestId) returns P
     }
     
     return result;
+}
+
+public isolated function updatePayerDataExchangeRequestSummary(string requestId, string exportSummary) returns string|error {
+    sql:ParameterizedQuery query = `UPDATE payer_data_exchange_requests SET export_summary = ${exportSummary} WHERE request_id = ${requestId}`;
+    sql:ExecutionResult|sql:Error result = dbClient->execute(query);
+
+    if result is sql:ExecutionResult {
+        if result.affectedRowCount > 0 {
+            return "Export summary updated successfully";
+        }
+        return error("Failed to update export summary. Request ID not found.");
+    } else {
+        log:printError("Database error during export summary update", 'error = result);
+        return error("An internal error occurred while updating the export summary.");
+    }
 }
 
 public isolated function getPayerConfig(string payerId) returns PayerConfig|error {

@@ -14,9 +14,17 @@
 // specific language governing permissions and limitations
 // under the License.
 import { useState } from "react";
+import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { Container, Card, Form, Button, Alert, Spinner, Table } from "react-bootstrap";
 import axios from "axios";
+import {
+    resetCurrentRequest,
+    updateCurrentRequestMethod,
+    updateCurrentRequestUrl,
+    updateCurrentResponse,
+} from "../redux/currentStateSlice";
+import { HTTP_METHODS } from "../constants/enum";
 
 function ProviderDataAccess() {
     const [loading, setLoading] = useState(false);
@@ -30,6 +38,7 @@ function ProviderDataAccess() {
 
     const Config = window.Config;
     const navigate = useNavigate();
+    const dispatch = useDispatch();
 
     const handleFetchData = async () => {
         const npi = Config.npi;
@@ -65,7 +74,14 @@ function ProviderDataAccess() {
 
             // 3. Trigger Group Export
             console.log(`[Provider Access] Triggering Group /$export operation...`);
+
+            // Dispatch Developer Console Events
+            dispatch(resetCurrentRequest());
+            dispatch(updateCurrentRequestMethod(HTTP_METHODS.GET));
+            dispatch(updateCurrentRequestUrl(Config.demoHospitalUrl + Config.group + `/${groupId}/$export`));
+
             const exportResponse = await axios.get(`${Config.group}/${groupId}/$export`);
+            dispatch(updateCurrentResponse(exportResponse.data));
 
             if (exportResponse.data && exportResponse.data.exportUrls) {
                 console.log(`[Provider Access] Group /$export Accepted. Transaction Time: ${exportResponse.data.transactionTime}`);

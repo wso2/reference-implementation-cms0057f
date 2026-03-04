@@ -270,7 +270,7 @@ public isolated function syncDataToFhirServer(string exportId, json exportSummar
     log:printDebug("Starting sync for export.", exportId = exportId, fileCount = summary.output.length().toString());
 
     foreach OutputFile item in summary.output {
-        log:printInfo("Syncing file: " + item.url);
+        log:printDebug("Syncing file: " + item.url);
 
         // Download file stream
         BulkExportServerConfig fileServerConfig = check serverConfig.cloneWithType();

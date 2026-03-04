@@ -461,6 +461,13 @@ public class PollingTask {
                                 lock {
                                     _ = updateExportTaskStatusInMemory(taskMap = exportTasks, exportTaskId = self.exportId, newStatus = "Sync Failed");
                                 }
+                                if self.context.hasKey("requestId") {
+                                    string requestId = self.context.get("requestId");
+                                    string|error updateResult = updatePayerDataExchangeRequestStatus(requestId, "FAILED");
+                                    if updateResult is error {
+                                        log:printError("Failed to update data exchange status to FAILED.", updateResult);
+                                    }
+                                }
                             } else {
                                 log:printDebug("Completed sync path for export.", exportId = self.exportId);
                                 lock {

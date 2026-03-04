@@ -1486,6 +1486,122 @@ service /fhir/r4/Consent on new fhirr4:Listener(config = consentApiConfig) {
 }
 
 // ######################################################################################################################
+// # Group API                                                                                                          #
+// ######################################################################################################################
+
+public type Group international401:Group;
+
+service /fhir/r4/Group on new fhirr4:Listener(config = groupApiConfig) {
+
+    // Read the current state of single resource based on its id.
+    isolated resource function get [string id](r4:FHIRContext fhirContext) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return getById(fhirConnector, GROUP, id);
+    }
+
+    // Read the state of a specific version of a resource based on its id.
+    isolated resource function get [string id]/_history/[string vid](r4:FHIRContext fhirContext) returns Group|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    // Search for resources based on a set of criteria.
+    isolated resource function get .(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError|error {
+        map<string[]> queryParamsMap = getQueryParamsMap(fhirContext.getRequestSearchParameters());
+        return search(fhirConnector, GROUP, queryParamsMap);
+    }
+
+    // Create a new resource.
+    isolated resource function post .(r4:FHIRContext fhirContext, Group fhirGroup) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return create(fhirConnector, GROUP, fhirGroup.toJson());
+    }
+
+    // Export a group.
+    isolated resource function get [string id]/\$export(r4:FHIRContext fhirContext) returns r4:FHIRError|http:Response|error {
+        log:printDebug("Group-level export invoked for group id: " + id);
+        map<string[]> queryParameters = {};
+
+        r4:FHIRRequest? fhirRequest = fhirContext.getFHIRRequest();
+        if fhirRequest !is () {
+            queryParameters = getQueryParamsMap(fhirRequest.getSearchParameters());
+        }
+
+        r4:DomainResource|r4:FHIRError groupResource = getById(fhirConnector, GROUP, id);
+        if groupResource is r4:FHIRError {
+            return groupResource;
+        }
+
+        Group currentGroup = check groupResource.cloneWithType(Group);
+        international401:GroupMember[]? members = currentGroup.member;
+        if members is () || members.length() == 0 {
+            return r4:createFHIRError("No members found in the group", r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+        }
+
+        map<string> exportUrls = {};
+
+        foreach international401:GroupMember member in members {
+            r4:Reference entity = member.entity;
+            string? reference = entity.reference;
+            if reference is string {
+                // expecting reference to be "Patient/123"
+                if reference.startsWith("Patient/") {
+                    string patientId = reference.substring(8);
+                    
+                    // Call the async export for patient
+                    r4:FHIRError|http:Response|error exportRes = invokePatientExport(patientId, queryParameters, fhirClient:GET);
+                    if exportRes is http:Response {
+                        string|error pollingUrl = exportRes.getHeader("content-location");
+                        if pollingUrl is string {
+                            exportUrls[patientId] = pollingUrl;
+                        } else {
+                            exportUrls[patientId] = "Failed to get Content-Location header: " + exportRes.statusCode.toString();
+                        }
+                    } else if exportRes is error {
+                        exportUrls[patientId] = "Error executing export: " + exportRes.message();
+                    }
+                }
+            }
+        }
+
+        http:Response response = new;
+        response.statusCode = http:STATUS_ACCEPTED;
+        response.setJsonPayload({ "transactionTime": time:utcToString(time:utcNow()), "exportUrls": exportUrls });
+        return response;
+    }
+
+    // Update the current state of a resource completely.
+    isolated resource function put [string id](r4:FHIRContext fhirContext, Group fhirGroup) returns Group|r4:OperationOutcome|r4:FHIRError {
+        r4:DomainResource|r4:FHIRError result = update(fhirConnector, GROUP, id, fhirGroup.toJson());
+        if result is r4:FHIRError {
+            return result;
+        }
+        Group|error updatedGroup = result.cloneWithType(Group);
+        if updatedGroup is error {
+            return r4:createFHIRError(updatedGroup.message(), r4:ERROR, r4:INVALID);
+        }
+        return updatedGroup;
+    }
+
+    // Update the current state of a resource partially.
+    isolated resource function patch [string id](r4:FHIRContext fhirContext, json patch) returns Group|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    // Delete a resource.
+    isolated resource function delete [string id](r4:FHIRContext fhirContext) returns r4:OperationOutcome|r4:FHIRError {
+        return deleteResource(fhirConnector, GROUP, id);
+    }
+
+    // Retrieve the update history for a particular resource.
+    isolated resource function get [string id]/_history(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    // Retrieve the update history for all resources.
+    isolated resource function get _history(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+}
+
+// ######################################################################################################################
 // # Subscription API                                                                                                   #
 // ######################################################################################################################
 

@@ -75,7 +75,7 @@ public isolated function getPayerDataExchangeRequests(int 'limit = 10, int offse
                                         r.export_summary AS exportSummary
                                     FROM payer_data_exchange_requests r
                                     LEFT JOIN payers p ON r.payer_id = p.id
-                                    ORDER BY CASE WHEN r.bulk_data_sync_status = 'PENDING' THEN 1 ELSE 2 END, r.request_id ASC
+                                    ORDER BY CASE WHEN r.bulk_data_sync_status = 'PENDING' THEN 1 ELSE 2 END, r.created_at DESC
                                     LIMIT ${'limit} OFFSET ${offset}`;
                                     
     stream<PayerDataExchangeRequest, sql:Error?> resultStream = dbClient->query(query);

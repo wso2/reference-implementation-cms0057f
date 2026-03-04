@@ -19,10 +19,8 @@ import { useNavigate } from "react-router-dom";
 import { Container, Card, Form, Button, Alert, Spinner, Table } from "react-bootstrap";
 import axios from "axios";
 import {
-    resetCurrentRequest,
-    updateCurrentRequestMethod,
-    updateCurrentRequestUrl,
-    updateCurrentResponse,
+    clearRequestLogs,
+    appendRequestLog,
 } from "../redux/currentStateSlice";
 import { HTTP_METHODS } from "../constants/enum";
 
@@ -51,9 +49,19 @@ function ProviderDataAccess() {
         setLoading(true);
         setErrorMsg("");
 
+        // Clear previous logs on new sync
+        dispatch(clearRequestLogs());
+
         try {
             // 1. Fetch Organization by NPI identifier
             const orgResponse = await axios.get(`${Config.organization}?identifier=${npi}`);
+
+            dispatch(appendRequestLog({
+                url: `${Config.demoBaseUrl}${Config.organization}?identifier=${npi}`,
+                method: HTTP_METHODS.GET,
+                response: orgResponse.data
+            }));
+
             if (!orgResponse.data || !orgResponse.data.entry || orgResponse.data.entry.length === 0) {
                 throw new Error(`No Organization found for NPI: ${npi}`);
             }
@@ -65,6 +73,13 @@ function ProviderDataAccess() {
 
             // 2. Fetch Group by managing-entity
             const groupResponse = await axios.get(`${Config.group}?managing-entity=Organization/${organizationId}`);
+
+            dispatch(appendRequestLog({
+                url: `${Config.demoBaseUrl}${Config.group}?managing-entity=Organization/${organizationId}`,
+                method: HTTP_METHODS.GET,
+                response: groupResponse.data
+            }));
+
             if (!groupResponse.data || !groupResponse.data.entry || groupResponse.data.entry.length === 0) {
                 throw new Error(`No Group found managed by Organization: ${organizationId}`);
             }
@@ -75,13 +90,14 @@ function ProviderDataAccess() {
             // 3. Trigger Group Export
             console.log(`[Provider Access] Triggering Group /$export operation...`);
 
-            // Dispatch Developer Console Events
-            dispatch(resetCurrentRequest());
-            dispatch(updateCurrentRequestMethod(HTTP_METHODS.GET));
-            dispatch(updateCurrentRequestUrl(Config.demoHospitalUrl + Config.group + `/${groupId}/$export`));
-
             const exportResponse = await axios.get(`${Config.group}/${groupId}/$export`);
-            dispatch(updateCurrentResponse(exportResponse.data));
+
+            // Dispatch Export Job Dev Console Event
+            dispatch(appendRequestLog({
+                url: `${Config.demoBaseUrl}${Config.group}/${groupId}/$export`,
+                method: HTTP_METHODS.GET,
+                response: exportResponse.data
+            }));
 
             if (exportResponse.data && exportResponse.data.exportUrls) {
                 console.log(`[Provider Access] Group /$export Accepted. Transaction Time: ${exportResponse.data.transactionTime}`);
@@ -220,25 +236,59 @@ function ProviderDataAccess() {
                     </tr>
                 ));
             case "Claim":
-                return list.map((res: any, i) => (
-                    <tr key={i}>
-                        <td>{res.id}</td>
-                        <td>{res.type?.coding?.[0]?.code}</td>
-                        <td>{res.status}</td>
-                        <td>{res.total?.value} {res.total?.currency}</td>
-                        <td>{res.created}</td>
-                    </tr>
-                ));
+                return list.map((res: any, i) => {
+                    const lineItems = res.item || [];
+                    const calculatedTotalVal = lineItems.reduce((acc: number, item: any) => {
+                        const unitPrice = item.unitPrice?.value || 0;
+                        const qty = item.quantity?.value || 0;
+                        return acc + (unitPrice * qty);
+                    }, 0);
+                    const currency = lineItems[0]?.unitPrice?.currency || "";
+                    const displayCode = lineItems[0]?.productOrService?.coding?.[0]?.display || "N/A";
+
+                    return (
+                        <tr key={i}>
+                            <td>{res.id}</td>
+                            <td>{res.type?.coding?.[0]?.code}</td>
+                            <td>{res.status}</td>
+                            <td>{displayCode}</td>
+                            <td>{calculatedTotalVal} {currency}</td>
+                        </tr>
+                    );
+                });
             case "ClaimResponse":
-                return list.map((res: any, i) => (
-                    <tr key={i}>
-                        <td>{res.id}</td>
-                        <td>{res.outcome}</td>
-                        <td>{res.disposition}</td>
-                        <td>{res.payment?.amount?.value} {res.payment?.amount?.currency}</td>
-                        <td>{res.created}</td>
-                    </tr>
-                ));
+                return list.map((res: any, i) => {
+                    const items = res.item || [];
+                    const calculatedBenefitVal = items.reduce((acc: number, currentItem: any) => {
+                        const adjudications = currentItem.adjudication || [];
+                        const benefitAdjs = adjudications.filter((adj: any) =>
+                            adj.category?.coding?.some((codeObj: any) => codeObj.code === "benefit")
+                        );
+                        const benefitSum = benefitAdjs.reduce((bAcc: number, bAdj: any) => bAcc + (bAdj.amount?.value || 0), 0);
+                        return acc + benefitSum;
+                    }, 0);
+
+                    // Try to extract currency from the first benefit adjudication found, fallback to USD
+                    let currency = "USD";
+                    if (items.length > 0 && items[0].adjudication) {
+                        const firstBenefit = items[0].adjudication.find((adj: any) =>
+                            adj.category?.coding?.some((codeObj: any) => codeObj.code === "benefit")
+                        );
+                        if (firstBenefit && firstBenefit.amount?.currency) {
+                            currency = firstBenefit.amount.currency;
+                        }
+                    }
+
+                    return (
+                        <tr key={i}>
+                            <td>{res.id}</td>
+                            <td>{res.outcome}</td>
+                            <td>{res.disposition}</td>
+                            <td>{calculatedBenefitVal} {currency}</td>
+                            <td>{res.created}</td>
+                        </tr>
+                    );
+                });
             case "Coverage":
                 return list.map((res: any, i) => (
                     <tr key={i}>
@@ -263,9 +313,9 @@ function ProviderDataAccess() {
             case "AllergyIntolerance":
                 return <tr><th>ID</th><th>Substance</th><th>Clinical Status</th><th>Reaction</th><th>Criticality</th></tr>;
             case "Claim":
-                return <tr><th>ID</th><th>Type</th><th>Status</th><th>Total</th><th>Created Date</th></tr>;
+                return <tr><th>ID</th><th>Type</th><th>Status</th><th>Product/Service</th><th>Total (Calculated)</th></tr>;
             case "ClaimResponse":
-                return <tr><th>ID</th><th>Outcome</th><th>Disposition</th><th>Payment Amount</th><th>Created Date</th></tr>;
+                return <tr><th>ID</th><th>Outcome</th><th>Disposition</th><th>Benefit Amount</th><th>Created Date</th></tr>;
             case "Coverage":
                 return <tr><th>ID</th><th>Status</th><th>Type</th><th>Subscriber ID</th><th>Period</th></tr>;
             default:

@@ -260,9 +260,10 @@ public isolated function extractMatchedPatient(json responsePayload, string syst
 #
 # + exportId - The export ID
 # + exportSummary - The export summary JSON
+# + serverConfig - Bulk export server config with auth details
 # + context - Context map with payer details
 # + return - Error if failed
-public isolated function syncDataToFhirServer(string exportId, json exportSummary, map<string> context) returns error? {
+public isolated function syncDataToFhirServer(string exportId, json exportSummary, BulkExportServerConfig serverConfig, map<string> context) returns error? {
 
     // Parse export summary
     ExportSummary summary = check exportSummary.cloneWithType(ExportSummary);
@@ -271,7 +272,9 @@ public isolated function syncDataToFhirServer(string exportId, json exportSummar
         log:printInfo("Syncing file: " + item.url);
 
         // Download file stream
-        http:Client fileClient = check new (item.url);
+        BulkExportServerConfig fileServerConfig = check serverConfig.cloneWithType();
+        fileServerConfig.baseUrl = item.url;
+        http:Client fileClient = check createHttpClient(fileServerConfig);
         http:Response response = check fileClient->get("");
 
         if response.statusCode != 200 {

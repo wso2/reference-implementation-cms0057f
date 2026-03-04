@@ -451,7 +451,7 @@ public class PollingTask {
 
                         if self.sync {
                             // Sync data to FHIR server
-                            error? syncResult = syncDataToFhirServer(self.exportId, payload, self.context);
+                            error? syncResult = syncDataToFhirServer(self.exportId, payload, self.serverConfig, self.context);
                             if syncResult is error {
                                 log:printError("Error in syncing files", syncResult);
                                 lock {

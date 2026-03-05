@@ -728,23 +728,24 @@ const RequirementCard = ({
                         const dtrUrl = `${window.Config.dtrAppUrl}?questionnaire=${questionnaireUrl}&medicationRequestId=${medicationRequestId}&patientId=${patientId}&coverageId=${coverageId}`;
 
                         return (
-                          <div key={index} style={{ marginBottom: "10px" }}>
+                          <div key={index} style={{ marginBottom: "15px" }}>
                             <li>{suggestion.label}</li>
-                            <Button
-                              variant="primary"
-                              size="sm"
-                              style={{ marginTop: "5px" }}
-                              onClick={() => {
-                                loadQuestionnaires();
-                                window.open(
-                                  dtrUrl,
-                                  "_blank",
-                                  "noopener,noreferrer"
-                                );
-                              }}
-                            >
-                              Launch DTR
-                            </Button>
+                            <div style={{ marginTop: "15px" }}>
+                              <Button
+                                variant="primary"
+                                style={{ width: "100%", fontWeight: "600", padding: "10px 0" }}
+                                onClick={() => {
+                                  loadQuestionnaires();
+                                  window.open(
+                                    dtrUrl,
+                                    "_blank",
+                                    "noopener,noreferrer"
+                                  );
+                                }}
+                              >
+                                Launch DTR
+                              </Button>
+                            </div>
                           </div>
                         );
                       }

@@ -122,29 +122,6 @@ const CoverageDetails = ({ patientId }: { patientId: string }) => {
                 />
               </Form.Group>
               <Form.Group style={{ marginTop: "10px", flex: "1 1 100%" }}>
-                <Form.Label>Type</Form.Label>
-                <Form.Control
-                  type="text"
-                  value={
-                    coverage.type?.text ||
-                    coverage.type?.coding?.[0]?.display ||
-                    coverage.type?.coding?.[0]?.code ||
-                    ""
-                  }
-                  disabled
-                />
-              </Form.Group>
-              <Form.Group style={{ marginTop: "10px", flex: "1 1 100%" }}>
-                <Form.Label>Subscriber</Form.Label>
-                <Form.Control
-                  type="text"
-                  value={coverage.subscriber?.display || coverage.subscriber?.reference || ""}
-                  disabled
-                />
-              </Form.Group>
-            </div>
-            <div style={{ display: "flex", gap: "20px" }}>
-              <Form.Group style={{ marginTop: "10px", flex: "1 1 100%" }}>
                 <Form.Label>Period Start</Form.Label>
                 <Form.Control
                   type="text"
@@ -160,7 +137,9 @@ const CoverageDetails = ({ patientId }: { patientId: string }) => {
                   disabled
                 />
               </Form.Group>
-              <Form.Group style={{ marginTop: "10px", flex: "1 1 100%" }}>
+            </div>
+            <div style={{ display: "flex", gap: "20px" }}>
+              <Form.Group style={{ marginTop: "10px", flex: "0 0 25%" }}>
                 <Form.Label>Payor</Form.Label>
                 <Form.Control
                   type="text"
@@ -169,14 +148,6 @@ const CoverageDetails = ({ patientId }: { patientId: string }) => {
                     coverage.payor?.[0]?.reference ||
                     ""
                   }
-                  disabled
-                />
-              </Form.Group>
-              <Form.Group style={{ marginTop: "10px", flex: "1 1 100%" }}>
-                <Form.Label>Beneficiary</Form.Label>
-                <Form.Control
-                  type="text"
-                  value={coverage.beneficiary?.display || coverage.beneficiary?.reference || ""}
                   disabled
                 />
               </Form.Group>

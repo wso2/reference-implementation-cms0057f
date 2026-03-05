@@ -438,7 +438,7 @@ public type AdjudicationSubmission record {
 # + itemNotes - field description
 public type ItemAdjudicationSubmission record {
     int sequence;
-    string adjudicationCode; // "approved", "denied", etc.
+    string adjudicationCode; // "copay", "deductible", "benefit", etc.
     decimal? approvedAmount;
     string? itemNotes;
 };

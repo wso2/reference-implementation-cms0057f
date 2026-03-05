@@ -15,6 +15,8 @@
 // under the License.
 import ballerina/http;
 import ballerina/log;
+import ballerina/time;
+import ballerina/lang.runtime;
 
 type ClaimStatus record {|
     string status = "entered-in-error";
@@ -23,10 +25,34 @@ type ClaimStatus record {|
     string providerName = "";
     string medicationRef = "";
     string date = "";
+    time:Utc addedTime = time:utcNow();
 |};
 
 // In-memory store
 map<ClaimStatus> claimStatuses = {};
+
+function init() {
+    _ = start cleanupTask();
+}
+
+function cleanupTask() {
+    while true {
+        runtime:sleep(60);
+        time:Utc currentUtc = time:utcNow();
+        string[] keysToRemove = [];
+        foreach [string, ClaimStatus] [id, claimStatus] in claimStatuses.entries() {
+            time:Seconds elapsed = time:utcDiffSeconds(currentUtc, claimStatus.addedTime);
+            if elapsed > 3600d {
+                keysToRemove.push(id);
+            }
+        }
+        foreach string id in keysToRemove {
+            if claimStatuses.hasKey(id) {
+                _ = claimStatuses.remove(id);
+            }
+        }
+    }
+}
 
 @http:ServiceConfig {
     cors: {

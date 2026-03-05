@@ -107,7 +107,7 @@ function PatientEncounter() {
       response.json()
     );
     localStorage.setItem("loggedUser", JSON.stringify(loggedUser));
-    navigate("dashboard");
+    navigate("/dashboard");
   };
 
   return isAuthenticated ? (
@@ -162,6 +162,7 @@ function PatientEncounter() {
               </Button>
             </Card.Body>
           </Card>
+
         </div>
       </div>
     </>

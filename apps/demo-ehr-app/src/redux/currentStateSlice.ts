@@ -24,6 +24,7 @@ const initialState = {
   requestMethod: "",
   hook: "",
   isProcess: false,
+  requestLogs: [] as any[],
 };
 
 const currentStateSlice = createSlice({
@@ -49,6 +50,12 @@ const currentStateSlice = createSlice({
       state.isProcess = action.payload;
       localStorage.setItem(IS_PROCESS, action.payload);
     },
+    appendRequestLog(state, action) {
+      state.requestLogs.push(action.payload);
+    },
+    clearRequestLogs(state) {
+      state.requestLogs = [];
+    },
     resetCurrentRequest() {
       return initialState;
     },
@@ -63,5 +70,7 @@ export const {
   updateCurrentRequestMethod,
   updateCurrentHook,
   updateIsProcess,
+  appendRequestLog,
+  clearRequestLogs,
 } = currentStateSlice.actions;
 export default currentStateSlice.reducer;

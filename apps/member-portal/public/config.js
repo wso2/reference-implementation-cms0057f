@@ -1,6 +1,6 @@
 window.configs = {
   organizationServiceUrl:
-    "/choreo-apis/cms-0057-f/organization-service-yg/v1/fhir/r4/Organization?type=payer",
+    "/choreo-apis/cms-paas/wso2payerportalbff/v1/payers?page=1&limit=10",
   oldPayerCoverageGet:
     "/choreo-apis/cms-0057-f/bulk-export-client/member-service/v1.0/previous",
   fhir: "/choreo-apis/cms-0057f---unitedhealth/fhir-service/v1/fhir/r4",

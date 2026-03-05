@@ -372,8 +372,8 @@ public function getPARequestDetail(string responseId) returns PARequestDetail|er
     // 5. Extract practitioner/provider info - DONE
     ProviderInformation providerInfo = check getProviderInformation(pasClaim.provider);
     
-    // 6. Parse claim items - DONE
-    ClaimItem[] items = check parseClaimItems(<international401:ClaimItem[]>pasClaim.item);
+    // 6. Parse claim items with adjudication data from ClaimResponse - DONE
+    ClaimItem[] items = check parseClaimItems(<international401:ClaimItem[]>pasClaim.item, claimResponse);
 
     // 7. Get the supporting information - DONE
     [string?, string?, string?, json[]?, json[]?] supportingInfo = check extractSupportingInformation(pasClaim.supportingInfo);
@@ -958,8 +958,9 @@ function extractSupportingInformation(international401:ClaimSupportingInfo[]? su
 # Parse Claim items
 #
 # + pasClaimItems - Array of PASClaimItem from PAS Claim resource
+# + claimResponse - ClaimResponse resource (optional) to extract adjudication data
 # + return - Array of ClaimItems or error
-function parseClaimItems(international401:ClaimItem[] pasClaimItems) returns ClaimItem[]|error {
+function parseClaimItems(international401:ClaimItem[] pasClaimItems, international401:ClaimResponse? claimResponse = ()) returns ClaimItem[]|error {
     ClaimItem[] items = [];
     
     foreach international401:ClaimItem pasItem in pasClaimItems {
@@ -979,6 +980,51 @@ function parseClaimItems(international401:ClaimItem[] pasClaimItems) returns Cla
         json? netJson = pasItem.net is r4:Money ? pasItem.net.toJson() : ();
         json? servicedPeriodJson = pasItem.servicedPeriod is r4:Period ? pasItem.servicedPeriod.toJson() : ();
         
+        // Extract adjudication data from ClaimResponse if available
+        json[]? adjudication = ();
+        int[]? noteNumbers = ();
+        string? reviewNote = ();
+        
+        if claimResponse is international401:ClaimResponse {
+            international401:ClaimResponseItem[]? responseItems = claimResponse.item;
+            if responseItems is international401:ClaimResponseItem[] {
+                // Find matching item by sequence
+                foreach international401:ClaimResponseItem responseItem in responseItems {
+                    if responseItem.itemSequence == pasItem.sequence {
+                        // Extract adjudication array
+                        international401:ClaimResponseItemAdjudication[] adjArray = <international401:ClaimResponseItemAdjudication[]>responseItem.adjudication;
+                        json[] adjJsonArray = [];
+                        foreach international401:ClaimResponseItemAdjudication adj in adjArray {
+                            adjJsonArray.push(adj.toJson());
+                        }
+                        adjudication = adjJsonArray;  
+                        
+                        // Extract note numbers
+                        if responseItem.noteNumber is int[] {
+                            noteNumbers = <int[]>responseItem.noteNumber;
+                            
+                            // Extract review note text from processNote
+                            if claimResponse.processNote is international401:ClaimResponseProcessNote[] {
+                                international401:ClaimResponseProcessNote[] processNotes = <international401:ClaimResponseProcessNote[]>claimResponse.processNote;
+                                foreach int noteNum in <int[]>noteNumbers {
+                                    foreach international401:ClaimResponseProcessNote note in processNotes {
+                                        if note.number == noteNum {
+                                            reviewNote = note.text;
+                                            break;
+                                        }
+                                    }
+                                    if reviewNote is string {
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+        
         ClaimItem item = {
             sequence: pasItem.sequence,
             productOrService: productOrServiceJson,
@@ -988,9 +1034,9 @@ function parseClaimItems(international401:ClaimItem[] pasClaimItems) returns Cla
             net: netJson,
             servicedDate: pasItem.servicedDate,
             servicedPeriod: servicedPeriodJson,
-            adjudication: (),
-            noteNumbers: (),
-            reviewNote: ()
+            adjudication: adjudication,
+            noteNumbers: noteNumbers,
+            reviewNote: reviewNote
         };
         
         items.push(item);

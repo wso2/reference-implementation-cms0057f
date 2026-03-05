@@ -62,11 +62,13 @@ public enum ResourceType {
     ORGANIZATION = "Organization",
     PATIENT = "Patient",
     PRACTITIONER = "Practitioner",
+    PRACTITIONER_ROLE = "PractitionerRole",
     PROCEDURE = "Procedure",
     QUESTIONNAIRE = "Questionnaire",
     QUESTIONNAIRE_PACKAGE = "QuestionnairePackage",
     QUESTIONNAIRE_RESPONSE = "QuestionnaireResponse",
-    EXPLANATION_OF_BENEFIT = "ExplanationOfBenefit"
+    EXPLANATION_OF_BENEFIT = "ExplanationOfBenefit",
+    GROUP = "Group"
 }
 
 # Holds information for OAuth2 authentication.

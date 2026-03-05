@@ -118,6 +118,7 @@ public type MatchedPatient record {|
 # + bulkDataSyncStatus - Bulk Data Sync Status (optional)  
 # + consent - Consent status (optional)  
 # + createdDate - Date of creation
+# + exportSummary - Export summary payload (optional)
 public type PayerDataExchangeRequest record {|
     string requestId?;
     string payerId;
@@ -130,6 +131,7 @@ public type PayerDataExchangeRequest record {|
     string bulkDataSyncStatus?;
     string consent?;
     string createdDate?;
+    string exportSummary?;
 |};
 
 # Record to hold payer data exchange request result with total count.

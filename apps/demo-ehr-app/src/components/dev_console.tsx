@@ -43,6 +43,7 @@ const DevConsole = () => {
   );
   const response = useSelector((state: any) => state.currentState.response);
   const isProcess = useSelector((state: any) => state.currentState.isProcess);
+  const requestLogs = useSelector((state: any) => state.currentState.requestLogs);
 
   const cdsRequest = requestState;
 
@@ -79,145 +80,181 @@ const DevConsole = () => {
         </div>
       )}
 
-      {requestUrl && (
-        <div
-          style={{
-            width: "80%",
-            borderRadius: 10,
-            backgroundColor: "#f5f0f0",
-            textAlign: "center",
-            alignSelf: "center",
-            marginTop: 10,
-            marginLeft: "10%",
-            padding: "8px",
-            paddingTop: "5px",
-            paddingBottom: "5px",
-            fontSize: 16,
-            fontFamily: "monospace",
-          }}
-        >
-          {requestMethod && <b>[{requestMethod}]:</b>} {requestUrl} <br />
-        </div>
+      {requestLogs && requestLogs.length > 0 ? (
+        <Box marginTop={2} paddingX={2} paddingBottom={4}>
+          {requestLogs.map((log: any, index: number) => (
+            <Box key={index} marginBottom={4} p={2} border="1px solid #4a5d62" borderRadius="8px" bgcolor="#344146" boxShadow="sm">
+              <Box color="white" mb={1} fontFamily="monospace" fontSize={14} style={{ wordBreak: 'break-all' }}>
+                <span style={{ color: '#90caf9' }}><b>[{log.method}]</b></span> {log.url}
+              </Box>
+              <div style={{ display: stage === "vertical" ? "block" : "flex", gap: "10px", marginTop: "10px" }}>
+                <div style={{ flex: "1 1 100%", maxWidth: stage === "vertical" ? "100%" : "50%" }}>
+                  <div style={{ height: "3vh", borderRadius: 2, backgroundColor: "#D9D9D9", textAlign: "center", alignSelf: "center", fontSize: 13, fontFamily: "monospace", fontWeight: 500, color: "black", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    Request Body
+                  </div>
+                  <div style={{ alignContent: "center", overflow: "auto", marginBottom: "15px", maxHeight: "300px" }}>
+                    <SyntaxHighlighter language="json" style={tomorrowNight} showLineNumbers={true}>
+                      {log.request ? JSON.stringify(log.request, null, 2) : "No Request Body"}
+                    </SyntaxHighlighter>
+                  </div>
+                </div>
+                <div style={{ flex: "1 1 100%", maxWidth: stage === "vertical" ? "100%" : "50%" }}>
+                  <div style={{ height: "3vh", borderRadius: 2, backgroundColor: "#D9D9D9", textAlign: "center", alignSelf: "center", fontSize: 13, fontFamily: "monospace", fontWeight: 500, color: "black", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    Response Body
+                  </div>
+                  <div style={{ alignContent: "center", overflow: "auto", marginBottom: "15px", maxHeight: "300px" }}>
+                    <SyntaxHighlighter language="json" style={tomorrowNight} showLineNumbers={true}>
+                      {log.response ? JSON.stringify(log.response, null, 2) : "No Response Body"}
+                    </SyntaxHighlighter>
+                  </div>
+                </div>
+              </div>
+            </Box>
+          ))}
+        </Box>
+      ) : (
+        <>
+          {requestUrl && (
+            <div
+              style={{
+                width: "80%",
+                borderRadius: 10,
+                backgroundColor: "#f5f0f0",
+                textAlign: "center",
+                alignSelf: "center",
+                marginTop: 10,
+                marginLeft: "10%",
+                padding: "8px",
+                paddingTop: "5px",
+                paddingBottom: "5px",
+                fontSize: 16,
+                fontFamily: "monospace",
+              }}
+            >
+              {requestMethod && <b>[{requestMethod}]:</b>} {requestUrl} <br />
+            </div>
+          )}
+          <div style={{ textAlign: "center", width: "100%" }}>
+            <FormControl
+              component="fieldset"
+              style={{
+                marginTop: 15,
+                textAlign: "center",
+                color: "white",
+              }}
+            >
+              <RadioGroup
+                row
+                aria-label="stage"
+                name="stage"
+                value={stage}
+                onChange={handleStageChange}
+              >
+                <FormControlLabel
+                  value="horizontal"
+                  control={<Radio />}
+                  label="Horizontal"
+                  style={{ color: "#FFFFFF" }}
+                />
+                <FormControlLabel
+                  value="vertical"
+                  control={<Radio />}
+                  label="Vertical"
+                />
+              </RadioGroup>
+            </FormControl>
+          </div>
+          <div
+            style={{
+              display: stage === "vertical" ? "block" : "flex",
+              gap: "10px",
+              marginLeft: "20px",
+              marginRight: "20px",
+              maxWidth: "100%",
+            }}
+          >
+            <div
+              style={{
+                flex: "1 1 100%",
+                maxWidth: stage === "vertical" ? "100%" : "50%",
+              }}
+            >
+              <div
+                style={{
+                  height: "3vh",
+                  borderRadius: 2,
+                  backgroundColor: "#D9D9D9",
+                  textAlign: "center",
+                  alignSelf: "center",
+                  marginTop: 20,
+                  fontSize: 16,
+                  fontFamily: "monospace",
+                  fontWeight: 500,
+                }}
+              >
+                Request Body
+              </div>
+
+              <div
+                style={{
+                  alignContent: "center",
+                  overflow: "auto",
+                  marginBottom: "15px",
+                }}
+              >
+                <SyntaxHighlighter
+                  language="json"
+                  style={tomorrowNight}
+                  showLineNumbers={true}
+                >
+                  {hook != "cds-services"
+                    ? JSON.stringify(cdsRequest, null, 2)
+                    : "No Request Body"}
+                </SyntaxHighlighter>
+              </div>
+            </div>
+
+            <div
+              style={{
+                flex: "1 1 100%",
+                maxWidth: stage === "vertical" ? "100%" : "50%",
+              }}
+            >
+              <div
+                style={{
+                  height: "3vh",
+                  borderRadius: 2,
+                  backgroundColor: "#D9D9D9",
+                  textAlign: "center",
+                  alignSelf: "center",
+                  marginTop: 20,
+                  fontSize: 16,
+                  fontFamily: "monospace",
+                  fontWeight: 500,
+                }}
+              >
+                Response Body
+              </div>
+
+              <div
+                style={{
+                  alignContent: "center",
+                  overflow: "auto",
+                  marginBottom: "15px",
+                }}
+              >
+                <SyntaxHighlighter
+                  language="json"
+                  style={tomorrowNight}
+                  showLineNumbers={true}
+                >
+                  {JSON.stringify(response, null, 2)}
+                </SyntaxHighlighter>
+              </div>
+            </div>
+          </div>
+        </>
       )}
-      <div style={{ textAlign: "center", width: "100%" }}>
-        <FormControl
-          component="fieldset"
-          style={{
-            marginTop: 15,
-            textAlign: "center",
-            color: "white",
-          }}
-        >
-          <RadioGroup
-            row
-            aria-label="stage"
-            name="stage"
-            value={stage}
-            onChange={handleStageChange}
-          >
-            <FormControlLabel
-              value="horizontal"
-              control={<Radio />}
-              label="Horizontal"
-              style={{ color: "#FFFFFF" }}
-            />
-            <FormControlLabel
-              value="vertical"
-              control={<Radio />}
-              label="Vertical"
-            />
-          </RadioGroup>
-        </FormControl>
-      </div>
-      <div
-        style={{
-          display: stage === "vertical" ? "block" : "flex",
-          gap: "10px",
-          marginLeft: "20px",
-          marginRight: "20px",
-          maxWidth: "100%",
-        }}
-      >
-        <div
-          style={{
-            flex: "1 1 100%",
-            maxWidth: stage === "vertical" ? "100%" : "50%",
-          }}
-        >
-          <div
-            style={{
-              height: "3vh",
-              borderRadius: 2,
-              backgroundColor: "#D9D9D9",
-              textAlign: "center",
-              alignSelf: "center",
-              marginTop: 20,
-              fontSize: 16,
-              fontFamily: "monospace",
-              fontWeight: 500,
-            }}
-          >
-            Request Body
-          </div>
-
-          <div
-            style={{
-              alignContent: "center",
-              overflow: "auto",
-              marginBottom: "15px",
-            }}
-          >
-            <SyntaxHighlighter
-              language="json"
-              style={tomorrowNight}
-              showLineNumbers={true}
-            >
-              {hook != "cds-services"
-                ? JSON.stringify(cdsRequest, null, 2)
-                : "No Request Body"}
-            </SyntaxHighlighter>
-          </div>
-        </div>
-
-        <div
-          style={{
-            flex: "1 1 100%",
-            maxWidth: stage === "vertical" ? "100%" : "50%",
-          }}
-        >
-          <div
-            style={{
-              height: "3vh",
-              borderRadius: 2,
-              backgroundColor: "#D9D9D9",
-              textAlign: "center",
-              alignSelf: "center",
-              marginTop: 20,
-              fontSize: 16,
-              fontFamily: "monospace",
-              fontWeight: 500,
-            }}
-          >
-            Response Body
-          </div>
-
-          <div
-            style={{
-              alignContent: "center",
-              overflow: "auto",
-              marginBottom: "15px",
-            }}
-          >
-            <SyntaxHighlighter
-              language="json"
-              style={tomorrowNight}
-              showLineNumbers={true}
-            >
-              {JSON.stringify(response, null, 2)}
-            </SyntaxHighlighter>
-          </div>
-        </div>
-      </div>
     </Box>
   );
 };

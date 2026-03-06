@@ -105,9 +105,37 @@ isolated function invokePatientSummary(string patientId, map<string[]> queryPara
     return response;
 }
 
+// Computes the intersection of consented resource types with the requested _type parameter.
+// If no _type is requested, returns all consented resource types.
+// Returns an empty array when the intersection is empty (caller must treat this as a denial).
+isolated function filterConsentedResourceTypes(map<string[]> queryParameters, string[] consentedResourceTypes) returns string[] {
+    map<boolean> consentedTypeSet = {};
+    foreach string consentedType in consentedResourceTypes {
+        consentedTypeSet[consentedType.trim()] = true;
+    }
+
+    string[] filteredResourceTypes = [];
+    string[]? requestTypeParams = queryParameters["_type"];
+    if requestTypeParams is string[] {
+        foreach string requestTypeParam in requestTypeParams {
+            string[] requestedTypes = re `,`.split(requestTypeParam);
+            foreach string requestedType in requestedTypes {
+                final string normalizedType = requestedType.trim();
+                if normalizedType != "" && consentedTypeSet.hasKey(normalizedType)
+                && !filteredResourceTypes.some(isolated function(string t) returns boolean => t == normalizedType) {
+                    filteredResourceTypes.push(normalizedType);
+                }
+            }
+        }
+    } else {
+        filteredResourceTypes = consentedTypeSet.keys();
+    }
+    return filteredResourceTypes;
+}
+
 // ######################################################################################################################
 // # Capability statement API                                                                                           #
-// ###################################################################################################################### 
+// ######################################################################################################################
 
 # # The service representing capability statement API
 final readonly & international401:CapabilityStatement capabilityStatement = check generateCapabilityStatement().cloneReadOnly();
@@ -260,46 +288,23 @@ service /fhir/r4/Patient on new fhirr4:Listener(config = patientApiConfig) {
             }
 
             string[] consentedResourceTypes = consentContext.consentedResourceTypes.clone();
-
-            // If the consent has specified resource types, filter the export request to include only those resource types.
-            if consentedResourceTypes.length() > 0 {
-                map<boolean> consentedTypeSet = {};
-                foreach string consentedType in consentedResourceTypes {
-                    consentedTypeSet[consentedType.trim()] = true;
-                }
-
-                string[] filteredResourceTypes = [];
-                string[]? requestTypeParams = queryParameters["_type"];
-                if requestTypeParams is string[] {
-                    foreach string requestTypeParam in requestTypeParams {
-                        string[] requestedTypes = re `,`.split(requestTypeParam);
-                        foreach string requestedType in requestedTypes {
-                            final string normalizedType = requestedType.trim();
-                            if normalizedType != "" && consentedTypeSet.hasKey(normalizedType)
-                            && !filteredResourceTypes.some(isolated function(string t) returns boolean => t == normalizedType) {
-                                filteredResourceTypes.push(normalizedType);
-                            }
-                        }
-                    }
-                } else {
-                    filteredResourceTypes = consentedTypeSet.keys();
-                }
-
-                if filteredResourceTypes.length() == 0 {
-                    return r4:createFHIRError("No consented resource types available for export", r4:ERROR,
-                            r4:INVALID, httpStatusCode = http:STATUS_FORBIDDEN);
-                }
-
-                string filteredTypeParam = string:'join(",", ...filteredResourceTypes);
-                queryParameters["_type"] = [filteredTypeParam];
-                log:printDebug("$export param: _type = " + filteredTypeParam);
-            } else {
+            if consentedResourceTypes.length() == 0 {
                 // Consent exists but specifies no allowed resource types; deny export.
                 log:printDebug("Consent context exists but no consented resource types specified. Denying export.");
                 return r4:createFHIRError("No consented resource types available for export", r4:ERROR,
                         r4:INVALID, httpStatusCode = http:STATUS_FORBIDDEN);
             }
 
+            // Filter the export request to include only consented resource types.
+            string[] filteredResourceTypes = filterConsentedResourceTypes(queryParameters, consentedResourceTypes);
+            if filteredResourceTypes.length() == 0 {
+                return r4:createFHIRError("No consented resource types available for export", r4:ERROR,
+                        r4:INVALID, httpStatusCode = http:STATUS_FORBIDDEN);
+            }
+
+            string filteredTypeParam = string:'join(",", ...filteredResourceTypes);
+            queryParameters["_type"] = [filteredTypeParam];
+            log:printDebug("$export param: _type = " + filteredTypeParam);
         }
         // If no consent context exists, proceed with the export request as is. Meaning all resource types specified in the request (if any) will be exported.
         // By default, if the _type parameter is not specified, all resource types are exported as per the FHIR specification.
@@ -1571,45 +1576,24 @@ service /fhir/r4/Group on new fhirr4:Listener(config = groupApiConfig) {
                         }
 
                         string[] consentedResourceTypes = consentContext.consentedResourceTypes.clone();
-
-                        if consentedResourceTypes.length() > 0 {
-                            map<boolean> consentedTypeSet = {};
-                            foreach string consentedType in consentedResourceTypes {
-                                consentedTypeSet[consentedType.trim()] = true;
-                            }
-
-                            string[] filteredResourceTypes = [];
-                            string[]? requestTypeParams = patientQueryParameters["_type"];
-                            if requestTypeParams is string[] {
-                                foreach string requestTypeParam in requestTypeParams {
-                                    string[] requestedTypes = re `,`.split(requestTypeParam);
-                                    foreach string requestedType in requestedTypes {
-                                        final string normalizedType = requestedType.trim();
-                                        if normalizedType != "" && consentedTypeSet.hasKey(normalizedType)
-                                        && !filteredResourceTypes.some(isolated function(string t) returns boolean => t == normalizedType) {
-                                            filteredResourceTypes.push(normalizedType);
-                                        }
-                                    }
-                                }
-                            } else {
-                                filteredResourceTypes = consentedTypeSet.keys();
-                            }
-
-                            if filteredResourceTypes.length() == 0 {
-                                log:printDebug("No consented resource types available for patient " + patientId + ". Skipping.");
-                                exportUrls[patientId] = "Skipped: no consented resource types available for export";
-                                continue;
-                            }
-
-                            string filteredTypeParam = string:'join(",", ...filteredResourceTypes);
-                            patientQueryParameters["_type"] = [filteredTypeParam];
-                            log:printDebug("$export param for patient " + patientId + ": _type = " + filteredTypeParam);
-                        } else {
+                        if consentedResourceTypes.length() == 0 {
                             // Consent exists but specifies no allowed resource types; skip this patient.
                             log:printDebug("Consent context exists but no consented resource types specified for patient " + patientId + ". Skipping.");
                             exportUrls[patientId] = "Skipped: no consented resource types specified in consent";
                             continue;
                         }
+
+                        // Filter the export request to include only consented resource types.
+                        string[] filteredResourceTypes = filterConsentedResourceTypes(patientQueryParameters, consentedResourceTypes);
+                        if filteredResourceTypes.length() == 0 {
+                            log:printDebug("No consented resource types available for patient " + patientId + ". Skipping.");
+                            exportUrls[patientId] = "Skipped: no consented resource types available for export";
+                            continue;
+                        }
+
+                        string filteredTypeParam = string:'join(",", ...filteredResourceTypes);
+                        patientQueryParameters["_type"] = [filteredTypeParam];
+                        log:printDebug("$export param for patient " + patientId + ": _type = " + filteredTypeParam);
                     }
 
                     // Call the async export for patient

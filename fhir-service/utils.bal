@@ -876,12 +876,12 @@ isolated function updateCommunicationRequestAndClaim(international401:Parameters
     }
     claim.supportingInfo = existingSupportingInfo;
 
-    r4:DomainResource _ = check update(fhirConnector, CLAIM, claim.toJson());
+    r4:DomainResource _ = check update(fhirConnector, CLAIM, claimId, claim.toJson());
     log:printDebug(string `Claim ${claimId} updated successfully`);
 
     communicationRequest.status = "completed";
     r4:DomainResource|r4:FHIRError updatedComReqJson = 
-        check update(fhirConnector, COMMUNICATION_REQUEST, communicationRequest.toJson());
+        check update(fhirConnector, COMMUNICATION_REQUEST, commReqId, communicationRequest.toJson());
     if updatedComReqJson is r4:FHIRError {
         log:printError("Failed to update CommunicationRequest: " + updatedComReqJson.message());
         return createOpereationOutcome(r4:CODE_SEVERITY_ERROR, r4:ERROR, 

@@ -441,7 +441,11 @@ public isolated function submitAttachments(international401:Parameters payload)
                 }
             }
         }
-        if trackingId != "" && supportingInfoList.length() > 0 {
+        if trackingId == "" {
+            return r4:createFHIRError("TrackingId parameter is missing", r4:ERROR, r4:INVALID, 
+                httpStatusCode = http:STATUS_BAD_REQUEST);
+        }
+        if supportingInfoList.length() > 0 {
             return supportingInfoList.clone();
         }
     }
@@ -815,7 +819,7 @@ isolated function checkForDuplicateConsent(Consent consent) returns r4:FHIRError
 
  
 isolated function updateCommunicationRequestAndClaim(international401:Parameters parameters,
-    davincipas:PASClaimSupportingInfo[] supportingInfo) returns r4:OperationOutcome|error {
+    davincipas:PASClaimSupportingInfo[] supportingInfo, r4:FHIRContext fhirContext) returns r4:OperationOutcome|error {
 
     international401:ParametersParameter[]? 'parameter = 'parameters.'parameter;
     string commReqId = "";
@@ -829,11 +833,19 @@ isolated function updateCommunicationRequestAndClaim(international401:Parameters
     }
     if commReqId == "" {
         log:printError("TrackingId parameter is missing");
+        fhirContext.setResponseStatusCode(400);
         return createOpereationOutcome(r4:CODE_SEVERITY_ERROR, r4:ERROR, "TrackingId parameter is missing");
     }
 
     r4:DomainResource communicationRequestJson = check getById(fhirConnector, COMMUNICATION_REQUEST, commReqId);
     davincipas:PASCommunicationRequest communicationRequest = check communicationRequestJson.cloneWithType();
+
+    if communicationRequest.status == "completed" {
+        log:printError(string `CommunicationRequest ${commReqId} is already completed`);
+        fhirContext.setResponseStatusCode(400);
+        return createOpereationOutcome(r4:CODE_SEVERITY_ERROR, r4:ERROR, 
+            string `CommunicationRequest ${commReqId} is already completed`);
+    }
 
     // get claim id
     string claimId = "";
@@ -850,6 +862,7 @@ isolated function updateCommunicationRequestAndClaim(international401:Parameters
     }
     if claimId == "" {
         log:printError("Failed to find linked claim reference in CommunicationRequest");
+        fhirContext.setResponseStatusCode(400);
         return createOpereationOutcome(r4:CODE_SEVERITY_ERROR, r4:ERROR, 
             "Failed to find linked claim reference in CommunicationRequest");
     }
@@ -884,6 +897,7 @@ isolated function updateCommunicationRequestAndClaim(international401:Parameters
         check update(fhirConnector, COMMUNICATION_REQUEST, commReqId, communicationRequest.toJson());
     if updatedComReqJson is r4:FHIRError {
         log:printError("Failed to update CommunicationRequest: " + updatedComReqJson.message());
+        fhirContext.setResponseStatusCode(500);
         return createOpereationOutcome(r4:CODE_SEVERITY_ERROR, r4:ERROR, 
             "Failed to update CommunicationRequest");
     }
@@ -900,5 +914,6 @@ isolated function updateCommunicationRequestAndClaim(international401:Parameters
             }
         ]
     };
+    fhirContext.setResponseStatusCode(200);
     return outcome;
 }

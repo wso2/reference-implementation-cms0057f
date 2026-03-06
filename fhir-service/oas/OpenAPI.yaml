@@ -783,6 +783,255 @@ paths:
       security:
         - default: []
       x-auth-type: Application & Application User
+  /CommunicationRequest:
+    get:
+      tags:
+        - GET
+        - CommunicationRequest
+      parameters:
+        - name: about
+          in: query
+          description: Resources that pertain to this communication request
+          required: false
+          schema:
+            type: string
+            example: null
+          x-wso2-oh-fhirType: reference
+        - name: authored
+          in: query
+          description: When request transitioned to being actionable
+          required: false
+          schema:
+            type: string
+            example: null
+          x-wso2-oh-fhirType: date
+        - name: based-on
+          in: query
+          description: Fulfills plan or proposal
+          required: false
+          schema:
+            type: string
+            example: null
+          x-wso2-oh-fhirType: reference
+        - name: category
+          in: query
+          description: Message category
+          required: false
+          schema:
+            type: string
+            example: null
+          x-wso2-oh-fhirType: token
+        - name: encounter
+          in: query
+          description: The Encounter during which this CommunicationRequest was created
+          required: false
+          schema:
+            type: string
+            example: null
+          x-wso2-oh-fhirType: reference
+        - name: group-identifier
+          in: query
+          description: Composite request this is part of
+          required: false
+          schema:
+            type: string
+            example: null
+          x-wso2-oh-fhirType: token
+        - name: identifier
+          in: query
+          description: Unique identifier
+          required: false
+          schema:
+            type: string
+            example: null
+          x-wso2-oh-fhirType: token
+        - name: information-provider
+          in: query
+          description: Who should share the information
+          required: false
+          schema:
+            type: string
+            example: null
+          x-wso2-oh-fhirType: reference
+        - name: medium
+          in: query
+          description: A channel of communication
+          required: false
+          schema:
+            type: string
+            example: null
+          x-wso2-oh-fhirType: token
+        - name: occurrence
+          in: query
+          description: When scheduled
+          required: false
+          schema:
+            type: string
+            example: null
+          x-wso2-oh-fhirType: date
+        - name: patient
+          in: query
+          description: Focus of message
+          required: false
+          schema:
+            type: string
+            example: null
+          x-wso2-oh-fhirType: reference
+        - name: priority
+          in: query
+          description: routine | urgent | asap | stat
+          required: false
+          schema:
+            type: string
+            example: null
+          x-wso2-oh-fhirType: token
+        - name: recipient
+          in: query
+          description: Who to share the information with
+          required: false
+          schema:
+            type: string
+            example: null
+          x-wso2-oh-fhirType: reference
+        - name: replaces
+          in: query
+          description: Request(s) replaced by this request
+          required: false
+          schema:
+            type: string
+            example: null
+          x-wso2-oh-fhirType: reference
+        - name: requester
+          in: query
+          description: Who asks for the information to be shared
+          required: false
+          schema:
+            type: string
+            example: null
+          x-wso2-oh-fhirType: reference
+        - name: status
+          in: query
+          description: draft | active | on-hold | revoked | completed | entered-in-error | unknown
+          required: false
+          schema:
+            type: string
+            example: null
+          x-wso2-oh-fhirType: token
+        - name: subject
+          in: query
+          description: Focus of message
+          required: false
+          schema:
+            type: string
+            example: null
+          x-wso2-oh-fhirType: reference
+        - $ref: "#/components/parameters/_lastUpdatedParam"
+        - $ref: "#/components/parameters/_securityParam"
+        - $ref: "#/components/parameters/_tagParam"
+        - $ref: "#/components/parameters/_idParam"
+        - $ref: "#/components/parameters/_sourceParam"
+        - $ref: "#/components/parameters/_profileParam"
+      responses:
+        "200":
+          description: search Communication Request operation successful
+          content:
+            application/fhir+json:
+              schema:
+                $ref: "#/components/schemas/Bundle"
+      security:
+        - default: []
+      x-auth-type: Application & Application User
+    post:
+      summary: Create a new Communication Request
+      tags:
+        - POST
+        - Communication Request
+      requestBody:
+        required: true
+        content:
+          application/fhir+json:
+            schema:
+              $ref: "#/components/schemas/CommunicationRequest"
+      responses:
+        "201":
+          description: Successfully created Communication Request
+  /CommunicationRequest/{id}:
+    get:
+      tags:
+        - GET
+        - Communication Request
+      parameters:
+        - name: id
+          in: path
+          description: logical identifier
+          required: true
+          schema:
+            type: string
+            example: null
+      responses:
+        "200":
+          description: read Communication Request operation successful
+          content:
+            application/fhir+json:
+              schema:
+                $ref: "#/components/schemas/CommunicationRequest"
+      security:
+        - default: []
+      x-auth-type: Application & Application User
+    put:
+      tags:
+        - PUT
+        - Communication Request
+      parameters:
+        - name: id
+          in: path
+          description: logical identifier
+          required: true
+          schema:
+            type: string
+            example: null
+      responses:
+        "200":
+          description: update Communication Request operation successful
+      security:
+        - default: []
+      x-auth-type: Application & Application User
+    delete:
+      tags:
+        - DELETE
+        - Communication Request
+      parameters:
+        - name: id
+          in: path
+          description: logical identifier
+          required: true
+          schema:
+            type: string
+            example: null
+      responses:
+        "204":
+          description: delete Communication Request operation successful
+      security:
+        - default: []
+      x-auth-type: Application & Application User
+    patch:
+      tags:
+        - PATCH
+        - Communication Request
+      parameters:
+        - name: id
+          in: path
+          description: logical identifier
+          required: true
+          schema:
+            type: string
+            example: null
+      responses:
+        "200":
+          description: patch Communication Request operation successful
+      security:
+        - default: []
+      x-auth-type: Application & Application User
   /Coverage:
     get:
       tags:
@@ -6107,6 +6356,15 @@ components:
         - $ref: "#/components/schemas/DomainResource"
         - type: object
           properties: {}
+          example: null
+    CommunicationRequest:
+      example: null
+      allOf:
+        - $ref: "#/components/schemas/DomainResource"
+        - type: object
+          properties:
+            contract:
+              $ref: "#/components/schemas/Reference"
           example: null
     Coverage:
       example: null

@@ -582,6 +582,25 @@ paths:
       responses:
         "201":
           description: Successfully created Claim
+  /Claim/$submit-attachment:
+    post:
+      summary: Add attachments to a Claim
+      tags:
+        - POST
+        - Claim
+      requestBody:
+        required: true
+        content:
+          application/fhir+json:
+            schema:
+              $ref: "#/components/schemas/Parameters"
+      responses:
+        "200":
+          description: submit attachment operation successful
+          content:
+            application/fhir+json:
+              schema:
+                $ref: "#/components/schemas/OperationOutcome"
   /ClaimResponse:
     get:
       tags:

@@ -6357,6 +6357,15 @@ components:
         - type: object
           properties: {}
           example: null
+    CommunicationRequest:
+      example: null
+      allOf:
+        - $ref: "#/components/schemas/DomainResource"
+        - type: object
+          properties:
+            contract:
+              $ref: "#/components/schemas/Reference"
+          example: null
     Coverage:
       example: null
       allOf:

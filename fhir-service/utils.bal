@@ -876,7 +876,7 @@ isolated function updateCommunicationRequestAndClaim(international401:Parameters
     }
     claim.supportingInfo = existingSupportingInfo;
 
-    r4:DomainResource _ = check update(fhirConnector, CLAIM, claimId, claim.toJson());
+    _ = check update(fhirConnector, CLAIM, claimId, claim.toJson());
     log:printDebug(string `Claim ${claimId} updated successfully`);
 
     communicationRequest.status = "completed";

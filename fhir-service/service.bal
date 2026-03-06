@@ -1532,6 +1532,7 @@ service /fhir/r4/Group on new fhirr4:Listener(config = groupApiConfig) {
     isolated resource function get [string id]/\$export(r4:FHIRContext fhirContext) returns r4:FHIRError|http:Response|error {
         log:printDebug("Group-level export invoked for group id: " + id);
         map<string[]> queryParameters = {};
+        r4:ConsentContext? consentContext = fhirContext.getConsentContext();
 
         r4:FHIRRequest? fhirRequest = fhirContext.getFHIRRequest();
         if fhirRequest !is () {
@@ -1558,9 +1559,61 @@ service /fhir/r4/Group on new fhirr4:Listener(config = groupApiConfig) {
                 // expecting reference to be "Patient/123"
                 if reference.startsWith("Patient/") {
                     string patientId = reference.substring(8);
-                    
+                    map<string[]> patientQueryParameters = queryParameters.clone();
+
+                    // Apply per-patient consent filtering
+                    if consentContext !is () {
+                        if consentContext.patientID != patientId {
+                            // Skip patients not covered by the consent context
+                            log:printDebug("Skipping patient " + patientId + ": does not match consent context patient id " + consentContext.patientID);
+                            exportUrls[patientId] = "Skipped: patient not authorized by consent context";
+                            continue;
+                        }
+
+                        string[] consentedResourceTypes = consentContext.consentedResourceTypes.clone();
+
+                        if consentedResourceTypes.length() > 0 {
+                            map<boolean> consentedTypeSet = {};
+                            foreach string consentedType in consentedResourceTypes {
+                                consentedTypeSet[consentedType.trim()] = true;
+                            }
+
+                            string[] filteredResourceTypes = [];
+                            string[]? requestTypeParams = patientQueryParameters["_type"];
+                            if requestTypeParams is string[] {
+                                foreach string requestTypeParam in requestTypeParams {
+                                    string[] requestedTypes = re `,`.split(requestTypeParam);
+                                    foreach string requestedType in requestedTypes {
+                                        final string normalizedType = requestedType.trim();
+                                        if normalizedType != "" && consentedTypeSet.hasKey(normalizedType)
+                                        && !filteredResourceTypes.some(isolated function(string t) returns boolean => t == normalizedType) {
+                                            filteredResourceTypes.push(normalizedType);
+                                        }
+                                    }
+                                }
+                            } else {
+                                filteredResourceTypes = consentedTypeSet.keys();
+                            }
+
+                            if filteredResourceTypes.length() == 0 {
+                                log:printDebug("No consented resource types available for patient " + patientId + ". Skipping.");
+                                exportUrls[patientId] = "Skipped: no consented resource types available for export";
+                                continue;
+                            }
+
+                            string filteredTypeParam = string:'join(",", ...filteredResourceTypes);
+                            patientQueryParameters["_type"] = [filteredTypeParam];
+                            log:printDebug("$export param for patient " + patientId + ": _type = " + filteredTypeParam);
+                        } else {
+                            // Consent exists but specifies no allowed resource types; skip this patient.
+                            log:printDebug("Consent context exists but no consented resource types specified for patient " + patientId + ". Skipping.");
+                            exportUrls[patientId] = "Skipped: no consented resource types specified in consent";
+                            continue;
+                        }
+                    }
+
                     // Call the async export for patient
-                    r4:FHIRError|http:Response|error exportRes = invokePatientExport(patientId, queryParameters, fhirClient:GET);
+                    r4:FHIRError|http:Response|error exportRes = invokePatientExport(patientId, patientQueryParameters, fhirClient:GET);
                     if exportRes is http:Response {
                         string|error pollingUrl = exportRes.getHeader("content-location");
                         if pollingUrl is string {

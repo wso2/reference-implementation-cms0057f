@@ -41,9 +41,44 @@ isolated http:Client httpClient = check new (rule_engine_url);
 # + hookId - ID of the hook being invoked.
 # + return - return CdsResponse or CdsError
 isolated function connectDecisionSystemForCrdMriSpineOrderSign(cds:CdsRequest cdsRequest, string hookId) returns cds:CdsResponse|cds:CdsError {
+
+    // Extract patientId and serviceRequestId from context
+    cds:Context context = cdsRequest.clone().context;
+
+    string patientId = "";
+    if context["patientId"] is string {
+        patientId = <string>context["patientId"];
+    }
+
+    if patientId == "" {
+        return cds:createCdsError("patientId missing from CDS Hook context", 400);
+    }
+
+    // Try to find a ServiceRequest id from draftOrders
+    string serviceRequestId = "";
+    r4:Bundle? draftOrders = context?.draftOrders;
+    if draftOrders is r4:Bundle {
+        r4:BundleEntry[]? entriesArray = draftOrders.entry;
+        if entriesArray is r4:BundleEntry[] {
+            foreach var item in entriesArray {
+                anydata resourceData = item?.'resource;
+                if resourceData is map<json> {
+                    if resourceData["resourceType"] == "ServiceRequest" {
+                        if resourceData["id"] is string {
+                            serviceRequestId = <string>resourceData["id"];
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Call rule engine inside lock
     lock {
         r4:Bundle bundle = {'type: "collection"};
         r4:BundleEntry[] entries = [];
+
+        // Add prefetch resources
         map<r4:DomainResource>? prefetch = cdsRequest.clone().prefetch;
         if prefetch is map<r4:DomainResource> {
             foreach var item in prefetch.keys() {
@@ -54,10 +89,11 @@ isolated function connectDecisionSystemForCrdMriSpineOrderSign(cds:CdsRequest cd
             }
         }
 
-        cds:Context context = cdsRequest.clone().context;
-        r4:Bundle? draftOrders = context?.draftOrders;
-        if draftOrders is r4:Bundle {
-            r4:BundleEntry[]? entriesArray = draftOrders.entry;
+        // Add draft orders
+        cds:Context ctx = cdsRequest.clone().context;
+        r4:Bundle? draftOrdersInLock = ctx?.draftOrders;
+        if draftOrdersInLock is r4:Bundle {
+            r4:BundleEntry[]? entriesArray = draftOrdersInLock.entry;
             if entriesArray is r4:BundleEntry[] {
                 foreach var item in entriesArray {
                     entries.push(item);
@@ -84,25 +120,93 @@ isolated function connectDecisionSystemForCrdMriSpineOrderSign(cds:CdsRequest cd
 
         cds:CdsResponse res = {cards: []};
 
-        cds:Card card = {
-            summary: priorAuthDecision.summary,
-            detail: priorAuthDecision.reasons[0],
-            indicator: "critical",
-            'source: {label: "WSO2 Healthcare Rule Engine"}
-        };
+        if priorAuthDecision.priorAuthRequired {
+            cds:Card card = {
+                summary: priorAuthDecision.summary,
+                detail: priorAuthDecision.reasons.length() > 0 ? priorAuthDecision.reasons[0] : "Prior Authorization Required",
+                indicator: "info",
+                'source: {label: "WSO2 Healthcare Rule Engine"}
+            };
 
-        PriorAuthLink[]? links = priorAuthDecision.links;
-
-        cds:Link[] cdsLinks = [];
-        if links is PriorAuthLink[] {
-            foreach PriorAuthLink item in links {
-                cds:Link link = {label: item.label, 'type: cds:ABSOLUTE, url: item.url};
-                cdsLinks.push(link);
+            // Extract questionnaire URL from links array (label == "Questionnaire")
+            string? questionnaireUrl = ();
+            PriorAuthLink[]? links = priorAuthDecision.links;
+            if links is PriorAuthLink[] {
+                foreach PriorAuthLink lnk in links {
+                    if lnk.label == "Questionnaire" {
+                        questionnaireUrl = lnk.url;
+                        break;
+                    }
+                }
             }
-            card.links = cdsLinks;
+
+            // Build Task-based suggestion for DTR if questionnaire URL is present
+            if questionnaireUrl is string {
+                international401:Task task = {
+                    meta: {
+                        profile: ["http://hl7.org/fhir/us/davinci-crd/StructureDefinition/profile-taskquestionnaire"]
+                    },
+                    status: "requested",
+                    intent: "order",
+                    code: {
+                        coding: [
+                            {
+                                system: "http://hl7.org/fhir/uv/sdc/CodeSystem/temp",
+                                code: "data-request-questionnaire"
+                            }
+                        ]
+                    },
+                    description: "Complete Prior Auth form",
+                    for: {
+                        reference: string `Patient/${patientId}`
+                    },
+                    requester: {
+                        reference: string `Organization/${payer_organization_id}`
+                    },
+                    input: [
+                        {
+                            'type: {
+                                coding: [
+                                    {
+                                        system: "http://hl7.org/fhir/uv/sdc/CodeSystem/temp",
+                                        code: "questionnaire"
+                                    }
+                                ],
+                                text: "questionnaire"
+                            },
+                            valueCanonical: questionnaireUrl
+                        }
+                    ]
+                };
+
+                if serviceRequestId != "" {
+                    task.basedOn = [
+                        {
+                            reference: string `ServiceRequest/${serviceRequestId}`
+                        }
+                    ];
+                }
+
+                cds:Suggestion suggestion = {
+                    label: "Complete Prior Auth Questionnaire",
+                    uuid: "submit-epa-task",
+                    actions: [
+                        {
+                            'type: "create",
+                            description: "Add 'Complete Prior Auth form' to the task list",
+                            'resource: task
+                        }
+                    ]
+                };
+
+                cds:Suggestion[] suggestions = card.suggestions ?: [];
+                suggestions.push(suggestion);
+                card.suggestions = suggestions;
+            }
+
+            res.cards.push(card);
         }
 
-        res.cards.push(card);
         return res.clone();
     }
 }

@@ -121,6 +121,7 @@ const ClaimForm = () => {
     quantity: number;
     patient: string;
     provider: string;
+    providerName: string;
     insurer: string;
     use: string;
     supportingInfo: string;
@@ -131,6 +132,7 @@ const ClaimForm = () => {
     quantity: medicationFormData.frequency * medicationFormData.period,
     patient: `Patient/${currentPatient.id}`,
     provider: "PractitionerRole/456",
+    providerName: "City General Hospital",
     insurer: "Organization/50",
     use: "preauthorization",
     supportingInfo: "QuestionnaireResponse/1122",
@@ -230,7 +232,7 @@ const ClaimForm = () => {
           if (claimId) {
             const webhookUrl = Config.webhookServerUrl || "http://localhost:9099";
             const patientName = formData.patient || "Unknown Patient";
-            const providerName = formData.provider || "Unknown Provider";
+            const providerName = formData.providerName || "Unknown Provider";
             const medicationRef = formData.medication || "Unknown Medication";
 
             axios.post(`${webhookUrl}/claim`, {

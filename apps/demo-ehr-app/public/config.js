@@ -16,7 +16,7 @@
 
 window.Config = {
   baseUrl:
-    "https://c32618cf-389d-44f1-93ee-b67a3468aae3-dev.e1-us-east-azure.choreoapis.dev/cms-0057f---unitedhealth/fhir-service/v1.0",
+    "https://c32618cf-389d-44f1-93ee-b67a3468aae3-dev.e1-us-east-azure.choreoapis.dev/cms-paas/fhir-service-fm/v1.0",
   demoBaseUrl: "https://unitedcare.com",
   demoHospitalUrl: "https://grace-hospital.com",
   cdsRequestUrl: "https://c32618cf-389d-44f1-93ee-b67a3468aae3-dev.e1-us-east-azure.choreoapis.dev/cms-paas/cds-service/v1.0/cds-services",

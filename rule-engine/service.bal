@@ -21,7 +21,7 @@ configurable string fhir_server_url = ?;
 configurable map<string> & readonly hook_id_questionnaire_id_map = ?;
 
 service http:Service / on new http:Listener(9093) {
-    isolated resource function post crd\-mri\-spine\-order\-sign(@http:Payload json payload) returns PriorAuthDecision|error {
+    isolated resource function post crd\-mri\-spine\-order\-sign(@http:Payload json payload) returns json|error {
         // log:printInfo(payload.toJsonString());
         // return error(string `Rule repository backend not implemented/ connected yet`);
 
@@ -35,7 +35,7 @@ service http:Service / on new http:Listener(9093) {
         return decidePriorAuth(parse, "crd-mri-spine-order-sign");
     }
 
-    isolated resource function post radiology\-order(@http:Payload json payload) returns PriorAuthDecision|error {
+    isolated resource function post radiology\-order(@http:Payload json payload) returns json|error {
         r4:Bundle|error r4Bundle = payload.cloneWithType();
 
         if r4Bundle is error {
@@ -45,7 +45,7 @@ service http:Service / on new http:Listener(9093) {
         return decidePriorAuth(r4Bundle, "radiology-order");
     }
 
-    isolated resource function post radiology(@http:Payload json payload) returns PriorAuthDecision|error {
+    isolated resource function post radiology(@http:Payload json payload) returns json|error {
         r4:Bundle|error r4Bundle = payload.cloneWithType();
 
         if r4Bundle is error {
@@ -55,7 +55,7 @@ service http:Service / on new http:Listener(9093) {
         return decidePriorAuth(r4Bundle, "radiology");
     }
 
-    isolated resource function post prescribe\-medication(@http:Payload json payload) returns PriorAuthDecision|error {
+    isolated resource function post prescribe\-medication(@http:Payload json payload) returns json|error {
         r4:Bundle|error r4Bundle = payload.cloneWithType();
 
         if r4Bundle is error {

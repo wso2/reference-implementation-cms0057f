@@ -49,6 +49,8 @@ import {
   CHIP_COLOR_WARNING,
 } from "../constants/color";
 import {
+  appendRequestLog,
+  clearRequestLogs,
   resetCurrentRequest,
   updateCurrentRequest,
   updateCurrentRequestMethod,
@@ -196,6 +198,14 @@ const PrescribeForm = ({
         },
       })
       .then<CdsResponse>((res) => {
+        dispatch(
+          appendRequestLog({
+            method: HTTP_METHODS.POST,
+            url: Config.demoBaseUrl + Config.prescribe_medication,
+            request: payload,
+            response: res.data,
+          })
+        );
         if (res.status >= 200 && res.status < 300) {
           setAlertMessage("Payer requirements retrieved successfully!");
           setAlertSeverity("success");
@@ -288,6 +298,7 @@ const PrescribeForm = ({
       return;
     }
     dispatch(updateActiveStep(0));
+    dispatch(clearRequestLogs());
     dispatch(
       updateSingleStep({
         stepName: "Medication request",
@@ -333,6 +344,14 @@ const PrescribeForm = ({
         },
       })
       .then<CdsResponse>(async (res) => {
+        dispatch(
+          appendRequestLog({
+            method: HTTP_METHODS.POST,
+            url: Config.demoHospitalUrl + Config.medication_request,
+            request: payload,
+            response: res.data,
+          })
+        );
         if (res.status >= 200 && res.status < 300) {
           setAlertMessage("Medication order created successfully!");
           setAlertSeverity("success");
@@ -618,6 +637,14 @@ const RequirementCard = ({
         },
       })
       .then(async (response) => {
+        dispatch(
+          appendRequestLog({
+            method: HTTP_METHODS.POST,
+            url: Config.demoBaseUrl + Config.questionnaire_package,
+            request: requestBody,
+            response: response.data,
+          })
+        );
         if (response.status >= 200 && response.status < 300) {
           console.log("Questionnaire fetched successfully!");
         } else {

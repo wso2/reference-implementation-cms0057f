@@ -34,7 +34,11 @@ import { updateCdsResponse, resetCdsResponse } from "../redux/cdsResponseSlice";
 import { useAuth } from "../components/AuthProvider";
 import PatientInfo from "../components/PatientInfo";
 import { FREQUENCY_UNITS } from "../constants/data";
-import { updateIsProcess } from "../redux/currentStateSlice";
+import {
+  appendRequestLog,
+  clearRequestLogs,
+  updateIsProcess,
+} from "../redux/currentStateSlice";
 import { HTTP_METHODS } from "../constants/enum";
 
 const useQuery = () => {
@@ -104,6 +108,7 @@ const QuestionnniarForm = ({
     dispatch(resetCdsRequest());
     dispatch(resetCdsResponse());
     dispatch(updateIsProcess(true));
+    dispatch(clearRequestLogs());
     // Fetch the questionnaire data from the API
     const Config = window.Config;
     dispatch(
@@ -129,6 +134,14 @@ const QuestionnniarForm = ({
         setOpenSnackbar(true);
 
         const questionnaire = response.data;
+        dispatch(
+          appendRequestLog({
+            method: HTTP_METHODS.POST,
+            url: Config.demoBaseUrl + Config.questionnaire_package,
+            request: requestBody,
+            response: questionnaire,
+          })
+        );
         const questionnaireParam = questionnaire.parameter?.find(
           (p: any) => p.name === "PackageBundle"
         );
@@ -220,6 +233,8 @@ const QuestionnniarForm = ({
       updateRequestUrl(Config.demoBaseUrl + Config.questionnaire_response)
     );
     dispatch(updateRequestMethod(HTTP_METHODS.POST));
+    // Note: clearRequestLogs is NOT called here because we want to see both
+    // questionnaire-package and questionnaire-response if they happen in the same session.
 
     // Submit the questionnaire response to the API
 
@@ -236,6 +251,14 @@ const QuestionnniarForm = ({
           if (response.data?.id) {
             setSubmittedQrId(response.data.id);
           }
+          dispatch(
+            appendRequestLog({
+              method: HTTP_METHODS.POST,
+              url: Config.demoBaseUrl + Config.questionnaire_response,
+              request: questionnaireResponse,
+              response: response.data,
+            })
+          );
         } else {
           setAlertMessage("Failed to submit questionnaire response!");
           setAlertSeverity("error");

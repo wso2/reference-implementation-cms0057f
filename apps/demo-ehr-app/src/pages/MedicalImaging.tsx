@@ -36,6 +36,8 @@ import {
   CHIP_COLOR_WARNING,
 } from "../constants/color";
 import {
+  appendRequestLog,
+  clearRequestLogs,
   updateCurrentRequest,
   updateCurrentRequestMethod,
   updateCurrentRequestUrl,
@@ -197,6 +199,7 @@ const ImagingOrderForm = ({
     }
 
     const Config = window.Config;
+    dispatch(clearRequestLogs());
     let currentServiceRequestId = serviceRequestId;
 
     // Step 1: Create Imaging Order if not already created
@@ -223,6 +226,14 @@ const ImagingOrderForm = ({
         });
         if (res.status >= 200 && res.status < 300) {
           const createdSr = res.data;
+          dispatch(
+            appendRequestLog({
+              method: HTTP_METHODS.POST,
+              url: Config.baseUrl + Config.service_request,
+              request: srResource,
+              response: createdSr,
+            })
+          );
           currentServiceRequestId = createdSr.id;
           setServiceRequestId(createdSr.id);
           operations[0].isCompleted = true;
@@ -292,6 +303,14 @@ const ImagingOrderForm = ({
       setOpenSnackbar(true);
 
       setCdsCards(res.data.cards);
+      dispatch(
+        appendRequestLog({
+          method: HTTP_METHODS.POST,
+          url: Config.demoBaseUrl + Config.crd_mri_spine,
+          request: payload,
+          response: res.data,
+        })
+      );
       localStorage.setItem(
         CDS_RESPONSE,
         JSON.stringify({ cards: res.data.cards, systemActions: {} })

@@ -93,7 +93,7 @@ isolated function invokePatientSummary(string patientId, map<string[]> queryPara
 
     http:Response response = new;
     response.statusCode = summaryResponse.httpStatusCode;
-    
+
     json|xml summaryPayload = summaryResponse.'resource;
     if summaryPayload is json {
         if summaryPayload != () {
@@ -1102,7 +1102,31 @@ service /fhir/r4/Encounter on new fhirr4:Listener(config = encounterApiConfig) {
 service /fhir/r4/Questionnaire/questionnaire\-package on new fhirr4:Listener(config = questionnairePackageApiConfig) {
 
     isolated resource function post .(r4:FHIRContext fhirContext, international401:Parameters parameters) returns error|http:Response {
-        r4:DomainResource createResult = check getById(fhirConnector, QUESTIONNAIRE, "4");
+        // Extract questionnaire ID from the incoming Parameters resource.
+        // The DTR launch URL puts the full questionnaire URL in a "questionnaire" parameter
+        // with valueCanonical. We parse the last path segment as the ID.
+        string questionnaireId = "4"; // default fallback for drug scenario
+
+        international401:ParametersParameter[]? paramList = parameters.'parameter;
+        if paramList is international401:ParametersParameter[] {
+            foreach international401:ParametersParameter param in paramList {
+                if param.name == "questionnaire" {
+                    r4:canonical? valueCanonical = param.valueCanonical;
+                    if valueCanonical is r4:canonical && valueCanonical != "" {
+                        // Extract last path segment — e.g. ".../Questionnaire/1" -> "1"
+                        int? lastIndex = valueCanonical.lastIndexOf("/");
+                        if lastIndex is int {
+                            questionnaireId = valueCanonical.substring(lastIndex + 1);
+                        } else {
+                            questionnaireId = valueCanonical;
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+
+        r4:DomainResource createResult = check getById(fhirConnector, QUESTIONNAIRE, questionnaireId);
 
         r4:Bundle bundle = {
             resourceType: "Bundle",
@@ -1133,7 +1157,7 @@ service /fhir/r4/Questionnaire/questionnaire\-package on new fhirr4:Listener(con
 // # Questionnaire API                                                                                                  #
 // ######################################################################################################################
 
-public type Questionnaire davincidtr210:DTRStdQuestionnaire;
+public type Questionnaire international401:Questionnaire|davincidtr210:DTRStdQuestionnaire;
 
 service /fhir/r4/Questionnaire on new fhirr4:Listener(config = questionnaireApiConfig) {
 
@@ -1545,7 +1569,7 @@ service /fhir/r4/Group on new fhirr4:Listener(config = groupApiConfig) {
                 // expecting reference to be "Patient/123"
                 if reference.startsWith("Patient/") {
                     string patientId = reference.substring(8);
-                    
+
                     // Call the async export for patient
                     r4:FHIRError|http:Response|error exportRes = invokePatientExport(patientId, queryParameters, fhirClient:GET);
                     if exportRes is http:Response {
@@ -1564,7 +1588,7 @@ service /fhir/r4/Group on new fhirr4:Listener(config = groupApiConfig) {
 
         http:Response response = new;
         response.statusCode = http:STATUS_ACCEPTED;
-        response.setJsonPayload({ "transactionTime": time:utcToString(time:utcNow()), "exportUrls": exportUrls });
+        response.setJsonPayload({"transactionTime": time:utcToString(time:utcNow()), "exportUrls": exportUrls});
         return response;
     }
 

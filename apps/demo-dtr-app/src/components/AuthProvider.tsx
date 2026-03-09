@@ -51,7 +51,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const redirectTo = originalPath || "/";
       navigate(redirectTo, { replace: true });
     } else if (response.status == 401) {
-      setIsAuthenticated(false); 
+      setIsAuthenticated(false);
       navigate("/login");
     }
   };
@@ -59,16 +59,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const saveQueryParamsToSessionStorage = () => {
     const coverageId = query.get("coverageId");
     const medicationRequestId = query.get("medicationRequestId");
+    const serviceRequestId = query.get("serviceRequestId");
+    const questionnaire = query.get("questionnaire");
     const patientId = query.get("patientId");
 
-    if (!coverageId || !medicationRequestId || !patientId) {
+    // Mandatory: patientId must always be present.
+    // Flow 1: coverageId and medicationRequestId (standard drug flow)
+    // Flow 2: questionnaire (MRI flow)
+    const isStandardFlow = coverageId && medicationRequestId;
+    const isQuestionnaireFlow = questionnaire;
+
+    if (!patientId || (!isStandardFlow && !isQuestionnaireFlow)) {
       navigate("/fetching");
       return;
     }
 
-    sessionStorage.setItem("coverageId", coverageId);
-    sessionStorage.setItem("medicationRequestId", medicationRequestId);
-    sessionStorage.setItem("patientId", patientId);
+    if (coverageId) sessionStorage.setItem("coverageId", coverageId);
+    if (medicationRequestId) sessionStorage.setItem("medicationRequestId", medicationRequestId);
+    if (serviceRequestId) sessionStorage.setItem("serviceRequestId", serviceRequestId);
+    if (questionnaire) sessionStorage.setItem("questionnaire", questionnaire);
+    if (patientId) sessionStorage.setItem("patientId", patientId);
   }
 
   useEffect(() => {

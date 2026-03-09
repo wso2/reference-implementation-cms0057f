@@ -33,16 +33,29 @@ import { updateCdsResponse, resetCdsResponse } from "../redux/cdsResponseSlice";
 const getQuestionText = (text: { value: string } | string | undefined): string =>
   typeof text === "string" ? text : (text?.value ?? "");
 
+/**
+ * Extracts the Questionnaire ID from a full FHIR Questionnaire URL.
+ * E.g. "https://example.com/fhir/r4/Questionnaire/34" -> "34"
+ */
+const extractQuestionnaireId = (url: string): string => {
+  const parts = url.split("/");
+  return parts[parts.length - 1];
+};
+
 export default function QuestionnniarForm({
   coverageId,
   medicationRequestId,
+  serviceRequestId,
+  questionnaireUrl,
   patientId,
   isQuestionnaireResponseSubmited,
   setIsQuestionnaireResponseSubmited,
   practitionerId,
 }: {
-  coverageId: string;
-  medicationRequestId: string;
+  coverageId?: string;
+  medicationRequestId?: string;
+  serviceRequestId?: string;
+  questionnaireUrl?: string;
   patientId: string;
   isQuestionnaireResponseSubmited: boolean;
   setIsQuestionnaireResponseSubmited: React.Dispatch<
@@ -54,7 +67,9 @@ export default function QuestionnniarForm({
   const [questions, setQuestions] = useState<
     { linkId: string; text: { value: string } | string; type: string }[]
   >([]);
-  const [questionnaireID, setQuestionnaireID] = useState<string | null>(null);
+  const [questionnaireID, setQuestionnaireID] = useState<string | null>(
+    questionnaireUrl ? extractQuestionnaireId(questionnaireUrl) : null
+  );
   const [formData, setFormData] = useState<{
     [key: string]: string | number | boolean;
   }>({});
@@ -66,25 +81,56 @@ export default function QuestionnniarForm({
 
   const Config = window.Config;
 
-  const questionnairePackageRequestBody = {
-    resourceType: "Parameters",
-    id: "questionnaire-package-request",
-    parameter: [
-      {
+  /**
+   * Build the questionnaire-package request body dynamically based on
+   * which parameters are available in the launch context.
+   */
+  const buildRequestBody = () => {
+    const parameters: any[] = [];
+
+    // Always include the questionnaire URL when launching via DTR link
+    if (questionnaireUrl) {
+      parameters.push({
+        name: "questionnaire",
+        valueCanonical: questionnaireUrl,
+      });
+    }
+
+    // Include coverage if provided
+    if (coverageId) {
+      parameters.push({
         name: "coverage",
         resource: {
           resourceType: "Coverage",
           reference: "Coverage/" + coverageId,
         },
-      },
-      {
+      });
+    }
+
+    // Include order — prefer MedicationRequest, fall back to ServiceRequest
+    if (medicationRequestId) {
+      parameters.push({
         name: "order",
         resource: {
           resourceType: "MedicationRequest",
           reference: "MedicationRequest/" + medicationRequestId,
         },
-      },
-    ],
+      });
+    } else if (serviceRequestId) {
+      parameters.push({
+        name: "order",
+        resource: {
+          resourceType: "ServiceRequest",
+          reference: "ServiceRequest/" + serviceRequestId,
+        },
+      });
+    }
+
+    return {
+      resourceType: "Parameters",
+      id: "questionnaire-package-request",
+      parameter: parameters,
+    };
   };
 
   useEffect(() => {
@@ -92,10 +138,12 @@ export default function QuestionnniarForm({
     dispatch(resetCdsResponse());
     dispatch(updateRequestUrl(Config.questionnaire_package));
     dispatch(updateRequestMethod("POST"));
-    dispatch(updateRequest(questionnairePackageRequestBody));
+
+    const requestBody = buildRequestBody();
+    dispatch(updateRequest(requestBody));
 
     axios
-      .post(Config.questionnaire_package, questionnairePackageRequestBody, {
+      .post(Config.questionnaire_package, requestBody, {
         headers: {
           "Content-Type": "application/fhir+json",
         },
@@ -125,7 +173,11 @@ export default function QuestionnniarForm({
           console.warn("Questionnaire parsed successfully but contained no items.", questionnaireResource);
         }
         setQuestions(items);
-        setQuestionnaireID(questionnaireResource.id ?? null);
+
+        // Use the ID from the fetched resource if we didn't have it from the URL
+        if (!questionnaireID && questionnaireResource.id) {
+          setQuestionnaireID(questionnaireResource.id);
+        }
 
         dispatch(
           updateCdsResponse({
@@ -168,10 +220,6 @@ export default function QuestionnniarForm({
       throw new Error("Questionnaire ID not found");
     }
 
-    if (!practitionerId) {
-      throw new Error("Practitioner ID not found");
-    }
-
     return {
       resourceType: "QuestionnaireResponse",
       extension: [
@@ -190,7 +238,7 @@ export default function QuestionnniarForm({
         reference: "Patient/" + patientId,
       },
       author: {
-        reference: practitionerId,
+        reference: practitionerId || "Practitioner/456",
       },
       item: questions.map((question) => ({
         linkId: question.linkId,
@@ -351,9 +399,24 @@ export default function QuestionnniarForm({
           <Button
             variant="success"
             style={{ marginTop: "30px", marginRight: "20px", float: "right" }}
-            onClick={() =>
-              window.open(Config.ehr_baseUrl + "/dashboard/claim-submit")
-            }
+            onClick={() => {
+              console.log("DTR -> Claim Submit - IDs:", {
+                patientId,
+                serviceRequestId,
+                medicationRequestId,
+                coverageId
+              });
+              const claimUrl = [
+                Config.ehr_baseUrl,
+                "/dashboard/claim-submit",
+                `?patientId=${patientId}`,
+                serviceRequestId ? `&serviceRequestId=${serviceRequestId}` : "",
+                medicationRequestId ? `&medicationRequestId=${medicationRequestId}` : "",
+                coverageId ? `&coverageId=${coverageId}` : ""
+              ].join("");
+              console.log("Opening claim URL:", claimUrl);
+              window.open(claimUrl);
+            }}
             disabled={!isQuestionnaireResponseSubmited}
           >
             Visit Claim Submission

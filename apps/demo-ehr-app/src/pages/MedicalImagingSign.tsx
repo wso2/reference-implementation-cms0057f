@@ -36,7 +36,7 @@ import { updateCdsHook } from "../redux/cdsRequestSlice";
 import { ExpandedContext } from "../utils/expanded_context";
 import { updateCdsResponse } from "../redux/cdsResponseSlice";
 import axios from "axios";
-import { CdsCard, CdsResponse } from "./MedicalImaging";
+import { CdsCard, CdsResponse } from "../components/interfaces/cdsCard";
 import { Card } from "@chakra-ui/react";
 
 function MedicalImagingSign() {
@@ -219,7 +219,7 @@ function MedicalImagingSign() {
                   </Typography>
                   <Typography variant="body2">
                     <ul>
-                      {card.suggestions?.map((suggestion) => (
+                      {card.suggestions?.map((suggestion: { label: string }) => (
                         <li>{suggestion.label}</li>
                       ))}
                     </ul>
@@ -228,7 +228,7 @@ function MedicalImagingSign() {
                 {card.links != null && (
                   <CardActions>
                     Still, not applied?
-                    <Link target="_blank" to={"prior-auth"}>
+                    <Link target="_blank" to={`prior-auth?patientId=${patientId}`}>
                       Apply
                     </Link>
                   </CardActions>

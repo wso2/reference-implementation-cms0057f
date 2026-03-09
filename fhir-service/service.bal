@@ -374,7 +374,7 @@ service /fhir/r4/Patient on new fhirr4:Listener(config = patientApiConfig) {
 
 public type Claim davincipas:PASClaim;
 
-public type Parameters international401:Parameters;
+public type Parameters r4:Bundle|international401:Parameters;
 
 service /fhir/r4/Claim on new fhirr4:Listener(config = ClaimApiConfig) {
 

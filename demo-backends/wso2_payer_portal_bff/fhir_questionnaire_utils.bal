@@ -124,7 +124,7 @@ function parseQuestionnaireListItem(json fhirResource) returns QuestionnaireList
 # + return - FHIR Questionnaire resource as JSON or error
 function getFHIRQuestionnaireById(string questionnaireId) returns json|error {
     string path = QUESTIONNAIRE + "/" + questionnaireId;
-    json result = check fhirHttpClient->get(path);
+    json result = check fhirHttpClient->get(path, headers = {"Content-Type": "application/fhir+json"});
     return result;
 }
 
@@ -145,7 +145,7 @@ function createFHIRQuestionnaire(json questionnaire) returns json|error {
 # + return - Updated questionnaire resource as JSON or error
 function updateFHIRQuestionnaire(string questionnaireId, json questionnaire) returns json|error {
     string path = QUESTIONNAIRE + "/" + questionnaireId;
-    http:Response response = check fhirHttpClient->put(path, questionnaire);
+    http:Response response = check fhirHttpClient->put(path, questionnaire, headers = {"Content-Type": "application/fhir+json"});
     json result = check response.getJsonPayload();
     return result;
 }
@@ -156,7 +156,7 @@ function updateFHIRQuestionnaire(string questionnaireId, json questionnaire) ret
 # + return - Error if operation fails, () if successful
 function deleteFHIRQuestionnaire(string questionnaireId) returns error? {
     string path = QUESTIONNAIRE + "/" + questionnaireId;
-    http:Response response = check fhirHttpClient->delete(path);
+    http:Response response = check fhirHttpClient->delete(path, headers = {"Content-Type": "application/fhir+json"});
     // Check if delete was successful (HTTP 204 or 200)
     int statusCode = response.statusCode;
     if statusCode != 200 && statusCode != 204 {

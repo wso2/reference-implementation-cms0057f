@@ -4267,6 +4267,78 @@ paths:
       security:
         - default: []
       x-auth-type: Application & Application User
+  /ServiceRequest:
+    get:
+      tags:
+        - GET
+        - ServiceRequest
+      parameters:
+        - name: patient
+          in: query
+          description: Search by subject - a patient
+          required: false
+          schema:
+            type: string
+          x-wso2-oh-fhirType: reference
+        - name: status
+          in: query
+          description: Status of the service request
+          required: false
+          schema:
+            type: string
+          x-wso2-oh-fhirType: token
+        - $ref: "#/components/parameters/_lastUpdatedParam"
+        - $ref: "#/components/parameters/_securityParam"
+        - $ref: "#/components/parameters/_tagParam"
+        - $ref: "#/components/parameters/_idParam"
+        - $ref: "#/components/parameters/_sourceParam"
+        - $ref: "#/components/parameters/_profileParam"
+      responses:
+        "200":
+          description: search ServiceRequest operation successful
+          content:
+            application/fhir+json:
+              schema:
+                $ref: "#/components/schemas/Bundle"
+      security:
+        - default: []
+      x-auth-type: Application & Application User
+    post:
+      summary: Create a new ServiceRequest
+      tags:
+        - POST
+        - ServiceRequest
+      requestBody:
+        required: true
+        content:
+          application/fhir+json:
+            schema:
+              $ref: "#/components/schemas/ServiceRequest"
+      responses:
+        "201":
+          description: Successfully created ServiceRequest
+  /ServiceRequest/{id}:
+    get:
+      tags:
+        - GET
+        - ServiceRequest
+      parameters:
+        - name: id
+          in: path
+          description: logical identifier
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: read ServiceRequest operation successful
+          content:
+            application/fhir+json:
+              schema:
+                $ref: "#/components/schemas/ServiceRequest"
+      security:
+        - default: []
+      x-auth-type: Application & Application User
   /metadata:
     get:
       summary: Get FHIR R4 Capability Statement

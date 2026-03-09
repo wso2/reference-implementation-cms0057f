@@ -92,11 +92,12 @@ const ClaimForm = () => {
             }
           }
           // Fallback: search for the latest QuestionnaireResponse for this patient
-          console.log(`Attempting fallback search for QuestionnaireResponse for Patient/${patientId}`);
-          const searchRes = await axios.get(`${Config.questionnaire_response}?subject=Patient/${patientId}&_count=1`);
+          console.log(`Attempting fallback search for QuestionnaireResponse for Patient/${patientId} with page=6&_count=10`);
+          const searchRes = await axios.get(`${Config.questionnaire_response}?subject=Patient/${patientId}&page=6&_count=10`);
           if (searchRes.data?.entry?.length > 0) {
-            console.log("Found QR via fallback search:", searchRes.data.entry[0].resource.id);
-            return { data: searchRes.data.entry[0].resource };
+            const lastEntryIndex = searchRes.data.entry.length - 1;
+            console.log("Found QR via fallback search (using last entry of page 5):", searchRes.data.entry[lastEntryIndex].resource.id);
+            return { data: searchRes.data.entry[lastEntryIndex].resource };
           }
           throw new Error("No QuestionnaireResponse found for this patient.");
         };
@@ -129,7 +130,7 @@ const ClaimForm = () => {
               console.warn(`Failed to fetch ServiceRequest by ID ${serviceRequestId}, trying fallback search.`);
             }
           }
-          
+
           // Try MedicationRequest by ID
           if (medicationRequestId && medicationRequestId !== "null") {
             try {

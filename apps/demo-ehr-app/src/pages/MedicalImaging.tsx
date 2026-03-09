@@ -27,7 +27,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { CdsCard, CdsResponse } from "../components/interfaces/cdsCard";
 import axios from "axios";
 import { useAuth } from "../components/AuthProvider";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { Alert, Box, Snackbar, Step, StepLabel, Stepper } from "@mui/material";
 import PatientInfo from "../components/PatientInfo";
 import {
@@ -475,8 +475,6 @@ const PayerRequirementsCard = ({
   cdsCards: CdsCard[],
   serviceRequestId: string | null
 }) => {
-  const navigate = useNavigate();
-  const patientId = localStorage.getItem(SELECTED_PATIENT_ID) || "101";
 
   if (cdsCards.length === 0) return null;
 
@@ -492,7 +490,7 @@ const PayerRequirementsCard = ({
         }}
       >
         {cdsCards.map((card, index) => (
-          <RequirementCard key={index} card={card} />
+          <RequirementCard key={index} card={card} serviceRequestId={serviceRequestId} />
         ))}
       </div>
 
@@ -501,7 +499,7 @@ const PayerRequirementsCard = ({
 };
 
 // ── RequirementCard ──────────────────────────────────────────────────────────
-const RequirementCard = ({ card }: { card: CdsCard }) => {
+const RequirementCard = ({ card, serviceRequestId }: { card: CdsCard, serviceRequestId: string | null }) => {
   const patientId = localStorage.getItem(SELECTED_PATIENT_ID);
 
   const indicatorColor =

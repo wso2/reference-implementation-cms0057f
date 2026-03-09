@@ -34,6 +34,7 @@ import ballerinax/health.fhir.r4.uscore501;
 configurable Configs configs = ?;
 configurable string exportServiceUrl = ?;
 configurable string sampleDataGithubUrl = ?;
+configurable boolean doX12Translation = ?;
 
 // This is used to connect to file service
 isolated http:Client exportServiceClient = check new (exportServiceUrl);

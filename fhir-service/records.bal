@@ -69,7 +69,8 @@ public enum ResourceType {
     QUESTIONNAIRE_RESPONSE = "QuestionnaireResponse",
     EXPLANATION_OF_BENEFIT = "ExplanationOfBenefit",
     GROUP = "Group",
-    SERVICE_REQUEST = "ServiceRequest"
+    SERVICE_REQUEST = "ServiceRequest",
+    AUDIT_EVENT = "AuditEvent"
 }
 
 # Holds information for OAuth2 authentication.

@@ -26,6 +26,7 @@ import ballerinax/health.fhir.r4.international401;
 import ballerinax/health.fhir.r4.parser;
 import ballerinax/health.fhir.r4.uscore501;
 import ballerinax/health.fhir.r4.validator;
+import wso2healthcare/health.x12.utils.fhirtox12 as fhirToX12;
 
 isolated function getQueryParamsMap(map<r4:RequestSearchParameter[] & readonly> requestSearchParameters) returns map<string[]> {
     //TODO: Should provide ability to get the query parameters from the context as it is from the http request. 
@@ -352,6 +353,35 @@ public isolated function claimSubmit(r4:Bundle|international401:Parameters paylo
 
             r4:DomainResource newClaimResource = check create(fhirConnector, CLAIM, claim.toJson());
             international401:Claim newClaim = check newClaimResource.cloneWithType();
+
+            if doX12Translation {
+                log:printDebug("Starting FHIR to X12 translation for the Bundle");
+                fhirToX12:EnvelopeSegments_Type envelope = {};
+                string|error x12278String = fhirToX12:to278String(submissionBundle, envelope);
+                if x12278String is string {
+                    log:printDebug("The converted bundle is: " + x12278String);
+                    international401:AuditEvent auditEvent = {
+                        id: "x12/" + <string>claim.id,
+                        'source: {
+                            observer: {
+                                "display": "FHIR Service"
+                            }
+                        }, 
+                        agent: [], 
+                        recorded: time:utcToString(time:utcNow()), 
+                        'type: {
+                            system: "http://terminology.hl7.org/CodeSystem/audit-event-type",
+                            code: "x12",
+                            display: "X12 Request"
+                        },
+                        outcome: x12278String
+                    };
+                    _ = check create(fhirConnector, AUDIT_EVENT, auditEvent.toJson());
+                    log:printDebug("Audit event created for the converted X12 message.");
+                } else {
+                    log:printError("Error converting bundle: " + x12278String.message());
+                }
+            }
 
             davincipas:PASClaimResponse claimResponse = {
                 id: uuid:createType1AsString(),

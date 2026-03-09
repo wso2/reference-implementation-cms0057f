@@ -385,10 +385,10 @@ service /fhir/r4/Claim on new fhirr4:Listener(config = ClaimApiConfig) {
     isolated resource function post \$submit\-attachment(r4:FHIRContext fhirContext, Parameters parameters) 
         returns r4:OperationOutcome|error {
         // persist attachments and get the corresponding attachment references
-        davincipas:PASClaimSupportingInfo[]|r4:FHIRError|error claimSubmissionResponse = submitAttachments(parameters);
+        davincipas:PASClaimSupportingInfo[]|r4:FHIRError|error claimSubmissionResponse = submitAttachments(<international401:Parameters>parameters);
         // update communication request status to "completed" and update claim with attachment references 
         if claimSubmissionResponse is davincipas:PASClaimSupportingInfo[] {
-            return updateCommunicationRequestAndClaim(parameters, claimSubmissionResponse, fhirContext);
+            return updateCommunicationRequestAndClaim(<international401:Parameters>parameters, claimSubmissionResponse, fhirContext);
         }
         log:printError("Attachment submission failed: " + claimSubmissionResponse.message());
         fhirContext.setResponseStatusCode(400);

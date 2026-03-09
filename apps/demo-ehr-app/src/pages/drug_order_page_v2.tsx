@@ -798,7 +798,7 @@ export default function DrugOrderPageV2() {
 
   return isAuthenticated ? (
     <div style={{ marginLeft: 50, marginBottom: 50 }}>
-      <div className="page-heading">Order Drugs</div>
+      <div className="page-heading">Prescribe Medications</div>
       <PatientInfo />
       <PrescribeForm setCdsCards={setCdsCards} />
       <PayerRequirementsCard cdsCards={cdsCards} />

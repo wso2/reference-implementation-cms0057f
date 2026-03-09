@@ -34,9 +34,9 @@ export const SERVICE_CARD_DETAILS = [
   },
   {
     serviceImagePath: "/drug_order_service.png",
-    serviceName: "Order Drugs",
+    serviceName: "Prescribe Medications",
     serviceDescription:
-      "Order and manage medications for patients, ensuring timely and accurate delivery.",
+      "Manage patient prescriptions, check medication interactions, and initiate Prior Authorization",
     path: "/dashboard/drug-order-v2",
   },
   {

@@ -21,13 +21,17 @@ window.Config = {
   demoHospitalUrl: "https://grace-hospital.com",
   cdsRequestUrl: "https://c32618cf-389d-44f1-93ee-b67a3468aae3-dev.e1-us-east-azure.choreoapis.dev/cms-paas/cds-service/v1.0/cds-services",
   fhirServerUrl: "http://fhir-server-1853775667:9090/fhir/r4",
-  dtrAppUrl: "https://1feed768-63df-4134-a86b-29feb37b8dd0.e1-us-east-azure.choreoapps.dev",
+  dtrAppUrl: "https://localhost:10001",
   webhookServerUrl: "/choreo-apis/cms-provider/pa-notification-service/v1",
 
   medication_request:
     "/choreo-apis/cms-paas/fhir-service-fm/v1/MedicationRequest",
+  service_request:
+    "/choreo-apis/cms-paas/fhir-service-fm/v1/ServiceRequest",
   prescribe_medication:
     "/choreo-apis/cms-paas/cds-service/v1/cds-services/prescribe-medication",
+  crd_mri_spine:
+    "/choreo-apis/cms-paas/cds-service/v1/cds-services/crd-mri-spine-order-sign",
   questionnaire_package:
     "/choreo-apis/cms-paas/fhir-service-fm/v1/Questionnaire/questionnaire-package",
   questionnaire_response:
@@ -38,6 +42,8 @@ window.Config = {
     "/choreo-apis/cms-paas/fhir-service-fm/v1/Practitioner",
   patient:
     "/choreo-apis/cms-paas/fhir-service-fm/v1/Patient",
+  coverage:
+    "/choreo-apis/cms-paas/fhir-service-fm/v1/Coverage",
   claim:
     "/choreo-apis/cms-paas/fhir-service-fm/v1/Claim",
   bulkExportFetch:

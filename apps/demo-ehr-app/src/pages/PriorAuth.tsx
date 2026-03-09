@@ -30,7 +30,9 @@ import { useDispatch, useSelector } from "react-redux";
 import { LAB_TEST } from "../constants/data";
 import { ExpandedContext } from "../utils/expanded_context";
 import { useAuth } from "../components/AuthProvider";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
+import { CREATE_PAS_CLAIM_BUNDLE } from "../constants/data";
+import axios from "axios";
 
 function LabTest() {
   const { isAuthenticated } = useAuth();
@@ -47,8 +49,21 @@ function LabTest() {
   const [enableNotification1, setEnableNotification1] = useState(false);
   const [enableNotification2, setEnableNotification2] = useState(false);
 
-  const [patientId, setPatientId] = useState("PA2347");
-  const [practionerId, setPractionerId] = useState("PT567498");
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const urlPatientId = queryParams.get("patientId") || "PA2347";
+  const serviceRequestId = queryParams.get("serviceRequestId");
+  const questionnaireResponseId = queryParams.get("questionnaireResponseId");
+
+  const [patientId] = useState(urlPatientId);
+  const [practionerId] = useState("PT567498");
+
+  const [patientResource, setPatientResource] = useState<any>(null);
+  const [serviceRequestResource, setServiceRequestResource] = useState<any>(null);
+  const [questionnaireResponseResource, setQuestionnaireResponseResource] = useState<any>(null);
+  const [coverageResource, setCoverageResource] = useState<any>(null);
+
+  const [loading, setLoading] = useState(false);
   const [selectedTestType, setSelectedTestType] = useState("");
   const [selectedArea, setSelectedArea] = useState("");
   const [description, setDescription] = useState("");
@@ -93,27 +108,119 @@ function LabTest() {
     setIsSelectedAreaChanged(true);
   };
 
-  const handleScheduleClick = () => {
-    setPatientId("");
-    setPractionerId("");
-    setEnableNotification1(true);
-    setSelectedTestType("");
-    setSelectedArea("");
-    setDescription("");
-    setFile("");
+  const handleScheduleClick = async () => {
+    setLoading(true);
+    const Config = (window as any).Config;
 
-    setIsTestTypeChanged(false);
-    setIsSelectedAreaChanged(false);
-    setIsFileUploadChanged(false);
+    const providerOrg = {
+      resourceType: "Organization",
+      id: "provider-01",
+      meta: {
+        profile: [
+          "http://hl7.org/fhir/us/davinci-pas/StructureDefinition/profile-pas-requestor-organization",
+        ],
+      },
+      identifier: [
+        {
+          system: "http://hl7.org/fhir/sid/us-npi",
+          value: "9999999999",
+        },
+      ],
+      name: "General Hospital Radiology",
+    };
+
+    const payerOrg = {
+      resourceType: "Organization",
+      id: "payer-01",
+      meta: {
+        profile: [
+          "http://hl7.org/fhir/us/davinci-pas/StructureDefinition/profile-pas-insurer-organization",
+        ],
+      },
+      name: "WSO2 Healthcare Payer",
+    };
+
+    const bundle = CREATE_PAS_CLAIM_BUNDLE(
+      patientResource,
+      serviceRequestResource,
+      questionnaireResponseResource,
+      coverageResource,
+      providerOrg,
+      payerOrg
+    );
+
+    try {
+      const response = await axios.post(Config.claim_submit, bundle, {
+        headers: {
+          "Content-Type": "application/fhir+json",
+        },
+      });
+
+      if (response.status >= 200 && response.status < 300) {
+        setEnableNotification1(true);
+        // Clear form or navigate
+      } else {
+        console.error("Failed to submit PAS claim:", response.data);
+      }
+    } catch (error) {
+      console.error("Error submitting PAS claim:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const isFormValid = () => {
-    return selectedTestType != "" && selectedArea != "" && file != "";
-  };
+
 
   useEffect(() => {
+    const fetchResources = async () => {
+      const Config = (window as any).Config;
+      try {
+        // Fetch Patient
+        const patRes = await axios.get(`${Config.patient}/${patientId}`);
+        setPatientResource(patRes.data);
+
+        // Fetch ServiceRequest
+        if (serviceRequestId) {
+          const srRes = await axios.get(`${Config.service_request}/${serviceRequestId}`);
+          setServiceRequestResource(srRes.data);
+          setSelectedTestType(srRes.data.code?.coding?.[0]?.display || "");
+        }
+
+        // Fetch QuestionnaireResponse
+        if (questionnaireResponseId) {
+          const qrRes = await axios.get(`${Config.questionnaire_response}/${questionnaireResponseId}`);
+          setQuestionnaireResponseResource(qrRes.data);
+        } else {
+          // Attempt to fetch latest QuestionnaireResponse for this patient
+          const qrSearchRes = await axios.get(`${Config.baseUrl}/fhir/r4/QuestionnaireResponse?patient=${patientId}&_count=1`);
+          if (qrSearchRes.data.entry && qrSearchRes.data.entry.length > 0) {
+            setQuestionnaireResponseResource(qrSearchRes.data.entry[0].resource);
+          }
+        }
+
+        // Fetch Coverage (implied search or direct by ID if we had it, for now assume there's one for patient)
+        const covRes = await axios.get(`${Config.baseUrl}/fhir/r4/Coverage?patient=${patientId}`);
+        if (covRes.data.entry && covRes.data.entry.length > 0) {
+          setCoverageResource(covRes.data.entry[0].resource);
+        } else {
+          // Fallback static coverage if not found in server for demo purposes
+          setCoverageResource({
+            resourceType: "Coverage",
+            id: "cov-01",
+            status: "active",
+            beneficiary: { reference: `Patient/${patientId}` },
+            payor: [{ reference: "Organization/payer-01" }],
+            subscriberId: "588675dc-e80e-4528-a78f-af10f9755f23",
+          });
+        }
+      } catch (err) {
+        console.error("Error fetching resources for Prior Auth:", err);
+      }
+    };
+
+    fetchResources();
     dispatch(updateCdsHook("order-sign"));
-  }, [selectedPatientId, description, dispatch]);
+  }, [selectedPatientId, description, dispatch, patientId, serviceRequestId, questionnaireResponseId]);
 
   return isAuthenticated ? (
     <>
@@ -221,14 +328,14 @@ function LabTest() {
             <Button
               variant="contained"
               onClick={handleScheduleClick}
-              disabled={!isFormValid()}
+              disabled={loading}
               style={{
                 borderRadius: "50px",
                 marginLeft: 20,
                 marginTop: 50,
               }}
             >
-              Submit
+              {loading ? "Submitting..." : "Submit"}
             </Button>
           </Box>
         </Box>

@@ -190,7 +190,11 @@ const PrescribeForm = ({
     localStorage.setItem(CDS_REQUEST, JSON.stringify(payload));
 
     axios
-      .post<CdsResponse>(Config.prescribe_medication, payload)
+      .post<CdsResponse>(Config.prescribe_medication, payload, {
+        headers: {
+          "Content-Type": "application/fhir+json",
+        },
+      })
       .then<CdsResponse>((res) => {
         if (res.status >= 200 && res.status < 300) {
           setAlertMessage("Payer requirements retrieved successfully!");

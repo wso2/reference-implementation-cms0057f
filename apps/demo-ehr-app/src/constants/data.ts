@@ -1554,8 +1554,8 @@ export const CREATE_PAS_CLAIM_BUNDLE = (
           coding: [
             {
               system: "http://terminology.hl7.org/CodeSystem/claim-supportinginfo-category",
-              code: "medical-record",
-              display: "Medical Record",
+              code: "additionalInformation",
+              display: "Additional Information",
             },
           ],
         },

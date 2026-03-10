@@ -27,7 +27,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { CdsCard, CdsResponse } from "../components/interfaces/cdsCard";
 import axios from "axios";
 import { useAuth } from "../components/AuthProvider";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { Alert, Box, Snackbar, Step, StepLabel, Stepper } from "@mui/material";
 import PatientInfo from "../components/PatientInfo";
 import {
@@ -56,9 +56,14 @@ import {
   CDS_REQUEST_URL,
   CDS_RESPONSE,
   SELECTED_PATIENT_ID,
+  MEDICATION_REQUEST,
+  MEDICATION_REQUEST_METHOD,
+  MEDICATION_REQUEST_URL,
+  MEDICATION_RESPONSE,
 } from "../constants/localStorageVariables";
 import { HTTP_METHODS } from "../constants/enum";
 import { selectPatient } from "../redux/patientSlice";
+import { updateStepsArray } from "../redux/commonStoargeSlice";
 
 // ── Imaging Type options (CPT codes for MRI Spine) ──────────────────────────
 const IMAGING_TYPE_OPTIONS = [
@@ -131,6 +136,15 @@ const ImagingOrderForm = ({
 
   useEffect(() => {
     dispatch(updateIsProcess(true));
+    dispatch(
+      updateStepsArray([
+        { name: "Service request", status: StepStatus.NOT_STARTED },
+        { name: "Check Payer Requirements", status: StepStatus.NOT_STARTED },
+        { name: "Questionnaire package", status: StepStatus.NOT_STARTED },
+        { name: "Questionnaire Response", status: StepStatus.NOT_STARTED },
+        { name: "Claim Submit", status: StepStatus.NOT_STARTED },
+      ])
+    );
   }, [dispatch]);
 
   const isFormValid = () =>
@@ -208,7 +222,7 @@ const ImagingOrderForm = ({
       setActiveOperation(0);
       dispatch(
         updateSingleStep({
-          stepName: "Create imaging order",
+          stepName: "Service request",
           newStatus: StepStatus.IN_PROGRESS,
         })
       );
@@ -217,6 +231,10 @@ const ImagingOrderForm = ({
       dispatch(updateCurrentRequestMethod(HTTP_METHODS.POST));
       dispatch(updateCurrentRequestUrl(Config.baseUrl + Config.service_request));
       dispatch(updateCurrentRequest(srResource));
+
+      localStorage.setItem(MEDICATION_REQUEST_METHOD, HTTP_METHODS.POST);
+      localStorage.setItem(MEDICATION_REQUEST_URL, Config.baseUrl + Config.service_request);
+      localStorage.setItem(MEDICATION_REQUEST, JSON.stringify(srResource));
 
       try {
         const res = await axios.post(Config.service_request, srResource, {
@@ -237,9 +255,12 @@ const ImagingOrderForm = ({
           currentServiceRequestId = createdSr.id;
           setServiceRequestId(createdSr.id);
           operations[0].isCompleted = true;
+
+          localStorage.setItem(MEDICATION_RESPONSE, JSON.stringify(createdSr));
+
           dispatch(
             updateSingleStep({
-              stepName: "Create imaging order",
+              stepName: "Service request",
               newStatus: StepStatus.COMPLETED,
             })
           );
@@ -520,6 +541,7 @@ const PayerRequirementsCard = ({
 // ── RequirementCard ──────────────────────────────────────────────────────────
 const RequirementCard = ({ card, serviceRequestId }: { card: CdsCard, serviceRequestId: string | null }) => {
   const patientId = localStorage.getItem(SELECTED_PATIENT_ID);
+  const navigate = useNavigate();
 
   const indicatorColor =
     card.indicator === "warning"
@@ -603,7 +625,7 @@ const RequirementCard = ({ card, serviceRequestId }: { card: CdsCard, serviceReq
                                 padding: "10px 0",
                               }}
                               onClick={() => {
-                                window.open(dtrUrl, "_blank", "noopener,noreferrer");
+                                navigate(`/dashboard/dtr-launch?dtrUrl=${encodeURIComponent(dtrUrl)}`);
                               }}
                             >
                               Launch DTR

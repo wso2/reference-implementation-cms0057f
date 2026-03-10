@@ -70,6 +70,7 @@ export default function QuestionnniarForm({
   const [questionnaireID, setQuestionnaireID] = useState<string | null>(
     questionnaireUrl ? extractQuestionnaireId(questionnaireUrl) : null
   );
+  const [questionnaireResponseID, setQuestionnaireResponseID] = useState<string | null>(null);
   const [formData, setFormData] = useState<{
     [key: string]: string | number | boolean;
   }>({});
@@ -152,6 +153,18 @@ export default function QuestionnniarForm({
         if (response.status >= 200 && response.status < 300) {
           setAlertMessage("Questionnaire fetched successfully!");
           setAlertSeverity("success");
+
+          if (window !== window.parent) {
+            window.parent.postMessage({
+              type: "DTR_QUESTIONNAIRE_PACKAGE_LOG",
+              payload: {
+                method: "POST",
+                url: Config.questionnaire_package,
+                request: requestBody,
+                response: response.data
+              }
+            }, "*");
+          }
         } else {
           setAlertMessage("Failed to fetch questionnaire!");
           setAlertSeverity("error");
@@ -288,6 +301,20 @@ export default function QuestionnniarForm({
         if (response.status >= 200 && response.status < 300) {
           setAlertMessage("Questionnaire response submitted successfully!");
           setAlertSeverity("success");
+          if (response.data && response.data.id) {
+            setQuestionnaireResponseID(response.data.id);
+          }
+          if (window !== window.parent) {
+            window.parent.postMessage({
+              type: "DTR_QUESTIONNAIRE_RESPONSE_LOG",
+              payload: {
+                method: "POST",
+                url: Config.questionnaire_response,
+                request: questionnaireResponse,
+                response: response.data
+              }
+            }, "*");
+          }
         } else {
           setAlertMessage("Failed to submit questionnaire response!");
           setAlertSeverity("error");
@@ -404,7 +431,8 @@ export default function QuestionnniarForm({
                 patientId,
                 serviceRequestId,
                 medicationRequestId,
-                coverageId
+                coverageId,
+                qrId: questionnaireResponseID
               });
               const claimUrl = [
                 Config.ehr_baseUrl,
@@ -412,10 +440,26 @@ export default function QuestionnniarForm({
                 `?patientId=${patientId}`,
                 serviceRequestId ? `&serviceRequestId=${serviceRequestId}` : "",
                 medicationRequestId ? `&medicationRequestId=${medicationRequestId}` : "",
-                coverageId ? `&coverageId=${coverageId}` : ""
+                coverageId ? `&coverageId=${coverageId}` : "",
+                questionnaireResponseID ? `&qrId=${questionnaireResponseID}` : ""
               ].join("");
               console.log("Opening claim URL:", claimUrl);
-              window.open(claimUrl);
+
+              if (window !== window.parent) {
+                console.log("Embedded mode detected, sending postMessage");
+                window.parent.postMessage({
+                  type: "DTR_CLAIM_SUBMIT",
+                  payload: {
+                    patientId,
+                    serviceRequestId,
+                    medicationRequestId,
+                    coverageId,
+                    qrId: questionnaireResponseID
+                  }
+                }, "*");
+              } else {
+                window.open(claimUrl);
+              }
             }}
             disabled={!isQuestionnaireResponseSubmited}
           >

@@ -31,3 +31,6 @@ format = ["json"]
 
 [configRest]
 mode = "server"
+
+[ballerinax.health.fhir.r4.parser]
+validateAgainstProfile=false

@@ -49,6 +49,8 @@ import {
   CHIP_COLOR_WARNING,
 } from "../constants/color";
 import {
+  appendRequestLog,
+  clearRequestLogs,
   resetCurrentRequest,
   updateCurrentRequest,
   updateCurrentRequestMethod,
@@ -190,8 +192,20 @@ const PrescribeForm = ({
     localStorage.setItem(CDS_REQUEST, JSON.stringify(payload));
 
     axios
-      .post<CdsResponse>(Config.prescribe_medication, payload)
+      .post<CdsResponse>(Config.prescribe_medication, payload, {
+        headers: {
+          "Content-Type": "application/fhir+json",
+        },
+      })
       .then<CdsResponse>((res) => {
+        dispatch(
+          appendRequestLog({
+            method: HTTP_METHODS.POST,
+            url: Config.demoBaseUrl + Config.prescribe_medication,
+            request: payload,
+            response: res.data,
+          })
+        );
         if (res.status >= 200 && res.status < 300) {
           setAlertMessage("Payer requirements retrieved successfully!");
           setAlertSeverity("success");
@@ -284,6 +298,7 @@ const PrescribeForm = ({
       return;
     }
     dispatch(updateActiveStep(0));
+    dispatch(clearRequestLogs());
     dispatch(
       updateSingleStep({
         stepName: "Medication request",
@@ -329,6 +344,14 @@ const PrescribeForm = ({
         },
       })
       .then<CdsResponse>(async (res) => {
+        dispatch(
+          appendRequestLog({
+            method: HTTP_METHODS.POST,
+            url: Config.demoHospitalUrl + Config.medication_request,
+            request: payload,
+            response: res.data,
+          })
+        );
         if (res.status >= 200 && res.status < 300) {
           setAlertMessage("Medication order created successfully!");
           setAlertSeverity("success");
@@ -614,6 +637,14 @@ const RequirementCard = ({
         },
       })
       .then(async (response) => {
+        dispatch(
+          appendRequestLog({
+            method: HTTP_METHODS.POST,
+            url: Config.demoBaseUrl + Config.questionnaire_package,
+            request: requestBody,
+            response: response.data,
+          })
+        );
         if (response.status >= 200 && response.status < 300) {
           console.log("Questionnaire fetched successfully!");
         } else {
@@ -798,7 +829,7 @@ export default function DrugOrderPageV2() {
 
   return isAuthenticated ? (
     <div style={{ marginLeft: 50, marginBottom: 50 }}>
-      <div className="page-heading">Order Drugs</div>
+      <div className="page-heading">Prescribe Medications</div>
       <PatientInfo />
       <PrescribeForm setCdsCards={setCdsCards} />
       <PayerRequirementsCard cdsCards={cdsCards} />

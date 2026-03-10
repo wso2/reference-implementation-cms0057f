@@ -244,108 +244,108 @@ final r4:ResourceAPIConfig claimResponseApiConfig = {
     ],
     defaultProfile: (),
     searchParameters: [
-            {
-        name: "created",
-        active: true,
-        information: {
-            description: "The creation date",
-            builtin: false,
-            documentation: "http://hl7.org/fhir/SearchParameter/ClaimResponse-created"
+        {
+            name: "created",
+            active: true,
+            information: {
+                description: "The creation date",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/ClaimResponse-created"
+            }
+        },
+        {
+            name: "request",
+            active: true,
+            information: {
+                description: "The claim reference",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/ClaimResponse-request"
+            }
+        },
+        {
+            name: "payment-date",
+            active: true,
+            information: {
+                description: "The expected payment date",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/ClaimResponse-payment-date"
+            }
+        },
+        {
+            name: "outcome",
+            active: true,
+            information: {
+                description: "The processing outcome",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/ClaimResponse-outcome"
+            }
+        },
+        {
+            name: "status",
+            active: true,
+            information: {
+                description: "The status of the ClaimResponse",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/ClaimResponse-status"
+            }
+        },
+        {
+            name: "requestor",
+            active: true,
+            information: {
+                description: "The Provider of the claim",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/ClaimResponse-requestor"
+            }
+        },
+        {
+            name: "identifier",
+            active: true,
+            information: {
+                description: "The identity of the ClaimResponse",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/ClaimResponse-identifier"
+            }
+        },
+        {
+            name: "use",
+            active: true,
+            information: {
+                description: "The type of claim",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/ClaimResponse-use"
+            }
+        },
+        {
+            name: "insurer",
+            active: true,
+            information: {
+                description: "The organization which generated this resource",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/ClaimResponse-insurer"
+            }
+        },
+        {
+            name: "patient",
+            active: true,
+            information: {
+                description: "The subject of care",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/ClaimResponse-patient"
+            }
+        },
+        {
+            name: "disposition",
+            active: true,
+            information: {
+                description: "The contents of the disposition message",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/ClaimResponse-disposition"
+            }
         }
-    },
-            {
-        name: "request",
-        active: true,
-        information: {
-            description: "The claim reference",
-            builtin: false,
-            documentation: "http://hl7.org/fhir/SearchParameter/ClaimResponse-request"
-        }
-    },
-            {
-        name: "payment-date",
-        active: true,
-        information: {
-            description: "The expected payment date",
-            builtin: false,
-            documentation: "http://hl7.org/fhir/SearchParameter/ClaimResponse-payment-date"
-        }
-    },
-            {
-        name: "outcome",
-        active: true,
-        information: {
-            description: "The processing outcome",
-            builtin: false,
-            documentation: "http://hl7.org/fhir/SearchParameter/ClaimResponse-outcome"
-        }
-    },
-            {
-        name: "status",
-        active: true,
-        information: {
-            description: "The status of the ClaimResponse",
-            builtin: false,
-            documentation: "http://hl7.org/fhir/SearchParameter/ClaimResponse-status"
-        }
-    },
-            {
-        name: "requestor",
-        active: true,
-        information: {
-            description: "The Provider of the claim",
-            builtin: false,
-            documentation: "http://hl7.org/fhir/SearchParameter/ClaimResponse-requestor"
-        }
-    },
-            {
-        name: "identifier",
-        active: true,
-        information: {
-            description: "The identity of the ClaimResponse",
-            builtin: false,
-            documentation: "http://hl7.org/fhir/SearchParameter/ClaimResponse-identifier"
-        }
-    },
-            {
-        name: "use",
-        active: true,
-        information: {
-            description: "The type of claim",
-            builtin: false,
-            documentation: "http://hl7.org/fhir/SearchParameter/ClaimResponse-use"
-        }
-    },
-            {
-        name: "insurer",
-        active: true,
-        information: {
-            description: "The organization which generated this resource",
-            builtin: false,
-            documentation: "http://hl7.org/fhir/SearchParameter/ClaimResponse-insurer"
-        }
-    },
-            {
-        name: "patient",
-        active: true,
-        information: {
-            description: "The subject of care",
-            builtin: false,
-            documentation: "http://hl7.org/fhir/SearchParameter/ClaimResponse-patient"
-        }
-    },
-            {
-        name: "disposition",
-        active: true,
-        information: {
-            description: "The contents of the disposition message",
-            builtin: false,
-            documentation: "http://hl7.org/fhir/SearchParameter/ClaimResponse-disposition"
-        }
-    }
-        ],
+    ],
     operations: [
-    
+
     ],
     serverConfig: (),
     authzConfig: ()
@@ -535,6 +535,43 @@ final r4:ResourceAPIConfig medicationRequestApiConfig = {
     ],
     defaultProfile: (),
     searchParameters: [
+    ],
+    operations: [
+
+    ],
+    serverConfig: (),
+    authzConfig: ()
+};
+
+# ######################################################################################################################
+# Service Request API Configs                                                                                          #
+# ######################################################################################################################
+
+final r4:ResourceAPIConfig serviceRequestApiConfig = {
+    resourceType: "ServiceRequest",
+    profiles: [
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-servicerequest"
+    ],
+    defaultProfile: (),
+    searchParameters: [
+        {
+            name: "patient",
+            active: true,
+            information: {
+                description: "The patient that the service request is for",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/ServiceRequest-patient"
+            }
+        },
+        {
+            name: "status",
+            active: true,
+            information: {
+                description: "The status of the service request",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/ServiceRequest-status"
+            }
+        }
     ],
     operations: [
 
@@ -1050,7 +1087,6 @@ final r4:ResourceAPIConfig groupApiConfig = {
     serverConfig: (),
     authzConfig: ()
 };
-
 
 # ######################################################################################################################
 # Encounter API Configs                                                                                             #

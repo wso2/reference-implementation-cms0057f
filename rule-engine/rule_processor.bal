@@ -202,7 +202,7 @@ isolated function prepareTheLinks(string hookId) returns PriorAuthLink[]? {
 
         return [
             {
-                label: "Questionnaire url",
+                label: "Questionnaire",
                 url: questionnaireResourceUrl
             }
         ];

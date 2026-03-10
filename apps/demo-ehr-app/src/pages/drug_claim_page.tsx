@@ -14,18 +14,25 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import Form from "react-bootstrap/Form";
 import Card from "react-bootstrap/Card";
 import Button from "react-bootstrap/Button";
 import { useDispatch, useSelector } from "react-redux";
-import { CLAIM_REQUEST_BODY, PATIENT_DETAILS } from "../constants/data";
+import {
+  CREATE_PAS_CLAIM_BUNDLE,
+} from "../constants/data";
 import { useAuth } from "../components/AuthProvider";
-import { Navigate, useNavigate } from "react-router-dom";
-import { Alert, Snackbar } from "@mui/material";
-import { selectPatient } from "../redux/patientSlice";
-
+import { Navigate, useNavigate, useLocation } from "react-router-dom";
+import { Alert, CircularProgress, Snackbar } from "@mui/material";
+import {
+  SELECTED_PATIENT_ID,
+  CLAIM_REQUEST,
+  CLAIM_REQUEST_METHOD,
+  CLAIM_REQUEST_URL,
+} from "../constants/localStorageVariables";
+import { HTTP_METHODS } from "../constants/enum";
 import { updateIsProcess } from "../redux/currentStateSlice";
 import {
   StepStatus,
@@ -33,178 +40,206 @@ import {
   updateSingleStep,
 } from "../redux/commonStoargeSlice";
 import PatientInfo from "../components/PatientInfo";
-import {
-  CLAIM_REQUEST,
-  CLAIM_REQUEST_METHOD,
-  CLAIM_REQUEST_URL,
-  CLAIM_RESPONSE,
-  SELECTED_PATIENT_ID,
-} from "../constants/localStorageVariables";
-import { HTTP_METHODS } from "../constants/enum";
+
+const useQuery = () => {
+  return new URLSearchParams(useLocation().search);
+};
 
 const ClaimForm = () => {
   const dispatch = useDispatch();
-  const medicationFormData = useSelector(
-    (state: {
-      medicationFormData: {
-        medication: string;
-        frequency: number;
-        period: number;
-      };
-    }) => state.medicationFormData
-  );
   const navigate = useNavigate();
+  const query = useQuery();
+
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const [alertSeverity, setAlertSeverity] = useState<
     "error" | "warning" | "info" | "success"
   >("info");
   const [openSnackbar, setOpenSnackbar] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const pollIntervalRef = React.useRef<any>(null);
+  // Resources state
+  const [resources, setResources] = useState<{
+    patient: any;
+    request: any;
+    qr: any;
+    coverage: any;
+    providerOrg: any;
+    payerOrg: any;
+  } | null>(null);
 
-  useEffect(() => {
-    return () => {
-      if (pollIntervalRef.current) {
-        clearInterval(pollIntervalRef.current);
-      }
-    };
-  }, []);
+  const patientId = query.get("patientId") || localStorage.getItem(SELECTED_PATIENT_ID) || "101";
+  const medicationRequestId = query.get("medicationRequestId");
+  const serviceRequestId = query.get("serviceRequestId");
+  const qrId = query.get("qrId");
+  const coverageId = query.get("coverageId");
 
-  const savedPatientId = localStorage.getItem(SELECTED_PATIENT_ID);
+  console.log("ClaimPage IDs:", { patientId, medicationRequestId, serviceRequestId, qrId, coverageId });
+
   const loggedUser = useSelector((state: any) => state.loggedUser);
 
-  if (savedPatientId) {
-    dispatch(selectPatient(savedPatientId));
-  }
-
-  const selectedPatientId = useSelector(
-    (state: any) => state.patient.selectedPatientId
-  );
-  let currentPatient = PATIENT_DETAILS.find(
-    (patient) => patient.id === selectedPatientId
-  );
-
-  if (!currentPatient) {
-    currentPatient = PATIENT_DETAILS[0];
-  }
-
   useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      const Config = window.Config;
+      try {
+        // Fetch resources (QR and Coverage handle null/fallback)
+        const fetchQr = async () => {
+          if (qrId && qrId !== "null") {
+            try {
+              return await axios.get(`${Config.questionnaire_response}/${qrId}`);
+            } catch (err) {
+              console.warn(`Failed to fetch QR by ID ${qrId}, trying fallback search.`);
+            }
+          }
+          // Fallback: search for the latest QuestionnaireResponse for this patient
+          console.log(`Attempting fallback search for QuestionnaireResponse for Patient/${patientId} with page=6&_count=10`);
+          const searchRes = await axios.get(`${Config.questionnaire_response}?subject=Patient/${patientId}&page=6&_count=10`);
+          if (searchRes.data?.entry?.length > 0) {
+            const lastEntryIndex = searchRes.data.entry.length - 1;
+            console.log("Found QR via fallback search (using last entry of page 5):", searchRes.data.entry[lastEntryIndex].resource.id);
+            return { data: searchRes.data.entry[lastEntryIndex].resource };
+          }
+          throw new Error("No QuestionnaireResponse found for this patient.");
+        };
+
+        const fetchCoverage = async () => {
+          if (coverageId && coverageId !== "null") {
+            try {
+              return await axios.get(`${Config.coverage}/${coverageId}`);
+            } catch (err) {
+              console.warn(`Failed to fetch Coverage by ID ${coverageId}, trying fallback search.`);
+            }
+          }
+          // Fallback: search for the latest Coverage for this patient
+          console.log(`Attempting fallback search for Coverage for Patient/${patientId}`);
+          const searchRes = await axios.get(`${Config.coverage}?patient=Patient/${patientId}&_count=1`);
+          if (searchRes.data?.entry?.length > 0) {
+            console.log("Found Coverage via fallback search:", searchRes.data.entry[0].resource.id);
+            return { data: searchRes.data.entry[0].resource };
+          }
+          throw new Error("No Coverage found for this patient.");
+        };
+
+        const fetchRequest = async () => {
+          // Try ServiceRequest by ID first
+          if (serviceRequestId && serviceRequestId !== "null") {
+            try {
+              console.log(`Fetching ServiceRequest by ID: ${serviceRequestId}`);
+              return await axios.get(`${Config.service_request}/${serviceRequestId}`);
+            } catch (err) {
+              console.warn(`Failed to fetch ServiceRequest by ID ${serviceRequestId}, trying fallback search.`);
+            }
+          }
+
+          // Try MedicationRequest by ID
+          if (medicationRequestId && medicationRequestId !== "null") {
+            try {
+              console.log(`Fetching MedicationRequest by ID: ${medicationRequestId}`);
+              return await axios.get(`${Config.medication_request}/${medicationRequestId}`);
+            } catch (err) {
+              console.warn(`Failed to fetch MedicationRequest by ID ${medicationRequestId}, trying fallback search.`);
+            }
+          }
+
+          // Fallback: search for the latest ServiceRequest for this patient
+          console.log(`Attempting fallback search for ServiceRequest for Patient/${patientId}`);
+          try {
+            const searchRes = await axios.get(`${Config.service_request}?patient=Patient/${patientId}&_count=1`);
+            if (searchRes.data?.entry?.length > 0) {
+              console.log("Found ServiceRequest via fallback search:", searchRes.data.entry[0].resource.id);
+              return { data: searchRes.data.entry[0].resource };
+            }
+          } catch (err) {
+            console.warn("ServiceRequest search failed, trying MedicationRequest search.");
+          }
+
+          // Last resort: search for the latest MedicationRequest for this patient
+          console.log(`Attempting fallback search for MedicationRequest for Patient/${patientId}`);
+          const medSearchRes = await axios.get(`${Config.medication_request}?patient=Patient/${patientId}&_count=1`);
+          if (medSearchRes.data?.entry?.length > 0) {
+            console.log("Found MedicationRequest via fallback search:", medSearchRes.data.entry[0].resource.id);
+            return { data: medSearchRes.data.entry[0].resource };
+          }
+
+          throw new Error("No ServiceRequest or MedicationRequest found for this patient.");
+        };
+
+        const [patientRes, requestRes, qrRes, coverageRes, payerRes] = await Promise.all([
+          axios.get(`${Config.patient}/${patientId}`),
+          fetchRequest(),
+          fetchQr(),
+          fetchCoverage(),
+          axios.get(`${Config.organization}/50`),
+        ]);
+
+        // Mock Provider Org if not found
+        const providerOrg = {
+          resourceType: "Organization",
+          id: "456",
+          name: "City General Hospital",
+          identifier: [{ system: "http://hl7.org/fhir/sid/us-npi", value: "N123456" }]
+        };
+
+        if (!requestRes.data) {
+          throw new Error("No MedicationRequest or ServiceRequest found for claim submission.");
+        }
+
+        setResources({
+          patient: patientRes.data,
+          request: requestRes.data,
+          qr: qrRes.data,
+          coverage: coverageRes.data,
+          providerOrg: providerOrg,
+          payerOrg: payerRes.data,
+        });
+      } catch (err) {
+        console.error("Error fetching resources:", err);
+        const errorMessage = err instanceof Error ? err.message : "Failed to fetch necessary claim data.";
+        setAlertMessage(errorMessage);
+        setAlertSeverity("error");
+        setOpenSnackbar(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+
     dispatch(updateIsProcess(true));
-    dispatch(
-      updateSingleStep({
-        stepName: "Medication request",
-        newStatus: StepStatus.COMPLETED,
-      })
-    );
-    dispatch(
-      updateSingleStep({
-        stepName: "Check Payer Requirements",
-        newStatus: StepStatus.COMPLETED,
-      })
-    );
-    dispatch(
-      updateSingleStep({
-        stepName: "Questionnaire package",
-        newStatus: StepStatus.COMPLETED,
-      })
-    );
-    dispatch(
-      updateSingleStep({
-        stepName: "Questionnaire Response",
-        newStatus: StepStatus.COMPLETED,
-      })
-    );
-  }, [dispatch]);
-
-  const [formData, setFormData] = useState<{
-    medication: string;
-    quantity: number;
-    patient: string;
-    provider: string;
-    insurer: string;
-    use: string;
-    supportingInfo: string;
-    category: string;
-    unitPrice: string;
-  }>({
-    medication: medicationFormData.medication,
-    quantity: medicationFormData.frequency * medicationFormData.period,
-    patient: `Patient/${currentPatient.id}`,
-    provider: "PractitionerRole/456",
-    insurer: "Organization/50",
-    use: "preauthorization",
-    supportingInfo: "QuestionnaireResponse/1122",
-    category: "Pharmacy",
-    unitPrice: "600 USD",
-  });
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, value } = e.target;
-    setFormData((prevFormData) => ({
-      ...prevFormData,
-      [id]: value,
-    }));
-  };
+    // Mark previous steps as completed
+    ["Medication request", "Check Payer Requirements", "Questionnaire package", "Questionnaire Response"].forEach(step => {
+      dispatch(updateSingleStep({ stepName: step, newStatus: StepStatus.COMPLETED }));
+    });
+  }, [patientId, medicationRequestId, qrId, coverageId, dispatch]);
 
   const handleSubmit = () => {
+    if (!resources) return;
+
     const Config = window.Config;
-    const payload = CLAIM_REQUEST_BODY(
-      formData.patient,
-      formData.provider,
-      formData.insurer,
-      formData.use,
-      formData.supportingInfo,
-      formData.category,
-      formData.medication,
-      formData.quantity,
-      formData.unitPrice,
-      new Date().toISOString().split("T")[0]
+    const payload = CREATE_PAS_CLAIM_BUNDLE(
+      resources.patient,
+      resources.request,
+      resources.qr,
+      resources.coverage,
+      resources.providerOrg,
+      resources.payerOrg
     );
 
     dispatch(updateActiveStep(4));
-    dispatch(
-      updateSingleStep({
-        stepName: "Medication request",
-        newStatus: StepStatus.COMPLETED,
-      })
-    );
-    dispatch(
-      updateSingleStep({
-        stepName: "Check Payer Requirements",
-        newStatus: StepStatus.COMPLETED,
-      })
-    );
-    dispatch(
-      updateSingleStep({
-        stepName: "Questionnaire package",
-        newStatus: StepStatus.COMPLETED,
-      })
-    );
-    dispatch(
-      updateSingleStep({
-        stepName: "Questionnaire Response",
-        newStatus: StepStatus.COMPLETED,
-      })
-    );
     dispatch(
       updateSingleStep({
         stepName: "Claim Submit",
         newStatus: StepStatus.IN_PROGRESS,
       })
     );
-    localStorage.setItem(CLAIM_REQUEST_METHOD, HTTP_METHODS.POST);
-    localStorage.setItem(
-      CLAIM_REQUEST_URL,
-      Config.demoBaseUrl + Config.claim_submit
-    );
 
+    localStorage.setItem(CLAIM_REQUEST_METHOD, HTTP_METHODS.POST);
+    localStorage.setItem(CLAIM_REQUEST_URL, Config.demoBaseUrl + Config.claim_submit);
     localStorage.setItem(CLAIM_REQUEST, JSON.stringify(payload));
 
     axios
       .post(Config.claim_submit, payload, {
-        headers: {
-          "Content-Type": "application/fhir+json",
-        },
+        headers: { "Content-Type": "application/fhir+json" },
       })
       .then((response) => {
         if (response.status >= 200 && response.status < 300) {
@@ -219,25 +254,15 @@ const ClaimForm = () => {
             if (reference) {
               claimId = reference.startsWith("Claim/") ? reference.substring(6) : reference;
             }
-          } else if (response.data.resourceType === "Parameters" && response.data.parameter?.length > 0) {
-            outcome = response.data.parameter[0].resource?.outcome;
-            const reference = response.data.parameter[0].resource?.request?.reference;
-            if (reference) {
-              claimId = reference.startsWith("Claim/") ? reference.substring(6) : reference;
-            }
           }
 
           if (claimId) {
             const webhookUrl = Config.webhookServerUrl || "http://localhost:9099";
-            const patientName = formData.patient || "Unknown Patient";
-            const providerName = formData.provider || "Unknown Provider";
-            const medicationRef = formData.medication || "Unknown Medication";
-
             axios.post(`${webhookUrl}/claim`, {
               id: claimId,
-              patientName: patientName,
-              providerName: providerName,
-              medicationRef: medicationRef,
+              patientName: `${resources.patient.name?.[0]?.given?.join(" ")} ${resources.patient.name?.[0]?.family}`,
+              providerName: resources.providerOrg.name,
+              medicationRef: resources.request.medicationCodeableConcept?.text || "Medication",
               date: new Date().toISOString().split("T")[0],
               outcome: outcome,
               status: outcome === 'complete' ? 'active' : 'draft'
@@ -247,9 +272,8 @@ const ClaimForm = () => {
           if (outcome === "complete" || outcome === "partial") {
             navigate("/dashboard/prior-auth-list");
           } else {
-            console.log("Prior Authorization error:", response.data);
-            setAlertMessage("Prior Authorization error");
-            setAlertSeverity("error");
+            setAlertMessage("Claim submission outcome: " + outcome);
+            setAlertSeverity("warning");
             setOpenSnackbar(true);
           }
         } else {
@@ -257,172 +281,122 @@ const ClaimForm = () => {
           setAlertSeverity("error");
           setOpenSnackbar(true);
         }
-
-        localStorage.setItem(CLAIM_RESPONSE, JSON.stringify(response.data));
-        dispatch(
-          updateSingleStep({
-            stepName: "Claim Submit",
-            newStatus: StepStatus.COMPLETED,
-          })
-        );
+        dispatch(updateSingleStep({ stepName: "Claim Submit", newStatus: StepStatus.COMPLETED }));
       })
       .catch((error) => {
-        setAlertMessage("Error submitting claim");
+        setAlertMessage("Error submitting claim: " + error.message);
         setAlertSeverity("error");
         setOpenSnackbar(true);
-        console.log(error);
-        return;
       });
   };
 
-  const handleCloseSnackbar = () => {
-    setOpenSnackbar(false);
-  };
+  const handleCloseSnackbar = () => setOpenSnackbar(false);
 
+  if (loading) {
+    return (
+      <Card style={{ marginTop: "30px", padding: "40px", textAlign: "center" }}>
+        <CircularProgress />
+        <p style={{ marginTop: "20px" }}>Loading claim details...</p>
+      </Card>
+    );
+  }
+
+  if (!resources) {
+    return (
+      <Card style={{ marginTop: "30px", padding: "20px" }}>
+        <Alert severity="error">
+          Could not load resources for claim submission.
+          <br />
+          <strong>Provided IDs:</strong>
+          <ul style={{ marginTop: "10px", marginBottom: "0" }}>
+            <li>Patient ID: {patientId || "missing"}</li>
+            <li>Service Request ID: {serviceRequestId || "will search by patient"}</li>
+            <li>Medication Request ID: {medicationRequestId || "will search by patient"}</li>
+            <li>Questionnaire Response ID: {qrId || "will search by patient"}</li>
+            <li>Coverage ID: {coverageId || "will search by patient"}</li>
+          </ul>
+          <p style={{ marginTop: "10px" }}>
+            Check the browser console for detailed error information.
+          </p>
+        </Alert>
+      </Card>
+    );
+  }
 
   return (
     <Card style={{ marginTop: "30px", padding: "20px" }}>
       <Card.Body>
-        <Card.Title>Claim Details</Card.Title>
+        <Card.Title>PAS Claim Submission Details</Card.Title>
         <Form>
-          <div
-            style={{
-              display: "flex",
-              gap: "20px",
-            }}
-          >
-            <Form.Group
-              controlId="patient"
-              style={{ marginTop: "20px", flex: "1 1 100%" }}
-            >
+          <div style={{ display: "flex", gap: "20px" }}>
+            <Form.Group controlId="patient" style={{ marginTop: "20px", flex: "1 1 100%" }}>
               <Form.Label>Patient</Form.Label>
               <Form.Control
                 type="text"
-                value={formData.patient}
-                onChange={handleChange}
+                value={`${resources.patient.name?.[0]?.given?.join(" ")} ${resources.patient.name?.[0]?.family} (ID: ${resources.patient.id})`}
                 disabled
               />
             </Form.Group>
-            <Form.Group
-              controlId="provider"
-              style={{ marginTop: "20px", flex: "1 1 100%" }}
-            >
+            <Form.Group controlId="provider" style={{ marginTop: "20px", flex: "1 1 100%" }}>
               <Form.Label>Practitioner</Form.Label>
               <Form.Control
                 type="text"
-                // value={formData.provider}
-                value={loggedUser?.first_name + " " + loggedUser?.last_name}
-                onChange={handleChange}
+                value={loggedUser ? `${loggedUser.first_name} ${loggedUser.last_name}` : "City General Hospital"}
                 disabled
               />
             </Form.Group>
-            <Form.Group
-              controlId="insurer"
-              style={{ marginTop: "20px", flex: "1 1 100%" }}
-            >
+            <Form.Group controlId="insurer" style={{ marginTop: "20px", flex: "1 1 100%" }}>
               <Form.Label>Insurer</Form.Label>
               <Form.Control
                 type="text"
-                value="UnitedCare Health Insurance"
-                onChange={handleChange}
+                value={resources.payerOrg.name || "UnitedCare Health Insurance"}
                 disabled
               />
             </Form.Group>
           </div>
 
-          <div
-            style={{
-              display: "flex",
-              gap: "20px",
-            }}
-          >
-            <Form.Group
-              controlId="category"
-              style={{ marginTop: "20px", flex: "1 1 100%" }}
-            >
-              <Form.Label>Category</Form.Label>
-              <Form.Control
-                type="text"
-                value={formData.category}
-                onChange={handleChange}
-                disabled
-              />
+          <div style={{ display: "flex", gap: "20px" }}>
+            <Form.Group controlId="use" style={{ marginTop: "20px", flex: "1 1 100%" }}>
+              <Form.Label>Claim Use</Form.Label>
+              <Form.Control type="text" value="PREAUTHORIZATION" disabled />
             </Form.Group>
-            <Form.Group
-              controlId="use"
-              style={{ marginTop: "20px", flex: "1 1 100%" }}
-            >
-              <Form.Label>Use</Form.Label>
-              <Form.Control
-                type="text"
-                value={formData.use.toLocaleUpperCase()}
-                onChange={handleChange}
-                disabled
-              />
+            <Form.Group controlId="coverage" style={{ marginTop: "20px", flex: "1 1 100%" }}>
+              <Form.Label>Coverage ID</Form.Label>
+              <Form.Control type="text" value={resources.coverage.id} disabled />
             </Form.Group>
-
-            {/* <Form.Group
-              controlId="supportingInfo"
-              style={{ marginTop: "20px", flex: "1 1 100%" }}
-            >
-              <Form.Label>Supporting Info</Form.Label>
-              <Form.Control
-                type="text"
-                value={formData.supportingInfo}
-                onChange={handleChange}
-                disabled
-              />
-            </Form.Group> */}
           </div>
 
           <Form.Group controlId="medication" style={{ marginTop: "20px" }}>
-            <Form.Label>Product/Service</Form.Label>
+            <Form.Label>Medication / Service Requested</Form.Label>
             <Form.Control
               type="text"
-              value={formData.medication}
-              onChange={handleChange}
+              value={
+                resources.request.medicationCodeableConcept?.text ||
+                resources.request.code?.text ||
+                resources.request.code?.coding?.[0]?.display ||
+                resources.request.code?.coding?.[0]?.code ||
+                resources.request.category?.[0]?.coding?.[0]?.display ||
+                "Unknown Service"
+              }
               disabled
             />
           </Form.Group>
 
-          <div
-            style={{
-              display: "flex",
-              gap: "20px",
-            }}
-          >
-            <Form.Group
-              controlId="quantity"
-              style={{ marginTop: "20px", flex: "1 1 100%" }}
-            >
-              <Form.Label>Quantity</Form.Label>
-              <Form.Control
-                type="text"
-                value={formData.quantity}
-                onChange={handleChange}
-                disabled
-              />
-            </Form.Group>
+          <Form.Group controlId="qr" style={{ marginTop: "20px" }}>
+            <Form.Label>Associated Questionnaire Response</Form.Label>
+            <Form.Control
+              type="text"
+              value={`ID: ${resources.qr.id} (Status: ${resources.qr.status})`}
+              disabled
+            />
+          </Form.Group>
 
-            <Form.Group
-              controlId="unitPrice"
-              style={{ marginTop: "20px", flex: "1 1 100%" }}
-            >
-              <Form.Label>Unit Price</Form.Label>
-              <Form.Control
-                type="text"
-                value={formData.unitPrice}
-                onChange={handleChange}
-                disabled
-              />
-            </Form.Group>
-          </div>
           <Button
             variant="success"
-            style={{ marginTop: "30px", marginRight: "20px", float: "right" }}
+            style={{ marginTop: "30px", width: "200px", float: "right", fontWeight: "bold" }}
             onClick={handleSubmit}
           >
-            Submit Claim
+            Submit PAS Claim Bundle
           </Button>
         </Form>
       </Card.Body>

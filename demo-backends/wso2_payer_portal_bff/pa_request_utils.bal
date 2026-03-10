@@ -22,6 +22,7 @@ import ballerinax/health.fhir.r4;
 import ballerinax/health.fhir.r4.ips;
 import ballerinax/health.fhir.r4.parser;
 import ballerinax/health.fhir.r4.international401;
+import ballerinax/health.fhir.r4.davincipas;
 import ballerina/uuid;
 
 // ============================================
@@ -1362,25 +1363,36 @@ public function submitPARequestAdditionalInfo(string responseId, AdditionalInfor
     
     // create communication request for additional information using the data from additionalInformation and 
     // link it to the claim response
-    json[] payload = [];
+    davincipas:PASCommunicationRequestPayload[] payload = [];
     foreach string code in additionalInformation.informationCodes {
-        json payloadItem = {
+        davincipas:PASCommunicationRequestPayload payloadItem = {
             contentString: code
         };
         payload.push(payloadItem);
     }
 
-    json? subjectJson = ();
+    r4:Reference? subjectJson = ();
     if claimResponse.patient is r4:Reference {
-        subjectJson = (<r4:Reference>claimResponse.patient).toJson();
+        subjectJson = claimResponse.patient;
     }
 
-    json[] about = [];
+    r4:Reference[] about = [];
     if claimResponse.request is r4:Reference {
-        about.push((<r4:Reference>claimResponse.request).toJson());
+        about.push(<r4:Reference>claimResponse.request);
+    }
+    r4:CodeableConcept[] reasonCode = [];
+    if additionalInformation.reasonCode is json && additionalInformation.reasonCode is r4:CodeableConcept[] {
+        reasonCode = <r4:CodeableConcept[]>additionalInformation.reasonCode;
+    } else {
+        reasonCode = [{
+            coding: [{
+                system: "http://terminology.hl7.org/CodeSystem/v3-ActReason",
+                code: "priorAuthorization"
+            }]
+        }];
     }
 
-    json communicationRequest = {
+    davincipas:PASCommunicationRequest communicationRequest = {
         resourceType: "CommunicationRequest",
         id: uuid:createType1AsString(),
         meta: {
@@ -1401,13 +1413,7 @@ public function submitPARequestAdditionalInfo(string responseId, AdditionalInfor
         occurrenceDateTime: time:utcToString(time:utcNow()),
         subject: subjectJson,
         about: about,
-        reasonCode: additionalInformation.reasonCode ?: [{
-            coding: [{
-                system: "http://terminology.hl7.org/CodeSystem/v3-ActReason",
-                code: "priorAuthorization"
-            }]
-        }],
-        
+        reasonCode: reasonCode,
         payload: payload
     };
 

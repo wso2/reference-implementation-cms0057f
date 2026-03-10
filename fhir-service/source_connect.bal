@@ -54,8 +54,15 @@ public isolated function getById(fhirClient:FHIRConnector fhirConnector, Resourc
     return r4:createFHIRError("Failed to retrieve resource", r4:ERROR, r4:PROCESSING, httpStatusCode = http:STATUS_INTERNAL_SERVER_ERROR);
 }
 
-public isolated function search(fhirClient:FHIRConnector fhirConnector, ResourceType resourceType, map<string[]>? searchParameters = ()) returns r4:FHIRError|r4:Bundle {
-    fhirClient:FHIRResponse|fhirClient:FHIRError response = fhirConnector->search(resourceType, searchParameters = searchParameters);
+public isolated function search(fhirClient:FHIRConnector fhirConnector, ResourceType resourceType, map<string[]>? searchParameters = (), r4:FHIRContext? fhirContext = ()) returns r4:FHIRError|r4:Bundle {
+    r4:PaginationContext? paginationParameters = fhirContext is r4:FHIRContext ? fhirContext.getPaginationContext() : ();
+    map<string[]> searchParams = searchParameters is map<string[]> ? searchParameters : {};
+    // Add pagination parameters to search parameters if they are present in the FHIR context
+    if paginationParameters is r4:PaginationContext {
+        searchParams["page"] = [paginationParameters.page.toString()];
+        searchParams["pageSize"] = [paginationParameters.pageSize.toString()];
+    }
+    fhirClient:FHIRResponse|fhirClient:FHIRError response = fhirConnector->search(resourceType, searchParameters = searchParams);
 
     if response is fhirClient:FHIRError {
         return r4:createFHIRError(response.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);

@@ -93,7 +93,7 @@ isolated function invokePatientSummary(string patientId, map<string[]> queryPara
 
     http:Response response = new;
     response.statusCode = summaryResponse.httpStatusCode;
-    
+
     json|xml summaryPayload = summaryResponse.'resource;
     if summaryPayload is json {
         if summaryPayload != () {
@@ -379,7 +379,7 @@ service /fhir/r4/Patient on new fhirr4:Listener(config = patientApiConfig) {
 
     // Search for resources based on a set of criteria.
     isolated resource function get .(r4:FHIRContext fhirContext) returns r4:FHIRError|error|r4:Bundle {
-        return search(fhirConnector, PATIENT, getQueryParamsMap(fhirContext.getRequestSearchParameters()));
+        return search(fhirConnector, PATIENT, getQueryParamsMap(fhirContext.getRequestSearchParameters()), fhirContext);
     }
 
     // Create a new resource.
@@ -419,7 +419,7 @@ service /fhir/r4/Patient on new fhirr4:Listener(config = patientApiConfig) {
 
 public type Claim davincipas:PASClaim;
 
-public type Parameters international401:Parameters;
+public type Parameters r4:Bundle|international401:Parameters;
 
 service /fhir/r4/Claim on new fhirr4:Listener(config = ClaimApiConfig) {
 
@@ -428,14 +428,15 @@ service /fhir/r4/Claim on new fhirr4:Listener(config = ClaimApiConfig) {
     }
 
     isolated resource function post \$submit\-attachment(r4:FHIRContext fhirContext, Parameters parameters) 
-        returns r4:OperationOutcome|r4:Bundle|error {
+        returns r4:OperationOutcome|error {
         // persist attachments and get the corresponding attachment references
-        davincipas:PASClaimSupportingInfo[]|r4:FHIRError|error claimSubmissionResponse = submitAttachments(parameters);
+        davincipas:PASClaimSupportingInfo[]|r4:FHIRError|error claimSubmissionResponse = submitAttachments(<international401:Parameters>parameters);
         // update communication request status to "completed" and update claim with attachment references 
         if claimSubmissionResponse is davincipas:PASClaimSupportingInfo[] {
-            return updateCommunicationRequestAndClaim(parameters, claimSubmissionResponse);
+            return updateCommunicationRequestAndClaim(<international401:Parameters>parameters, claimSubmissionResponse, fhirContext);
         }
         log:printError("Attachment submission failed: " + claimSubmissionResponse.message());
+        fhirContext.setResponseStatusCode(400);
         return createOpereationOutcome(r4:CODE_SEVERITY_ERROR, r4:ERROR, "Attachment submission failed: " + claimSubmissionResponse.message()); 
         
     }
@@ -456,7 +457,7 @@ service /fhir/r4/Claim on new fhirr4:Listener(config = ClaimApiConfig) {
     // Search for resources based on a set of criteria.
     isolated resource function get .(r4:FHIRContext fhirContext) returns error|http:Response {
         map<string[]> queryParamsMap = getQueryParamsMap(fhirContext.getRequestSearchParameters());
-        r4:Bundle bundle = check search(fhirConnector, CLAIM, queryParamsMap);
+        r4:Bundle bundle = check search(fhirConnector, CLAIM, queryParamsMap, fhirContext);
 
         http:Response response = new;
         response.setJsonPayload(bundle.toJson());
@@ -524,7 +525,7 @@ service /fhir/r4/ClaimResponse on new fhirr4:Listener(config = claimResponseApiC
         map<string[]> queryParamsMap = getQueryParamsMap(fhirContext.getRequestSearchParameters());
 
         http:Response response = new;
-        r4:Bundle bundle = check search(fhirConnector, CLAIM_RESPONSE, queryParamsMap);
+        r4:Bundle bundle = check search(fhirConnector, CLAIM_RESPONSE, queryParamsMap, fhirContext);
         response.setJsonPayload(bundle.toJson());
         response.statusCode = http:STATUS_OK;
         return response;
@@ -606,7 +607,7 @@ service /fhir/r4/Coverage on new fhirr4:Listener(config = coverageApiConfig) {
     // Search for resources based on a set of criteria.
     isolated resource function get .(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
         map<string[]> queryParamsMap = getQueryParamsMap(fhirContext.getRequestSearchParameters());
-        return search(fhirConnector, COVERAGE, queryParamsMap);
+        return search(fhirConnector, COVERAGE, queryParamsMap, fhirContext);
     }
 
     // Create a new resource.
@@ -665,7 +666,7 @@ service /fhir/r4/ExplanationOfBenefit on new fhirr4:Listener(config = eobApiConf
 
     // Search for resources based on a set of criteria.
     isolated resource function get .(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
-        return search(fhirConnector, EXPLANATION_OF_BENEFIT, getQueryParamsMap(fhirContext.getRequestSearchParameters()));
+        return search(fhirConnector, EXPLANATION_OF_BENEFIT, getQueryParamsMap(fhirContext.getRequestSearchParameters()), fhirContext);
     }
 
     // Create a new resource.
@@ -720,7 +721,7 @@ service /fhir/r4/MedicationRequest on new fhirr4:Listener(config = medicationReq
     // Search for resources based on a set of criteria.
     isolated resource function get .(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
         map<string[]> queryParamsMap = getQueryParamsMap(fhirContext.getRequestSearchParameters());
-        return search(fhirConnector, MEDICATION_REQUEST, queryParamsMap);
+        return search(fhirConnector, MEDICATION_REQUEST, queryParamsMap, fhirContext);
     }
 
     // Create a new resource.
@@ -738,6 +739,61 @@ service /fhir/r4/MedicationRequest on new fhirr4:Listener(config = medicationReq
 
     // Update the current state of a resource partially.
     isolated resource function patch [string id](r4:FHIRContext fhirContext, json patch) returns MedicationRequest|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    // Delete a resource.
+    isolated resource function delete [string id](r4:FHIRContext fhirContext) returns r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    // Retrieve the update history for a particular resource.
+    isolated resource function get [string id]/_history(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    // Retrieve the update history for all resources.
+    isolated resource function get _history(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+}
+
+// ######################################################################################################################
+// # ServiceRequest API                                                                                                 #
+// ######################################################################################################################
+
+public type ServiceRequest uscore501:USCoreServiceRequestProfile;
+
+service /fhir/r4/ServiceRequest on new fhirr4:Listener(config = serviceRequestApiConfig) {
+
+    // Read the current state of single resource based on its id.
+    isolated resource function get [string id](r4:FHIRContext fhirContext) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return getById(fhirConnector, SERVICE_REQUEST, id);
+    }
+
+    // Read the state of a specific version of a resource based on its id.
+    isolated resource function get [string id]/_history/[string vid](r4:FHIRContext fhirContext) returns ServiceRequest|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    // Search for resources based on a set of criteria.
+    isolated resource function get .(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+        map<string[]> queryParamsMap = getQueryParamsMap(fhirContext.getRequestSearchParameters());
+        return search(fhirConnector, SERVICE_REQUEST, queryParamsMap, fhirContext);
+    }
+
+    // Create a new resource.
+    isolated resource function post .(r4:FHIRContext fhirContext, ServiceRequest serviceRequest) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return create(fhirConnector, SERVICE_REQUEST, serviceRequest.toJson());
+    }
+
+    // Update the current state of a resource completely.
+    isolated resource function put [string id](r4:FHIRContext fhirContext, ServiceRequest servicerequest) returns ServiceRequest|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    // Update the current state of a resource partially.
+    isolated resource function patch [string id](r4:FHIRContext fhirContext, json patch) returns ServiceRequest|r4:OperationOutcome|r4:FHIRError {
         return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
     }
 
@@ -778,7 +834,7 @@ service /fhir/r4/Organization on new fhirr4:Listener(config = organizationApiCon
     // Search for resources based on a set of criteria.
     isolated resource function get .(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
         map<string[]> queryParamsMap = getQueryParamsMap(fhirContext.getRequestSearchParameters());
-        return search(fhirConnector, ORGANIZATION, queryParamsMap);
+        return search(fhirConnector, ORGANIZATION, queryParamsMap, fhirContext);
     }
 
     // Create a new resource.
@@ -833,7 +889,7 @@ service /fhir/r4/Practitioner on new fhirr4:Listener(config = practitionerApiCon
     // Search for resources based on a set of criteria.
     isolated resource function get .(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
         map<string[]> queryParamsMap = getQueryParamsMap(fhirContext.getRequestSearchParameters());
-        return search(fhirConnector, PRACTITIONER, queryParamsMap);
+        return search(fhirConnector, PRACTITIONER, queryParamsMap, fhirContext);
     }
 
     // Create a new resource.
@@ -888,7 +944,7 @@ service /fhir/r4/PractitionerRole on new fhirr4:Listener(config = practitionerRo
     // Search for resources based on a set of criteria.
     isolated resource function get .(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
         map<string[]> queryParamsMap = getQueryParamsMap(fhirContext.getRequestSearchParameters());
-        return search(fhirConnector, PRACTITIONER_ROLE, queryParamsMap);
+        return search(fhirConnector, PRACTITIONER_ROLE, queryParamsMap, fhirContext);
     }
 
     // Create a new resource.
@@ -951,7 +1007,7 @@ service /fhir/r4/AllergyIntolerance on new fhirr4:Listener(config = allergyIntol
     // Search for resources based on a set of criteria.
     isolated resource function get .(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
         map<string[]> queryParamsMap = getQueryParamsMap(fhirContext.getRequestSearchParameters());
-        return search(fhirConnector, ALLERGY_INTOLERENCE, queryParamsMap);
+        return search(fhirConnector, ALLERGY_INTOLERENCE, queryParamsMap, fhirContext);
     }
 
     // Create a new resource.
@@ -1006,7 +1062,7 @@ service /fhir/r4/Observation on new fhirr4:Listener(config = observationApiConfi
     // Search for resources based on a set of criteria.
     isolated resource function get .(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
         map<string[]> queryParamsMap = getQueryParamsMap(fhirContext.getRequestSearchParameters());
-        return search(fhirConnector, OBSERVATION, queryParamsMap);
+        return search(fhirConnector, OBSERVATION, queryParamsMap, fhirContext);
     }
 
     // Create a new resource.
@@ -1061,7 +1117,7 @@ service /fhir/r4/DiagnosticReport on new fhirr4:Listener(config = diagnosticRepo
     // Search for resources based on a set of criteria.
     isolated resource function get .(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
         map<string[]> queryParamsMap = getQueryParamsMap(fhirContext.getRequestSearchParameters());
-        return search(fhirConnector, DIAGNOSTIC_REPORT, queryParamsMap);
+        return search(fhirConnector, DIAGNOSTIC_REPORT, queryParamsMap, fhirContext);
     }
 
     // Create a new resource.
@@ -1119,7 +1175,7 @@ service /fhir/r4/Encounter on new fhirr4:Listener(config = encounterApiConfig) {
 
     // Search for resources based on a set of criteria.
     isolated resource function get .(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
-        return search(fhirConnector, ENCOUNTER, getQueryParamsMap(fhirContext.getRequestSearchParameters()));
+        return search(fhirConnector, ENCOUNTER, getQueryParamsMap(fhirContext.getRequestSearchParameters()), fhirContext);
     }
 
     // Create a new resource.
@@ -1160,7 +1216,31 @@ service /fhir/r4/Encounter on new fhirr4:Listener(config = encounterApiConfig) {
 service /fhir/r4/Questionnaire/questionnaire\-package on new fhirr4:Listener(config = questionnairePackageApiConfig) {
 
     isolated resource function post .(r4:FHIRContext fhirContext, international401:Parameters parameters) returns error|http:Response {
-        r4:DomainResource createResult = check getById(fhirConnector, QUESTIONNAIRE, "4");
+        // Extract questionnaire ID from the incoming Parameters resource.
+        // The DTR launch URL puts the full questionnaire URL in a "questionnaire" parameter
+        // with valueCanonical. We parse the last path segment as the ID.
+        string questionnaireId = "4"; // default fallback for drug scenario
+
+        international401:ParametersParameter[]? paramList = parameters.'parameter;
+        if paramList is international401:ParametersParameter[] {
+            foreach international401:ParametersParameter param in paramList {
+                if param.name == "questionnaire" {
+                    r4:canonical? valueCanonical = param.valueCanonical;
+                    if valueCanonical is r4:canonical && valueCanonical != "" {
+                        // Extract last path segment — e.g. ".../Questionnaire/1" -> "1"
+                        int? lastIndex = valueCanonical.lastIndexOf("/");
+                        if lastIndex is int {
+                            questionnaireId = valueCanonical.substring(lastIndex + 1);
+                        } else {
+                            questionnaireId = valueCanonical;
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+
+        r4:DomainResource createResult = check getById(fhirConnector, QUESTIONNAIRE, questionnaireId);
 
         r4:Bundle bundle = {
             resourceType: "Bundle",
@@ -1191,7 +1271,7 @@ service /fhir/r4/Questionnaire/questionnaire\-package on new fhirr4:Listener(con
 // # Questionnaire API                                                                                                  #
 // ######################################################################################################################
 
-public type Questionnaire davincidtr210:DTRStdQuestionnaire;
+public type Questionnaire international401:Questionnaire|davincidtr210:DTRStdQuestionnaire;
 
 service /fhir/r4/Questionnaire on new fhirr4:Listener(config = questionnaireApiConfig) {
 
@@ -1565,7 +1645,7 @@ service /fhir/r4/Group on new fhirr4:Listener(config = groupApiConfig) {
     // Search for resources based on a set of criteria.
     isolated resource function get .(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError|error {
         map<string[]> queryParamsMap = getQueryParamsMap(fhirContext.getRequestSearchParameters());
-        return search(fhirConnector, GROUP, queryParamsMap);
+        return search(fhirConnector, GROUP, queryParamsMap, fhirContext);
     }
 
     // Create a new resource.
@@ -1654,7 +1734,7 @@ service /fhir/r4/Group on new fhirr4:Listener(config = groupApiConfig) {
 
         http:Response response = new;
         response.statusCode = http:STATUS_ACCEPTED;
-        response.setJsonPayload({ "transactionTime": time:utcToString(time:utcNow()), "exportUrls": exportUrls });
+        response.setJsonPayload({"transactionTime": time:utcToString(time:utcNow()), "exportUrls": exportUrls});
         return response;
     }
 
@@ -1925,7 +2005,7 @@ service /fhir/r4/CommunicationRequest on new fhirr4:Listener(config = communicat
     // Search for resources based on a set of criteria.
     isolated resource function get .(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
         map<string[]> queryParamsMap = getQueryParamsMap(fhirContext.getRequestSearchParameters());
-        return search(fhirConnector, COMMUNICATION_REQUEST, queryParamsMap);
+        return search(fhirConnector, COMMUNICATION_REQUEST, queryParamsMap, fhirContext);
     }
 
     // Create a new resource.

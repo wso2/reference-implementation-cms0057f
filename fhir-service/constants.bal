@@ -57,3 +57,14 @@ const string CONSENT_PROVISION_REQUIRED = "Consent provision section is required
 const string CONSENT_DUPLICATE_FOUND = "Duplicate active consent found for the same patient and policy";
 const string CONSENT_SCOPE_INVALID = "Consent scope must be for patient privacy";
 const string CONSENT_SCOPE_REQUIRED = "Consent scope is required";
+
+# Constants for PDex Payer-to-Payer Bulk Exchange
+const string PDEX_EXPORT_TYPE_P2P = "hl7.fhir.us.davinci-pdex#payertopayer";
+const string PDEX_MEMBER_MATCH_GROUP_PROFILE = "http://hl7.org/fhir/us/davinci-pdex/StructureDefinition/pdex-member-match-group";
+const string PDEX_NO_MATCH_GROUP_PROFILE = "http://hl7.org/fhir/us/davinci-pdex/StructureDefinition/pdex-member-no-match-group";
+const string BULK_MATCH_JOB_NOT_FOUND = "Bulk member match job not found";
+const string BULK_MATCH_INVALID_EXPORT_TYPE = "Unsupported exportType for this endpoint. Expected: hl7.fhir.us.davinci-pdex#payertopayer";
+const string BULK_MATCH_NO_MEMBER_BUNDLES = "No MemberBundle entries found in Parameters";
+const string BULK_MATCH_MISSING_PATIENT = "MemberBundle is missing required MemberPatient";
+const string BULK_MATCH_MISSING_COVERAGE = "MemberBundle is missing required CoverageToMatch";
+const string BULK_MATCH_MISSING_CONSENT = "MemberBundle is missing required Consent";

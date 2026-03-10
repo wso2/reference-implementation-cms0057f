@@ -19,6 +19,35 @@ import ballerinax/health.fhir.r4;
 import ballerinax/health.fhir.r4.international401;
 
 // ============================================================================
+// Bulk Member Match Async Job Types
+// ============================================================================
+
+# Status enum for async bulk member match jobs
+public enum BulkMatchStatus {
+    BULK_MATCH_PENDING = "pending",
+    BULK_MATCH_PROCESSING = "processing",
+    BULK_MATCH_COMPLETED = "completed",
+    BULK_MATCH_FAILED = "failed"
+}
+
+# Internal record tracking an async bulk member match job
+#
+# + jobId - Unique job identifier
+# + status - Current job status
+# + createdAt - Job creation timestamp
+# + completedAt - Job completion timestamp (null if not yet done)
+# + result - The Parameters result resource (null if not completed)
+# + errorMessage - Error description if the job failed
+public type BulkMemberMatchJob record {|
+    string jobId;
+    BulkMatchStatus status;
+    time:Utc createdAt;
+    time:Utc? completedAt;
+    (international401:Parameters & readonly)? result;
+    string? errorMessage;
+|};
+
+// ============================================================================
 // Re-exported FHIR Base Types from r4
 // ============================================================================
 

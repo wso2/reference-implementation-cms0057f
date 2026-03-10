@@ -208,6 +208,46 @@ service http:InterceptableService /fhir/r4/_export on httpListener {
     resource function get download/[string jobId]/[string fileName](http:Request request) returns http:Response|error {
         return fhirHttpClient->forward("/_export/download/" + jobId + "/" + fileName, request);
     }
+
+    // Async polling endpoint for $bulk-member-match jobs
+    // Content-Location is set to /fhir/r4/_export/bulk-match-status/{jobId}
+    // Returns 202 while processing, 200 with Parameters body when complete, 4xx/5xx on error.
+    isolated resource function get bulk\-match\-status/[string jobId]() returns http:Response {
+        BulkMemberMatchJob? job = getBulkMemberMatchJob(jobId);
+        http:Response resp = new;
+
+        if job is () {
+            resp.statusCode = http:STATUS_NOT_FOUND;
+            resp.setJsonPayload({"error": BULK_MATCH_JOB_NOT_FOUND, "jobId": jobId});
+            return resp;
+        }
+
+        if job.status == BULK_MATCH_PENDING || job.status == BULK_MATCH_PROCESSING {
+            resp.statusCode = http:STATUS_ACCEPTED;
+            resp.setHeader("Retry-After", "5");
+            resp.setJsonPayload({"status": job.status, "jobId": jobId});
+            return resp;
+        }
+
+        if job.status == BULK_MATCH_COMPLETED {
+            international401:Parameters? result = job.result;
+            if result !is () {
+                resp.statusCode = http:STATUS_OK;
+                resp.setHeader("Content-Type", "application/fhir+json");
+                resp.setJsonPayload(result.toJson());
+                return resp;
+            }
+        }
+
+        // FAILED or completed but result is missing
+        resp.statusCode = http:STATUS_INTERNAL_SERVER_ERROR;
+        resp.setJsonPayload({
+            "status": job.status,
+            "error": job.errorMessage ?: "Processing failed",
+            "jobId": jobId
+        });
+        return resp;
+    }
 }
 
 // ######################################################################################################################
@@ -1615,6 +1655,191 @@ service /fhir/r4/Group on new fhirr4:Listener(config = groupApiConfig) {
         http:Response response = new;
         response.statusCode = http:STATUS_ACCEPTED;
         response.setJsonPayload({ "transactionTime": time:utcToString(time:utcNow()), "exportUrls": exportUrls });
+        return response;
+    }
+
+    // Bulk Member Match (PDex Payer-to-Payer) — POST /fhir/r4/Group/$bulk-member-match
+    // Accepts a Parameters resource with one or more MemberBundle entries.
+    // Supports synchronous (200) and asynchronous (Prefer: respond-async → 202) modes.
+    isolated resource function post \$bulk\-member\-match(r4:FHIRContext fhirContext,
+            international401:Parameters parameters)
+            returns http:Response|r4:FHIRError {
+
+        log:printDebug("Bulk member match operation invoked");
+
+        // Detect async preference via Prefer: respond-async header
+        string preferHeader = "";
+        r4:HTTPRequest? httpReq = fhirContext.getHTTPRequest();
+        if httpReq !is () {
+            // HTTP headers are stored in lowercase by the Ballerina runtime
+            string[]? preferValues = httpReq.headers["prefer"];
+            if preferValues !is () && preferValues.length() > 0 {
+                preferHeader = preferValues[0];
+            }
+        }
+
+        if preferHeader == "respond-async" {
+            string jobId = uuid:createType1AsString();
+            lock {
+                bulkMatchJobStore[jobId] = {
+                    jobId: jobId,
+                    status: BULK_MATCH_PENDING,
+                    createdAt: time:utcNow(),
+                    completedAt: (),
+                    result: (),
+                    errorMessage: ()
+                };
+            }
+            // Start background processing — results stored in bulkMatchJobStore
+            _ = start processAndStoreBulkMemberMatch(jobId, parameters.cloneReadOnly());
+
+            http:Response resp = new;
+            resp.statusCode = http:STATUS_ACCEPTED;
+            resp.setHeader("Content-Location",
+                    "/fhir/r4/_export/bulk-match-status/" + jobId);
+            return resp;
+        }
+
+        // Synchronous path
+        international401:Parameters|r4:FHIRError result = processBulkMemberMatch(parameters);
+        if result is r4:FHIRError {
+            return result;
+        }
+        http:Response resp = new;
+        resp.statusCode = http:STATUS_OK;
+        resp.setHeader("Content-Type", "application/fhir+json");
+        resp.setJsonPayload(result.toJson());
+        return resp;
+    }
+
+    // DaVinci Data Export — GET /fhir/r4/Group/{id}/$davinci-data-export
+    // Profiled extension of Bulk Data Export for DaVinci use cases (Da Vinci ATR STU 2.1).
+    // Accepts exportType, _since, _until, _type, _typeFilter, patient query parameters.
+    isolated resource function get [string id]/\$davinci\-data\-export(
+            r4:FHIRContext fhirContext) returns r4:FHIRError|http:Response|error {
+
+        log:printDebug("DaVinci Data Export invoked for group id: " + id);
+
+        map<string[]> queryParameters = {};
+        r4:FHIRRequest? fhirRequest = fhirContext.getFHIRRequest();
+        if fhirRequest !is () {
+            queryParameters = getQueryParamsMap(fhirRequest.getSearchParameters());
+        }
+
+        // Validate exportType when provided — only PDex P2P is supported here
+        string[]? exportTypes = queryParameters["exportType"];
+        if exportTypes !is () && exportTypes.length() > 0 {
+            if exportTypes[0] != PDEX_EXPORT_TYPE_P2P {
+                return r4:createFHIRError(BULK_MATCH_INVALID_EXPORT_TYPE, r4:ERROR,
+                        r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+            }
+        }
+
+        // Look up the Group
+        r4:DomainResource|r4:FHIRError groupResource = getById(fhirConnector, GROUP, id);
+        if groupResource is r4:FHIRError {
+            return groupResource;
+        }
+        Group currentGroup = check groupResource.cloneWithType(Group);
+        international401:GroupMember[]? members = currentGroup.member;
+        if members is () || members.length() == 0 {
+            return r4:createFHIRError("No members found in the group", r4:ERROR,
+                    r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+        }
+
+        // Optional patient-level filter (Reference values, e.g. "Patient/123")
+        string[]? patientFilter = queryParameters["patient"];
+
+        // Build forwarding query params: strip PDex-specific params the backend won't understand
+        map<string[]> exportQueryParams = queryParameters.clone();
+        _ = exportQueryParams.remove("exportType");
+        _ = exportQueryParams.remove("patient");
+
+        r4:ConsentContext? consentContext = fhirContext.getConsentContext();
+
+        map<string> exportUrls = {};
+
+        foreach international401:GroupMember member in members {
+            r4:Reference entity = member.entity;
+            string? reference = entity.reference;
+            if reference is string && reference.startsWith("Patient/") {
+                string patientId = reference.substring(8);
+
+                // Apply optional patient filter
+                if patientFilter !is () {
+                    boolean included = false;
+                    foreach string pf in patientFilter {
+                        if pf == "Patient/" + patientId || pf == patientId {
+                            included = true;
+                            break;
+                        }
+                    }
+                    if !included {
+                        log:printDebug("Skipping patient " + patientId
+                                + ": not in patient filter");
+                        continue;
+                    }
+                }
+
+                map<string[]> patientQueryParameters = exportQueryParams.clone();
+
+                // Apply per-patient consent filtering (same logic as $export)
+                if consentContext !is () {
+                    if consentContext.patientID != patientId {
+                        log:printDebug("Skipping patient " + patientId
+                                + ": does not match consent context");
+                        exportUrls[patientId] =
+                                "Skipped: patient not authorized by consent context";
+                        continue;
+                    }
+                    string[] consentedResourceTypes =
+                            consentContext.consentedResourceTypes.clone();
+                    if consentedResourceTypes.length() == 0 {
+                        log:printDebug("No consented types for patient " + patientId
+                                + ". Skipping.");
+                        exportUrls[patientId] =
+                                "Skipped: no consented resource types in consent";
+                        continue;
+                    }
+                    string[] filteredResourceTypes = filterConsentedResourceTypes(
+                            patientQueryParameters, consentedResourceTypes);
+                    if filteredResourceTypes.length() == 0 {
+                        log:printDebug("No allowed types after consent filter for patient "
+                                + patientId + ". Skipping.");
+                        exportUrls[patientId] =
+                                "Skipped: no consented resource types available";
+                        continue;
+                    }
+                    string filteredTypeParam = string:'join(",", ...filteredResourceTypes);
+                    patientQueryParameters["_type"] = [filteredTypeParam];
+                    log:printDebug("$davinci-data-export _type for patient " + patientId
+                            + ": " + filteredTypeParam);
+                }
+
+                r4:FHIRError|http:Response|error exportRes = invokePatientExport(
+                        patientId, patientQueryParameters, fhirClient:GET);
+                if exportRes is http:Response {
+                    string|error pollingUrl = exportRes.getHeader("content-location");
+                    if pollingUrl is string {
+                        exportUrls[patientId] = pollingUrl;
+                    } else {
+                        exportUrls[patientId] = "Failed to get Content-Location: "
+                                + exportRes.statusCode.toString();
+                    }
+                } else if exportRes is error {
+                    exportUrls[patientId] = "Error: " + exportRes.message();
+                }
+            }
+        }
+
+        http:Response response = new;
+        response.statusCode = http:STATUS_ACCEPTED;
+        response.setJsonPayload({
+            "transactionTime": time:utcToString(time:utcNow()),
+            "exportType": (exportTypes !is () && exportTypes.length() > 0)
+                    ? exportTypes[0] : PDEX_EXPORT_TYPE_P2P,
+            "exportUrls": exportUrls
+        });
         return response;
     }
 

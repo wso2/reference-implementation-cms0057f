@@ -60,7 +60,7 @@ public isolated function search(fhirClient:FHIRConnector fhirConnector, Resource
     // Add pagination parameters to search parameters if they are present in the FHIR context
     if paginationParameters is r4:PaginationContext {
         searchParams["page"] = [paginationParameters.page.toString()];
-        searchParams["pageSize"] = [paginationParameters.pageSize.toString()];
+        searchParams["_count"] = [paginationParameters.pageSize.toString()];
     }
     fhirClient:FHIRResponse|fhirClient:FHIRError response = fhirConnector->search(resourceType, searchParameters = searchParams);
 

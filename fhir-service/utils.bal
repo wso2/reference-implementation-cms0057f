@@ -607,15 +607,23 @@ isolated function evaluateConsent(Consent consent, string memberMatchResult) ret
         return result;
     }
 
+    // Status check — consent must be active
+    if consent.status != international401:CODE_STATUS_ACTIVE {
+        log:printError("Consent is not active. Status: " + consent.status);
+        result.reason = CONSENT_STATUS_INVALID;
+        return result;
+    }
+
     // Step 1: Member Identity Validation
     // Confirm the Consent.patient reference matches the uniquely identified member
     if consent.patient?.reference is string {
         string consentPatientRef = <string>consent.patient?.reference;
-        // Extract patient ID from reference (e.g., "Patient/123" -> "123")
+        // Extract patient ID from reference (e.g., "Patient/123" or "http://server/Patient/123" -> "123")
         string:RegExp slash = re `/`;
         string[] refParts = slash.split(consentPatientRef);
-        if refParts.length() == 2 {
-            string consentPatientId = refParts[1];
+        // use last segment to support both relative ("Patient/id") and absolute URLs
+        if refParts.length() >= 1 {
+            string consentPatientId = refParts[refParts.length() - 1];
             // Compare with the matched member identifier
             if consentPatientId == memberMatchResult {
                 result.memberIdentity = memberMatchResult;
@@ -638,7 +646,7 @@ isolated function evaluateConsent(Consent consent, string memberMatchResult) ret
 
     // Step 2: Payer Identity Validation
     // Confirm the Consent.organization is the Receiving Payer and Consent.performer is the Requesting Payer
-    if consent.organization is r4:Reference[] {
+    if consent.organization is r4:Reference[] && (<r4:Reference[]>consent.organization).length() > 0 {
         // Check if organization matches the receiving payer (this system)
         // This is a simplified check - in production you'd validate against actual payer identifiers
         result.requestingPayer = "receiving-payer"; // Placeholder
@@ -656,15 +664,31 @@ isolated function evaluateConsent(Consent consent, string memberMatchResult) ret
         result.consentStartDate = period.'start;
         result.consentEndDate = period.end;
 
-        // Check if consent is still valid
+        // Use proper UTC timestamp comparison instead of string lexicographic comparison.
+        // Normalize date-only values (FHIR dateTime may omit the time component).
         if period.end is r4:dateTime {
-            r4:dateTime now = time:utcToString(time:utcNow());
-            if period.end < now {
-                log:printError("Consent has expired. End date: " + <string>period.end + ", Current time: " + now);
+            string endStr = <string>period.end;
+            string endNormalized = endStr.includes("T") ? endStr : endStr + "T23:59:59Z";
+            time:Utc|error endUtc = time:utcFromString(endNormalized);
+            if endUtc is error || endUtc < time:utcNow() {
+                log:printError("Consent has expired. End date: " + endStr);
                 result.reason = CONSENT_EXPIRED;
                 return result;
             }
         }
+
+        // Also verify consent has already started
+        if period.'start is r4:dateTime {
+            string startStr = <string>period.'start;
+            string startNormalized = startStr.includes("T") ? startStr : startStr + "T00:00:00Z";
+            time:Utc|error startUtc = time:utcFromString(startNormalized);
+            if startUtc is time:Utc && startUtc > time:utcNow() {
+                log:printError("Consent not yet in effect. Start date: " + startStr);
+                result.reason = CONSENT_EXPIRED;
+                return result;
+            }
+        }
+
         log:printDebug("Date validity validation successful");
     } else {
         // If no period specified, consider it invalid
@@ -675,29 +699,40 @@ isolated function evaluateConsent(Consent consent, string memberMatchResult) ret
 
     // Step 4: Policy Compliance Validation
     // Determine if the Receiving Payer can technically comply with the data segmentation request
+    // Check both consent.policy[].uri and consent.policyRule.coding[] (HRex uses policyRule)
     if consent.policy is international401:ConsentPolicy[] {
         result.consentPolicy = extractConsentPolicy(<international401:ConsentPolicy[]>consent.policy);
-
-        // Check if the requested policy is supported
-        if result.consentPolicy is string {
-            string policy = <string>result.consentPolicy;
-            // This is a simplified check - in production you'd validate against actual system capabilities
-            if policy == "http://hl7.org/fhir/us/davinci-hrex/StructureDefinition-hrex-consent.html#regular" ||
-                policy == "http://hl7.org/fhir/us/davinci-hrex/StructureDefinition-hrex-consent.html#sensitive" {
-                // Policy is supported
-                log:printDebug("Policy compliance validation successful. Policy: " + policy);
-            } else {
-                log:printError("Requested policy not supported: " + policy);
-                result.reason = CONSENT_POLICY_NOT_SUPPORTED;
-                return result;
+    }
+    // Also check policyRule as a fallback (HRex consent uses policyRule with hrex-temp codes)
+    if result.consentPolicy is () && consent.policyRule is r4:CodeableConcept {
+        r4:CodeableConcept pRule = <r4:CodeableConcept>consent.policyRule;
+        if pRule.coding is r4:Coding[] {
+            foreach r4:Coding coding in <r4:Coding[]>pRule.coding {
+                if coding.code is string {
+                    string code = <string>coding.code;
+                    if code == "regular" || code == "sensitive" {
+                        result.consentPolicy = code;
+                        break;
+                    }
+                }
             }
+        }
+    }
+
+    if result.consentPolicy is string {
+        string policy = <string>result.consentPolicy;
+        // Accept both full HRex policy URIs and short hrex-temp CodeSystem codes
+        if policy == "http://hl7.org/fhir/us/davinci-hrex/StructureDefinition-hrex-consent.html#regular" ||
+            policy == "http://hl7.org/fhir/us/davinci-hrex/StructureDefinition-hrex-consent.html#sensitive" ||
+            policy == "regular" || policy == "sensitive" {
+            log:printDebug("Policy compliance validation successful. Policy: " + policy);
         } else {
-            log:printError("Consent policy not found in provision policies");
+            log:printError("Requested policy not supported: " + policy);
             result.reason = CONSENT_POLICY_NOT_SUPPORTED;
             return result;
         }
     } else {
-        log:printError("Provision policies not found in consent");
+        log:printError("Consent policy not found in policy[] or policyRule");
         result.reason = CONSENT_POLICY_NOT_SUPPORTED;
         return result;
     }

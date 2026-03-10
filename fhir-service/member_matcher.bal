@@ -50,7 +50,6 @@ public isolated class DemoFHIRMemberMatcher {
 
         // Member match resources
         uscore501:USCorePatientProfile memberPatient = memberMatchResources.memberPatient;
-        hrex100:HRexConsent? consent = memberMatchResources.consent;
         hrex100:HRexCoverage coverageToMatch = memberMatchResources.coverageToMatch;
         hrex100:HRexCoverage? _ = memberMatchResources.coverageToLink;
 

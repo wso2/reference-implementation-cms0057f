@@ -279,7 +279,28 @@ service /fhir/r4/Patient on new fhirr4:Listener(config = patientApiConfig) {
         // Match member
         davincihrex100:MemberIdentifier memberIdentifier = check fhirMemberMatcher.matchMember(memberMatchResources);
 
-        // Member match response profile: 
+        // Evaluate consent separately — keeps matchMember focused on patient/coverage matching only.
+        // Consent is optional in HRex; if not provided the identifier is returned without consent check.
+        davincihrex100:HRexConsent? hrexConsent = memberMatchResources.consent;
+        if hrexConsent !is () {
+            international401:Consent|error i4Consent =
+                    hrexConsent.cloneWithType(international401:Consent);
+            if i4Consent is error {
+                return r4:createFHIRError(
+                        "Failed to process consent resource: " + i4Consent.message(),
+                        r4:ERROR, r4:INVALID,
+                        httpStatusCode = http:STATUS_UNPROCESSABLE_ENTITY);
+            }
+            ConsentEvaluationResult consentResult = evaluateConsent(i4Consent, memberIdentifier);
+            if !consentResult.isValid {
+                return r4:createFHIRError(
+                        consentResult.reason ?: "Consent validation failed",
+                        r4:ERROR, r4:PROCESSING,
+                        httpStatusCode = http:STATUS_UNPROCESSABLE_ENTITY);
+            }
+        }
+
+        // Member match response profile:
         // https://hl7.org/fhir/us/davinci-hrex/StructureDefinition-hrex-parameters-member-match-out.html
         return {
             'parameter: [

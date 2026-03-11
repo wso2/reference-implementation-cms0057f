@@ -1805,22 +1805,33 @@ service /fhir/r4/Group on new fhirr4:Listener(config = groupApiConfig) {
     }
 
     // Bulk Member Match (PDex Payer-to-Payer) — POST /fhir/r4/Group/$bulk-member-match
-    // Accepts a PDexMultiMemberMatchRequestParameters resource with one or more MemberBundle entries.
+    // Accepts a Parameters resource with one or more MemberBundle entries (profile:
+    // pdex-parameters-multi-member-match-bundle-in). The FHIR framework deserializes
+    // the body as international401:Parameters; we cast to the typed PDex form inside.
     // Supports synchronous (200) and asynchronous (Prefer: respond-async → 202) modes.
     isolated resource function post \$bulk\-member\-match(r4:FHIRContext fhirContext,
-            davincipdex220:PDexMultiMemberMatchRequestParameters parameters)
+            international401:Parameters parameters)
             returns http:Response|r4:FHIRError {
 
         log:printDebug("Bulk member match operation invoked");
 
+        // Cast the generic Parameters to the typed PDex profile
+        davincipdex220:PDexMultiMemberMatchRequestParameters|error pdexParams =
+                parameters.cloneWithType(davincipdex220:PDexMultiMemberMatchRequestParameters);
+        if pdexParams is error {
+            return r4:createFHIRError(
+                    "Invalid $bulk-member-match request body: " + pdexParams.message(),
+                    r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+        }
+
         // Detect async preference via Prefer: respond-async header
+        // The FHIR framework stores headers in the HTTPRequest under lowercase keys
         string preferHeader = "";
         r4:HTTPRequest? httpReq = fhirContext.getHTTPRequest();
         if httpReq !is () {
-            // HTTP headers are stored in lowercase by the Ballerina runtime
-            string[]? preferValues = httpReq.headers["prefer"];
+            string[]? preferValues = httpReq.headers["prefer"] ?: httpReq.headers["Prefer"];
             if preferValues !is () && preferValues.length() > 0 {
-                preferHeader = preferValues[0];
+                preferHeader = preferValues[0].trim();
             }
         }
 
@@ -1837,7 +1848,7 @@ service /fhir/r4/Group on new fhirr4:Listener(config = groupApiConfig) {
                 };
             }
             // Start background processing — results stored in bulkMatchJobStore
-            _ = start processAndStoreBulkMemberMatch(jobId, parameters.cloneReadOnly());
+            _ = start processAndStoreBulkMemberMatch(jobId, pdexParams.cloneReadOnly());
 
             http:Response resp = new;
             resp.statusCode = http:STATUS_ACCEPTED;
@@ -1848,7 +1859,7 @@ service /fhir/r4/Group on new fhirr4:Listener(config = groupApiConfig) {
 
         // Synchronous path — delegate to the BulkMemberMatcher interface
         davincipdex220:BulkMemberMatchResult|r4:FHIRError matchResult =
-                bulkMemberMatcher.matchMembers({requestParameters: parameters});
+                bulkMemberMatcher.matchMembers({requestParameters: pdexParams});
         if matchResult is r4:FHIRError {
             return matchResult;
         }

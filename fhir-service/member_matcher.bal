@@ -62,7 +62,7 @@ public isolated class DemoFHIRMemberMatcher {
 
         r4:BundleEntry[]? entry = nameMatchedPatients.entry;
 
-        if entry is r4:BundleEntry[] {
+        if entry is r4:BundleEntry[] && entry.length() > 0 {
             r4:BundleEntry firstEntry = entry[0];
 
             anydata 'resource = firstEntry?.'resource;

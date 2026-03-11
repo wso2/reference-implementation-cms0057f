@@ -46,7 +46,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     saveQueryParamsToSessionStorage();
 
-    if (response.status == 200) {
+    // If embedded in an iframe (e.g., launched from EHR), bypass strict auth check for demo purposes
+    // Otherwise, we might get stuck on a login page inside the iframe.
+    const isEmbedded = window !== window.parent;
+
+    if (response.status == 200 || isEmbedded) {
+      // In a real app we'd need proper auth passing. For demo, we allow embedded access.
       setIsAuthenticated(true);
       const redirectTo = originalPath || "/";
       navigate(redirectTo, { replace: true });

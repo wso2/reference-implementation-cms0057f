@@ -40,7 +40,7 @@ import {
 import { CdsCard, CdsResponse } from "../components/interfaces/cdsCard";
 import axios from "axios";
 import { useAuth } from "../components/AuthProvider";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { Alert, Box, Snackbar, Step, StepLabel, Stepper } from "@mui/material";
 import PatientInfo from "../components/PatientInfo";
 import {
@@ -62,6 +62,7 @@ import {
   StepStatus,
   updateActiveStep,
   updateSingleStep,
+  updateStepsArray,
 } from "../redux/commonStoargeSlice";
 import {
   CDS_HOOK,
@@ -105,6 +106,15 @@ const PrescribeForm = ({
   useEffect(() => {
     dispatch(resetMedicationFormData());
     dispatch(updateIsProcess(true));
+    dispatch(
+      updateStepsArray([
+        { name: "Medication request", status: StepStatus.NOT_STARTED },
+        { name: "Check Payer Requirements", status: StepStatus.NOT_STARTED },
+        { name: "Questionnaire package", status: StepStatus.NOT_STARTED },
+        { name: "Questionnaire Response", status: StepStatus.NOT_STARTED },
+        { name: "Claim Submit", status: StepStatus.NOT_STARTED },
+      ])
+    );
   }, [dispatch]);
 
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
@@ -584,6 +594,7 @@ const RequirementCard = ({
   requirementsResponsCard: CdsCard;
 }) => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const requestBody = {
     resourceType: "Parameters",
@@ -767,11 +778,7 @@ const RequirementCard = ({
                                 style={{ width: "100%", fontWeight: "600", padding: "10px 0" }}
                                 onClick={() => {
                                   loadQuestionnaires();
-                                  window.open(
-                                    dtrUrl,
-                                    "_blank",
-                                    "noopener,noreferrer"
-                                  );
+                                  navigate(`/dashboard/dtr-launch?dtrUrl=${encodeURIComponent(dtrUrl)}`);
                                 }}
                               >
                                 Launch DTR

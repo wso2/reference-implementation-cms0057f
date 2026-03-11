@@ -28,6 +28,7 @@ import ballerinax/health.fhir.r4.carinbb200;
 import ballerinax/health.fhir.r4.davincidtr210;
 import ballerinax/health.fhir.r4.davincihrex100;
 import ballerinax/health.fhir.r4.davincipas;
+import ballerinax/health.fhir.r4.davincipdex220;
 import ballerinax/health.fhir.r4.international401;
 import ballerinax/health.fhir.r4.uscore501;
 
@@ -40,6 +41,10 @@ isolated http:Client exportServiceClient = check new (exportServiceUrl);
 
 final fhirClient:FHIRConnector fhirConnector = check initFhirConnector();
 final http:Client fhirHttpClient = check new (baseUrl);
+
+// Pluggable PDex operation handlers — replace with custom implementations as needed
+final davincipdex220:BulkMemberMatcher bulkMemberMatcher = new DefaultBulkMemberMatcher();
+final davincipdex220:DaVinciDataExporter davinciDataExporter = new DefaultDaVinciDataExporter();
 
 isolated function invokePatientExport(string patientId, map<string[]> queryParameters, fhirClient:RequestMode requestMode) returns r4:FHIRError|http:Response|error {
     fhirClient:FHIRResponse|fhirClient:FHIRError exportResponse =
@@ -230,10 +235,50 @@ service http:InterceptableService /fhir/r4/_export on httpListener {
         }
 
         if job.status == BULK_MATCH_COMPLETED {
-            international401:Parameters? result = job.result;
+            davincipdex220:PDexMultiMemberMatchResponseParameters? result = job.result;
             if result !is () {
                 resp.statusCode = http:STATUS_OK;
                 resp.setHeader("Content-Type", "application/fhir+json");
+                resp.setJsonPayload(result.toJson());
+                return resp;
+            }
+        }
+
+        // FAILED or completed but result is missing
+        resp.statusCode = http:STATUS_INTERNAL_SERVER_ERROR;
+        resp.setJsonPayload({
+            "status": job.status,
+            "error": job.errorMessage ?: "Processing failed",
+            "jobId": jobId
+        });
+        return resp;
+    }
+
+    // Async polling endpoint for $davinci-data-export jobs
+    // Content-Location is set to /fhir/r4/_export/davinci-export-status/{jobId}
+    // Returns 202 while processing, 200 with result body when complete, 4xx/5xx on error.
+    isolated resource function get davinci\-export\-status/[string jobId]() returns http:Response {
+        DaVinciExportJob? job = getDaVinciExportJob(jobId);
+        http:Response resp = new;
+
+        if job is () {
+            resp.statusCode = http:STATUS_NOT_FOUND;
+            resp.setJsonPayload({"error": "Da Vinci export job not found", "jobId": jobId});
+            return resp;
+        }
+
+        if job.status == DAVINCI_EXPORT_PENDING || job.status == DAVINCI_EXPORT_PROCESSING {
+            resp.statusCode = http:STATUS_ACCEPTED;
+            resp.setHeader("Retry-After", "5");
+            resp.setJsonPayload({"status": job.status, "jobId": jobId});
+            return resp;
+        }
+
+        if job.status == DAVINCI_EXPORT_COMPLETED {
+            DaVinciExportResult? result = job.result;
+            if result !is () {
+                resp.statusCode = http:STATUS_OK;
+                resp.setHeader("Content-Type", "application/json");
                 resp.setJsonPayload(result.toJson());
                 return resp;
             }
@@ -1760,10 +1805,10 @@ service /fhir/r4/Group on new fhirr4:Listener(config = groupApiConfig) {
     }
 
     // Bulk Member Match (PDex Payer-to-Payer) — POST /fhir/r4/Group/$bulk-member-match
-    // Accepts a Parameters resource with one or more MemberBundle entries.
+    // Accepts a PDexMultiMemberMatchRequestParameters resource with one or more MemberBundle entries.
     // Supports synchronous (200) and asynchronous (Prefer: respond-async → 202) modes.
     isolated resource function post \$bulk\-member\-match(r4:FHIRContext fhirContext,
-            international401:Parameters parameters)
+            davincipdex220:PDexMultiMemberMatchRequestParameters parameters)
             returns http:Response|r4:FHIRError {
 
         log:printDebug("Bulk member match operation invoked");
@@ -1801,23 +1846,25 @@ service /fhir/r4/Group on new fhirr4:Listener(config = groupApiConfig) {
             return resp;
         }
 
-        // Synchronous path
-        international401:Parameters|r4:FHIRError result = processBulkMemberMatch(parameters);
-        if result is r4:FHIRError {
-            return result;
+        // Synchronous path — delegate to the BulkMemberMatcher interface
+        davincipdex220:BulkMemberMatchResult|r4:FHIRError matchResult =
+                bulkMemberMatcher.matchMembers({requestParameters: parameters});
+        if matchResult is r4:FHIRError {
+            return matchResult;
         }
         http:Response resp = new;
         resp.statusCode = http:STATUS_OK;
         resp.setHeader("Content-Type", "application/fhir+json");
-        resp.setJsonPayload(result.toJson());
+        resp.setJsonPayload(matchResult.responseParameters.toJson());
         return resp;
     }
 
     // DaVinci Data Export — GET /fhir/r4/Group/{id}/$davinci-data-export
     // Profiled extension of Bulk Data Export for DaVinci use cases (Da Vinci ATR STU 2.1).
     // Accepts exportType, _since, _until, _type, _typeFilter, patient query parameters.
+    // Returns 202 Accepted with Content-Location pointing to the davinci-export-status endpoint.
     isolated resource function get [string id]/\$davinci\-data\-export(
-            r4:FHIRContext fhirContext) returns r4:FHIRError|http:Response|error {
+            r4:FHIRContext fhirContext) returns r4:FHIRError|http:Response {
 
         log:printDebug("DaVinci Data Export invoked for group id: " + id);
 
@@ -1828,119 +1875,84 @@ service /fhir/r4/Group on new fhirr4:Listener(config = groupApiConfig) {
         }
 
         // Validate exportType when provided — only PDex P2P is supported here
-        string[]? exportTypes = queryParameters["exportType"];
-        if exportTypes !is () && exportTypes.length() > 0 {
-            if exportTypes[0] != PDEX_EXPORT_TYPE_P2P {
+        string[]? exportTypeParam = queryParameters["exportType"];
+        string exportType = PDEX_EXPORT_TYPE_P2P;
+        if exportTypeParam !is () && exportTypeParam.length() > 0 {
+            if exportTypeParam[0] != PDEX_EXPORT_TYPE_P2P {
                 return r4:createFHIRError(BULK_MATCH_INVALID_EXPORT_TYPE, r4:ERROR,
                         r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
             }
+            exportType = exportTypeParam[0];
         }
 
-        // Look up the Group
-        r4:DomainResource|r4:FHIRError groupResource = getById(fhirConnector, GROUP, id);
-        if groupResource is r4:FHIRError {
-            return groupResource;
+        // Build typed DataExportParameters from query params using direct field assignment
+        davincipdex220:DataExportParameters exportParams = {
+            exportType: exportType
+        };
+
+        string[]? sinceParam = queryParameters["_since"];
+        if sinceParam !is () && sinceParam.length() > 0 {
+            exportParams._since = sinceParam[0];
         }
-        Group currentGroup = check groupResource.cloneWithType(Group);
-        international401:GroupMember[]? members = currentGroup.member;
-        if members is () || members.length() == 0 {
-            return r4:createFHIRError("No members found in the group", r4:ERROR,
-                    r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+        string[]? untilParam = queryParameters["_until"];
+        if untilParam !is () && untilParam.length() > 0 {
+            exportParams._until = untilParam[0];
+        }
+        string[]? typeParam = queryParameters["_type"];
+        if typeParam !is () && typeParam.length() > 0 {
+            exportParams._type = typeParam[0];
+        }
+        string[]? typeFilterParam = queryParameters["_typeFilter"];
+        if typeFilterParam !is () && typeFilterParam.length() > 0 {
+            exportParams._typeFilter = typeFilterParam[0];
         }
 
-        // Optional patient-level filter (Reference values, e.g. "Patient/123")
-        string[]? patientFilter = queryParameters["patient"];
-
-        // Build forwarding query params: strip PDex-specific params the backend won't understand
-        map<string[]> exportQueryParams = queryParameters.clone();
-        _ = exportQueryParams.remove("exportType");
-        _ = exportQueryParams.remove("patient");
-
-        r4:ConsentContext? consentContext = fhirContext.getConsentContext();
-
-        map<string> exportUrls = {};
-
-        foreach international401:GroupMember member in members {
-            r4:Reference entity = member.entity;
-            string? reference = entity.reference;
-            if reference is string && reference.startsWith("Patient/") {
-                string patientId = reference.substring(8);
-
-                // Apply optional patient filter
-                if patientFilter !is () {
-                    boolean included = false;
-                    foreach string pf in patientFilter {
-                        if pf == "Patient/" + patientId || pf == patientId {
-                            included = true;
-                            break;
-                        }
-                    }
-                    if !included {
-                        log:printDebug("Skipping patient " + patientId
-                                + ": not in patient filter");
-                        continue;
-                    }
-                }
-
-                map<string[]> patientQueryParameters = exportQueryParams.clone();
-
-                // Apply per-patient consent filtering (same logic as $export)
-                if consentContext !is () {
-                    if consentContext.patientID != patientId {
-                        log:printDebug("Skipping patient " + patientId
-                                + ": does not match consent context");
-                        exportUrls[patientId] =
-                                "Skipped: patient not authorized by consent context";
-                        continue;
-                    }
-                    string[] consentedResourceTypes =
-                            consentContext.consentedResourceTypes.clone();
-                    if consentedResourceTypes.length() == 0 {
-                        log:printDebug("No consented types for patient " + patientId
-                                + ". Skipping.");
-                        exportUrls[patientId] =
-                                "Skipped: no consented resource types in consent";
-                        continue;
-                    }
-                    string[] filteredResourceTypes = filterConsentedResourceTypes(
-                            patientQueryParameters, consentedResourceTypes);
-                    if filteredResourceTypes.length() == 0 {
-                        log:printDebug("No allowed types after consent filter for patient "
-                                + patientId + ". Skipping.");
-                        exportUrls[patientId] =
-                                "Skipped: no consented resource types available";
-                        continue;
-                    }
-                    string filteredTypeParam = string:'join(",", ...filteredResourceTypes);
-                    patientQueryParameters["_type"] = [filteredTypeParam];
-                    log:printDebug("$davinci-data-export _type for patient " + patientId
-                            + ": " + filteredTypeParam);
-                }
-
-                r4:FHIRError|http:Response|error exportRes = invokePatientExport(
-                        patientId, patientQueryParameters, fhirClient:GET);
-                if exportRes is http:Response {
-                    string|error pollingUrl = exportRes.getHeader("content-location");
-                    if pollingUrl is string {
-                        exportUrls[patientId] = pollingUrl;
-                    } else {
-                        exportUrls[patientId] = "Failed to get Content-Location: "
-                                + exportRes.statusCode.toString();
-                    }
-                } else if exportRes is error {
-                    exportUrls[patientId] = "Error: " + exportRes.message();
-                }
+        // Build patient filter References from query param values ("Patient/123" or "123")
+        string[]? patientFilterParam = queryParameters["patient"];
+        if patientFilterParam !is () && patientFilterParam.length() > 0 {
+            r4:Reference[] patientRefs = [];
+            foreach string pf in patientFilterParam {
+                patientRefs.push({reference: pf.startsWith("Patient/") ? pf : "Patient/" + pf});
             }
+            exportParams.patient = patientRefs;
+        }
+
+        // Apply consent filtering at the HTTP layer before delegating to the exporter
+        r4:ConsentContext? consentContext = fhirContext.getConsentContext();
+        if consentContext !is () {
+            // Restrict to the consented patient only
+            exportParams.patient = [{reference: "Patient/" + consentContext.patientID}];
+
+            string[] consentedResourceTypes = consentContext.consentedResourceTypes.clone();
+            if consentedResourceTypes.length() == 0 {
+                return r4:createFHIRError("No consented resource types available for export",
+                        r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_FORBIDDEN);
+            }
+            // Build a temporary map to reuse filterConsentedResourceTypes()
+            map<string[]> typeQueryParams = {};
+            string? currentType = exportParams._type;
+            if currentType is string {
+                typeQueryParams["_type"] = [currentType];
+            }
+            string[] filteredTypes = filterConsentedResourceTypes(typeQueryParams, consentedResourceTypes);
+            if filteredTypes.length() == 0 {
+                return r4:createFHIRError("No consented resource types available for export",
+                        r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_FORBIDDEN);
+            }
+            exportParams._type = string:'join(",", ...filteredTypes);
+            log:printDebug("$davinci-data-export consent-filtered _type: " + (exportParams._type ?: ""));
+        }
+
+        // Delegate to the DaVinciDataExporter interface
+        davincipdex220:DataExportJob|r4:FHIRError exportJob =
+                davinciDataExporter.initiateExport(id, exportParams);
+        if exportJob is r4:FHIRError {
+            return exportJob;
         }
 
         http:Response response = new;
-        response.statusCode = http:STATUS_ACCEPTED;
-        response.setJsonPayload({
-            "transactionTime": time:utcToString(time:utcNow()),
-            "exportType": (exportTypes !is () && exportTypes.length() > 0)
-                    ? exportTypes[0] : PDEX_EXPORT_TYPE_P2P,
-            "exportUrls": exportUrls
-        });
+        response.statusCode = exportJob.statusCode;
+        response.setHeader("Content-Location", exportJob.contentLocation);
         return response;
     }
 

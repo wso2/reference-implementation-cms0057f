@@ -16,6 +16,7 @@
 
 import ballerina/time;
 import ballerinax/health.fhir.r4;
+import ballerinax/health.fhir.r4.davincipdex220;
 import ballerinax/health.fhir.r4.international401;
 
 // ============================================================================
@@ -43,7 +44,47 @@ public type BulkMemberMatchJob record {|
     BulkMatchStatus status;
     time:Utc createdAt;
     time:Utc? completedAt;
-    (international401:Parameters & readonly)? result;
+    (davincipdex220:PDexMultiMemberMatchResponseParameters & readonly)? result;
+    string? errorMessage;
+|};
+
+// ============================================================================
+// Da Vinci Data Export Async Job Types
+// ============================================================================
+
+# Status enum for async Da Vinci data export jobs
+public enum DaVinciExportStatus {
+    DAVINCI_EXPORT_PENDING = "pending",
+    DAVINCI_EXPORT_PROCESSING = "processing",
+    DAVINCI_EXPORT_COMPLETED = "completed",
+    DAVINCI_EXPORT_FAILED = "failed"
+}
+
+# Export result returned when a Da Vinci data export job completes
+#
+# + transactionTime - ISO-8601 timestamp at which the export was finalised
+# + exportType - Canonical export type (e.g. hl7.fhir.us.davinci-pdex#payertopayer)
+# + exportUrls - Map of patient ID → Content-Location polling URL for each patient export
+public type DaVinciExportResult record {|
+    string transactionTime;
+    string exportType;
+    map<string> exportUrls;
+|};
+
+# Internal record tracking an async Da Vinci data export job
+#
+# + jobId - Unique job identifier
+# + status - Current job status
+# + createdAt - Job creation timestamp
+# + completedAt - Job completion timestamp (null if not yet done)
+# + result - Export result when completed (null otherwise)
+# + errorMessage - Error description if the job failed
+public type DaVinciExportJob record {|
+    string jobId;
+    DaVinciExportStatus status;
+    time:Utc createdAt;
+    time:Utc? completedAt;
+    (DaVinciExportResult & readonly)? result;
     string? errorMessage;
 |};
 

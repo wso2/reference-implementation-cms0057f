@@ -18,6 +18,7 @@ import ballerina/log;
 import ballerina/time;
 import ballerinax/health.fhir.r4;
 import ballerinax/health.fhir.r4.davincihrex100 as hrex100;
+import ballerinax/health.fhir.r4.davincipdex220;
 import ballerinax/health.fhir.r4.international401;
 import ballerinax/health.fhir.r4.uscore501;
 
@@ -41,12 +42,12 @@ isolated map<BulkMemberMatchJob> bulkMatchJobStore = {};
 # as the target of a subsequent $davinci-data-export call.
 #
 # + parameters - PDex Multi-Member Match Request Parameters resource
-# + return - Parameters resource with three Group resources, or FHIRError
-isolated function processBulkMemberMatch(international401:Parameters parameters)
-        returns international401:Parameters|r4:FHIRError {
+# + return - PDex typed response Parameters with three Group resources, or FHIRError
+isolated function processBulkMemberMatch(davincipdex220:PDexMultiMemberMatchRequestParameters parameters)
+        returns davincipdex220:PDexMultiMemberMatchResponseParameters|r4:FHIRError {
 
-    international401:ParametersParameter[]? paramEntries = parameters.'parameter;
-    if paramEntries is () || paramEntries.length() == 0 {
+    davincipdex220:PDexMultiMemberMatchRequestParametersParameter[] paramEntries = parameters.'parameter;
+    if paramEntries.length() == 0 {
         return r4:createFHIRError(BULK_MATCH_NO_MEMBER_BUNDLES, r4:ERROR, r4:INVALID,
                 httpStatusCode = 400);
     }
@@ -55,7 +56,7 @@ isolated function processBulkMemberMatch(international401:Parameters parameters)
     r4:Reference[] nonMatchedRefs = [];
     r4:Reference[] consentConstrainedRefs = [];
 
-    foreach international401:ParametersParameter entry in paramEntries {
+    foreach davincipdex220:PDexMultiMemberMatchRequestParametersParameter entry in paramEntries {
         if entry.name != "MemberBundle" {
             continue;
         }
@@ -209,8 +210,8 @@ isolated function processBulkMemberMatch(international401:Parameters parameters)
         }
     }
 
-    // Build response Parameters with the three named Groups
-    international401:Parameters response = {
+    // Build typed response Parameters with the three named Groups
+    davincipdex220:PDexMultiMemberMatchResponseParameters response = {
         'parameter: [
             {name: "MatchedMembers", 'resource: matchedGroup},
             {name: "NonMatchedMembers", 'resource: nonMatchedGroup},
@@ -218,6 +219,26 @@ isolated function processBulkMemberMatch(international401:Parameters parameters)
         ]
     };
     return response;
+}
+
+// ============================================================================
+// DefaultBulkMemberMatcher — implements davincipdex220:BulkMemberMatcher
+// ============================================================================
+
+# Default implementation of the PDex BulkMemberMatcher interface.
+# Delegates to processBulkMemberMatch() for the actual matching logic.
+public isolated class DefaultBulkMemberMatcher {
+    *davincipdex220:BulkMemberMatcher;
+
+    public isolated function matchMembers(davincipdex220:BulkMemberMatchResources resources)
+            returns davincipdex220:BulkMemberMatchResult|r4:FHIRError {
+        davincipdex220:PDexMultiMemberMatchResponseParameters|r4:FHIRError result =
+                processBulkMemberMatch(resources.requestParameters);
+        if result is r4:FHIRError {
+            return result;
+        }
+        return {responseParameters: result};
+    }
 }
 
 // ============================================================================
@@ -254,7 +275,8 @@ isolated function buildBulkMatchGroupResource(string profileUrl, r4:Reference[] 
 # + jobId - The ID previously stored in bulkMatchJobStore
 # + parameters - The PDex Multi-Member Match Request Parameters
 isolated function processAndStoreBulkMemberMatch(
-        string jobId, international401:Parameters & readonly parameters) {
+        string jobId,
+        davincipdex220:PDexMultiMemberMatchRequestParameters & readonly parameters) {
 
     // Mark job as processing
     lock {
@@ -271,19 +293,20 @@ isolated function processAndStoreBulkMemberMatch(
         }
     }
 
-    international401:Parameters|r4:FHIRError result = processBulkMemberMatch(parameters);
+    davincipdex220:BulkMemberMatchResult|r4:FHIRError matchResult =
+            bulkMemberMatcher.matchMembers({requestParameters: parameters});
 
     lock {
         if bulkMatchJobStore.hasKey(jobId) {
             BulkMemberMatchJob current = bulkMatchJobStore.get(jobId);
-            if result is r4:FHIRError {
+            if matchResult is r4:FHIRError {
                 bulkMatchJobStore[jobId] = {
                     jobId: current.jobId,
                     status: BULK_MATCH_FAILED,
                     createdAt: current.createdAt,
                     completedAt: time:utcNow(),
                     result: (),
-                    errorMessage: result.message()
+                    errorMessage: matchResult.message()
                 };
             } else {
                 bulkMatchJobStore[jobId] = {
@@ -291,7 +314,7 @@ isolated function processAndStoreBulkMemberMatch(
                     status: BULK_MATCH_COMPLETED,
                     createdAt: current.createdAt,
                     completedAt: time:utcNow(),
-                    result: result.cloneReadOnly(),
+                    result: matchResult.responseParameters.cloneReadOnly(),
                     errorMessage: ()
                 };
             }

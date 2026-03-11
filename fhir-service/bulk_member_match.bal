@@ -87,7 +87,26 @@ isolated function processBulkMemberMatch(davincipdex220:PDexMultiMemberMatchRequ
                     if pt is uscore501:USCorePatientProfile {
                         memberPatient = pt;
                     } else {
-                        log:printWarn("Failed to parse MemberPatient: " + pt.message());
+                        // Fallback: coerce a basic FHIR Patient by injecting required USCore
+                        // fields (e.g. an empty identifier array) so cloneWithType succeeds.
+                        log:printWarn("Strict USCore parse failed (" + pt.message()
+                                + "); attempting lenient fallback for MemberPatient");
+                        json|error ptJson = partResource.cloneWithType(json);
+                        if ptJson is map<json> {
+                            if !ptJson.hasKey("identifier") {
+                                ptJson["identifier"] = [];
+                            }
+                            uscore501:USCorePatientProfile|error coerced =
+                                    ptJson.cloneWithType(uscore501:USCorePatientProfile);
+                            if coerced is uscore501:USCorePatientProfile {
+                                memberPatient = coerced;
+                            } else {
+                                log:printWarn("Patient USCore parse also failed: " + coerced.message());
+                            }
+                        } else {
+                            log:printWarn("Failed to convert MemberPatient to JSON: "
+                                    + (ptJson is error ? ptJson.message() : "unexpected type"));
+                        }
                     }
                 }
                 "CoverageToMatch" => {

@@ -14,6 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
+import ballerina/http;
 import ballerina/log;
 import ballerina/time;
 import ballerinax/health.fhir.r4;
@@ -166,13 +167,19 @@ isolated function processBulkMemberMatch(davincipdex220:PDexMultiMemberMatchRequ
                 fhirMemberMatcher.matchMember(memberMatchResources);
 
         if matchResult is r4:FHIRError {
-            log:printDebug("No match for member: " + matchResult.message());
-            // Use the incoming coverage ID as a proxy identifier when no internal ID exists
             string covId = coverageToMatch.id ?: "unknown";
-            nonMatchedRefs.push({
-                reference: "Coverage/" + covId,
-                display: "No match found"
-            });
+            int statusCode = matchResult.detail().httpStatusCode;
+            if statusCode == http:STATUS_UNPROCESSABLE_ENTITY || statusCode == http:STATUS_NOT_FOUND {
+                // Expected no-match outcome — member is not in this payer's system
+                log:printDebug("No match for member (coverage " + covId + "): " + matchResult.message());
+                nonMatchedRefs.push({reference: "Coverage/" + covId, display: "No match found"});
+            } else {
+                // Unexpected processing error — log at error level and surface the reason
+                log:printError("Member match processing error for coverage " + covId
+                        + ": " + matchResult.message());
+                nonMatchedRefs.push({reference: "Coverage/" + covId,
+                        display: "Match error: " + matchResult.message()});
+            }
             continue;
         }
 

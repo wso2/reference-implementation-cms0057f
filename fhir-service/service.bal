@@ -336,7 +336,11 @@ service /fhir/r4/Patient on new fhirr4:Listener(config = patientApiConfig) {
                         r4:ERROR, r4:INVALID,
                         httpStatusCode = http:STATUS_UNPROCESSABLE_ENTITY);
             }
-            ConsentEvaluationResult consentResult = evaluateConsent(i4Consent, memberIdentifier);
+            // Per HRex spec, Consent.patient SHALL be a local ref to the input MemberPatient
+            // (e.g. "Patient/1"), not the matched id. Validate against the input patient's id.
+            // Ref: https://hl7.org/fhir/us/davinci-hrex/STU1/OperationDefinition-member-match.html
+            string inputPatientId = memberMatchResources.memberPatient.id ?: "";
+            ConsentEvaluationResult consentResult = evaluateConsent(i4Consent, inputPatientId);
             if !consentResult.isValid {
                 return r4:createFHIRError(
                         consentResult.reason ?: "Consent validation failed",

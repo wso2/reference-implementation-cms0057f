@@ -587,9 +587,12 @@ isolated function extractConsentFromParameters(international401:ParametersParame
 # Function to evaluate consent based on comprehensive guidelines
 #
 # + consent - The consent resource to evaluate
-# + memberMatchResult - The matched member identifier from the member matcher
+# + inputPatientId - The `id` of the input MemberPatient resource from the request. Per HRex spec,
+#                   Consent.patient SHALL be a local reference (e.g. "Patient/1") that resolves to
+#                   the MemberPatient parameter — NOT the matched patient ID in this payer's system.
+#                   Ref: https://hl7.org/fhir/us/davinci-hrex/STU1/OperationDefinition-member-match.html
 # + return - The result of the consent evaluation
-isolated function evaluateConsent(Consent consent, string memberMatchResult) returns ConsentEvaluationResult {
+isolated function evaluateConsent(Consent consent, string inputPatientId) returns ConsentEvaluationResult {
     ConsentEvaluationResult result = {
         isValid: false,
         patientId: (),
@@ -601,8 +604,8 @@ isolated function evaluateConsent(Consent consent, string memberMatchResult) ret
         requestingPayer: ()
     };
 
-    if memberMatchResult == "" {
-        log:printError("Member match result is empty");
+    if inputPatientId == "" {
+        log:printError("Input patient id is empty");
         result.reason = CONSENT_EVALUATION_FAILED;
         return result;
     }
@@ -615,7 +618,8 @@ isolated function evaluateConsent(Consent consent, string memberMatchResult) ret
     }
 
     // Step 1: Member Identity Validation
-    // Confirm the Consent.patient reference matches the uniquely identified member
+    // Consent.patient SHALL be a local reference to the input MemberPatient (e.g. "Patient/1").
+    // Compare its id segment against the input patient's id — never against the matched patient id.
     if consent.patient?.reference is string {
         string consentPatientRef = <string>consent.patient?.reference;
         // Extract patient ID from reference (e.g., "Patient/123" or "http://server/Patient/123" -> "123")
@@ -624,12 +628,12 @@ isolated function evaluateConsent(Consent consent, string memberMatchResult) ret
         // use last segment to support both relative ("Patient/id") and absolute URLs
         if refParts.length() >= 1 {
             string consentPatientId = refParts[refParts.length() - 1];
-            // Compare with the matched member identifier
-            if consentPatientId == memberMatchResult {
-                result.memberIdentity = memberMatchResult;
+            // Compare with the input MemberPatient id
+            if consentPatientId == inputPatientId {
+                result.memberIdentity = inputPatientId;
                 log:printDebug("Member identity validation successful: " + consentPatientId);
             } else {
-                log:printError("Member identity mismatch. Consent patient: " + consentPatientId + ", Matched member: " + memberMatchResult);
+                log:printError("Member identity mismatch. Consent patient: " + consentPatientId + ", Input patient: " + inputPatientId);
                 result.reason = CONSENT_INVALID_MEMBER;
                 return result;
             }

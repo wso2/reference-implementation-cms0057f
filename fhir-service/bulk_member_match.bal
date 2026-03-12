@@ -198,7 +198,13 @@ isolated function processBulkMemberMatch(davincipdex220:PDexMultiMemberMatchRequ
             continue;
         }
 
-        ConsentEvaluationResult consentResult = evaluateConsent(i4Consent, patientId);
+        // Per HRex spec, Consent.patient SHALL be a local reference to the input MemberPatient
+        // , not the matched patient ID. Validate against the input patient's
+        // local id so cross-system IDs are never compared.
+        // Ref: https://hl7.org/fhir/us/davinci-hrex/STU1/OperationDefinition-member-match.html
+        //      "Resolving parameter references" — Consent.patient SHALL resolve to MemberPatient.
+        string inputPatientId = memberPatient.id ?: "";
+        ConsentEvaluationResult consentResult = evaluateConsent(i4Consent, inputPatientId);
         if consentResult.isValid {
             log:printDebug("Consent valid for patient " + patientId);
             matchedRefs.push(patientRef);

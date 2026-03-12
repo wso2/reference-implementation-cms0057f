@@ -53,9 +53,9 @@ isolated function processBulkMemberMatch(davincipdex220:PDexMultiMemberMatchRequ
                 httpStatusCode = 400);
     }
 
-    r4:Reference[] matchedRefs = [];
-    r4:Reference[] nonMatchedRefs = [];
-    r4:Reference[] consentConstrainedRefs = [];
+    MemberOutcomeEntry[] matchedEntries = [];
+    MemberOutcomeEntry[] nonMatchedEntries = [];
+    MemberOutcomeEntry[] consentConstrainedEntries = [];
 
     foreach davincipdex220:PDexMultiMemberMatchRequestParametersParameter entry in paramEntries {
         if entry.name != "MemberBundle" {
@@ -66,7 +66,7 @@ isolated function processBulkMemberMatch(davincipdex220:PDexMultiMemberMatchRequ
         international401:ParametersParameter[]? parts = entry.part;
         if parts is () || parts.length() == 0 {
             log:printWarn("MemberBundle entry has no parts — skipping");
-            nonMatchedRefs.push({display: "MemberBundle with no parts"});
+            nonMatchedEntries.push({originalPatient: (), memberRef: (), displayOnly: "MemberBundle with no parts"});
             continue;
         }
 
@@ -141,17 +141,17 @@ isolated function processBulkMemberMatch(davincipdex220:PDexMultiMemberMatchRequ
         // Validate required parts
         if memberPatient is () {
             log:printWarn(BULK_MATCH_MISSING_PATIENT + " — marking as non-matched");
-            nonMatchedRefs.push({display: BULK_MATCH_MISSING_PATIENT});
+            nonMatchedEntries.push({originalPatient: (), memberRef: (), displayOnly: BULK_MATCH_MISSING_PATIENT});
             continue;
         }
         if coverageToMatch is () {
             log:printWarn(BULK_MATCH_MISSING_COVERAGE + " — marking as non-matched");
-            nonMatchedRefs.push({display: BULK_MATCH_MISSING_COVERAGE});
+            nonMatchedEntries.push({originalPatient: memberPatient, memberRef: (), displayOnly: BULK_MATCH_MISSING_COVERAGE});
             continue;
         }
         if consent is () {
             log:printWarn(BULK_MATCH_MISSING_CONSENT + " — marking as non-matched");
-            nonMatchedRefs.push({display: BULK_MATCH_MISSING_CONSENT});
+            nonMatchedEntries.push({originalPatient: memberPatient, memberRef: (), displayOnly: BULK_MATCH_MISSING_CONSENT});
             continue;
         }
 
@@ -172,13 +172,13 @@ isolated function processBulkMemberMatch(davincipdex220:PDexMultiMemberMatchRequ
             if statusCode == http:STATUS_UNPROCESSABLE_ENTITY || statusCode == http:STATUS_NOT_FOUND {
                 // Expected no-match outcome — member is not in this payer's system
                 log:printDebug("No match for member (coverage " + covId + "): " + matchResult.message());
-                nonMatchedRefs.push({reference: "Coverage/" + covId, display: "No match found"});
+                nonMatchedEntries.push({originalPatient: memberPatient, memberRef: ()});
             } else {
                 // Unexpected processing error — log at error level and surface the reason
                 log:printError("Member match processing error for coverage " + covId
                         + ": " + matchResult.message());
-                nonMatchedRefs.push({reference: "Coverage/" + covId,
-                        display: "Match error: " + matchResult.message()});
+                nonMatchedEntries.push({originalPatient: memberPatient, memberRef: (),
+                        displayOnly: "Match error: " + matchResult.message()});
             }
             continue;
         }
@@ -194,7 +194,7 @@ isolated function processBulkMemberMatch(davincipdex220:PDexMultiMemberMatchRequ
         if i4Consent is error {
             log:printWarn("Failed to convert HRexConsent for patient " + patientId
                     + ": " + i4Consent.message() + " — treating as consent constrained");
-            consentConstrainedRefs.push(patientRef);
+            consentConstrainedEntries.push({originalPatient: memberPatient, memberRef: patientRef});
             continue;
         }
 
@@ -207,24 +207,24 @@ isolated function processBulkMemberMatch(davincipdex220:PDexMultiMemberMatchRequ
         ConsentEvaluationResult consentResult = evaluateConsent(i4Consent, inputPatientId);
         if consentResult.isValid {
             log:printDebug("Consent valid for patient " + patientId);
-            matchedRefs.push(patientRef);
+            matchedEntries.push({originalPatient: memberPatient, memberRef: patientRef});
         } else {
             log:printDebug("Consent constrained for patient " + patientId
                     + ": " + (consentResult.reason ?: "unknown reason"));
-            consentConstrainedRefs.push(patientRef);
+            consentConstrainedEntries.push({originalPatient: memberPatient, memberRef: patientRef});
         }
     }
 
     // Build the three result Group resources
     international401:Group matchedGroup =
-            buildBulkMatchGroupResource(PDEX_MEMBER_MATCH_GROUP_PROFILE, matchedRefs);
+            buildBulkMatchGroupResource(PDEX_MEMBER_MATCH_GROUP_PROFILE, PDEX_MATCH_CODE, matchedEntries);
     international401:Group nonMatchedGroup =
-            buildBulkMatchGroupResource(PDEX_NO_MATCH_GROUP_PROFILE, nonMatchedRefs);
+            buildBulkMatchGroupResource(PDEX_NO_MATCH_GROUP_PROFILE, PDEX_NO_MATCH_CODE, nonMatchedEntries);
     international401:Group consentConstrainedGroup =
-            buildBulkMatchGroupResource(PDEX_NO_MATCH_GROUP_PROFILE, consentConstrainedRefs);
+            buildBulkMatchGroupResource(PDEX_NO_MATCH_GROUP_PROFILE, PDEX_CONSENT_CONSTRAINT_CODE, consentConstrainedEntries);
 
     // Persist the MatchedMembers Group so it can be targeted by $davinci-data-export
-    if matchedRefs.length() > 0 {
+    if matchedEntries.length() > 0 {
         r4:DomainResource|r4:FHIRError persistResult =
                 create(fhirConnector, GROUP, matchedGroup.toJson());
         if persistResult is r4:FHIRError {
@@ -277,24 +277,74 @@ public isolated class DefaultBulkMemberMatcher {
 // Group Builder
 // ============================================================================
 
-# Builds a PDex-profiled Group resource from a list of member References.
+# Builds a PDex-profiled Group resource per the multi-member-match spec.
 #
-# + profileUrl - The canonical URL of the FHIR profile to apply
-# + memberRefs - r4:Reference entries for each group member
-# + return - A populated international401:Group resource
-isolated function buildBulkMatchGroupResource(string profileUrl, r4:Reference[] memberRefs)
-        returns international401:Group {
+# Each entry with an originalPatient is embedded as a contained resource (id = "1", "2", ...).
+# The member.entity carries:
+#   - MatchedMembers:  entity.reference = receiving-payer Patient ref; extension → contained #N
+#   - Non/Constrained: entity.reference = contained #N (no matched patient exists)
+# Ref: https://hl7.org/fhir/us/davinci-pdex/STU2/OperationDefinition-bulk-member-match.html
+#
+# + profileUrl  - Canonical profile URL for the Group
+# + matchCode   - PdexMultiMemberMatchResultCS code (match / nomatch / consentconstraint)
+# + entries     - MemberOutcomeEntry list with original patients and outcome references
+# + return      - A populated international401:Group resource
+isolated function buildBulkMatchGroupResource(string profileUrl, string matchCode,
+        MemberOutcomeEntry[] entries) returns international401:Group {
 
+    r4:Resource[] contained = [];
     international401:GroupMember[] members = [];
-    foreach r4:Reference ref in memberRefs {
-        members.push({entity: ref});
+    int containedIndex = 1;
+
+    foreach MemberOutcomeEntry entry in entries {
+        international401:Patient? originalPatient = entry.originalPatient;
+
+        if originalPatient is international401:Patient {
+            // Assign a stable local contained-resource id for this entry
+            string containedId = containedIndex.toString();
+            containedIndex += 1;
+
+            // Strip any incoming id and assign the local contained id
+            international401:Patient containedPatient = originalPatient.clone();
+            containedPatient.id = containedId;
+            contained.push(containedPatient);
+
+            // Extension linking entity back to the contained input patient
+            r4:ReferenceExtension matchParamsExt = {
+                url: BASE_EXT_MATCH_PARAMETERS_URL,
+                valueReference: {reference: "#" + containedId}
+            };
+
+            // For matched members the entity points to the receiving-payer patient;
+            // for non-matched / consent-constrained it points to the contained patient itself.
+            r4:Reference? matchedRef = entry.memberRef;
+            r4:Reference entityRef = matchedRef is r4:Reference
+                    ? {reference: matchedRef.reference, extension: [matchParamsExt]}
+                    : {reference: "#" + containedId, extension: [matchParamsExt]};
+
+            members.push({entity: entityRef});
+        } else {
+            // Parsing failed before we had a patient — use a display-only reference
+            members.push({entity: {display: entry.displayOnly ?: "unknown"}});
+        }
     }
-    return {
+
+    international401:Group grp = {
         'type: "person",
         actual: true,
         meta: {profile: [profileUrl]},
+        code: {
+            coding: [{
+                system: PDEX_MULTI_MEMBER_MATCH_RESULT_CS,
+                code: matchCode
+            }]
+        },
         member: members
     };
+    if contained.length() > 0 {
+        grp.contained = contained;
+    }
+    return grp;
 }
 
 // ============================================================================

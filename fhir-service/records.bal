@@ -20,6 +20,21 @@ import ballerinax/health.fhir.r4.davincipdex220;
 import ballerinax/health.fhir.r4.international401;
 
 // ============================================================================
+// Bulk Member Match Types
+// ============================================================================
+
+# Pairs an original input MemberPatient with its outcome reference for building
+# the result Group resources. Per spec:
+# - MatchedMembers: memberRef = the receiving-payer Patient reference (e.g. "Patient/1001")
+# - NonMatched / ConsentConstrained: memberRef = () (entity will reference the contained patient)
+# originalPatient may be () for error cases where parsing failed before we had a patient.
+public type MemberOutcomeEntry record {|
+    international401:Patient? originalPatient;
+    r4:Reference? memberRef;
+    string displayOnly?;
+|};
+
+// ============================================================================
 // Bulk Member Match Async Job Types
 // ============================================================================
 

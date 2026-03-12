@@ -649,14 +649,39 @@ isolated function evaluateConsent(Consent consent, string inputPatientId) return
     }
 
     // Step 2: Payer Identity Validation
-    // Confirm the Consent.organization is the Receiving Payer and Consent.performer is the Requesting Payer
-    if consent.organization is r4:Reference[] && (<r4:Reference[]>consent.organization).length() > 0 {
-        // Check if organization matches the receiving payer (this system)
-        // This is a simplified check - in production you'd validate against actual payer identifiers
-        result.requestingPayer = "receiving-payer"; // Placeholder
-        log:printDebug("Payer identity validation successful");
+    // Per HRex Consent profile (STU1.1), payer roles are expressed via provision.actor slices
+    // (Must Support, cardinality 2..*). Consent.organization is NOT part of HRex Consent.
+    //   - role code "performer" → requesting/source payer (authorized to disclose)
+    //   - role code "IRCP"      → receiving payer (authorized to receive data)
+    // Ref: https://hl7.org/fhir/us/davinci-hrex/STU1.1/StructureDefinition-hrex-consent.html
+    international401:ConsentProvisionActor[]? actors = consent.provision?.actor;
+    if actors is international401:ConsentProvisionActor[] && actors.length() >= 2 {
+        boolean hasPerformer = false;
+        boolean hasRecipient = false;
+        string requestingPayerRef = "";
+        foreach international401:ConsentProvisionActor actor in actors {
+            r4:Coding[]? codings = actor.role.coding;
+            if codings is r4:Coding[] {
+                foreach r4:Coding coding in codings {
+                    if coding.code == "performer" {
+                        hasPerformer = true;
+                        requestingPayerRef = actor.reference.reference ?: "";
+                    } else if coding.code == "IRCP" {
+                        hasRecipient = true;
+                    }
+                }
+            }
+        }
+        if hasPerformer && hasRecipient {
+            result.requestingPayer = requestingPayerRef;
+            log:printDebug("Payer identity validation successful — source: " + requestingPayerRef);
+        } else {
+            log:printError("Missing required provision.actor role(s). performer=" + hasPerformer.toString() + " IRCP=" + hasRecipient.toString());
+            result.reason = CONSENT_INVALID_PAYER;
+            return result;
+        }
     } else {
-        log:printError("Organization reference not found in consent");
+        log:printError("provision.actor missing or has fewer than 2 entries");
         result.reason = CONSENT_INVALID_PAYER;
         return result;
     }

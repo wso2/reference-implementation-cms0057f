@@ -57,6 +57,8 @@ const string CONSENT_PROVISION_REQUIRED = "Consent provision section is required
 const string CONSENT_DUPLICATE_FOUND = "Duplicate active consent found for the same patient and policy";
 const string CONSENT_SCOPE_INVALID = "Consent scope must be for patient privacy";
 const string CONSENT_SCOPE_REQUIRED = "Consent scope is required";
+const string CONSENT_PROVISION_TYPE_INVALID = "Consent provision type must be 'permit'";
+const string CONSENT_PROVISION_ACTION_INVALID = "Consent provision must include a 'disclose' action";
 
 # Constants for PDex Payer-to-Payer Bulk Exchange
 const string PDEX_EXPORT_TYPE_P2P = "hl7.fhir.us.davinci-pdex#payertopayer";

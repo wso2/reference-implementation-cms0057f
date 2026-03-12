@@ -617,6 +617,22 @@ isolated function evaluateConsent(Consent consent, string inputPatientId) return
         return result;
     }
 
+    // Scope check — HRex Consent requires scope = "patient-privacy" (Must Support fixed value)
+    // Ref: https://hl7.org/fhir/us/davinci-hrex/STU1.1/StructureDefinition-hrex-consent.html
+    r4:Coding[]? scopeCodings = consent.scope?.coding;
+    if scopeCodings is r4:Coding[] {
+        boolean validScope = scopeCodings.some(c => c.code == "patient-privacy");
+        if !validScope {
+            log:printError("Consent scope is not 'patient-privacy'");
+            result.reason = CONSENT_SCOPE_INVALID;
+            return result;
+        }
+    } else {
+        log:printError("Consent scope is missing");
+        result.reason = CONSENT_SCOPE_REQUIRED;
+        return result;
+    }
+
     // Step 1: Member Identity Validation
     // Consent.patient SHALL be a local reference to the input MemberPatient (e.g. "Patient/1").
     // Compare its id segment against the input patient's id — never against the matched patient id.
@@ -683,6 +699,24 @@ isolated function evaluateConsent(Consent consent, string inputPatientId) return
     } else {
         log:printError("provision.actor missing or has fewer than 2 entries");
         result.reason = CONSENT_INVALID_PAYER;
+        return result;
+    }
+
+    // Provision rules validation — HRex Consent fixed values (Must Support)
+    // provision.type must be "permit" and provision.action must include "disclose"
+    // Ref: https://hl7.org/fhir/us/davinci-hrex/STU1.1/StructureDefinition-hrex-consent.html
+    if consent.provision?.'type != international401:CODE_TYPE_PERMIT {
+        log:printError("Consent provision type is not 'permit'. Got: " + (consent.provision?.'type ?: "missing").toString());
+        result.reason = CONSENT_PROVISION_TYPE_INVALID;
+        return result;
+    }
+    r4:CodeableConcept[]? actions = consent.provision?.action;
+    boolean hasDisclose = actions is r4:CodeableConcept[] &&
+        actions.some(a => (a.coding is r4:Coding[]) &&
+            (<r4:Coding[]>a.coding).some(c => c.code == "disclose"));
+    if !hasDisclose {
+        log:printError("Consent provision does not include a 'disclose' action");
+        result.reason = CONSENT_PROVISION_ACTION_INVALID;
         return result;
     }
 

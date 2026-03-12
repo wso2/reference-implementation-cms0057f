@@ -35,6 +35,7 @@ import ballerinax/health.fhir.r4.uscore501;
 configurable Configs configs = ?;
 configurable string exportServiceUrl = ?;
 configurable string sampleDataGithubUrl = ?;
+configurable string serverBaseUrl = "http://localhost:8081";
 
 // This is used to connect to file service
 isolated http:Client exportServiceClient = check new (exportServiceUrl);
@@ -1857,7 +1858,7 @@ service /fhir/r4/Group on new fhirr4:Listener(config = groupApiConfig) {
             http:Response resp = new;
             resp.statusCode = http:STATUS_ACCEPTED;
             resp.setHeader("Content-Location",
-                    "/fhir/r4/_export/bulk-match-status/" + jobId);
+                    serverBaseUrl + "/fhir/r4/_export/bulk-match-status/" + jobId);
             return resp;
         }
 

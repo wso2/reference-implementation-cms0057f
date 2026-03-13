@@ -16,7 +16,92 @@
 
 import ballerina/time;
 import ballerinax/health.fhir.r4;
+import ballerinax/health.fhir.r4.davincipdex220;
 import ballerinax/health.fhir.r4.international401;
+
+// ============================================================================
+// Bulk Member Match Types
+// ============================================================================
+
+# Pairs an original input MemberPatient with its outcome reference for building
+# the result Group resources. Per spec:
+# - MatchedMembers: memberRef = the receiving-payer Patient reference (e.g. "Patient/1001")
+# - NonMatched / ConsentConstrained: memberRef = () (entity will reference the contained patient)
+# originalPatient may be () for error cases where parsing failed before we had a patient.
+public type MemberOutcomeEntry record {|
+    international401:Patient? originalPatient;
+    r4:Reference? memberRef;
+    string displayOnly?;
+|};
+
+// ============================================================================
+// Bulk Member Match Async Job Types
+// ============================================================================
+
+# Status enum for async bulk member match jobs
+public enum BulkMatchStatus {
+    BULK_MATCH_PENDING = "pending",
+    BULK_MATCH_PROCESSING = "processing",
+    BULK_MATCH_COMPLETED = "completed",
+    BULK_MATCH_FAILED = "failed"
+}
+
+# Internal record tracking an async bulk member match job
+#
+# + jobId - Unique job identifier
+# + status - Current job status
+# + createdAt - Job creation timestamp
+# + completedAt - Job completion timestamp (null if not yet done)
+# + result - The Parameters result resource (null if not completed)
+# + errorMessage - Error description if the job failed
+public type BulkMemberMatchJob record {|
+    string jobId;
+    BulkMatchStatus status;
+    time:Utc createdAt;
+    time:Utc? completedAt;
+    (davincipdex220:PDexMultiMemberMatchResponseParameters & readonly)? result;
+    string? errorMessage;
+|};
+
+// ============================================================================
+// Da Vinci Data Export Async Job Types
+// ============================================================================
+
+# Status enum for async Da Vinci data export jobs
+public enum DaVinciExportStatus {
+    DAVINCI_EXPORT_PENDING = "pending",
+    DAVINCI_EXPORT_PROCESSING = "processing",
+    DAVINCI_EXPORT_COMPLETED = "completed",
+    DAVINCI_EXPORT_FAILED = "failed"
+}
+
+# Export result returned when a Da Vinci data export job completes
+#
+# + transactionTime - ISO-8601 timestamp at which the export was finalised
+# + exportType - Canonical export type (e.g. hl7.fhir.us.davinci-pdex#payertopayer)
+# + exportUrls - Map of patient ID → Content-Location polling URL for each patient export
+public type DaVinciExportResult record {|
+    string transactionTime;
+    string exportType;
+    map<string> exportUrls;
+|};
+
+# Internal record tracking an async Da Vinci data export job
+#
+# + jobId - Unique job identifier
+# + status - Current job status
+# + createdAt - Job creation timestamp
+# + completedAt - Job completion timestamp (null if not yet done)
+# + result - Export result when completed (null otherwise)
+# + errorMessage - Error description if the job failed
+public type DaVinciExportJob record {|
+    string jobId;
+    DaVinciExportStatus status;
+    time:Utc createdAt;
+    time:Utc? completedAt;
+    (DaVinciExportResult & readonly)? result;
+    string? errorMessage;
+|};
 
 // ============================================================================
 // Re-exported FHIR Base Types from r4

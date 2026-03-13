@@ -5,7 +5,7 @@
 
 [ballerina]
 dependencies-toml-version = "2"
-distribution-version = "2201.12.10"
+distribution-version = "2201.12.11"
 
 [[package]]
 org = "ballerina"
@@ -481,6 +481,20 @@ modules = [
 
 [[package]]
 org = "ballerinax"
+name = "health.fhir.r4.davincipdex220"
+version = "1.0.0"
+dependencies = [
+	{org = "ballerina", name = "constraint"},
+	{org = "ballerina", name = "log"},
+	{org = "ballerinax", name = "health.fhir.r4"},
+	{org = "ballerinax", name = "health.fhir.r4.international401"}
+]
+modules = [
+	{org = "ballerinax", packageName = "health.fhir.r4.davincipdex220", moduleName = "health.fhir.r4.davincipdex220"}
+]
+
+[[package]]
+org = "ballerinax"
 name = "health.fhir.r4.international401"
 version = "4.0.2"
 dependencies = [
@@ -599,6 +613,7 @@ dependencies = [
 	{org = "ballerinax", name = "health.fhir.r4.davincidtr210"},
 	{org = "ballerinax", name = "health.fhir.r4.davincihrex100"},
 	{org = "ballerinax", name = "health.fhir.r4.davincipas"},
+	{org = "ballerinax", name = "health.fhir.r4.davincipdex220"},
 	{org = "ballerinax", name = "health.fhir.r4.international401"},
 	{org = "ballerinax", name = "health.fhir.r4.parser"},
 	{org = "ballerinax", name = "health.fhir.r4.uscore501"},

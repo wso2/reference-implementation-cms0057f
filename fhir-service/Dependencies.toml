@@ -76,16 +76,6 @@ dependencies = [
 
 [[package]]
 org = "ballerina"
-name = "edi"
-version = "1.5.3"
-dependencies = [
-	{org = "ballerina", name = "io"},
-	{org = "ballerina", name = "lang.regexp"},
-	{org = "ballerina", name = "log"}
-]
-
-[[package]]
-org = "ballerina"
 name = "file"
 version = "1.12.0"
 dependencies = [
@@ -550,16 +540,6 @@ modules = [
 
 [[package]]
 org = "ballerinax"
-name = "health.fhir.r4.uscore700"
-version = "2.0.0"
-dependencies = [
-	{org = "ballerina", name = "constraint"},
-	{org = "ballerina", name = "log"},
-	{org = "ballerinax", name = "health.fhir.r4"}
-]
-
-[[package]]
-org = "ballerinax"
 name = "health.fhir.r4.validator"
 version = "6.0.0"
 dependencies = [
@@ -623,39 +603,9 @@ dependencies = [
 	{org = "ballerinax", name = "health.fhir.r4.parser"},
 	{org = "ballerinax", name = "health.fhir.r4.uscore501"},
 	{org = "ballerinax", name = "health.fhir.r4.validator"},
-	{org = "ballerinax", name = "health.fhirr4"},
-	{org = "wso2healthcare", name = "health.x12.utils.fhirtox12"}
+	{org = "ballerinax", name = "health.fhirr4"}
 ]
 modules = [
 	{org = "wso2", packageName = "fhir.service", moduleName = "fhir.service"}
-]
-
-[[package]]
-org = "wso2healthcare"
-name = "health.x12.utils.fhirtox12"
-version = "3.1.1"
-dependencies = [
-	{org = "ballerina", name = "edi"},
-	{org = "ballerina", name = "io"},
-	{org = "ballerina", name = "lang.regexp"},
-	{org = "ballerina", name = "log"},
-	{org = "ballerinai", name = "observe"},
-	{org = "ballerinax", name = "health.fhir.r4"},
-	{org = "ballerinax", name = "health.fhir.r4.davincipas"},
-	{org = "ballerinax", name = "health.fhir.r4.international401"},
-	{org = "ballerinax", name = "health.fhir.r4.parser"},
-	{org = "ballerinax", name = "health.fhir.r4.uscore700"},
-	{org = "wso2healthcare", name = "health.x12.v005010x217"}
-]
-modules = [
-	{org = "wso2healthcare", packageName = "health.x12.utils.fhirtox12", moduleName = "health.x12.utils.fhirtox12"}
-]
-
-[[package]]
-org = "wso2healthcare"
-name = "health.x12.v005010x217"
-version = "1.1.0"
-dependencies = [
-	{org = "ballerina", name = "edi"}
 ]
 

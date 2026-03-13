@@ -7,8 +7,6 @@ sampleDataGithubUrl = "http://localhost:9091/data"
 
 baseUrl = "http://localhost:9090/fhir/r4"
 
-doX12Translation = false
-
 [ballerina.http]
 defaultListenerPort = 8080
 
@@ -36,3 +34,8 @@ mode = "server"
 
 [ballerinax.health.fhir.r4.parser]
 validateAgainstProfile=false
+
+[x12ConnectionConfig]
+enable = false
+url = ""
+authEnabled = false

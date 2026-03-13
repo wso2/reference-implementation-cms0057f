@@ -416,6 +416,9 @@ public isolated function claimSubmit(r4:Bundle|international401:Parameters paylo
             string claimId = uuid:createType1AsString();
             claim.id = claimId;
 
+            r4:DomainResource newClaimResource = check create(fhirConnector, CLAIM, claim.toJson());
+            international401:Claim newClaim = check newClaimResource.cloneWithType();
+
             if x12ConnectionConfig.enable {
 
                 FhirToX12ServicePayload x12Payload = {
@@ -431,9 +434,6 @@ public isolated function claimSubmit(r4:Bundle|international401:Parameters paylo
                     log:printInfo("X12 translation and audit record creation successful");
                 }
             }
-
-            r4:DomainResource newClaimResource = check create(fhirConnector, CLAIM, claim.toJson());
-            international401:Claim newClaim = check newClaimResource.cloneWithType();
 
             davincipas:PASClaimResponse claimResponse = {
                 id: uuid:createType1AsString(),

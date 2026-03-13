@@ -31,6 +31,10 @@ import {
   CLAIM_REQUEST,
   CLAIM_REQUEST_METHOD,
   CLAIM_REQUEST_URL,
+  QUESTIONNAIRE_RESPONSE,
+  QUESTIONNAIRE_RESPONSE_REQUEST,
+  QUESTIONNAIRE_RESPONSE_METHOD,
+  QUESTIONNAIRE_RESPONSE_URL,
 } from "../constants/localStorageVariables";
 import { HTTP_METHODS } from "../constants/enum";
 import { updateIsProcess } from "../redux/currentStateSlice";
@@ -84,9 +88,21 @@ const ClaimForm = () => {
       try {
         // Fetch resources (QR and Coverage handle null/fallback)
         const fetchQr = async () => {
+          const saveQRToLocalStorage = (qrResource: any) => {
+            localStorage.setItem(QUESTIONNAIRE_RESPONSE, JSON.stringify(qrResource));
+            const resource = { ...qrResource };
+            delete resource.id;
+            delete resource.authored;
+            localStorage.setItem(QUESTIONNAIRE_RESPONSE_REQUEST, JSON.stringify(resource));
+            localStorage.setItem(QUESTIONNAIRE_RESPONSE_METHOD, HTTP_METHODS.POST);
+            localStorage.setItem(QUESTIONNAIRE_RESPONSE_URL, Config.demoBaseUrl + Config.questionnaire_response);
+          };
+
           if (qrId && qrId !== "null") {
             try {
-              return await axios.get(`${Config.questionnaire_response}/${qrId}`);
+              const res = await axios.get(`${Config.questionnaire_response}/${qrId}`);
+              saveQRToLocalStorage(res.data);
+              return res;
             } catch (err) {
               console.warn(`Failed to fetch QR by ID ${qrId}, trying fallback search.`);
             }
@@ -96,8 +112,10 @@ const ClaimForm = () => {
           const searchRes = await axios.get(`${Config.questionnaire_response}?subject=Patient/${patientId}&page=6&_count=10`);
           if (searchRes.data?.entry?.length > 0) {
             const lastEntryIndex = searchRes.data.entry.length - 1;
-            console.log("Found QR via fallback search (using last entry of page 5):", searchRes.data.entry[lastEntryIndex].resource.id);
-            return { data: searchRes.data.entry[lastEntryIndex].resource };
+            const resource = searchRes.data.entry[lastEntryIndex].resource;
+            console.log("Found QR via fallback search (using last entry of page 5):", resource.id);
+            saveQRToLocalStorage(resource);
+            return { data: resource };
           }
           throw new Error("No QuestionnaireResponse found for this patient.");
         };

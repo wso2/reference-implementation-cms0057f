@@ -26,6 +26,7 @@ import ballerinax/health.fhir.r4.international401;
 import ballerinax/health.fhir.r4.parser;
 import ballerinax/health.fhir.r4.uscore501;
 import ballerinax/health.fhir.r4.validator;
+import ballerinax/health.clients.fhir as fhirClient;
 
 isolated function getQueryParamsMap(map<r4:RequestSearchParameter[] & readonly> requestSearchParameters) returns map<string[]> {
     //TODO: Should provide ability to get the query parameters from the context as it is from the http request. 
@@ -296,6 +297,70 @@ public isolated function generateSmartConfiguration() returns SmartConfiguration
     return smartConfig;
 }
 
+# Function to invoke the X12 translation service and create an audit record for the transaction.
+# 
+# + url - The endpoint URL of the X12 translation service
+# + payload - The payload to be sent to the X12 translation service
+# + claimId - The ID of the claim being processed, used for audit record correlation
+# + fhirConnector - The FHIR connector used to create the audit record in the FHIR server
+# 
+# + return - An error if the X12 service call fails or if audit record creation fails, otherwise returns ()
+isolated function invokeX12ServiceAndCreateAuditRecord(string url, string payload, string claimId, fhirClient:FHIRConnector fhirConnector) returns error? {
+    
+    http:Client x12ConnectionClient;
+    string x12ServiceUrl = x12ConnectionConfig.url;
+    if x12ServiceUrl == "" {
+        return error("Missing X12 service URL in the configuration.");
+    }
+
+    if x12ConnectionConfig.authEnabled {
+        if x12ConnectionConfig.tokenUrl is () || x12ConnectionConfig.tokenUrl == "" {
+            return error("Missing required field: tokenUrl for OAuth2 authentication.");
+        }
+        if x12ConnectionConfig.clientId is () || x12ConnectionConfig.clientId == "" {
+            return error("Missing required field: clientId for OAuth2 authentication.");
+        }
+        if x12ConnectionConfig.clientSecret is () || x12ConnectionConfig.clientSecret == "" {
+            return error("Missing required field: clientSecret for OAuth2 authentication.");
+        }
+        http:OAuth2ClientCredentialsGrantConfig config = {
+            tokenUrl: x12ConnectionConfig.tokenUrl ?: "",
+            clientId: x12ConnectionConfig.clientId ?: "",
+            clientSecret: x12ConnectionConfig.clientSecret ?: ""
+        };
+        x12ConnectionClient = check new http:Client(x12ServiceUrl, auth = config);
+    } else {
+        x12ConnectionClient = check new http:Client(x12ServiceUrl);
+    }
+    
+    http:Response response = check x12ConnectionClient->post(url, payload);
+    if response.statusCode == http:STATUS_OK {
+        string responsePayload = check response.getTextPayload();
+
+        // Create Audit Record
+        international401:AuditEvent auditEvent = {
+            id: claimId,
+            'source: {
+                observer: {
+                    "display": "FHIR Service"
+                }
+            }, 
+            agent: [], 
+            recorded: time:utcToString(time:utcNow()), 
+            'type: {
+                system: "http://terminology.hl7.org/CodeSystem/audit-event-type",
+                code: "x12",
+                display: "X12 Request"
+            },
+            outcome: responsePayload
+        };
+        _ = check create(fhirConnector, AUDIT_EVENT, auditEvent.toJson());
+        log:printDebug("Audit event created for the converted X12 message.");
+    } else {
+        return error("X12 service call failed with status code: " + response.statusCode.toString());
+    }
+}
+
 public isolated function claimSubmit(r4:Bundle|international401:Parameters payload) returns r4:FHIRError|r4:Bundle|error {
     r4:Bundle submissionBundle;
     if payload is r4:Bundle {
@@ -348,10 +413,27 @@ public isolated function claimSubmit(r4:Bundle|international401:Parameters paylo
         }
 
         if claim is international401:Claim {
-            claim.id = uuid:createType1AsString();
+            string claimId = uuid:createType1AsString();
+            claim.id = claimId;
 
             r4:DomainResource newClaimResource = check create(fhirConnector, CLAIM, claim.toJson());
             international401:Claim newClaim = check newClaimResource.cloneWithType();
+
+            if x12ConnectionConfig.enable {
+
+                FhirToX12ServicePayload x12Payload = {
+                    payload: submissionBundle.toJson(),
+                    x12Headers: x12Header
+                };
+
+                log:printInfo("Starting FHIR to X12 translation for the Bundle");
+                error? result = invokeX12ServiceAndCreateAuditRecord("/transform/fhir-to-x12/x12-278", x12Payload.toJsonString(), claimId, fhirConnector);
+                if result is error {
+                    return r4:createFHIRError(result.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_INTERNAL_SERVER_ERROR);
+                } else {
+                    log:printInfo("X12 translation and audit record creation successful");
+                }
+            }
 
             davincipas:PASClaimResponse claimResponse = {
                 id: uuid:createType1AsString(),

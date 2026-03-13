@@ -747,7 +747,7 @@ isolated function evaluateConsent(Consent consent, string inputPatientId) return
             time:Utc|error startUtc = time:utcFromString(startNormalized);
             if startUtc is time:Utc && startUtc > time:utcNow() {
                 log:printError("Consent not yet in effect. Start date: " + startStr);
-                result.reason = CONSENT_EXPIRED;
+                result.reason = CONSENT_NOT_YET_EFFECTIVE;
                 return result;
             }
         }

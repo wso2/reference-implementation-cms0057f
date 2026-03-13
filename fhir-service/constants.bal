@@ -47,6 +47,7 @@ const string CONSENT_EVALUATION_SUCCESS = "Consent evaluation successful";
 const string CONSENT_EVALUATION_FAILED = "Consent evaluation failed";
 const string CONSENT_NOT_FOUND = "Consent not found";
 const string CONSENT_EXPIRED = "Consent has expired";
+const string CONSENT_NOT_YET_EFFECTIVE = "Consent is not yet in effect";
 const string CONSENT_INVALID_POLICY = "Consent policy does not match payer capabilities";
 const string CONSENT_INVALID_PAYER = "Payer requesting retrieval does not match consent";
 const string CONSENT_INVALID_MEMBER = "Member identity does not match";

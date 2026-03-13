@@ -223,23 +223,26 @@ isolated function processBulkMemberMatch(davincipdex220:PDexMultiMemberMatchRequ
     international401:Group consentConstrainedGroup =
             buildBulkMatchGroupResource(PDEX_NO_MATCH_GROUP_PROFILE, PDEX_CONSENT_CONSTRAINT_CODE, consentConstrainedEntries);
 
-    // Persist the MatchedMembers Group so it can be targeted by $davinci-data-export
+    // Persist the MatchedMembers Group so it can be targeted by $davinci-data-export.
+    // Both failure paths propagate as FHIRError: a Group without an id would make any
+    // subsequent $davinci-data-export call target a non-existent resource.
     if matchedEntries.length() > 0 {
         r4:DomainResource|r4:FHIRError persistResult =
                 create(fhirConnector, GROUP, matchedGroup.toJson());
         if persistResult is r4:FHIRError {
-            log:printWarn("Failed to persist MatchedMembers Group: " + persistResult.message());
-        } else {
-            international401:Group|error persistedGroup =
-                    persistResult.cloneWithType(international401:Group);
-            if persistedGroup is international401:Group {
-                matchedGroup = persistedGroup;
-                log:printDebug("MatchedMembers Group persisted with id: "
-                        + (persistedGroup.id ?: "unknown"));
-            } else {
-                log:printWarn("Persisted Group could not be parsed: " + persistedGroup.message());
-            }
+            log:printError("Failed to persist MatchedMembers Group: " + persistResult.message());
+            return persistResult;
         }
+        international401:Group|error persistedGroup =
+                persistResult.cloneWithType(international401:Group);
+        if persistedGroup is error {
+            log:printError("Persisted Group response could not be parsed: " + persistedGroup.message());
+            return r4:createFHIRError(
+                    "Failed to read persisted MatchedMembers Group: " + persistedGroup.message(),
+                    r4:ERROR, r4:PROCESSING, httpStatusCode = http:STATUS_INTERNAL_SERVER_ERROR);
+        }
+        matchedGroup = persistedGroup;
+        log:printDebug("MatchedMembers Group persisted with id: " + (persistedGroup.id ?: "unknown"));
     }
 
     // Build typed response Parameters with the three named Groups

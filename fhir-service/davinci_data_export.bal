@@ -242,8 +242,7 @@ isolated function processAndStoreDaVinciExport(
                         json|error fileType = fileEntry.'type;
                         json|error fileUrl = fileEntry.url;
                         if fileType is string && fileUrl is string {
-                            string absUrl = fileUrl.startsWith("/") ? serverBaseUrl + fileUrl : fileUrl;
-                            combinedOutput.push({'type: fileType, url: absUrl});
+                            combinedOutput.push({'type: fileType, url: rebaseUrl(fileUrl, serverBaseUrl)});
                         }
                     }
                     json[] errorArr = [];
@@ -255,8 +254,7 @@ isolated function processAndStoreDaVinciExport(
                         json|error fileType = fileEntry.'type;
                         json|error fileUrl = fileEntry.url;
                         if fileType is string && fileUrl is string {
-                            string absUrl = fileUrl.startsWith("/") ? serverBaseUrl + fileUrl : fileUrl;
-                            combinedErrors.push({'type: fileType, url: absUrl});
+                            combinedErrors.push({'type: fileType, url: rebaseUrl(fileUrl, serverBaseUrl)});
                         }
                     }
                 }
@@ -306,6 +304,24 @@ isolated function processAndStoreDaVinciExport(
             };
         }
     }
+}
+
+// ============================================================================
+// URL Helpers
+// ============================================================================
+
+# Replaces the scheme+host+port of a URL with the given base, keeping the path and query.
+# Relative URLs (starting with '/') are simply prefixed with the base.
+# + url - The original URL to rebase
+# + base - The new base URL (scheme+host+port) to apply
+# + return - The rebased URL as a string.
+isolated function rebaseUrl(string url, string base) returns string {
+    if url.startsWith("/") {
+        return base + url;
+    }
+    int schemeEnd = url.indexOf("://") ?: 0;
+    int pathStart = url.indexOf("/", schemeEnd + 3) ?: url.length();
+    return base + url.substring(pathStart);
 }
 
 // ============================================================================

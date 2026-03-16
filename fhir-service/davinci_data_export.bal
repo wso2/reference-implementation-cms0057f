@@ -179,7 +179,7 @@ isolated function processAndStoreDaVinciExport(
                 if exportRes is http:Response {
                     string|error pollingUrl = exportRes.getHeader("content-location");
                     if pollingUrl is string {
-                        exportUrls[patientId] = pollingUrl;
+                        exportUrls[patientId] = pollingUrl.startsWith("/") ? serverBaseUrl + pollingUrl : pollingUrl;
                     } else {
                         exportUrls[patientId] = "Failed to get Content-Location: "
                                 + exportRes.statusCode.toString();

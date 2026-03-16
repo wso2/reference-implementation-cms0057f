@@ -154,6 +154,9 @@ service / on new http:Listener(9099) {
             }
             
             claimStatuses[id] = newStatus;
+            if claimNotificationBundles.hasKey(id) {
+                _ = claimNotificationBundles.remove(id);
+            }
             log:printInfo("Registered Claim ID: " + id);
             
             http:Response res = new;

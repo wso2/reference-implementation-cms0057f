@@ -31,13 +31,20 @@ import {
   CLAIM_REQUEST,
   CLAIM_REQUEST_METHOD,
   CLAIM_REQUEST_URL,
+  CLAIM_RESPONSE,
   QUESTIONNAIRE_RESPONSE,
   QUESTIONNAIRE_RESPONSE_REQUEST,
   QUESTIONNAIRE_RESPONSE_METHOD,
   QUESTIONNAIRE_RESPONSE_URL,
 } from "../constants/localStorageVariables";
 import { HTTP_METHODS } from "../constants/enum";
-import { updateIsProcess } from "../redux/currentStateSlice";
+import {
+  updateIsProcess,
+  updateCurrentResponse,
+  updateCurrentRequest,
+  updateCurrentRequestUrl,
+  updateCurrentRequestMethod,
+} from "../redux/currentStateSlice";
 import {
   StepStatus,
   updateActiveStep,
@@ -263,10 +270,17 @@ const ClaimForm = () => {
         if (response.status >= 200 && response.status < 300) {
           console.log("Claim submitted successfully:", response.data);
 
+          const responseBundle = response.data;
+          localStorage.setItem(CLAIM_RESPONSE, JSON.stringify(responseBundle));
+          dispatch(updateCurrentResponse(responseBundle));
+          dispatch(updateCurrentRequest(payload));
+          dispatch(updateCurrentRequestUrl(Config.demoBaseUrl + Config.claim_submit));
+          dispatch(updateCurrentRequestMethod(HTTP_METHODS.POST));
+
           let outcome = null;
           let claimId = null;
-          if (response.data.resourceType === "Bundle" && response.data.entry?.length > 0) {
-            const claimResp = response.data.entry.find((e: any) => e.resource?.resourceType === "ClaimResponse");
+          if (responseBundle.resourceType === "Bundle" && responseBundle.entry?.length > 0) {
+            const claimResp = responseBundle.entry.find((e: any) => e.resource?.resourceType === "ClaimResponse");
             outcome = claimResp?.resource?.outcome;
             const reference = claimResp?.resource?.request?.reference;
             if (reference) {

@@ -23,15 +23,20 @@ import Card from "react-bootstrap/Card";
 import Button from "react-bootstrap/Button";
 import Spinner from "react-bootstrap/Spinner";
 import { Alert, Snackbar } from "@mui/material";
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { tomorrowNight } from "react-syntax-highlighter/dist/esm/styles/hljs";
 import { useAuth } from "../components/AuthProvider";
 import PatientInfo from "../components/PatientInfo";
 import {
+    updateCurrentRequest,
     updateCurrentResponse,
     updateCurrentRequestUrl,
     updateCurrentRequestMethod,
 } from "../redux/currentStateSlice";
+import {
+    updateActiveStep,
+    updateSingleStep,
+    StepStatus,
+} from "../redux/commonStoargeSlice";
+import { CLAIM_PAYER_NOTIFICATION } from "../constants/localStorageVariables";
 
 export default function PriorAuthView() {
     const { isAuthenticated } = useAuth();
@@ -41,7 +46,6 @@ export default function PriorAuthView() {
 
     const [claimData, setClaimData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
-    const [payerResponseBundle, setPayerResponseBundle] = useState<any>(null);
     const [alertMessage, setAlertMessage] = useState<string | null>(null);
     const [alertSeverity, setAlertSeverity] = useState<"error" | "warning" | "info" | "success">("info");
     const [openSnackbar, setOpenSnackbar] = useState(false);
@@ -69,13 +73,18 @@ export default function PriorAuthView() {
         axios.get(`${webhookUrl}/claim-notification/${claimId}`)
             .then(response => {
                 const bundle = response.data;
-                setPayerResponseBundle(bundle);
+                localStorage.setItem(CLAIM_PAYER_NOTIFICATION, JSON.stringify(bundle));
+                dispatch(updateCurrentRequest({
+                    "(no outbound request)": "Received from payer via webhook",
+                }));
                 dispatch(updateCurrentResponse(bundle));
-                dispatch(updateCurrentRequestUrl("Payer notification (webhook)"));
-                dispatch(updateCurrentRequestMethod("POST"));
+                dispatch(updateCurrentRequestUrl("Payer notification (received via webhook)"));
+                dispatch(updateCurrentRequestMethod("N/A"));
+                dispatch(updateActiveStep(5));
+                dispatch(updateSingleStep({ stepName: "Payer notification", newStatus: StepStatus.COMPLETED }));
             })
             .catch(() => {
-                setPayerResponseBundle(null);
+                localStorage.removeItem(CLAIM_PAYER_NOTIFICATION);
                 dispatch(updateCurrentResponse({}));
             });
     }, [claimId, dispatch]);
@@ -173,27 +182,6 @@ export default function PriorAuthView() {
                     </Alert>
                 </Snackbar>
             </Card>
-
-            {payerResponseBundle && (
-                <Card style={{ marginTop: "20px", padding: "20px" }}>
-                    <Card.Body>
-                        <Card.Title>Response from payer</Card.Title>
-                        <Card.Text className="text-muted small mb-2">
-                            Notification bundle received from the payer (webhook).
-                        </Card.Text>
-                        <div style={{ overflow: "auto", maxHeight: "400px", borderRadius: 4, backgroundColor: "#2d2d2d" }}>
-                            <SyntaxHighlighter
-                                language="json"
-                                style={tomorrowNight}
-                                showLineNumbers={true}
-                                customStyle={{ margin: 0, padding: 12 }}
-                            >
-                                {JSON.stringify(payerResponseBundle, null, 2)}
-                            </SyntaxHighlighter>
-                        </div>
-                    </Card.Body>
-                </Card>
-            )}
 
             <style>{`
                 .card {

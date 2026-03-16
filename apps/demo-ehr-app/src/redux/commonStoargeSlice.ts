@@ -34,6 +34,7 @@ const steps: Steps[] = [
   { name: "Questionnaire package", status: StepStatus.NOT_STARTED },
   { name: "Questionnaire Response", status: StepStatus.NOT_STARTED },
   { name: "Claim Submit", status: StepStatus.NOT_STARTED },
+  { name: "Payer notification", status: StepStatus.NOT_STARTED },
 ];
 
 const initialState = {

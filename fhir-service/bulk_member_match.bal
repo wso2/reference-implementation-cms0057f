@@ -17,6 +17,7 @@
 import ballerina/http;
 import ballerina/log;
 import ballerina/time;
+import ballerina/uuid;
 import ballerinax/health.fhir.r4;
 import ballerinax/health.fhir.r4.davincihrex100 as hrex100;
 import ballerinax/health.fhir.r4.davincipdex220;
@@ -333,6 +334,7 @@ isolated function buildBulkMatchGroupResource(string profileUrl, string matchCod
     }
 
     international401:Group grp = {
+        id: uuid:createType4AsString(),
         'type: "person",
         actual: true,
         meta: {profile: [profileUrl]},

@@ -15,6 +15,7 @@
 // under the License.
 
 import ballerina/http;
+import ballerina/lang.runtime;
 import ballerina/log;
 import ballerina/time;
 import ballerina/uuid;
@@ -28,6 +29,9 @@ import ballerinax/health.fhir.r4.international401;
 // ============================================================================
 
 isolated map<DaVinciExportJob> davinciExportJobStore = {};
+
+const int MAX_POLL_ATTEMPTS = 60;
+const decimal POLL_INTERVAL_SECONDS = 5.0d;
 
 // ============================================================================
 // DefaultDaVinciDataExporter — implements davincipdex220:DaVinciDataExporter
@@ -126,7 +130,8 @@ isolated function processAndStoreDaVinciExport(
     }
 
     international401:GroupMember[]? members = currentGroup.member;
-    map<string> exportUrls = {};
+    // Phase A: kick off per-patient exports and collect polling URLs
+    map<string> patientPollingUrls = {};
 
     if members !is () {
         // Build patient filter set for O(1) lookup
@@ -179,22 +184,113 @@ isolated function processAndStoreDaVinciExport(
                 if exportRes is http:Response {
                     string|error pollingUrl = exportRes.getHeader("content-location");
                     if pollingUrl is string {
-                        exportUrls[patientId] = pollingUrl.startsWith("/") ? serverBaseUrl + pollingUrl : pollingUrl;
+                        patientPollingUrls[patientId] =
+                                pollingUrl.startsWith("/") ? serverBaseUrl + pollingUrl : pollingUrl;
                     } else {
-                        exportUrls[patientId] = "Failed to get Content-Location: "
-                                + exportRes.statusCode.toString();
+                        log:printError("Patient " + patientId + ": missing Content-Location, status "
+                                + exportRes.statusCode.toString());
                     }
                 } else if exportRes is error {
-                    exportUrls[patientId] = "Error: " + exportRes.message();
+                    log:printError("Patient " + patientId + ": export kick-off failed: " + exportRes.message());
                 }
             }
         }
     }
 
+    // Phase B: poll each per-patient export until it completes and collect output file URLs
+    BulkDataOutputFile[] combinedOutput = [];
+    BulkDataOutputFile[] combinedErrors = [];
+
+    foreach string patientId in patientPollingUrls.keys() {
+        string pollingUrl = patientPollingUrls.get(patientId);
+
+        // Split the absolute polling URL into base (scheme+host+port) and path so that
+        // the http:Client base never bleeds into the path, regardless of upstream port.
+        int schemeEnd = pollingUrl.indexOf("://") ?: 0;
+        int pathStartIdx = pollingUrl.indexOf("/", schemeEnd + 3) ?: pollingUrl.length();
+        string clientBase = pollingUrl.substring(0, pathStartIdx);
+        string pollPath = pathStartIdx < pollingUrl.length() ? pollingUrl.substring(pathStartIdx) : "/";
+
+        http:Client|error statusClient = new http:Client(clientBase);
+        if statusClient is error {
+            log:printError("Patient " + patientId + ": failed to create HTTP client for "
+                    + clientBase + ": " + statusClient.message());
+            continue;
+        }
+
+        boolean patientDone = false;
+        int attempt = 0;
+        while !patientDone && attempt < MAX_POLL_ATTEMPTS {
+            attempt += 1;
+            http:Response|error pollRes = statusClient->get(pollPath);
+            if pollRes is error {
+                log:printError("Patient " + patientId + ": poll error on attempt " + attempt.toString()
+                        + ": " + pollRes.message());
+                runtime:sleep(POLL_INTERVAL_SECONDS);
+                continue;
+            }
+
+            if pollRes.statusCode == http:STATUS_OK {
+                json|error body = pollRes.getJsonPayload();
+                if body is json {
+                    json[] outputArr = [];
+                    json|error outputField = body.output;
+                    if outputField is json[] {
+                        outputArr = outputField;
+                    }
+                    foreach json fileEntry in outputArr {
+                        json|error fileType = fileEntry.'type;
+                        json|error fileUrl = fileEntry.url;
+                        if fileType is string && fileUrl is string {
+                            string absUrl = fileUrl.startsWith("/") ? serverBaseUrl + fileUrl : fileUrl;
+                            combinedOutput.push({'type: fileType, url: absUrl});
+                        }
+                    }
+                    json[] errorArr = [];
+                    json|error errorField = body.'error;
+                    if errorField is json[] {
+                        errorArr = errorField;
+                    }
+                    foreach json fileEntry in errorArr {
+                        json|error fileType = fileEntry.'type;
+                        json|error fileUrl = fileEntry.url;
+                        if fileType is string && fileUrl is string {
+                            string absUrl = fileUrl.startsWith("/") ? serverBaseUrl + fileUrl : fileUrl;
+                            combinedErrors.push({'type: fileType, url: absUrl});
+                        }
+                    }
+                }
+                patientDone = true;
+                log:printDebug("Patient " + patientId + ": export complete");
+            } else if pollRes.statusCode == http:STATUS_ACCEPTED {
+                decimal retryAfter = POLL_INTERVAL_SECONDS;
+                string|error retryHeader = pollRes.getHeader("retry-after");
+                if retryHeader is string {
+                    int|error parsed = int:fromString(retryHeader);
+                    if parsed is int {
+                        retryAfter = <decimal>parsed;
+                    }
+                }
+                log:printDebug("Patient " + patientId + ": still processing, retrying in "
+                        + retryAfter.toString() + "s (attempt " + attempt.toString() + ")");
+                runtime:sleep(retryAfter);
+            } else {
+                log:printError("Patient " + patientId + ": unexpected status " + pollRes.statusCode.toString());
+                patientDone = true;
+            }
+        }
+        if !patientDone {
+            log:printError("Patient " + patientId + ": timed out after " + MAX_POLL_ATTEMPTS.toString() + " attempts");
+        }
+    }
+
+    // Phase C: build the Bulk Data manifest and mark the group job complete
     DaVinciExportResult result = {
         transactionTime: time:utcToString(time:utcNow()),
-        exportType: params.exportType ?: PDEX_EXPORT_TYPE_P2P,
-        exportUrls: exportUrls
+        request: serverBaseUrl + "/fhir/r4/Group/" + groupId + "/$davinci-data-export",
+        requiresAccessToken: false,
+        output: combinedOutput,
+        'error: combinedErrors.length() > 0 ? combinedErrors : ()
     };
 
     lock {

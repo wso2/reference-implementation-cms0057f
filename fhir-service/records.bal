@@ -75,15 +75,31 @@ public enum DaVinciExportStatus {
     DAVINCI_EXPORT_FAILED = "failed"
 }
 
-# Export result returned when a Da Vinci data export job completes
+# One entry in the Bulk Data manifest output or error array
 #
-# + transactionTime - ISO-8601 timestamp at which the export was finalised
-# + exportType - Canonical export type (e.g. hl7.fhir.us.davinci-pdex#payertopayer)
-# + exportUrls - Map of patient ID → Content-Location polling URL for each patient export
+# + 'type - FHIR resource type contained in the file
+# + url - Absolute URL to the NDJSON file
+# + count - Number of resources in the file (optional)
+public type BulkDataOutputFile record {|
+    string 'type;
+    string url;
+    int count?;
+|};
+
+# Export manifest returned when a Da Vinci data export job completes.
+# Follows the FHIR Bulk Data Access IG completed-status response format.
+#
+# + transactionTime - Server time when the export query ran
+# + request - Full URL of the original kick-off request
+# + requiresAccessToken - Whether downloading files requires a bearer token
+# + output - NDJSON file download links, grouped by resource type
+# + error - OperationOutcome NDJSON files describing any export errors (omitted if none)
 public type DaVinciExportResult record {|
     string transactionTime;
-    string exportType;
-    map<string> exportUrls;
+    string request;
+    boolean requiresAccessToken;
+    BulkDataOutputFile[] output;
+    BulkDataOutputFile[] 'error?;
 |};
 
 # Internal record tracking an async Da Vinci data export job

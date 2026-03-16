@@ -67,6 +67,7 @@ const ClaimForm = () => {
   >("info");
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [itemAmount, setItemAmount] = useState<string>("");
 
   // Resources state
   const [resources, setResources] = useState<{
@@ -240,6 +241,14 @@ const ClaimForm = () => {
   const handleSubmit = () => {
     if (!resources) return;
 
+    const parsedAmount = Number(itemAmount);
+    if (isNaN(parsedAmount) || parsedAmount <= 0) {
+      setAlertMessage("Please enter a valid item amount greater than 0.");
+      setAlertSeverity("error");
+      setOpenSnackbar(true);
+      return;
+    }
+
     const Config = window.Config;
     const payload = CREATE_PAS_CLAIM_BUNDLE(
       resources.patient,
@@ -249,6 +258,49 @@ const ClaimForm = () => {
       resources.providerOrg,
       resources.payerOrg
     );
+
+    try {
+      // Enrich the Claim resource with monetary amounts using user-provided item amount.
+      const claimEntry = (payload as any).entry?.find(
+        (e: any) => e.resource?.resourceType === "Claim"
+      );
+      const claimResource = claimEntry?.resource;
+      if (claimResource) {
+        const currency = "USD";
+        const amountValue = parsedAmount;
+
+        claimResource.total = {
+          value: amountValue,
+          currency,
+        };
+
+        if (!claimResource.item || !Array.isArray(claimResource.item)) {
+          claimResource.item = [
+            {
+              sequence: 1,
+            },
+          ];
+        }
+
+        if (!claimResource.item[0]) {
+          claimResource.item[0] = {
+            sequence: 1,
+          };
+        }
+
+        claimResource.item[0].unitPrice = {
+          value: amountValue,
+          currency,
+        };
+
+        claimResource.item[0].net = {
+          value: amountValue,
+          currency,
+        };
+      }
+    } catch (e) {
+      console.error("Failed to enrich Claim with monetary amounts", e);
+    }
 
     dispatch(updateActiveStep(4));
     dispatch(
@@ -420,6 +472,18 @@ const ClaimForm = () => {
               type="text"
               value={`ID: ${resources.qr.id} (Status: ${resources.qr.status})`}
               disabled
+            />
+          </Form.Group>
+
+          <Form.Group controlId="itemAmount" style={{ marginTop: "20px", maxWidth: "300px" }}>
+            <Form.Label>Item Amount (USD)</Form.Label>
+            <Form.Control
+              type="number"
+              min="0"
+              step="0.01"
+              value={itemAmount}
+              onChange={(e) => setItemAmount(e.target.value)}
+              placeholder="Enter item amount"
             />
           </Form.Group>
 

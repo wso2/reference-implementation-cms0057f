@@ -219,6 +219,7 @@ isolated function processBulkMemberMatch(davincipdex220:PDexMultiMemberMatchRequ
     // Build the three result Group resources
     international401:Group matchedGroup =
             buildBulkMatchGroupResource(PDEX_MEMBER_MATCH_GROUP_PROFILE, PDEX_MATCH_CODE, matchedEntries);
+    matchedGroup.id = uuid:createType4AsString();
     international401:Group nonMatchedGroup =
             buildBulkMatchGroupResource(PDEX_NO_MATCH_GROUP_PROFILE, PDEX_NO_MATCH_CODE, nonMatchedEntries);
     international401:Group consentConstrainedGroup =
@@ -334,7 +335,6 @@ isolated function buildBulkMatchGroupResource(string profileUrl, string matchCod
     }
 
     international401:Group grp = {
-        id: uuid:createType4AsString(),
         'type: "person",
         actual: true,
         meta: {profile: [profileUrl]},

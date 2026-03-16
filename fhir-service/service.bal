@@ -1968,7 +1968,7 @@ service /fhir/r4/Group on new fhirr4:Listener(config = groupApiConfig) {
 
         http:Response response = new;
         response.statusCode = exportJob.statusCode;
-        response.setHeader("Content-Location", exportJob.contentLocation);
+        response.setHeader("Content-Location", serverBaseUrl + exportJob.contentLocation);
         return response;
     }
 

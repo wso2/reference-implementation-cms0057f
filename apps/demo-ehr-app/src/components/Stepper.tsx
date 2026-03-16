@@ -45,6 +45,7 @@ import {
   CLAIM_REQUEST_METHOD,
   CLAIM_REQUEST_URL,
   CLAIM_RESPONSE,
+  CLAIM_PAYER_NOTIFICATION,
   MEDICATION_REQUEST,
   MEDICATION_REQUEST_METHOD,
   MEDICATION_REQUEST_URL,
@@ -66,9 +67,13 @@ export default function HorizontalNonLinearStepper() {
   useEffect(() => {
     const stepsString = localStorage.getItem(STEPS);
     if (stepsString) {
-      updateStepsArray(JSON.parse(stepsString));
+      const parsed = JSON.parse(stepsString);
+      if (parsed.length === 5) {
+        parsed.push({ name: "Payer notification", status: StepStatus.NOT_STARTED });
+      }
+      dispatch(updateStepsArray(parsed));
     }
-  }, []);
+  }, [dispatch]);
 
   const stepsArray: Steps[] = useSelector(
     (state: any) => state.commonStoarge.stepsArray
@@ -216,6 +221,29 @@ export default function HorizontalNonLinearStepper() {
         dispatch(
           updateCurrentRequestMethod(localStorage.getItem(CLAIM_REQUEST_METHOD))
         );
+        break;
+      }
+      case 5: {
+        dispatch(resetCurrentRequest());
+        dispatch(updateIsProcess(true));
+
+        dispatch(
+          updateCurrentRequest({
+            "(no outbound request)": "Received from payer via webhook",
+          })
+        );
+
+        const payerNotificationString =
+          localStorage.getItem(CLAIM_PAYER_NOTIFICATION);
+        const payerNotification = payerNotificationString
+          ? JSON.parse(payerNotificationString)
+          : {};
+        dispatch(updateCurrentResponse(payerNotification));
+
+        dispatch(
+          updateCurrentRequestUrl("Payer notification (received via webhook)")
+        );
+        dispatch(updateCurrentRequestMethod("N/A"));
         break;
       }
       default: {

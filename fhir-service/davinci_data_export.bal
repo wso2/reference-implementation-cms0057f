@@ -172,10 +172,10 @@ isolated function processAndStoreDaVinciExport(
                 if untilVal is string {
                     patientQueryParams["_until"] = [untilVal];
                 }
-                string? typeVal = params._type;
-                if typeVal is string {
-                    patientQueryParams["_type"] = [typeVal];
-                }
+                // Always set _type to the intersection of the allowed list and any client
+                // request; if the client omitted _type, this defaults to all allowed types.
+                string[] effectiveTypes = intersectWithAllowed(params._type, allowedExportResourceTypes);
+                patientQueryParams["_type"] = [string:'join(",", ...effectiveTypes)];
                 string? typeFilterVal = params._typeFilter;
                 if typeFilterVal is string {
                     patientQueryParams["_typeFilter"] = [typeFilterVal];

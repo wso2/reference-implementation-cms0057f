@@ -37,6 +37,17 @@ configurable string exportServiceUrl = ?;
 configurable string sampleDataGithubUrl = ?;
 configurable string serverBaseUrl = "http://localhost:8081";
 
+// Resource types permitted for export. Derived from the DaVinci PDex payer-to-payer spec:
+// US Core clinical resources + PDex-specific claims/encounter types.
+// Override in Config.toml to restrict further.
+configurable string[] & readonly allowedExportResourceTypes = [
+    "AllergyIntolerance", "CarePlan", "CareTeam", "Condition", "Consent",
+    "Coverage", "Device", "DiagnosticReport", "DocumentReference", "Encounter",
+    "ExplanationOfBenefit", "Goal", "Immunization", "MedicationDispense",
+    "MedicationRequest", "Observation", "Patient", "Practitioner", "PractitionerRole",
+    "Procedure", "Provenance", "RelatedPerson", "ServiceRequest"
+];
+
 // This is used to connect to file service
 isolated http:Client exportServiceClient = check new (exportServiceUrl);
 
@@ -109,6 +120,26 @@ isolated function invokePatientSummary(string patientId, map<string[]> queryPara
         response.setXmlPayload(summaryPayload);
     }
     return response;
+}
+
+// Returns the intersection of a comma-separated requested type string with the allowed list.
+// If requestedType is (), returns the full allowed list (no client restriction → use all permitted).
+isolated function intersectWithAllowed(string? requestedType, string[] allowed) returns string[] {
+    map<boolean> allowedSet = {};
+    foreach string t in allowed {
+        allowedSet[t.trim()] = true;
+    }
+    if requestedType is () {
+        return allowed.clone();
+    }
+    string[] filtered = [];
+    foreach string segment in re `,`.split(requestedType) {
+        string t = segment.trim();
+        if t.length() > 0 && allowedSet.hasKey(t) {
+            filtered.push(t);
+        }
+    }
+    return filtered;
 }
 
 // Computes the intersection of consented resource types with the requested _type parameter.
@@ -1747,6 +1778,19 @@ service /fhir/r4/Group on new fhirr4:Listener(config = groupApiConfig) {
         }
 
         map<string> exportUrls = {};
+
+        // Restrict _type to the server-allowed list; intersect with the client's _type if provided.
+        string[]? requestedTypeParam = queryParameters["_type"];
+        string[] effectiveTypes = intersectWithAllowed(
+                requestedTypeParam !is () && requestedTypeParam.length() > 0
+                        ? string:'join(",", ...requestedTypeParam) : (),
+                allowedExportResourceTypes);
+        if effectiveTypes.length() == 0 {
+            return r4:createFHIRError(
+                    "None of the requested resource types are permitted for export",
+                    r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+        }
+        queryParameters["_type"] = [string:'join(",", ...effectiveTypes)];
 
         foreach international401:GroupMember member in members {
             r4:Reference entity = member.entity;

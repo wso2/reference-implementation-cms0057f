@@ -25,6 +25,11 @@ import {
     QUESTIONNAIRE_PACKAGE_URL,
     QUESTIONNAIRE_PACKAGE_REQUEST_METHOD,
 } from "../constants/localStorageVariables";
+import {
+    StepStatus,
+    updateActiveStep,
+    updateSingleStep,
+} from "../redux/commonStoargeSlice";
 import PatientInfo from "../components/PatientInfo";
 
 const useQuery = () => {
@@ -76,6 +81,15 @@ export default function DtrLaunchPage() {
                 if (event.data.payload.method) {
                     localStorage.setItem(QUESTIONNAIRE_PACKAGE_REQUEST_METHOD, event.data.payload.method);
                 }
+
+                // Mark "Questionnaire package" step as completed in the journey
+                dispatch(updateActiveStep(2));
+                dispatch(
+                    updateSingleStep({
+                        stepName: "Questionnaire package",
+                        newStatus: StepStatus.COMPLETED,
+                    })
+                );
             }
         };
 

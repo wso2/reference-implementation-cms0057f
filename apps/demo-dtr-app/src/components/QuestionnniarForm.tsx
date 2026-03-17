@@ -65,7 +65,12 @@ export default function QuestionnniarForm({
 }) {
   const dispatch = useDispatch();
   const [questions, setQuestions] = useState<
-    { linkId: string; text: { value: string } | string; type: string }[]
+    {
+      linkId: string;
+      text: { value: string } | string;
+      type: string;
+      extension?: any[];
+    }[]
   >([]);
   const [questionnaireID, setQuestionnaireID] = useState<string | null>(
     questionnaireUrl ? extractQuestionnaireId(questionnaireUrl) : null
@@ -179,13 +184,93 @@ export default function QuestionnniarForm({
           questionnaireParam?.resource?.entry?.[0]?.resource ?? {};
         const rawItems: any[] = questionnaireResource.item ?? [];
         const items = rawItems.filter(
-          (item): item is { linkId: string; text: { value: string } | string; type: string } =>
+          (
+            item
+          ): item is {
+            linkId: string;
+            text: { value: string } | string;
+            type: string;
+            extension?: any[];
+          } =>
             typeof item.linkId === "string" && item.type !== undefined
         );
         if (items.length === 0) {
           console.warn("Questionnaire parsed successfully but contained no items.", questionnaireResource);
         }
+
+        // Pre-populate dummy values for questions that have a CQL initialExpression
+        // so that the UI clearly shows values as if CQL was executed.
+        const initialFormData: {
+          [key: string]: string | number | boolean;
+        } = {};
+
+        items.forEach((item) => {
+          const hasCqlInitialExpression = item.extension?.some(
+            (ext: any) =>
+              ext?.url ===
+              "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-initialExpression"
+          );
+
+          if (!hasCqlInitialExpression) {
+            return;
+          }
+
+          // Use sensible demo defaults tailored to the MRI Spine Prior Auth questionnaire.
+          // Fall back to type-based defaults for any other questionnaires.
+          switch (item.linkId) {
+            case "1": // Primary ICD-10 diagnosis code
+              initialFormData[item.linkId] = "M54.16"; // Radiculopathy, lumbar region
+              return;
+            case "2": // Clinical indication / reason for MRI
+              initialFormData[item.linkId] =
+                "Persistent low back pain with right leg radiculopathy.";
+              return;
+            case "3": // Symptom onset date
+              initialFormData[item.linkId] = "2026-01-15";
+              return;
+            case "4": // Duration of symptoms (in weeks)
+              initialFormData[item.linkId] = 8;
+              return;
+            case "5": // Has neurological deficits
+              initialFormData[item.linkId] = true;
+              return;
+            case "6": // Has conservative treatment
+              initialFormData[item.linkId] = true;
+              return;
+            case "7": // Conservative treatments list
+              initialFormData[item.linkId] =
+                "NSAIDs, physical therapy, and home exercise program for 8 weeks.";
+              return;
+            case "8": // Has red flag symptoms
+              initialFormData[item.linkId] = false;
+              return;
+            case "9": // Ordering provider NPI
+              initialFormData[item.linkId] = "1234567890";
+              return;
+            default:
+              break;
+          }
+
+          // Generic fallback for other questionnaires
+          switch (item.type) {
+            case "boolean":
+              initialFormData[item.linkId] = true;
+              break;
+            case "integer":
+              initialFormData[item.linkId] = 6;
+              break;
+            case "date":
+              initialFormData[item.linkId] = "2026-03-01";
+              break;
+            case "string":
+            default:
+              initialFormData[item.linkId] = "Auto-populated value";
+              break;
+          }
+        });
+
         setQuestions(items);
+        setFormData((prev) => ({ ...initialFormData, ...prev }));
 
         // Use the ID from the fetched resource if we didn't have it from the URL
         if (!questionnaireID && questionnaireResource.id) {
@@ -215,7 +300,12 @@ export default function QuestionnniarForm({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type } = e.target;
-    const parsedValue = type === "number" ? parseFloat(value) : value;
+    const parsedValue =
+      type === "number"
+        ? value === ""
+          ? ""
+          : parseFloat(value)
+        : value;
     setFormData({ ...formData, [name]: parsedValue });
   };
 
@@ -357,6 +447,13 @@ export default function QuestionnniarForm({
         return (
           <Select
             name={question.linkId}
+            value={
+              typeof formData[question.linkId] === "boolean"
+                ? formData[question.linkId]
+                  ? { value: "Yes", label: "Yes" }
+                  : { value: "No", label: "No" }
+                : null
+            }
             onChange={(selectedOption) =>
               handleBooleanChange({
                 target: {
@@ -376,6 +473,25 @@ export default function QuestionnniarForm({
           <Form.Control
             type="number"
             name={question.linkId}
+            value={
+              typeof formData[question.linkId] === "number" ||
+              typeof formData[question.linkId] === "string"
+                ? formData[question.linkId]
+                : ""
+            }
+            onChange={handleInputChange}
+          />
+        );
+      case "date":
+        return (
+          <Form.Control
+            type="date"
+            name={question.linkId}
+            value={
+              typeof formData[question.linkId] === "string"
+                ? (formData[question.linkId] as string)
+                : ""
+            }
             onChange={handleInputChange}
           />
         );
@@ -385,6 +501,11 @@ export default function QuestionnniarForm({
           <Form.Control
             type="text"
             name={question.linkId}
+            value={
+              typeof formData[question.linkId] === "string"
+                ? (formData[question.linkId] as string)
+                : ""
+            }
             onChange={handleInputChange}
           />
         );

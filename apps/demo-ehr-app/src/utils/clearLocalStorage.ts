@@ -9,6 +9,7 @@ import {
   CLAIM_REQUEST_METHOD,
   CLAIM_REQUEST_URL,
   CLAIM_RESPONSE,
+  CLAIM_PAYER_NOTIFICATION,
   IS_PROCESS,
   MEDICATION_REQUEST,
   MEDICATION_REQUEST_METHOD,
@@ -40,6 +41,7 @@ export const clearLocalStorageFully = () => {
   localStorage.removeItem(CLAIM_REQUEST_METHOD);
   localStorage.removeItem(CLAIM_REQUEST_URL);
   localStorage.removeItem(CLAIM_RESPONSE);
+  localStorage.removeItem(CLAIM_PAYER_NOTIFICATION);
   localStorage.removeItem(IS_PROCESS);
   localStorage.removeItem(LOGGEDIN_USER);
   localStorage.removeItem(MEDICATION_REQUEST);
@@ -71,6 +73,7 @@ export const clearLocalStorageForPAPrococess = () => {
   localStorage.removeItem(CLAIM_REQUEST_METHOD);
   localStorage.removeItem(CLAIM_REQUEST_URL);
   localStorage.removeItem(CLAIM_RESPONSE);
+  localStorage.removeItem(CLAIM_PAYER_NOTIFICATION);
   localStorage.removeItem(MEDICATION_REQUEST);
   localStorage.removeItem(MEDICATION_REQUEST_METHOD);
   localStorage.removeItem(MEDICATION_REQUEST_URL);

@@ -57,6 +57,7 @@ const string CONSENT_PROVISION_REQUIRED = "Consent provision section is required
 const string CONSENT_DUPLICATE_FOUND = "Duplicate active consent found for the same patient and policy";
 const string CONSENT_SCOPE_INVALID = "Consent scope must be for patient privacy";
 const string CONSENT_SCOPE_REQUIRED = "Consent scope is required";
+const string FHIR_TO_X12_API_RESOURCE = "/transform/fhir-to-x12/x12-278";
 
 // Sample X12 headers
 final readonly & json x12Header = {

@@ -1,7 +1,7 @@
 ## These are sample configurations for the FHIR service.
 ## Update the values as per your environment setup.
 exportServiceUrl = "http://localhost:8090/bulk/export"
-serverBaseUrl = "http://localhost:8081"
+serverBaseUrl = "http://localhost:8080"
 
 ## Resource types permitted for $export and $davinci-data-export operations.
 ## Based on DaVinci PDex payer-to-payer spec: US Core clinical resources + PDex claims/encounter types.

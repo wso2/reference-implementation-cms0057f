@@ -193,11 +193,8 @@ isolated function processAndStoreDaVinciExport(
                 } else if exportRes is http:Response {
                     string|error pollingUrl = exportRes.getHeader("content-location");
                     if pollingUrl is string {
-                        if pollingUrl.startsWith("/") {
-                            patientPollingUrls[patientId] = serverBaseUrl + pollingUrl;
-                        } else {
-                            log:printError("Patient " + patientId + ": Content-Location is an absolute URL, rejecting: " + pollingUrl);
-                        }
+                        patientPollingUrls[patientId] =
+                                pollingUrl.startsWith("/") ? serverBaseUrl + pollingUrl : pollingUrl;
                     } else {
                         log:printError("Patient " + patientId + ": missing Content-Location, status "
                                 + exportRes.statusCode.toString());

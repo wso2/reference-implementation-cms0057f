@@ -469,46 +469,50 @@ export default function QuestionnniarForm({
           />
         );
       case "integer":
-        return (
-          <Form.Control
-            type="number"
-            name={question.linkId}
-            value={
-              typeof formData[question.linkId] === "number" ||
-              typeof formData[question.linkId] === "string"
-                ? formData[question.linkId]
-                : ""
-            }
-            onChange={handleInputChange}
-          />
-        );
+        {
+          const rawValue = formData[question.linkId];
+          const valueForInput =
+            typeof rawValue === "number" || typeof rawValue === "string"
+              ? rawValue
+              : "";
+          return (
+            <Form.Control
+              type="number"
+              name={question.linkId}
+              value={valueForInput as string | number}
+              onChange={handleInputChange}
+            />
+          );
+        }
       case "date":
-        return (
-          <Form.Control
-            type="date"
-            name={question.linkId}
-            value={
-              typeof formData[question.linkId] === "string"
-                ? (formData[question.linkId] as string)
-                : ""
-            }
-            onChange={handleInputChange}
-          />
-        );
+        {
+          const rawValue = formData[question.linkId];
+          const valueForInput =
+            typeof rawValue === "string" ? rawValue : "";
+          return (
+            <Form.Control
+              type="date"
+              name={question.linkId}
+              value={valueForInput}
+              onChange={handleInputChange}
+            />
+          );
+        }
       case "string":
       default:
-        return (
-          <Form.Control
-            type="text"
-            name={question.linkId}
-            value={
-              typeof formData[question.linkId] === "string"
-                ? (formData[question.linkId] as string)
-                : ""
-            }
-            onChange={handleInputChange}
-          />
-        );
+        {
+          const rawValue = formData[question.linkId];
+          const valueForInput =
+            typeof rawValue === "string" ? rawValue : "";
+          return (
+            <Form.Control
+              type="text"
+              name={question.linkId}
+              value={valueForInput}
+              onChange={handleInputChange}
+            />
+          );
+        }
     }
   };
 

@@ -21,6 +21,161 @@ import ballerina/uuid;
 import ballerinax/health.clients.fhir as fhirClient;
 import ballerinax/health.fhir.r4;
 import ballerinax/health.fhir.r4.international401;
+import xlibb/pipeline;
+
+configurable string kafkaServer = ?;
+configurable string notificationFailureTopic = "pas-notification-failure-store";
+configurable string notificationDeadLetterTopic = "pas-notification-dead-letter-store";
+configurable string notificationReplayTopic = "pas-notification-replay-store";
+configurable string notificationStoreConsumerGroup = "pas-notification-store";
+configurable int notificationReplayMaxRetries = 3;
+configurable decimal notificationReplayRetryInterval = 2;
+configurable boolean notificationReplayEnabled = false;
+
+type NotificationDispatch record {|
+    international401:Subscription subscription;
+    string claimResponseId;
+    international401:ClaimResponse claimResponse;
+|};
+
+type PreparedNotification record {|
+    string endpoint;
+    map<string|string[]> headers;
+    NotificationBundle bundle;
+|};
+ 
+isolated function sendNotificationDirect(
+    international401:Subscription subscription,
+    string claimResponseId,
+    international401:ClaimResponse claimResponse
+) returns error? {
+    string endpoint = subscription.channel.endpoint ?: "";
+    if endpoint == "" {
+        return error("Subscription endpoint is empty");
+    }
+
+    NotificationBundle bundle = check buildNotificationBundle(
+        subscription,
+        claimResponseId,
+        claimResponse
+    );
+
+    map<string|string[]> headers = {
+        "Content-Type": "application/fhir+json"
+    };
+
+    string? authHeader = extractAuthHeader(subscription);
+    if authHeader is string {
+        headers["Authorization"] = authHeader;
+    }
+
+    http:Client httpClient = check new (endpoint, {
+        timeout: 30,
+        retryConfig: {
+            count: 3,
+            interval: 2
+        }
+    });
+
+    http:Response|error response = httpClient->post("/", bundle, headers);
+    if response is http:Response {
+        if response.statusCode >= 200 && response.statusCode < 300 {
+            log:printInfo(string `Notification sent successfully to ${endpoint}`);
+            return;
+        }
+        return error(string `HTTP ${response.statusCode}`);
+    }
+
+    return error(string `HTTP error: ${response.message()}`);
+}
+
+final pipeline:HandlerChain? notificationPipeline = (notificationReplayEnabled)
+    ? (checkpanic new (
+        name = "pasNotificationPipeline",
+        processors = prepareNotification,
+        destinations = deliverNotification,
+        failureStore = checkpanic new KafkaMessageStore(
+            kafkaServer,
+            notificationFailureTopic,
+            string `${notificationStoreConsumerGroup}-${notificationFailureTopic}`
+        ),
+        replayListenerConfig = {
+            pollingInterval: 5,
+            maxRetries: notificationReplayMaxRetries,
+            retryInterval: notificationReplayRetryInterval,
+            deadLetterStore: checkpanic new KafkaMessageStore(
+                kafkaServer,
+                notificationDeadLetterTopic,
+                string `${notificationStoreConsumerGroup}-${notificationDeadLetterTopic}`
+            ),
+            replayStore: checkpanic new KafkaMessageStore(
+                kafkaServer,
+                notificationReplayTopic,
+                string `${notificationStoreConsumerGroup}-${notificationReplayTopic}`
+            )
+        }
+    ))
+    : ();
+
+@pipeline:TransformerConfig {id: "prepare_notification"}
+isolated function prepareNotification(pipeline:MessageContext msgCtx) returns PreparedNotification|error {
+    NotificationDispatch dispatch = check msgCtx.getContentWithType(NotificationDispatch);
+
+    // Get endpoint from channel
+    string endpoint = dispatch.subscription.channel.endpoint ?: "";
+    if endpoint == "" {
+        return error("Subscription endpoint is empty");
+    }
+
+    // Build notification bundle
+    NotificationBundle bundle = check buildNotificationBundle(
+        dispatch.subscription,
+        dispatch.claimResponseId,
+        dispatch.claimResponse
+    );
+
+    map<string|string[]> headers = {
+        "Content-Type": "application/fhir+json"
+    };
+
+    // Extract auth header from channel headers
+    string? authHeader = extractAuthHeader(dispatch.subscription);
+    if authHeader is string {
+        headers["Authorization"] = authHeader;
+    }
+
+    return {
+        endpoint,
+        headers,
+        bundle
+    };
+}
+
+@pipeline:DestinationConfig {
+    id: "deliver_notification",
+    retryConfig: {
+        maxRetries: 3,
+        retryInterval: 2
+    }
+}
+isolated function deliverNotification(pipeline:MessageContext msgCtx) returns anydata|error {
+    PreparedNotification prepared = check msgCtx.getContentWithType(PreparedNotification);
+
+    http:Client httpClient = check new (prepared.endpoint, {
+        timeout: 30
+    });
+
+    http:Response|error response = httpClient->post("/", prepared.bundle, prepared.headers);
+    if response is http:Response {
+        if response.statusCode >= 200 && response.statusCode < 300 {
+            log:printInfo(string `Notification sent successfully to ${prepared.endpoint}`);
+            return ();
+        }
+        return error(string `HTTP ${response.statusCode}`);
+    }
+
+    return error(string `HTTP error: ${response.message()}`);
+}
 
 # Send notification for ClaimResponse update
 #
@@ -49,68 +204,28 @@ public isolated function sendNotifications(
 
     // Send notification to each subscription
     foreach international401:Subscription sub in subscriptions {
-        error? result = sendNotification(sub, claimResponseId, claimResponse);
-        if result is error {
-            log:printError(string `Failed to send notification to ${sub.id ?: "unknown"}: ${result.message()}`);
-        }
-    }
-}
+        pipeline:HandlerChain? maybePipeline = notificationPipeline;
+        if maybePipeline is pipeline:HandlerChain {
+            pipeline:HandlerChain hc = maybePipeline;
+            NotificationDispatch dispatch = {
+                subscription: sub,
+                claimResponseId,
+                claimResponse
+            };
 
-# Send notification to single subscription
-#
-# + subscription - PASSubscription resource
-# + claimResponseId - ClaimResponse ID
-# + claimResponse - ClaimResponse resource
-# + return - Error if sending fails
-isolated function sendNotification(
-        international401:Subscription subscription,
-        string claimResponseId,
-        international401:ClaimResponse claimResponse
-) returns error? {
-
-    // Get endpoint from channel
-    string endpoint = subscription.channel.endpoint ?: "";
-    if endpoint == "" {
-        return error("Subscription endpoint is empty");
-    }
-
-    // Build notification bundle
-    NotificationBundle bundle = check buildNotificationBundle(
-            subscription,
-            claimResponseId,
-            claimResponse
-    );
-
-    // Send HTTP POST
-    http:Client httpClient = check new (endpoint, {
-        timeout: 30,
-        retryConfig: {
-            count: 3,
-            interval: 2
-        }
-    });
-
-    map<string|string[]> headers = {
-        "Content-Type": "application/fhir+json"
-    };
-
-    // Extract auth header from channel headers
-    string? authHeader = extractAuthHeader(subscription);
-    if authHeader is string {
-        headers["Authorization"] = authHeader;
-    }
-
-    http:Response|error response = httpClient->post("/", bundle, headers);
-
-    if response is http:Response {
-        if response.statusCode >= 200 && response.statusCode < 300 {
-            log:printInfo(string `Notification sent successfully to ${endpoint}`);
-            return;
+            pipeline:ExecutionSuccess|pipeline:ExecutionError execResult = hc.execute(dispatch);
+            if execResult is pipeline:ExecutionError {
+                log:printError(
+                    string `Failed to send notification to ${sub.id ?: "unknown"} (stored for replay)`,
+                    'error = execResult
+                );
+            }
         } else {
-            return error(string `HTTP ${response.statusCode}`);
+            error? result = sendNotificationDirect(sub, claimResponseId, claimResponse);
+            if result is error {
+                log:printError(string `Failed to send notification to ${sub.id ?: "unknown"}: ${result.message()}`);
+            }
         }
-    } else {
-        return error(string `HTTP error: ${response.message()}`);
     }
 }
 

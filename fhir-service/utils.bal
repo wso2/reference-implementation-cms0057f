@@ -308,38 +308,39 @@ public isolated function generateSmartConfiguration() returns SmartConfiguration
 isolated function invokeX12ServiceAndCreateAuditRecord(string url, string payload, string claimId, fhirClient:FHIRConnector fhirConnector) returns error? {
     
     if x12ConnectionConfig.enable {
+        http:Client?|error x12Client = ();
         lock {
-            http:Client?|error x12Client = x12ConnectionClient;
-            if x12Client is () || x12Client is error {
-                return error("X12 connection client is not initialized");
-            }
-            
-            http:Response response = check x12Client->post(url, payload);
-            if response.statusCode == http:STATUS_OK {
-                string responsePayload = check response.getTextPayload();
+            x12Client = x12ConnectionClient;
+        }
+        if x12Client is () || x12Client is error {
+            return error("X12 connection client is not initialized");
+        }
+        
+        http:Response response = check x12Client->post(url, payload);
+        if response.statusCode == http:STATUS_OK {
+            string responsePayload = check response.getTextPayload();
 
-                // Create Audit Record
-                international401:AuditEvent auditEvent = {
-                    id: claimId,
-                    'source: {
-                        observer: {
-                            "display": "FHIR Service"
-                        }
-                    }, 
-                    agent: [], 
-                    recorded: time:utcToString(time:utcNow()), 
-                    'type: {
-                        system: "http://terminology.hl7.org/CodeSystem/audit-event-type",
-                        code: "x12",
-                        display: "X12 Request"
-                    },
-                    outcome: responsePayload
-                };
-                _ = check create(fhirConnector, AUDIT_EVENT, auditEvent.toJson());
-                log:printDebug("Audit event created for the converted X12 message.");
-            } else {
-                return error("X12 service call failed with status code: " + response.statusCode.toString());
-            }
+            // Create Audit Record
+            international401:AuditEvent auditEvent = {
+                id: claimId,
+                'source: {
+                    observer: {
+                        "display": "FHIR Service"
+                    }
+                }, 
+                agent: [], 
+                recorded: time:utcToString(time:utcNow()), 
+                'type: {
+                    system: "http://terminology.hl7.org/CodeSystem/audit-event-type",
+                    code: "x12",
+                    display: "X12 Request"
+                },
+                outcome: responsePayload
+            };
+            _ = check create(fhirConnector, AUDIT_EVENT, auditEvent.toJson());
+            log:printDebug("Audit event created for the converted X12 message.");
+        } else {
+            return error("X12 service call failed with status code: " + response.statusCode.toString());
         }
     }
 }

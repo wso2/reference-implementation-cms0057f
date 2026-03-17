@@ -28,6 +28,7 @@ import ballerinax/health.fhir.r4.carinbb200;
 import ballerinax/health.fhir.r4.davincidtr210;
 import ballerinax/health.fhir.r4.davincihrex100;
 import ballerinax/health.fhir.r4.davincipas;
+import ballerinax/health.fhir.r4.davincipdex220;
 import ballerinax/health.fhir.r4.international401;
 import ballerinax/health.fhir.r4.uscore501;
 
@@ -35,6 +36,18 @@ configurable Configs configs = ?;
 configurable string exportServiceUrl = ?;
 configurable string sampleDataGithubUrl = ?;
 configurable X12ConnectionConfig x12ConnectionConfig = ?;
+configurable string serverBaseUrl = "http://localhost:8081";
+
+// Resource types permitted for export. Derived from the DaVinci PDex payer-to-payer spec:
+// US Core clinical resources + PDex-specific claims/encounter types.
+// Override in Config.toml to restrict further.
+configurable string[] & readonly allowedExportResourceTypes = [
+    "AllergyIntolerance", "CarePlan", "CareTeam", "Condition", "Consent",
+    "Coverage", "Device", "DiagnosticReport", "DocumentReference", "Encounter",
+    "ExplanationOfBenefit", "Goal", "Immunization", "MedicationDispense",
+    "MedicationRequest", "Observation", "Patient", "Practitioner", "PractitionerRole",
+    "Procedure", "Provenance", "RelatedPerson", "ServiceRequest"
+];
 
 // This is used to connect to file service
 isolated http:Client exportServiceClient = check new (exportServiceUrl);
@@ -74,6 +87,10 @@ isolated function init() returns error? {
         }
     }
 }
+
+// Pluggable PDex operation handlers — replace with custom implementations as needed
+final davincipdex220:BulkMemberMatcher bulkMemberMatcher = new DefaultBulkMemberMatcher();
+final davincipdex220:DaVinciDataExporter davinciDataExporter = new DefaultDaVinciDataExporter();
 
 isolated function invokePatientExport(string patientId, map<string[]> queryParameters, fhirClient:RequestMode requestMode) returns r4:FHIRError|http:Response|error {
     fhirClient:FHIRResponse|fhirClient:FHIRError exportResponse =
@@ -139,9 +156,57 @@ isolated function invokePatientSummary(string patientId, map<string[]> queryPara
     return response;
 }
 
+// Returns the intersection of a comma-separated requested type string with the allowed list.
+// If requestedType is (), returns the full allowed list (no client restriction → use all permitted).
+isolated function intersectWithAllowed(string? requestedType, string[] allowed) returns string[] {
+    map<boolean> allowedSet = {};
+    foreach string t in allowed {
+        allowedSet[t.trim()] = true;
+    }
+    if requestedType is () {
+        return allowed.clone();
+    }
+    string[] filtered = [];
+    foreach string segment in re `,`.split(requestedType) {
+        string t = segment.trim();
+        if t.length() > 0 && allowedSet.hasKey(t) {
+            filtered.push(t);
+        }
+    }
+    return filtered;
+}
+
+// Computes the intersection of consented resource types with the requested _type parameter.
+// If no _type is requested, returns all consented resource types.
+// Returns an empty array when the intersection is empty (caller must treat this as a denial).
+isolated function filterConsentedResourceTypes(map<string[]> queryParameters, string[] consentedResourceTypes) returns string[] {
+    map<boolean> consentedTypeSet = {};
+    foreach string consentedType in consentedResourceTypes {
+        consentedTypeSet[consentedType.trim()] = true;
+    }
+
+    string[] filteredResourceTypes = [];
+    string[]? requestTypeParams = queryParameters["_type"];
+    if requestTypeParams is string[] {
+        foreach string requestTypeParam in requestTypeParams {
+            string[] requestedTypes = re `,`.split(requestTypeParam);
+            foreach string requestedType in requestedTypes {
+                final string normalizedType = requestedType.trim();
+                if normalizedType != "" && consentedTypeSet.hasKey(normalizedType)
+                && !filteredResourceTypes.some(isolated function(string t) returns boolean => t == normalizedType) {
+                    filteredResourceTypes.push(normalizedType);
+                }
+            }
+        }
+    } else {
+        filteredResourceTypes = consentedTypeSet.keys();
+    }
+    return filteredResourceTypes;
+}
+
 // ######################################################################################################################
 // # Capability statement API                                                                                           #
-// ###################################################################################################################### 
+// ######################################################################################################################
 
 # # The service representing capability statement API
 final readonly & international401:CapabilityStatement capabilityStatement = check generateCapabilityStatement().cloneReadOnly();
@@ -214,6 +279,86 @@ service http:InterceptableService /fhir/r4/_export on httpListener {
     resource function get download/[string jobId]/[string fileName](http:Request request) returns http:Response|error {
         return fhirHttpClient->forward("/_export/download/" + jobId + "/" + fileName, request);
     }
+
+    // Async polling endpoint for $bulk-member-match jobs
+    // Content-Location is set to /fhir/r4/_export/bulk-match-status/{jobId}
+    // Returns 202 while processing, 200 with Parameters body when complete, 4xx/5xx on error.
+    isolated resource function get bulk\-match\-status/[string jobId]() returns http:Response {
+        BulkMemberMatchJob? job = getBulkMemberMatchJob(jobId);
+        http:Response resp = new;
+
+        if job is () {
+            resp.statusCode = http:STATUS_NOT_FOUND;
+            resp.setJsonPayload({"error": BULK_MATCH_JOB_NOT_FOUND, "jobId": jobId});
+            return resp;
+        }
+
+        if job.status == BULK_MATCH_PENDING || job.status == BULK_MATCH_PROCESSING {
+            resp.statusCode = http:STATUS_ACCEPTED;
+            resp.setHeader("Retry-After", "5");
+            resp.setJsonPayload({"status": job.status, "jobId": jobId});
+            return resp;
+        }
+
+        if job.status == BULK_MATCH_COMPLETED {
+            davincipdex220:PDexMultiMemberMatchResponseParameters? result = job.result;
+            if result !is () {
+                resp.statusCode = http:STATUS_OK;
+                resp.setHeader("Content-Type", "application/fhir+json");
+                resp.setJsonPayload(result.toJson());
+                return resp;
+            }
+        }
+
+        // FAILED or completed but result is missing
+        resp.statusCode = http:STATUS_INTERNAL_SERVER_ERROR;
+        resp.setJsonPayload({
+            "status": job.status,
+            "error": job.errorMessage ?: "Processing failed",
+            "jobId": jobId
+        });
+        return resp;
+    }
+
+    // Async polling endpoint for $davinci-data-export jobs
+    // Content-Location is set to /fhir/r4/_export/davinci-export-status/{jobId}
+    // Returns 202 while processing, 200 with result body when complete, 4xx/5xx on error.
+    isolated resource function get davinci\-export\-status/[string jobId]() returns http:Response {
+        DaVinciExportJob? job = getDaVinciExportJob(jobId);
+        http:Response resp = new;
+
+        if job is () {
+            resp.statusCode = http:STATUS_NOT_FOUND;
+            resp.setJsonPayload({"error": "Da Vinci export job not found", "jobId": jobId});
+            return resp;
+        }
+
+        if job.status == DAVINCI_EXPORT_PENDING || job.status == DAVINCI_EXPORT_PROCESSING {
+            resp.statusCode = http:STATUS_ACCEPTED;
+            resp.setHeader("Retry-After", "5");
+            resp.setJsonPayload({"status": job.status, "jobId": jobId});
+            return resp;
+        }
+
+        if job.status == DAVINCI_EXPORT_COMPLETED {
+            DaVinciExportResult? result = job.result;
+            if result !is () {
+                resp.statusCode = http:STATUS_OK;
+                resp.setHeader("Content-Type", "application/json");
+                resp.setJsonPayload(result.toJson());
+                return resp;
+            }
+        }
+
+        // FAILED or completed but result is missing
+        resp.statusCode = http:STATUS_INTERNAL_SERVER_ERROR;
+        resp.setJsonPayload({
+            "status": job.status,
+            "error": job.errorMessage ?: "Processing failed",
+            "jobId": jobId
+        });
+        return resp;
+    }
 }
 
 // ######################################################################################################################
@@ -245,7 +390,32 @@ service /fhir/r4/Patient on new fhirr4:Listener(config = patientApiConfig) {
         // Match member
         davincihrex100:MemberIdentifier memberIdentifier = check fhirMemberMatcher.matchMember(memberMatchResources);
 
-        // Member match response profile: 
+        // Evaluate consent separately — keeps matchMember focused on patient/coverage matching only.
+        // Consent is optional in HRex; if not provided the identifier is returned without consent check.
+        davincihrex100:HRexConsent? hrexConsent = memberMatchResources.consent;
+        if hrexConsent !is () {
+            international401:Consent|error i4Consent =
+                    hrexConsent.cloneWithType(international401:Consent);
+            if i4Consent is error {
+                return r4:createFHIRError(
+                        "Failed to process consent resource: " + i4Consent.message(),
+                        r4:ERROR, r4:INVALID,
+                        httpStatusCode = http:STATUS_UNPROCESSABLE_ENTITY);
+            }
+            // Per HRex spec, Consent.patient SHALL be a local ref to the input MemberPatient
+            // (e.g. "Patient/1"), not the matched id. Validate against the input patient's id.
+            // Ref: https://hl7.org/fhir/us/davinci-hrex/STU1/OperationDefinition-member-match.html
+            string inputPatientId = memberMatchResources.memberPatient.id ?: "";
+            ConsentEvaluationResult consentResult = evaluateConsent(i4Consent, inputPatientId);
+            if !consentResult.isValid {
+                return r4:createFHIRError(
+                        consentResult.reason ?: "Consent validation failed",
+                        r4:ERROR, r4:PROCESSING,
+                        httpStatusCode = http:STATUS_UNPROCESSABLE_ENTITY);
+            }
+        }
+
+        // Member match response profile:
         // https://hl7.org/fhir/us/davinci-hrex/StructureDefinition-hrex-parameters-member-match-out.html
         return {
             'parameter: [
@@ -294,46 +464,23 @@ service /fhir/r4/Patient on new fhirr4:Listener(config = patientApiConfig) {
             }
 
             string[] consentedResourceTypes = consentContext.consentedResourceTypes.clone();
-
-            // If the consent has specified resource types, filter the export request to include only those resource types.
-            if consentedResourceTypes.length() > 0 {
-                map<boolean> consentedTypeSet = {};
-                foreach string consentedType in consentedResourceTypes {
-                    consentedTypeSet[consentedType.trim()] = true;
-                }
-
-                string[] filteredResourceTypes = [];
-                string[]? requestTypeParams = queryParameters["_type"];
-                if requestTypeParams is string[] {
-                    foreach string requestTypeParam in requestTypeParams {
-                        string[] requestedTypes = re `,`.split(requestTypeParam);
-                        foreach string requestedType in requestedTypes {
-                            final string normalizedType = requestedType.trim();
-                            if normalizedType != "" && consentedTypeSet.hasKey(normalizedType)
-                            && !filteredResourceTypes.some(isolated function(string t) returns boolean => t == normalizedType) {
-                                filteredResourceTypes.push(normalizedType);
-                            }
-                        }
-                    }
-                } else {
-                    filteredResourceTypes = consentedTypeSet.keys();
-                }
-
-                if filteredResourceTypes.length() == 0 {
-                    return r4:createFHIRError("No consented resource types available for export", r4:ERROR,
-                            r4:INVALID, httpStatusCode = http:STATUS_FORBIDDEN);
-                }
-
-                string filteredTypeParam = string:'join(",", ...filteredResourceTypes);
-                queryParameters["_type"] = [filteredTypeParam];
-                log:printDebug("$export param: _type = " + filteredTypeParam);
-            } else {
+            if consentedResourceTypes.length() == 0 {
                 // Consent exists but specifies no allowed resource types; deny export.
                 log:printDebug("Consent context exists but no consented resource types specified. Denying export.");
                 return r4:createFHIRError("No consented resource types available for export", r4:ERROR,
                         r4:INVALID, httpStatusCode = http:STATUS_FORBIDDEN);
             }
 
+            // Filter the export request to include only consented resource types.
+            string[] filteredResourceTypes = filterConsentedResourceTypes(queryParameters, consentedResourceTypes);
+            if filteredResourceTypes.length() == 0 {
+                return r4:createFHIRError("No consented resource types available for export", r4:ERROR,
+                        r4:INVALID, httpStatusCode = http:STATUS_FORBIDDEN);
+            }
+
+            string filteredTypeParam = string:'join(",", ...filteredResourceTypes);
+            queryParameters["_type"] = [filteredTypeParam];
+            log:printDebug("$export param: _type = " + filteredTypeParam);
         }
         // If no consent context exists, proceed with the export request as is. Meaning all resource types specified in the request (if any) will be exported.
         // By default, if the _type parameter is not specified, all resource types are exported as per the FHIR specification.
@@ -1646,6 +1793,7 @@ service /fhir/r4/Group on new fhirr4:Listener(config = groupApiConfig) {
     isolated resource function get [string id]/\$export(r4:FHIRContext fhirContext) returns r4:FHIRError|http:Response|error {
         log:printDebug("Group-level export invoked for group id: " + id);
         map<string[]> queryParameters = {};
+        r4:ConsentContext? consentContext = fhirContext.getConsentContext();
 
         r4:FHIRRequest? fhirRequest = fhirContext.getFHIRRequest();
         if fhirRequest !is () {
@@ -1665,6 +1813,19 @@ service /fhir/r4/Group on new fhirr4:Listener(config = groupApiConfig) {
 
         map<string> exportUrls = {};
 
+        // Restrict _type to the server-allowed list; intersect with the client's _type if provided.
+        string[]? requestedTypeParam = queryParameters["_type"];
+        string[] effectiveTypes = intersectWithAllowed(
+                requestedTypeParam !is () && requestedTypeParam.length() > 0
+                        ? string:'join(",", ...requestedTypeParam) : (),
+                allowedExportResourceTypes);
+        if effectiveTypes.length() == 0 {
+            return r4:createFHIRError(
+                    "None of the requested resource types are permitted for export",
+                    r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+        }
+        queryParameters["_type"] = [string:'join(",", ...effectiveTypes)];
+
         foreach international401:GroupMember member in members {
             r4:Reference entity = member.entity;
             string? reference = entity.reference;
@@ -1672,26 +1833,256 @@ service /fhir/r4/Group on new fhirr4:Listener(config = groupApiConfig) {
                 // expecting reference to be "Patient/123"
                 if reference.startsWith("Patient/") {
                     string patientId = reference.substring(8);
+                    map<string[]> patientQueryParameters = queryParameters.clone();
+
+                    // Apply per-patient consent filtering
+                    if consentContext !is () {
+                        if consentContext.patientID != patientId {
+                            // Skip patients not covered by the consent context
+                            log:printDebug("Skipping patient " + patientId + ": does not match consent context patient id " + consentContext.patientID);
+                            continue;
+                        }
+
+                        string[] consentedResourceTypes = consentContext.consentedResourceTypes.clone();
+                        if consentedResourceTypes.length() == 0 {
+                            // Consent exists but specifies no allowed resource types; skip this patient.
+                            log:printDebug("Consent context exists but no consented resource types specified for patient " + patientId + ". Skipping.");
+                            continue;
+                        }
+
+                        // Filter the export request to include only consented resource types.
+                        string[] filteredResourceTypes = filterConsentedResourceTypes(patientQueryParameters, consentedResourceTypes);
+                        if filteredResourceTypes.length() == 0 {
+                            log:printDebug("No consented resource types available for patient " + patientId + ". Skipping.");
+                            continue;
+                        }
+
+                        string filteredTypeParam = string:'join(",", ...filteredResourceTypes);
+                        patientQueryParameters["_type"] = [filteredTypeParam];
+                        log:printDebug("$export param for patient " + patientId + ": _type = " + filteredTypeParam);
+                    }
 
                     // Call the async export for patient
-                    r4:FHIRError|http:Response|error exportRes = invokePatientExport(patientId, queryParameters, fhirClient:GET);
-                    if exportRes is http:Response {
+                    r4:FHIRError|http:Response|error exportRes = invokePatientExport(patientId, patientQueryParameters, fhirClient:GET);
+                    if exportRes is r4:FHIRError {
+                        exportUrls[patientId] = "FHIR error: " + exportRes.message();
+                    } else if exportRes is http:Response {
                         string|error pollingUrl = exportRes.getHeader("content-location");
                         if pollingUrl is string {
                             exportUrls[patientId] = pollingUrl;
                         } else {
                             exportUrls[patientId] = "Failed to get Content-Location header: " + exportRes.statusCode.toString();
                         }
-                    } else if exportRes is error {
+                    } else {
                         exportUrls[patientId] = "Error executing export: " + exportRes.message();
                     }
                 }
             }
         }
 
+        if consentContext !is () && exportUrls.length() == 0 {
+            http:Response denied = new;
+            denied.statusCode = http:STATUS_FORBIDDEN;
+            denied.setJsonPayload({"error": "No patients authorized for export under the active consent context"});
+            return denied;
+        }
+
         http:Response response = new;
         response.statusCode = http:STATUS_ACCEPTED;
         response.setJsonPayload({"transactionTime": time:utcToString(time:utcNow()), "exportUrls": exportUrls});
+        return response;
+    }
+
+    // Bulk Member Match (PDex Payer-to-Payer) — POST /fhir/r4/Group/$bulk-member-match
+    // Accepts a Parameters resource with one or more MemberBundle entries (profile:
+    // pdex-parameters-multi-member-match-bundle-in). The FHIR framework deserializes
+    // the body as international401:Parameters; we cast to the typed PDex form inside.
+    // Supports synchronous (200) and asynchronous (Prefer: respond-async → 202) modes.
+    isolated resource function post \$bulk\-member\-match(r4:FHIRContext fhirContext,
+            international401:Parameters parameters)
+            returns http:Response|r4:FHIRError {
+
+        log:printDebug("Bulk member match operation invoked");
+
+        // Cast the generic Parameters to the typed PDex profile
+        davincipdex220:PDexMultiMemberMatchRequestParameters|error pdexParams =
+                parameters.cloneWithType(davincipdex220:PDexMultiMemberMatchRequestParameters);
+        if pdexParams is error {
+            return r4:createFHIRError(
+                    "Invalid $bulk-member-match request body: " + pdexParams.message(),
+                    r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+        }
+
+        // Detect async preference via Prefer: respond-async header.
+        // Treat the header as a comma-separated token list so values like
+        // "respond-async, handling=strict" are handled correctly.
+        boolean asyncRequested = false;
+        r4:HTTPRequest? httpReq = fhirContext.getHTTPRequest();
+        if httpReq !is () {
+            string[]? preferValues = httpReq.headers["prefer"] ?: httpReq.headers["Prefer"];
+            if preferValues !is () {
+                foreach string pv in preferValues {
+                    foreach string token in re `,`.split(pv) {
+                        if token.trim().toLowerAscii() == "respond-async" {
+                            asyncRequested = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        if asyncRequested {
+            string jobId = uuid:createType1AsString();
+            evictExpiredBulkMatchJobs();
+            lock {
+                bulkMatchJobStore[jobId] = {
+                    jobId: jobId,
+                    status: BULK_MATCH_PENDING,
+                    createdAt: time:utcNow(),
+                    completedAt: (),
+                    result: (),
+                    errorMessage: ()
+                };
+            }
+            // Start background processing — results stored in bulkMatchJobStore
+            _ = start processAndStoreBulkMemberMatch(jobId, pdexParams.cloneReadOnly());
+
+            http:Response resp = new;
+            resp.statusCode = http:STATUS_ACCEPTED;
+            resp.setHeader("Content-Location",
+                    serverBaseUrl + "/fhir/r4/_export/bulk-match-status/" + jobId);
+            return resp;
+        }
+
+        // Synchronous path — delegate to the BulkMemberMatcher interface
+        davincipdex220:BulkMemberMatchResult|r4:FHIRError matchResult =
+                bulkMemberMatcher.matchMembers({requestParameters: pdexParams});
+        if matchResult is r4:FHIRError {
+            return matchResult;
+        }
+        http:Response resp = new;
+        resp.statusCode = http:STATUS_OK;
+        resp.setHeader("Content-Type", "application/fhir+json");
+        resp.setJsonPayload(matchResult.responseParameters.toJson());
+        return resp;
+    }
+
+    // DaVinci Data Export — GET /fhir/r4/Group/{id}/$davinci-data-export
+    // Profiled extension of Bulk Data Export for DaVinci use cases (Da Vinci ATR STU 2.1).
+    // Accepts exportType, _since, _until, _type, _typeFilter, patient query parameters.
+    // Returns 202 Accepted with Content-Location pointing to the davinci-export-status endpoint.
+    isolated resource function get [string id]/\$davinci\-data\-export(
+            r4:FHIRContext fhirContext) returns r4:FHIRError|http:Response {
+
+        log:printDebug("DaVinci Data Export invoked for group id: " + id);
+
+        map<string[]> queryParameters = {};
+        r4:FHIRRequest? fhirRequest = fhirContext.getFHIRRequest();
+        if fhirRequest !is () {
+            queryParameters = getQueryParamsMap(fhirRequest.getSearchParameters());
+        }
+
+        // Validate exportType when provided — only PDex P2P is supported here
+        string[]? exportTypeParam = queryParameters["exportType"];
+        string exportType = PDEX_EXPORT_TYPE_P2P;
+        if exportTypeParam !is () && exportTypeParam.length() > 0 {
+            if exportTypeParam[0] != PDEX_EXPORT_TYPE_P2P {
+                return r4:createFHIRError(BULK_MATCH_INVALID_EXPORT_TYPE, r4:ERROR,
+                        r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+            }
+            exportType = exportTypeParam[0];
+        }
+
+        // Build typed DataExportParameters from query params using direct field assignment
+        davincipdex220:DataExportParameters exportParams = {
+            exportType: exportType
+        };
+
+        string[]? sinceParam = queryParameters["_since"];
+        if sinceParam !is () && sinceParam.length() > 0 {
+            exportParams._since = sinceParam[0];
+        }
+        string[]? untilParam = queryParameters["_until"];
+        if untilParam !is () && untilParam.length() > 0 {
+            exportParams._until = untilParam[0];
+        }
+        string[]? typeParam = queryParameters["_type"];
+        if typeParam !is () && typeParam.length() > 0 {
+            exportParams._type = typeParam[0];
+        }
+        string[]? typeFilterParam = queryParameters["_typeFilter"];
+        if typeFilterParam !is () && typeFilterParam.length() > 0 {
+            exportParams._typeFilter = typeFilterParam[0];
+        }
+
+        // Build patient filter References from query param values ("Patient/123" or "123")
+        string[]? patientFilterParam = queryParameters["patient"];
+        if patientFilterParam !is () && patientFilterParam.length() > 0 {
+            r4:Reference[] patientRefs = [];
+            foreach string pf in patientFilterParam {
+                foreach string segment in re `,`.split(pf) {
+                    string trimmed = segment.trim();
+                    if trimmed.length() > 0 {
+                        patientRefs.push({reference: trimmed.startsWith("Patient/") ? trimmed : "Patient/" + trimmed});
+                    }
+                }
+            }
+            exportParams.patient = patientRefs;
+        }
+
+        // Apply consent filtering at the HTTP layer before delegating to the exporter
+        r4:ConsentContext? consentContext = fhirContext.getConsentContext();
+        if consentContext !is () {
+            string consentedPatientRef = "Patient/" + consentContext.patientID;
+            r4:Reference[]? existingPatientFilter = exportParams.patient;
+            if existingPatientFilter is () || existingPatientFilter.length() == 0 {
+                exportParams.patient = [{reference: consentedPatientRef}];
+            } else {
+                boolean inFilter = false;
+                foreach r4:Reference ref in existingPatientFilter {
+                    string? refStr = ref.reference;
+                    if refStr == consentedPatientRef || refStr == consentContext.patientID {
+                        inFilter = true;
+                    }
+                }
+                if !inFilter {
+                    return r4:createFHIRError(
+                            "Requested patient is not covered by the consent context",
+                            r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_FORBIDDEN);
+                }
+                exportParams.patient = [{reference: consentedPatientRef}];
+            }
+
+            string[] consentedResourceTypes = consentContext.consentedResourceTypes.clone();
+            if consentedResourceTypes.length() == 0 {
+                return r4:createFHIRError("No consented resource types available for export",
+                        r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_FORBIDDEN);
+            }
+            // Build a temporary map to reuse filterConsentedResourceTypes()
+            map<string[]> typeQueryParams = {};
+            string? currentType = exportParams._type;
+            if currentType is string {
+                typeQueryParams["_type"] = [currentType];
+            }
+            string[] filteredTypes = filterConsentedResourceTypes(typeQueryParams, consentedResourceTypes);
+            if filteredTypes.length() == 0 {
+                return r4:createFHIRError("No consented resource types available for export",
+                        r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_FORBIDDEN);
+            }
+            exportParams._type = string:'join(",", ...filteredTypes);
+            log:printDebug("$davinci-data-export consent-filtered _type: " + (exportParams._type ?: ""));
+        }
+
+        // Delegate to the DaVinciDataExporter interface
+        davincipdex220:DataExportJob|r4:FHIRError exportJob =
+                davinciDataExporter.initiateExport(id, exportParams);
+        if exportJob is r4:FHIRError {
+            return exportJob;
+        }
+
+        http:Response response = new;
+        response.statusCode = exportJob.statusCode;
+        response.setHeader("Content-Location", serverBaseUrl + exportJob.contentLocation);
         return response;
     }
 

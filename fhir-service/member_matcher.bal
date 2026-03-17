@@ -50,7 +50,6 @@ public isolated class DemoFHIRMemberMatcher {
 
         // Member match resources
         uscore501:USCorePatientProfile memberPatient = memberMatchResources.memberPatient;
-        hrex100:HRexConsent? consent = memberMatchResources.consent;
         hrex100:HRexCoverage coverageToMatch = memberMatchResources.coverageToMatch;
         hrex100:HRexCoverage? _ = memberMatchResources.coverageToLink;
 
@@ -63,7 +62,7 @@ public isolated class DemoFHIRMemberMatcher {
 
         r4:BundleEntry[]? entry = nameMatchedPatients.entry;
 
-        if entry is r4:BundleEntry[] {
+        if entry is r4:BundleEntry[] && entry.length() > 0 {
             r4:BundleEntry firstEntry = entry[0];
 
             anydata 'resource = firstEntry?.'resource;

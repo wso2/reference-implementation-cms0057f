@@ -38,7 +38,11 @@ isolated function evictExpiredBulkMatchJobs() {
         string[] toRemove = [];
         foreach string key in bulkMatchJobStore.keys() {
             BulkMemberMatchJob job = bulkMatchJobStore.get(key);
-            if time:utcDiffSeconds(now, job.createdAt) > BULK_MATCH_JOB_TTL_SECONDS {
+            if job.status == BULK_MATCH_PENDING || job.status == BULK_MATCH_PROCESSING {
+                continue;
+            }
+            time:Utc anchor = job.completedAt ?: job.createdAt;
+            if time:utcDiffSeconds(now, anchor) > BULK_MATCH_JOB_TTL_SECONDS {
                 toRemove.push(key);
             }
         }
@@ -68,6 +72,17 @@ isolated function processBulkMemberMatch(davincipdex220:PDexMultiMemberMatchRequ
 
     davincipdex220:PDexMultiMemberMatchRequestParametersParameter[] paramEntries = parameters.'parameter;
     if paramEntries.length() == 0 {
+        return r4:createFHIRError(BULK_MATCH_NO_MEMBER_BUNDLES, r4:ERROR, r4:INVALID,
+                httpStatusCode = 400);
+    }
+
+    int memberBundleCount = 0;
+    foreach var entry in paramEntries {
+        if entry.name == "MemberBundle" {
+            memberBundleCount += 1;
+        }
+    }
+    if memberBundleCount == 0 {
         return r4:createFHIRError(BULK_MATCH_NO_MEMBER_BUNDLES, r4:ERROR, r4:INVALID,
                 httpStatusCode = 400);
     }

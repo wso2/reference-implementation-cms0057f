@@ -175,6 +175,11 @@ isolated function processAndStoreDaVinciExport(
                 // Always set _type to the intersection of the allowed list and any client
                 // request; if the client omitted _type, this defaults to all allowed types.
                 string[] effectiveTypes = intersectWithAllowed(params._type, allowedExportResourceTypes);
+                if effectiveTypes.length() == 0 {
+                    log:printError("Patient " + patientId + ": no allowed resource types after filtering _type '"
+                            + (params._type ?: "") + "'; skipping");
+                    continue;
+                }
                 patientQueryParams["_type"] = [string:'join(",", ...effectiveTypes)];
                 string? typeFilterVal = params._typeFilter;
                 if typeFilterVal is string {
@@ -222,6 +227,7 @@ isolated function processAndStoreDaVinciExport(
     // Phase B: poll each per-patient export until it completes and collect output file URLs
     BulkDataOutputFile[] combinedOutput = [];
     BulkDataOutputFile[] combinedErrors = [];
+    boolean anyPatientSucceeded = false;
 
     foreach string patientId in patientPollingUrls.keys() {
         string pollingUrl = patientPollingUrls.get(patientId);
@@ -281,6 +287,7 @@ isolated function processAndStoreDaVinciExport(
                     }
                 }
                 patientDone = true;
+                anyPatientSucceeded = true;
                 log:printDebug("Patient " + patientId + ": export complete");
             } else if pollRes.statusCode == http:STATUS_ACCEPTED {
                 decimal retryAfter = POLL_INTERVAL_SECONDS;
@@ -304,25 +311,27 @@ isolated function processAndStoreDaVinciExport(
         }
     }
 
-    // Phase C: build the Bulk Data manifest and mark the group job complete
-    DaVinciExportResult result = {
+    // Phase C: build the Bulk Data manifest and mark the group job complete or failed
+    DaVinciExportStatus finalStatus = anyPatientSucceeded ? DAVINCI_EXPORT_COMPLETED : DAVINCI_EXPORT_FAILED;
+    DaVinciExportResult? finalResult = anyPatientSucceeded ? {
         transactionTime: time:utcToString(time:utcNow()),
         request: serverBaseUrl + "/fhir/r4/Group/" + groupId + "/$davinci-data-export",
         requiresAccessToken: false,
         output: combinedOutput,
         'error: combinedErrors.length() > 0 ? combinedErrors : ()
-    };
+    } : ();
+    string? finalError = anyPatientSucceeded ? () : "All patient exports failed or timed out";
 
     lock {
         if davinciExportJobStore.hasKey(jobId) {
             DaVinciExportJob current = davinciExportJobStore.get(jobId);
             davinciExportJobStore[jobId] = {
                 jobId: current.jobId,
-                status: DAVINCI_EXPORT_COMPLETED,
+                status: finalStatus,
                 createdAt: current.createdAt,
                 completedAt: time:utcNow(),
-                result: result.cloneReadOnly(),
-                errorMessage: ()
+                result: finalResult is DaVinciExportResult ? finalResult.cloneReadOnly() : (),
+                errorMessage: finalError
             };
         }
     }
@@ -338,7 +347,11 @@ isolated function evictExpiredDaVinciExportJobs() {
         string[] toRemove = [];
         foreach string key in davinciExportJobStore.keys() {
             DaVinciExportJob job = davinciExportJobStore.get(key);
-            if time:utcDiffSeconds(now, job.createdAt) > EXPORT_JOB_TTL_SECONDS {
+            if job.status == DAVINCI_EXPORT_PENDING || job.status == DAVINCI_EXPORT_PROCESSING {
+                continue;
+            }
+            time:Utc anchor = job.completedAt ?: job.createdAt;
+            if time:utcDiffSeconds(now, anchor) > EXPORT_JOB_TTL_SECONDS {
                 toRemove.push(key);
             }
         }

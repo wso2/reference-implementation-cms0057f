@@ -1846,6 +1846,13 @@ service /fhir/r4/Group on new fhirr4:Listener(config = groupApiConfig) {
             }
         }
 
+        if consentContext !is () && exportUrls.length() == 0 {
+            http:Response denied = new;
+            denied.statusCode = http:STATUS_FORBIDDEN;
+            denied.setJsonPayload({"error": "No patients authorized for export under the active consent context"});
+            return denied;
+        }
+
         http:Response response = new;
         response.statusCode = http:STATUS_ACCEPTED;
         response.setJsonPayload({"transactionTime": time:utcToString(time:utcNow()), "exportUrls": exportUrls});
@@ -1872,18 +1879,25 @@ service /fhir/r4/Group on new fhirr4:Listener(config = groupApiConfig) {
                     r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
         }
 
-        // Detect async preference via Prefer: respond-async header
-        // The FHIR framework stores headers in the HTTPRequest under lowercase keys
-        string preferHeader = "";
+        // Detect async preference via Prefer: respond-async header.
+        // Treat the header as a comma-separated token list so values like
+        // "respond-async, handling=strict" are handled correctly.
+        boolean asyncRequested = false;
         r4:HTTPRequest? httpReq = fhirContext.getHTTPRequest();
         if httpReq !is () {
             string[]? preferValues = httpReq.headers["prefer"] ?: httpReq.headers["Prefer"];
-            if preferValues !is () && preferValues.length() > 0 {
-                preferHeader = preferValues[0].trim();
+            if preferValues !is () {
+                foreach string pv in preferValues {
+                    foreach string token in re `,`.split(pv) {
+                        if token.trim().toLowerAscii() == "respond-async" {
+                            asyncRequested = true;
+                        }
+                    }
+                }
             }
         }
 
-        if preferHeader == "respond-async" {
+        if asyncRequested {
             string jobId = uuid:createType1AsString();
             evictExpiredBulkMatchJobs();
             lock {
@@ -1985,8 +1999,25 @@ service /fhir/r4/Group on new fhirr4:Listener(config = groupApiConfig) {
         // Apply consent filtering at the HTTP layer before delegating to the exporter
         r4:ConsentContext? consentContext = fhirContext.getConsentContext();
         if consentContext !is () {
-            // Restrict to the consented patient only
-            exportParams.patient = [{reference: "Patient/" + consentContext.patientID}];
+            string consentedPatientRef = "Patient/" + consentContext.patientID;
+            r4:Reference[]? existingPatientFilter = exportParams.patient;
+            if existingPatientFilter is () || existingPatientFilter.length() == 0 {
+                exportParams.patient = [{reference: consentedPatientRef}];
+            } else {
+                boolean inFilter = false;
+                foreach r4:Reference ref in existingPatientFilter {
+                    string? refStr = ref.reference;
+                    if refStr == consentedPatientRef || refStr == consentContext.patientID {
+                        inFilter = true;
+                    }
+                }
+                if !inFilter {
+                    return r4:createFHIRError(
+                            "Requested patient is not covered by the consent context",
+                            r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_FORBIDDEN);
+                }
+                exportParams.patient = [{reference: consentedPatientRef}];
+            }
 
             string[] consentedResourceTypes = consentContext.consentedResourceTypes.clone();
             if consentedResourceTypes.length() == 0 {

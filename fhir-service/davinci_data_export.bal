@@ -193,8 +193,11 @@ isolated function processAndStoreDaVinciExport(
                 } else if exportRes is http:Response {
                     string|error pollingUrl = exportRes.getHeader("content-location");
                     if pollingUrl is string {
-                        patientPollingUrls[patientId] =
-                                pollingUrl.startsWith("/") ? serverBaseUrl + pollingUrl : pollingUrl;
+                        if pollingUrl.startsWith("/") {
+                            patientPollingUrls[patientId] = serverBaseUrl + pollingUrl;
+                        } else {
+                            log:printError("Patient " + patientId + ": Content-Location is an absolute URL, rejecting: " + pollingUrl);
+                        }
                     } else {
                         log:printError("Patient " + patientId + ": missing Content-Location, status "
                                 + exportRes.statusCode.toString());
@@ -285,10 +288,12 @@ isolated function processAndStoreDaVinciExport(
                             combinedErrors.push({'type: fileType, url: rebaseUrl(fileUrl, serverBaseUrl)});
                         }
                     }
+                    anyPatientSucceeded = true;
+                    log:printDebug("Patient " + patientId + ": export complete");
+                } else {
+                    log:printError("Patient " + patientId + ": failed to parse export manifest: " + body.message());
                 }
                 patientDone = true;
-                anyPatientSucceeded = true;
-                log:printDebug("Patient " + patientId + ": export complete");
             } else if pollRes.statusCode == http:STATUS_ACCEPTED {
                 decimal retryAfter = POLL_INTERVAL_SECONDS;
                 string|error retryHeader = pollRes.getHeader("retry-after");

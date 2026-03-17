@@ -276,6 +276,11 @@ isolated function processBulkMemberMatch(davincipdex220:PDexMultiMemberMatchRequ
                     "Failed to read persisted MatchedMembers Group: " + persistedGroup.message(),
                     r4:ERROR, r4:PROCESSING, httpStatusCode = http:STATUS_INTERNAL_SERVER_ERROR);
         }
+        if persistedGroup.id is () {
+            log:printError("Persisted MatchedMembers Group has no id");
+            return r4:createFHIRError("Persisted MatchedMembers Group has no id",
+                    r4:ERROR, r4:PROCESSING, httpStatusCode = http:STATUS_INTERNAL_SERVER_ERROR);
+        }
         matchedGroup = persistedGroup;
         log:printDebug("MatchedMembers Group persisted with id: " + (persistedGroup.id ?: "unknown"));
     }

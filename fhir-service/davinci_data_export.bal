@@ -32,6 +32,7 @@ isolated map<DaVinciExportJob> davinciExportJobStore = {};
 
 const int MAX_POLL_ATTEMPTS = 60;
 const decimal POLL_INTERVAL_SECONDS = 5.0d;
+const decimal EXPORT_JOB_TTL_SECONDS = 3600.0d;
 
 // ============================================================================
 // DefaultDaVinciDataExporter — implements davincipdex220:DaVinciDataExporter
@@ -47,6 +48,7 @@ public isolated class DefaultDaVinciDataExporter {
             returns davincipdex220:DataExportJob|r4:FHIRError {
 
         string jobId = uuid:createType1AsString();
+        evictExpiredDaVinciExportJobs();
         lock {
             davinciExportJobStore[jobId] = {
                 jobId: jobId,
@@ -181,7 +183,9 @@ isolated function processAndStoreDaVinciExport(
 
                 r4:FHIRError|http:Response|error exportRes =
                         invokePatientExport(patientId, patientQueryParams, fhirClient:GET);
-                if exportRes is http:Response {
+                if exportRes is r4:FHIRError {
+                    log:printError("Patient " + patientId + ": export kick-off FHIR error: " + exportRes.message());
+                } else if exportRes is http:Response {
                     string|error pollingUrl = exportRes.getHeader("content-location");
                     if pollingUrl is string {
                         patientPollingUrls[patientId] =
@@ -190,11 +194,29 @@ isolated function processAndStoreDaVinciExport(
                         log:printError("Patient " + patientId + ": missing Content-Location, status "
                                 + exportRes.statusCode.toString());
                     }
-                } else if exportRes is error {
-                    log:printError("Patient " + patientId + ": export kick-off failed: " + exportRes.message());
+                } else {
+                    log:printError("Patient " + patientId + ": export kick-off error: " + exportRes.message());
                 }
             }
         }
+    }
+
+    // Fail fast if no patient exports could be initiated
+    if patientPollingUrls.length() == 0 {
+        lock {
+            if davinciExportJobStore.hasKey(jobId) {
+                DaVinciExportJob current = davinciExportJobStore.get(jobId);
+                davinciExportJobStore[jobId] = {
+                    jobId: current.jobId,
+                    status: DAVINCI_EXPORT_FAILED,
+                    createdAt: current.createdAt,
+                    completedAt: time:utcNow(),
+                    result: (),
+                    errorMessage: "No patient exports could be initiated"
+                };
+            }
+        }
+        return;
     }
 
     // Phase B: poll each per-patient export until it completes and collect output file URLs
@@ -302,6 +324,26 @@ isolated function processAndStoreDaVinciExport(
                 result: result.cloneReadOnly(),
                 errorMessage: ()
             };
+        }
+    }
+}
+
+// ============================================================================
+// Job Store Eviction
+// ============================================================================
+
+isolated function evictExpiredDaVinciExportJobs() {
+    time:Utc now = time:utcNow();
+    lock {
+        string[] toRemove = [];
+        foreach string key in davinciExportJobStore.keys() {
+            DaVinciExportJob job = davinciExportJobStore.get(key);
+            if time:utcDiffSeconds(now, job.createdAt) > EXPORT_JOB_TTL_SECONDS {
+                toRemove.push(key);
+            }
+        }
+        foreach string key in toRemove {
+            _ = davinciExportJobStore.remove(key);
         }
     }
 }

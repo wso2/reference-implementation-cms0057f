@@ -30,6 +30,24 @@ import ballerinax/health.fhir.r4.uscore501;
 
 isolated map<BulkMemberMatchJob> bulkMatchJobStore = {};
 
+const decimal BULK_MATCH_JOB_TTL_SECONDS = 3600.0d;
+
+isolated function evictExpiredBulkMatchJobs() {
+    time:Utc now = time:utcNow();
+    lock {
+        string[] toRemove = [];
+        foreach string key in bulkMatchJobStore.keys() {
+            BulkMemberMatchJob job = bulkMatchJobStore.get(key);
+            if time:utcDiffSeconds(now, job.createdAt) > BULK_MATCH_JOB_TTL_SECONDS {
+                toRemove.push(key);
+            }
+        }
+        foreach string key in toRemove {
+            _ = bulkMatchJobStore.remove(key);
+        }
+    }
+}
+
 // ============================================================================
 // Core Processing
 // ============================================================================
@@ -380,22 +398,13 @@ isolated function processAndStoreBulkMemberMatch(
         }
     }
 
-    davincipdex220:BulkMemberMatchResult|r4:FHIRError matchResult =
-            bulkMemberMatcher.matchMembers({requestParameters: parameters});
+    davincipdex220:BulkMemberMatchResult|r4:FHIRError|error matchResult =
+            trap bulkMemberMatcher.matchMembers({requestParameters: parameters});
 
     lock {
         if bulkMatchJobStore.hasKey(jobId) {
             BulkMemberMatchJob current = bulkMatchJobStore.get(jobId);
-            if matchResult is r4:FHIRError {
-                bulkMatchJobStore[jobId] = {
-                    jobId: current.jobId,
-                    status: BULK_MATCH_FAILED,
-                    createdAt: current.createdAt,
-                    completedAt: time:utcNow(),
-                    result: (),
-                    errorMessage: matchResult.message()
-                };
-            } else {
+            if matchResult is davincipdex220:BulkMemberMatchResult {
                 bulkMatchJobStore[jobId] = {
                     jobId: current.jobId,
                     status: BULK_MATCH_COMPLETED,
@@ -403,6 +412,19 @@ isolated function processAndStoreBulkMemberMatch(
                     completedAt: time:utcNow(),
                     result: matchResult.responseParameters.cloneReadOnly(),
                     errorMessage: ()
+                };
+            } else {
+                string errMsg = matchResult is r4:FHIRError
+                        ? matchResult.message()
+                        : "Unexpected error: " + matchResult.message();
+                log:printError("Bulk member match job " + jobId + " failed: " + errMsg);
+                bulkMatchJobStore[jobId] = {
+                    jobId: current.jobId,
+                    status: BULK_MATCH_FAILED,
+                    createdAt: current.createdAt,
+                    completedAt: time:utcNow(),
+                    result: (),
+                    errorMessage: errMsg
                 };
             }
         }

@@ -1762,7 +1762,6 @@ service /fhir/r4/Group on new fhirr4:Listener(config = groupApiConfig) {
                         if consentContext.patientID != patientId {
                             // Skip patients not covered by the consent context
                             log:printDebug("Skipping patient " + patientId + ": does not match consent context patient id " + consentContext.patientID);
-                            exportUrls[patientId] = "Skipped: patient not authorized by consent context";
                             continue;
                         }
 
@@ -1770,7 +1769,6 @@ service /fhir/r4/Group on new fhirr4:Listener(config = groupApiConfig) {
                         if consentedResourceTypes.length() == 0 {
                             // Consent exists but specifies no allowed resource types; skip this patient.
                             log:printDebug("Consent context exists but no consented resource types specified for patient " + patientId + ". Skipping.");
-                            exportUrls[patientId] = "Skipped: no consented resource types specified in consent";
                             continue;
                         }
 
@@ -1778,7 +1776,6 @@ service /fhir/r4/Group on new fhirr4:Listener(config = groupApiConfig) {
                         string[] filteredResourceTypes = filterConsentedResourceTypes(patientQueryParameters, consentedResourceTypes);
                         if filteredResourceTypes.length() == 0 {
                             log:printDebug("No consented resource types available for patient " + patientId + ". Skipping.");
-                            exportUrls[patientId] = "Skipped: no consented resource types available for export";
                             continue;
                         }
 
@@ -1789,14 +1786,16 @@ service /fhir/r4/Group on new fhirr4:Listener(config = groupApiConfig) {
 
                     // Call the async export for patient
                     r4:FHIRError|http:Response|error exportRes = invokePatientExport(patientId, patientQueryParameters, fhirClient:GET);
-                    if exportRes is http:Response {
+                    if exportRes is r4:FHIRError {
+                        exportUrls[patientId] = "FHIR error: " + exportRes.message();
+                    } else if exportRes is http:Response {
                         string|error pollingUrl = exportRes.getHeader("content-location");
                         if pollingUrl is string {
                             exportUrls[patientId] = pollingUrl;
                         } else {
                             exportUrls[patientId] = "Failed to get Content-Location header: " + exportRes.statusCode.toString();
                         }
-                    } else if exportRes is error {
+                    } else {
                         exportUrls[patientId] = "Error executing export: " + exportRes.message();
                     }
                 }
@@ -1842,6 +1841,7 @@ service /fhir/r4/Group on new fhirr4:Listener(config = groupApiConfig) {
 
         if preferHeader == "respond-async" {
             string jobId = uuid:createType1AsString();
+            evictExpiredBulkMatchJobs();
             lock {
                 bulkMatchJobStore[jobId] = {
                     jobId: jobId,
@@ -1928,7 +1928,12 @@ service /fhir/r4/Group on new fhirr4:Listener(config = groupApiConfig) {
         if patientFilterParam !is () && patientFilterParam.length() > 0 {
             r4:Reference[] patientRefs = [];
             foreach string pf in patientFilterParam {
-                patientRefs.push({reference: pf.startsWith("Patient/") ? pf : "Patient/" + pf});
+                foreach string segment in re `,`.split(pf) {
+                    string trimmed = segment.trim();
+                    if trimmed.length() > 0 {
+                        patientRefs.push({reference: trimmed.startsWith("Patient/") ? trimmed : "Patient/" + trimmed});
+                    }
+                }
             }
             exportParams.patient = patientRefs;
         }

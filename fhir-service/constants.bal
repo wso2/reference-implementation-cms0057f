@@ -58,6 +58,51 @@ const string CONSENT_PROVISION_REQUIRED = "Consent provision section is required
 const string CONSENT_DUPLICATE_FOUND = "Duplicate active consent found for the same patient and policy";
 const string CONSENT_SCOPE_INVALID = "Consent scope must be for patient privacy";
 const string CONSENT_SCOPE_REQUIRED = "Consent scope is required";
+const string FHIR_TO_X12_API_RESOURCE = "/transform/fhir-to-x12/x12-278";
+
+// Sample X12 headers
+final readonly & json x12Header = {
+  "interchangeControlHeader": {
+    "code": "ISA",
+    "ISA01__AuthorizationInformationQualifier": "00",
+    "ISA02__AuthorizationInformation": "",
+    "ISA03__SecurityInformationQualifier": "00",
+    "ISA04__SecurityInformation": "",
+    "ISA05__InterchangeIDQualifier": "ZZ",
+    "ISA06__InterchangeSenderID": "SENDER",
+    "ISA07__InterchangeIDQualifier": "ZZ",
+    "ISA08__InterchangeReceiverID": "RECEIVER",
+    "ISA09__InterchangeDate": "230915",
+    "ISA10__InterchangeTime": "1230",
+    "ISA11__RepetitionSeparator": "^",
+    "ISA12__InterchangeControlVersionNumber": "00501",
+    "ISA13__InterchangeControlNumber": "000000001",
+    "ISA14__AcknowledgmentRequested": "0",
+    "ISA15__InterchangeUsageIndicator": "P",
+    "ISA16__ComponentElementSeparator": ":"
+  },
+  "functionalGroupHeader": {
+    "code": "GS",
+    "GS01__FunctionalIdentifierCode": "PO",
+    "GS02__ApplicationSendersCode": "SENDAPP",
+    "GS03__ApplicationReceiversCode": "RECVAPP",
+    "GS04__Date": "20230915",
+    "GS05__Time": "1230",
+    "GS06__GroupControlNumber": "1",
+    "GS07__ResponsibleAgencyCode": "X",
+    "GS08__VersionReleaseIndustryIdentifierCode": "005010"
+  },
+  "functionalGroupTrailer": {
+    "code": "GE",
+    "GE01__NumberofTransactionSetsIncluded": "1",
+    "GE02__GroupControlNumber": "1"
+  },
+  "interchangeControlTrailer": {
+    "code": "IEA",
+    "IEA01__NumberofIncludedFunctionalGroups": "1",
+    "IEA02__InterchangeControlNumber": "000000001"
+  }
+};
 const string CONSENT_PROVISION_TYPE_INVALID = "Consent provision type must be 'permit'";
 const string CONSENT_PROVISION_ACTION_INVALID = "Consent provision must include a 'disclose' action";
 

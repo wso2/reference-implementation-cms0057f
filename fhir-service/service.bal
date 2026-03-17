@@ -35,6 +35,7 @@ import ballerinax/health.fhir.r4.uscore501;
 configurable Configs configs = ?;
 configurable string exportServiceUrl = ?;
 configurable string sampleDataGithubUrl = ?;
+configurable X12ConnectionConfig x12ConnectionConfig = ?;
 configurable string serverBaseUrl = "http://localhost:8081";
 
 // Resource types permitted for export. Derived from the DaVinci PDex payer-to-payer spec:
@@ -53,6 +54,39 @@ isolated http:Client exportServiceClient = check new (exportServiceUrl);
 
 final fhirClient:FHIRConnector fhirConnector = check initFhirConnector();
 final http:Client fhirHttpClient = check new (baseUrl);
+isolated http:Client? x12ConnectionClient = ();
+
+isolated function init() returns error? {
+
+    if x12ConnectionConfig.enable {
+        lock {
+            string x12ServiceUrl = x12ConnectionConfig.url;
+            if x12ServiceUrl == "" {
+                return error("Missing X12 service URL in the configuration.");
+            }
+
+            if x12ConnectionConfig.authEnabled {
+                if x12ConnectionConfig.tokenUrl is () || x12ConnectionConfig.tokenUrl == "" {
+                    return error("Missing required field: tokenUrl for OAuth2 authentication.");
+                }
+                if x12ConnectionConfig.clientId is () || x12ConnectionConfig.clientId == "" {
+                    return error("Missing required field: clientId for OAuth2 authentication.");
+                }
+                if x12ConnectionConfig.clientSecret is () || x12ConnectionConfig.clientSecret == "" {
+                    return error("Missing required field: clientSecret for OAuth2 authentication.");
+                }
+                http:OAuth2ClientCredentialsGrantConfig config = {
+                    tokenUrl: x12ConnectionConfig.tokenUrl ?: "",
+                    clientId: x12ConnectionConfig.clientId ?: "",
+                    clientSecret: x12ConnectionConfig.clientSecret ?: ""
+                };
+                x12ConnectionClient = check new http:Client(x12ServiceUrl, auth = config);
+            } else {
+                x12ConnectionClient = check new http:Client(x12ServiceUrl);
+            }
+        }
+    }
+}
 
 // Pluggable PDex operation handlers — replace with custom implementations as needed
 final davincipdex220:BulkMemberMatcher bulkMemberMatcher = new DefaultBulkMemberMatcher();

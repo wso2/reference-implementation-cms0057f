@@ -8,6 +8,7 @@ export const CLAIM_REQUEST = "claimRequest";
 export const CLAIM_REQUEST_METHOD = "claimRequestMethod";
 export const CLAIM_REQUEST_URL = "claimRequestUrl";
 export const CLAIM_RESPONSE = "claimResponse";
+export const CLAIM_PAYER_NOTIFICATION = "claimPayerNotification";
 export const IS_PROCESS = "isProcess";
 export const LOGGEDIN_USER = "loggedUser";
 export const MEDICATION_REQUEST = "medicationRequest";

@@ -49,6 +49,7 @@ import { PatientHistoryPage } from "./pages/patient_history.tsx";
 import PriorAuthList from "./pages/prior_auth_list.tsx";
 import PriorAuthView from "./pages/prior_auth_view.tsx";
 import ProviderDataAccess from "./pages/provider_data_access.tsx";
+import DtrLaunchPage from "./pages/dtr_launch_page.tsx";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <Provider store={store}>
@@ -137,6 +138,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
                     path="prior-auth-list/:claimId"
                     element={<PriorAuthView />}
                   />
+                  <Route path="dtr-launch" element={<DtrLaunchPage />} />
                 </Route>
 
                 <Route path="settings" element={<div>Not Implemented</div>} />

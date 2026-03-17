@@ -15,6 +15,7 @@
 // under the License.
 
 import NavBar from "./nav_bar";
+import Sidebar from "./sidebar";
 import { DevPortalExpandButton } from "./cds_button";
 import { Navigate, Outlet } from "react-router-dom";
 import { useContext } from "react";
@@ -50,18 +51,23 @@ export const Layout = () => {
           display: "flex",
           flexDirection: "row",
           backgroundColor: "white",
+          flexGrow: 1,
         }}
       >
+        <Sidebar />
+
         <div
           style={{
-            width: expanded ? "50vw" : "100vw",
-            overflowY: "hidden",
+            flexGrow: 1,
+            width: expanded ? "calc(50vw - 80px)" : "calc(100vw - 80px)", // Dynamic depending on the Sidebar's actual width via layout properties
+            overflowY: "auto", // Allowing internal scrolling
             transition: "width 0.5s ease-in-out",
             height: "100%",
-            marginTop: "30px",
           }}
         >
-          <Outlet />
+          <div style={{ marginTop: "30px", height: "100%" }}>
+            <Outlet />
+          </div>
         </div>
 
         <div style={{ width: "1.5vw", marginLeft: "2vw" }}>

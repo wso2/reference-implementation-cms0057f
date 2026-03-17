@@ -170,7 +170,8 @@ public enum ResourceType {
     QUESTIONNAIRE_RESPONSE = "QuestionnaireResponse",
     EXPLANATION_OF_BENEFIT = "ExplanationOfBenefit",
     GROUP = "Group",
-    SERVICE_REQUEST = "ServiceRequest"
+    SERVICE_REQUEST = "ServiceRequest",
+    AUDIT_EVENT = "AuditEvent"
 }
 
 # Holds information for OAuth2 authentication.
@@ -614,3 +615,28 @@ public type SubscriptionStatusParameter record {
     string? valueCanonical?;
     SubscriptionStatusParameter[]? part?;
 };
+
+# X12 connection config, to connect to X12 serverice for translating X12 <--> FHIR.
+# 
+# + enable - whether to enable the X12 connection
+# + url - Base URL of the X12 service
+# + tokenUrl - token endpoint URL
+# + clientId - client ID
+# + clientSecret - client secret
+# + authEnabled - whether authentication is enabled for the X12 connection
+public type X12ConnectionConfig record {|
+    boolean enable = false;
+    string url;
+    string tokenUrl?;
+    string clientId?;
+    string clientSecret?;
+    boolean authEnabled = false;
+|};
+
+# Payload for FHIR to X12 service
+# + payload - The FHIR resource payload to be sent to the X12 service
+# + x12Headers - The headers to be included in the request to the X12 service
+public type FhirToX12ServicePayload record {|
+    json payload;
+    json x12Headers;
+|};

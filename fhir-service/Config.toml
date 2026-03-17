@@ -46,3 +46,8 @@ mode = "server"
 
 [ballerinax.health.fhir.r4.parser]
 validateAgainstProfile=false
+
+[x12ConnectionConfig]
+enable = false
+url = ""
+authEnabled = false

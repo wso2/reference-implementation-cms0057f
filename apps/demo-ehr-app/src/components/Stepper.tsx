@@ -33,10 +33,8 @@ import { useEffect } from "react";
 import {
   StepStatus,
   Steps,
-  updateSingleStep,
   updateStepsArray,
 } from "../redux/commonStoargeSlice";
-import axios from "axios";
 import {
   CDS_HOOK,
   CDS_REQUEST,
@@ -47,6 +45,7 @@ import {
   CLAIM_REQUEST_METHOD,
   CLAIM_REQUEST_URL,
   CLAIM_RESPONSE,
+  CLAIM_PAYER_NOTIFICATION,
   MEDICATION_REQUEST,
   MEDICATION_REQUEST_METHOD,
   MEDICATION_REQUEST_URL,
@@ -59,11 +58,8 @@ import {
   QUESTIONNAIRE_RESPONSE_METHOD,
   QUESTIONNAIRE_RESPONSE_REQUEST,
   QUESTIONNAIRE_RESPONSE_URL,
-  SELECTED_PATIENT_ID,
   STEPS,
-  TIMESTAMP,
 } from "../constants/localStorageVariables";
-import { HTTP_METHODS } from "../constants/enum";
 
 export default function HorizontalNonLinearStepper() {
   const dispatch = useDispatch();
@@ -71,86 +67,17 @@ export default function HorizontalNonLinearStepper() {
   useEffect(() => {
     const stepsString = localStorage.getItem(STEPS);
     if (stepsString) {
-      updateStepsArray(JSON.parse(stepsString));
+      const parsed = JSON.parse(stepsString);
+      if (parsed.length === 5) {
+        parsed.push({ name: "Payer notification", status: StepStatus.NOT_STARTED });
+      }
+      dispatch(updateStepsArray(parsed));
     }
-  }, []);
+  }, [dispatch]);
 
   const stepsArray: Steps[] = useSelector(
     (state: any) => state.commonStoarge.stepsArray
   );
-
-  const Config = window.Config;
-
-  const patientId = localStorage.getItem(SELECTED_PATIENT_ID);
-
-  const loadQuestionnaireResponse = () => {
-    const timestamp = localStorage.getItem(TIMESTAMP);
-    let url = Config.questionnaire_response + `?subject=Patient/${patientId}`;
-    if (timestamp) {
-      url += `&authored=ge${timestamp}`;
-    }
-    axios
-      .get(url)
-      .then(async (response) => {
-        if (response.data.entry.length > 0) {
-          const questionnaireResponse = response.data.entry[0].resource;
-          console.log(questionnaireResponse);
-          if (questionnaireResponse) {
-            localStorage.setItem(
-              QUESTIONNAIRE_RESPONSE,
-              JSON.stringify(questionnaireResponse)
-            );
-
-            const resource = questionnaireResponse;
-            delete resource.id;
-            delete resource.authored;
-            localStorage.setItem(
-              QUESTIONNAIRE_RESPONSE_REQUEST,
-              JSON.stringify(resource)
-            );
-
-            localStorage.setItem(
-              QUESTIONNAIRE_RESPONSE_METHOD,
-              HTTP_METHODS.POST
-            );
-            localStorage.setItem(
-              QUESTIONNAIRE_RESPONSE_URL,
-              Config.demoBaseUrl + Config.questionnaire_response
-            );
-            dispatch(
-              updateSingleStep({
-                stepName: "Questionnaire Response",
-                newStatus: StepStatus.COMPLETED,
-              })
-            );
-          }
-          return;
-        } else {
-          console.log("Else");
-          localStorage.setItem(
-            QUESTIONNAIRE_RESPONSE,
-            JSON.stringify({
-              message:
-                "Cannot find a request payload. Make sure you submit the Answers to the questions",
-            })
-          );
-          localStorage.setItem(
-            QUESTIONNAIRE_RESPONSE_REQUEST,
-            JSON.stringify({
-              message:
-                "Cannot find a request payload. Make sure you submit the Answers to the questions",
-            })
-          );
-
-          localStorage.setItem(QUESTIONNAIRE_RESPONSE_METHOD, "");
-          localStorage.setItem(QUESTIONNAIRE_RESPONSE_URL, "");
-          return;
-        }
-      })
-      .catch((error) => {
-        console.error("Error fetching questionnaire:", error);
-      });
-  };
 
   const handleStep = (step: number) => () => {
     switch (step) {
@@ -240,7 +167,6 @@ export default function HorizontalNonLinearStepper() {
         break;
       }
       case 3: {
-        loadQuestionnaireResponse();
         dispatch(resetCurrentRequest());
         dispatch(updateIsProcess(true));
 
@@ -295,6 +221,29 @@ export default function HorizontalNonLinearStepper() {
         dispatch(
           updateCurrentRequestMethod(localStorage.getItem(CLAIM_REQUEST_METHOD))
         );
+        break;
+      }
+      case 5: {
+        dispatch(resetCurrentRequest());
+        dispatch(updateIsProcess(true));
+
+        dispatch(
+          updateCurrentRequest({
+            "(no outbound request)": "Received from payer via webhook",
+          })
+        );
+
+        const payerNotificationString =
+          localStorage.getItem(CLAIM_PAYER_NOTIFICATION);
+        const payerNotification = payerNotificationString
+          ? JSON.parse(payerNotificationString)
+          : {};
+        dispatch(updateCurrentResponse(payerNotification));
+
+        dispatch(
+          updateCurrentRequestUrl("Payer notification (received via webhook)")
+        );
+        dispatch(updateCurrentRequestMethod("N/A"));
         break;
       }
       default: {

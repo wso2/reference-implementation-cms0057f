@@ -139,6 +139,31 @@ isolated function invokePatientSummary(string patientId, map<string[]> queryPara
     return response;
 }
 
+// Reusable helper for terminology (and other) operations - same pattern as invokePatientSummary.
+isolated function invokeOperation(ResourceType resourceType, string operationName, fhirClient:RequestMode requestMode,
+    string? id = (), map<string[]>? queryParameters = ()) returns r4:FHIRError|http:Response|error {
+    fhirClient:FHIRResponse|fhirClient:FHIRError opResponse =
+        fhirConnector->callOperation(resourceType, operationName, requestMode, id = id, queryParameters = queryParameters);
+
+    if opResponse is fhirClient:FHIRError {
+        int statusCode = http:STATUS_INTERNAL_SERVER_ERROR;
+        if opResponse is fhirClient:FHIRServerError {
+            statusCode = opResponse.detail().httpStatusCode;
+        }
+        return r4:createFHIRError(opResponse.message(), r4:ERROR, r4:PROCESSING, httpStatusCode = statusCode);
+    }
+
+    http:Response response = new;
+    response.statusCode = opResponse.httpStatusCode;
+    json|xml payload = opResponse.'resource;
+    if payload is json && payload != () {
+        response.setJsonPayload(payload);
+    } else if payload is xml {
+        response.setXmlPayload(payload);
+    }
+    return response;
+}
+
 // ######################################################################################################################
 // # Capability statement API                                                                                           #
 // ###################################################################################################################### 
@@ -1808,5 +1833,237 @@ service /fhir/r4/CommunicationRequest on new fhirr4:Listener(config = communicat
     // Retrieve the update history for all resources.
     isolated resource function get _history(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
         return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+}
+
+// ######################################################################################################################
+// # ValueSet API                                                                                                       #
+// ######################################################################################################################
+
+service /fhir/r4/ValueSet on new fhirr4:Listener(config = valuesetApiConfig) {
+
+    isolated resource function get \$expand(r4:FHIRContext fhirContext) returns r4:FHIRError|http:Response|error {
+        map<string[]> queryParams = getQueryParamsMap(fhirContext.getRequestSearchParameters());
+        return invokeOperation(VALUE_SET, "$expand", fhirClient:GET, queryParameters = queryParams);
+    }
+
+    isolated resource function post \$expand(r4:FHIRContext fhirContext, international401:Parameters parameters) returns r4:FHIRError|http:Response|error {
+        map<string[]> queryParams = getQueryParamsMap(fhirContext.getRequestSearchParameters());
+        return invokeOperation(VALUE_SET, "$expand", fhirClient:POST, queryParameters = queryParams);
+    }
+
+    isolated resource function get \$validate\-code(r4:FHIRContext fhirContext) returns r4:FHIRError|http:Response|error {
+        map<string[]> queryParams = getQueryParamsMap(fhirContext.getRequestSearchParameters());
+        return invokeOperation(VALUE_SET, "$validate-code", fhirClient:GET, queryParameters = queryParams);
+    }
+
+    isolated resource function post \$validate\-code(r4:FHIRContext fhirContext, international401:Parameters parameters) returns r4:FHIRError|http:Response|error {
+        map<string[]> queryParams = getQueryParamsMap(fhirContext.getRequestSearchParameters());
+        return invokeOperation(VALUE_SET, "$validate-code", fhirClient:POST, queryParameters = queryParams);
+    }
+
+    isolated resource function get [string id](r4:FHIRContext fhirContext) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return getById(fhirConnector, VALUE_SET, id);
+    }
+
+    isolated resource function get [string id]/_history/[string vid](r4:FHIRContext fhirContext) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    isolated resource function get .(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+        map<string[]> queryParamsMap = getQueryParamsMap(fhirContext.getRequestSearchParameters());
+        return search(fhirConnector, VALUE_SET, queryParamsMap, fhirContext);
+    }
+
+    isolated resource function post .(r4:FHIRContext fhirContext, r4:ValueSet valueSet) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return create(fhirConnector, VALUE_SET, valueSet.toJson());
+    }
+
+    isolated resource function put [string id](r4:FHIRContext fhirContext, r4:ValueSet valueSet) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    isolated resource function patch [string id](r4:FHIRContext fhirContext, json patch) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    isolated resource function delete [string id](r4:FHIRContext fhirContext) returns r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    isolated resource function get [string id]/_history(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    isolated resource function get _history(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    isolated resource function get [string id]/\$expand(r4:FHIRContext fhirContext) returns r4:FHIRError|http:Response|error {
+        map<string[]> queryParams = getQueryParamsMap(fhirContext.getRequestSearchParameters());
+        return invokeOperation(VALUE_SET, "$expand", fhirClient:GET, id = id, queryParameters = queryParams);
+    }
+
+    isolated resource function post [string id]/\$expand(r4:FHIRContext fhirContext, international401:Parameters parameters) returns r4:FHIRError|http:Response|error {
+        map<string[]> queryParams = getQueryParamsMap(fhirContext.getRequestSearchParameters());
+        return invokeOperation(VALUE_SET, "$expand", fhirClient:POST, id = id, queryParameters = queryParams);
+    }
+
+    isolated resource function get [string id]/\$validate\-code(r4:FHIRContext fhirContext) returns r4:FHIRError|http:Response|error {
+        map<string[]> queryParams = getQueryParamsMap(fhirContext.getRequestSearchParameters());
+        return invokeOperation(VALUE_SET, "$validate-code", fhirClient:GET, id = id, queryParameters = queryParams);
+    }
+
+    isolated resource function post [string id]/\$validate\-code(r4:FHIRContext fhirContext, international401:Parameters parameters) returns r4:FHIRError|http:Response|error {
+        map<string[]> queryParams = getQueryParamsMap(fhirContext.getRequestSearchParameters());
+        return invokeOperation(VALUE_SET, "$validate-code", fhirClient:POST, id = id, queryParameters = queryParams);
+    }
+}
+
+// ######################################################################################################################
+// # CodeSystem API                                                                                                     #
+// ######################################################################################################################
+
+service /fhir/r4/CodeSystem on new fhirr4:Listener(config = codesystemApiConfig) {
+
+    isolated resource function get \$lookup(r4:FHIRContext fhirContext) returns r4:FHIRError|http:Response|error {
+        map<string[]> queryParams = getQueryParamsMap(fhirContext.getRequestSearchParameters());
+        return invokeOperation(CODE_SYSTEM, "$lookup", fhirClient:GET, queryParameters = queryParams);
+    }
+
+    isolated resource function post \$lookup(r4:FHIRContext fhirContext, international401:Parameters parameters) returns r4:FHIRError|http:Response|error {
+        map<string[]> queryParams = getQueryParamsMap(fhirContext.getRequestSearchParameters());
+        return invokeOperation(CODE_SYSTEM, "$lookup", fhirClient:POST, queryParameters = queryParams);
+    }
+
+    isolated resource function get \$subsumes(r4:FHIRContext fhirContext) returns r4:FHIRError|http:Response|error {
+        map<string[]> queryParams = getQueryParamsMap(fhirContext.getRequestSearchParameters());
+        return invokeOperation(CODE_SYSTEM, "$subsumes", fhirClient:GET, queryParameters = queryParams);
+    }
+
+    isolated resource function post \$subsumes(r4:FHIRContext fhirContext, international401:Parameters parameters) returns r4:FHIRError|http:Response|error {
+        map<string[]> queryParams = getQueryParamsMap(fhirContext.getRequestSearchParameters());
+        return invokeOperation(CODE_SYSTEM, "$subsumes", fhirClient:POST, queryParameters = queryParams);
+    }
+
+    isolated resource function get [string id](r4:FHIRContext fhirContext) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return getById(fhirConnector, CODE_SYSTEM, id);
+    }
+
+    isolated resource function get [string id]/_history/[string vid](r4:FHIRContext fhirContext) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    isolated resource function get .(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+        map<string[]> queryParamsMap = getQueryParamsMap(fhirContext.getRequestSearchParameters());
+        return search(fhirConnector, CODE_SYSTEM, queryParamsMap, fhirContext);
+    }
+
+    isolated resource function post .(r4:FHIRContext fhirContext, r4:CodeSystem codeSystem) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return create(fhirConnector, CODE_SYSTEM, codeSystem.toJson());
+    }
+
+    isolated resource function put [string id](r4:FHIRContext fhirContext, r4:CodeSystem codeSystem) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    isolated resource function patch [string id](r4:FHIRContext fhirContext, json patch) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    isolated resource function delete [string id](r4:FHIRContext fhirContext) returns r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    isolated resource function get [string id]/_history(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    isolated resource function get _history(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    isolated resource function get [string id]/\$lookup(r4:FHIRContext fhirContext) returns r4:FHIRError|http:Response|error {
+        map<string[]> queryParams = getQueryParamsMap(fhirContext.getRequestSearchParameters());
+        return invokeOperation(CODE_SYSTEM, "$lookup", fhirClient:GET, id = id, queryParameters = queryParams);
+    }
+
+    isolated resource function post [string id]/\$lookup(r4:FHIRContext fhirContext, international401:Parameters parameters) returns r4:FHIRError|http:Response|error {
+        map<string[]> queryParams = getQueryParamsMap(fhirContext.getRequestSearchParameters());
+        return invokeOperation(CODE_SYSTEM, "$lookup", fhirClient:POST, id = id, queryParameters = queryParams);
+    }
+
+    isolated resource function get [string id]/\$subsumes(r4:FHIRContext fhirContext) returns r4:FHIRError|http:Response|error {
+        map<string[]> queryParams = getQueryParamsMap(fhirContext.getRequestSearchParameters());
+        return invokeOperation(CODE_SYSTEM, "$subsumes", fhirClient:GET, id = id, queryParameters = queryParams);
+    }
+
+    isolated resource function post [string id]/\$subsumes(r4:FHIRContext fhirContext, international401:Parameters parameters) returns r4:FHIRError|http:Response|error {
+        map<string[]> queryParams = getQueryParamsMap(fhirContext.getRequestSearchParameters());
+        return invokeOperation(CODE_SYSTEM, "$subsumes", fhirClient:POST, id = id, queryParameters = queryParams);
+    }
+}
+
+// ######################################################################################################################
+// # ConceptMap API                                                                                                      #
+// ######################################################################################################################
+
+service /fhir/r4/ConceptMap on new fhirr4:Listener(config = conceptmapApiConfig) {
+
+    isolated resource function get \$translate(r4:FHIRContext fhirContext) returns r4:FHIRError|http:Response|error {
+        map<string[]> queryParams = getQueryParamsMap(fhirContext.getRequestSearchParameters());
+        return invokeOperation(CONCEPT_MAP, "$translate", fhirClient:GET, queryParameters = queryParams);
+    }
+
+    isolated resource function post \$translate(r4:FHIRContext fhirContext, international401:Parameters parameters) returns r4:FHIRError|http:Response|error {
+        map<string[]> queryParams = getQueryParamsMap(fhirContext.getRequestSearchParameters());
+        return invokeOperation(CONCEPT_MAP, "$translate", fhirClient:POST, queryParameters = queryParams);
+    }
+
+    isolated resource function get [string id](r4:FHIRContext fhirContext) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return getById(fhirConnector, CONCEPT_MAP, id);
+    }
+
+    isolated resource function get [string id]/_history/[string vid](r4:FHIRContext fhirContext) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    isolated resource function get .(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+        map<string[]> queryParamsMap = getQueryParamsMap(fhirContext.getRequestSearchParameters());
+        return search(fhirConnector, CONCEPT_MAP, queryParamsMap, fhirContext);
+    }
+
+    isolated resource function post .(r4:FHIRContext fhirContext, r4:ConceptMap conceptMap) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return create(fhirConnector, CONCEPT_MAP, conceptMap.toJson());
+    }
+
+    isolated resource function put [string id](r4:FHIRContext fhirContext, r4:ConceptMap conceptMap) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    isolated resource function patch [string id](r4:FHIRContext fhirContext, json patch) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    isolated resource function delete [string id](r4:FHIRContext fhirContext) returns r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    isolated resource function get [string id]/_history(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    isolated resource function get _history(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    isolated resource function get [string id]/\$translate(r4:FHIRContext fhirContext) returns r4:FHIRError|http:Response|error {
+        map<string[]> queryParams = getQueryParamsMap(fhirContext.getRequestSearchParameters());
+        return invokeOperation(CONCEPT_MAP, "$translate", fhirClient:GET, id = id, queryParameters = queryParams);
+    }
+
+    isolated resource function post [string id]/\$translate(r4:FHIRContext fhirContext, international401:Parameters parameters) returns r4:FHIRError|http:Response|error {
+        map<string[]> queryParams = getQueryParamsMap(fhirContext.getRequestSearchParameters());
+        return invokeOperation(CONCEPT_MAP, "$translate", fhirClient:POST, id = id, queryParameters = queryParams);
     }
 }

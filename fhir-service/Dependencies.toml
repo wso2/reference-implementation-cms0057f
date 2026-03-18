@@ -21,6 +21,14 @@ dependencies = [
 
 [[package]]
 org = "ballerina"
+name = "avro"
+version = "1.2.1"
+dependencies = [
+	{org = "ballerina", name = "jballerina.java"}
+]
+
+[[package]]
+org = "ballerina"
 name = "cache"
 version = "3.10.0"
 dependencies = [
@@ -256,6 +264,20 @@ modules = [
 
 [[package]]
 org = "ballerina"
+name = "messaging"
+version = "1.0.0"
+dependencies = [
+	{org = "ballerina", name = "lang.runtime"},
+	{org = "ballerina", name = "log"},
+	{org = "ballerina", name = "task"},
+	{org = "ballerina", name = "uuid"}
+]
+modules = [
+	{org = "ballerina", packageName = "messaging", moduleName = "messaging"}
+]
+
+[[package]]
+org = "ballerina"
 name = "mime"
 version = "2.12.1"
 dependencies = [
@@ -351,6 +373,25 @@ dependencies = [
 ]
 modules = [
 	{org = "ballerinai", packageName = "observe", moduleName = "observe"}
+]
+
+[[package]]
+org = "ballerinax"
+name = "confluent.cavroserdes"
+version = "1.0.2"
+dependencies = [
+	{org = "ballerina", name = "avro"},
+	{org = "ballerina", name = "jballerina.java"},
+	{org = "ballerinai", name = "observe"},
+	{org = "ballerinax", name = "confluent.cregistry"}
+]
+
+[[package]]
+org = "ballerinax"
+name = "confluent.cregistry"
+version = "0.4.3"
+dependencies = [
+	{org = "ballerina", name = "jballerina.java"}
 ]
 
 [[package]]
@@ -582,6 +623,23 @@ modules = [
 ]
 
 [[package]]
+org = "ballerinax"
+name = "kafka"
+version = "4.6.4"
+dependencies = [
+	{org = "ballerina", name = "crypto"},
+	{org = "ballerina", name = "jballerina.java"},
+	{org = "ballerina", name = "time"},
+	{org = "ballerina", name = "uuid"},
+	{org = "ballerinai", name = "observe"},
+	{org = "ballerinax", name = "confluent.cavroserdes"},
+	{org = "ballerinax", name = "confluent.cregistry"}
+]
+modules = [
+	{org = "ballerinax", packageName = "kafka", moduleName = "kafka"}
+]
+
+[[package]]
 org = "wso2"
 name = "fhir.service"
 version = "1.0.0"
@@ -589,6 +647,7 @@ dependencies = [
 	{org = "ballerina", name = "http"},
 	{org = "ballerina", name = "io"},
 	{org = "ballerina", name = "log"},
+	{org = "ballerina", name = "messaging"},
 	{org = "ballerina", name = "time"},
 	{org = "ballerina", name = "url"},
 	{org = "ballerina", name = "uuid"},
@@ -603,9 +662,27 @@ dependencies = [
 	{org = "ballerinax", name = "health.fhir.r4.parser"},
 	{org = "ballerinax", name = "health.fhir.r4.uscore501"},
 	{org = "ballerinax", name = "health.fhir.r4.validator"},
-	{org = "ballerinax", name = "health.fhirr4"}
+	{org = "ballerinax", name = "health.fhirr4"},
+	{org = "ballerinax", name = "kafka"},
+	{org = "xlibb", name = "pipeline"}
 ]
 modules = [
 	{org = "wso2", packageName = "fhir.service", moduleName = "fhir.service"}
+]
+
+[[package]]
+org = "xlibb"
+name = "pipeline"
+version = "1.0.0"
+dependencies = [
+	{org = "ballerina", name = "io"},
+	{org = "ballerina", name = "jballerina.java"},
+	{org = "ballerina", name = "lang.runtime"},
+	{org = "ballerina", name = "log"},
+	{org = "ballerina", name = "messaging"},
+	{org = "ballerina", name = "uuid"}
+]
+modules = [
+	{org = "xlibb", packageName = "pipeline", moduleName = "pipeline"}
 ]
 

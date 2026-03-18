@@ -7,6 +7,18 @@ sampleDataGithubUrl = "http://localhost:9091/data"
 
 baseUrl = "http://localhost:9090/fhir/r4"
 
+[wso2.fhir.service]
+# Kafka configuration used by the PAS notification replay pipeline.
+# Update these according to your Kafka deployment.
+kafkaServer = "localhost:9092"
+notificationFailureTopic = "pas-notification-failure-store"
+notificationDeadLetterTopic = "pas-notification-dead-letter-store"
+notificationReplayTopic = "pas-notification-replay-store"
+notificationStoreConsumerGroup = "pas-notification-store"
+notificationReplayMaxRetries = 3
+notificationReplayRetryInterval = 2
+notificationReplayEnabled = false
+
 [ballerina.http]
 defaultListenerPort = 8080
 

@@ -50,8 +50,11 @@ function queryPARequests(
     sql:ParameterizedQuery whereClause = ` WHERE 1=1`;
 
     if search is string && search.trim().length() > 0 {
-        string searchPattern = "%" + search + "%";
-        whereClause = sql:queryConcat(whereClause, ` AND (patient_id LIKE ${searchPattern} OR request_id LIKE ${searchPattern})`);
+        string escaped = re`\\`.replaceAll(search, "\\\\");
+        escaped = re`%`.replaceAll(escaped, "\\%");
+        escaped = re`_`.replaceAll(escaped, "\\_");
+        string searchPattern = "%" + escaped + "%";
+        whereClause = sql:queryConcat(whereClause, ` AND (patient_id LIKE ${searchPattern} ESCAPE '\\' OR request_id LIKE ${searchPattern} ESCAPE '\\')`);
     }
 
     PARequestUrgency[] effectiveUrgency = (urgency is PARequestUrgency[] && urgency.length() > 0)
@@ -273,9 +276,10 @@ public function getPARequestDetail(string responseId) returns PARequestDetail|er
 #
 # + code - The code to look up
 # + valueSetUrl - Canonical URL of the ValueSet to validate against
+# + valuesetID - The ID of the ValueSet (used in the API path)
 # + return - Display string from the ValueSet, or () if not found / lookup fails
-function lookupValueSetDisplay(string code, string valueSetUrl) returns string? {
-    string path = string `/ValueSet/${PAS_ATTACHMENT_CODE_ID}/$validate-code?url=${valueSetUrl}&code=${code}&system=http://loinc.org`;
+function lookupValueSetDisplay(string code, string valueSetUrl, string valuesetID) returns string? {
+    string path = string `/ValueSet/${valuesetID}/$validate-code?url=${valueSetUrl}&code=${code}&system=http://loinc.org`;
     json|http:ClientError result = fhirHttpClient->get(path);
     if result is map<json> {
         json params = result["parameter"];
@@ -324,7 +328,7 @@ function parseCommunicationRequest(json commReqJson) returns CommunicationReques
             if code is string {
                 requestedItems.push({
                     code: code,
-                    display: lookupValueSetDisplay(code, PAS_ATTACHMENT_CODES_VALUESET_URL)
+                    display: lookupValueSetDisplay(code, PAS_ATTACHMENT_CODES_VALUESET_URL, PAS_ATTACHMENT_CODE_ID)
                 });
             }
         }
@@ -340,7 +344,7 @@ function parseCommunicationRequest(json commReqJson) returns CommunicationReques
                 r4:Coding[] codings = <r4:Coding[]>first.coding;
                 if codings.length() > 0 && codings[0].code is string {
                     string actCode = <string>codings[0].code;
-                    reasonCode = lookupValueSetDisplay(actCode, PAS_ACT_REASON_VALUESET_URL)
+                    reasonCode = lookupValueSetDisplay(actCode, PAS_ACT_REASON_VALUESET_URL, PAS_ACT_REASON_CODE_ID)
                         ?: first.text
                         ?: actCode;
                 }

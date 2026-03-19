@@ -23,6 +23,7 @@ const string PAS_ATTACHMENT_CODE_ID = "pas-loinc-attachment-codes";
 
 # ValueSet URL for act reason codes (used in CommunicationRequest.reasonCode)
 const string PAS_ACT_REASON_VALUESET_URL = "http://terminology.hl7.org/ValueSet/v3-ActReason";
+const string PAS_ACT_REASON_CODE_ID = "v3-ActReason";
 
 # Database configuration.
 #

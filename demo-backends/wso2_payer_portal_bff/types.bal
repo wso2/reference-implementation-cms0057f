@@ -17,6 +17,13 @@
 import ballerina/constraint;
 import ballerinax/health.fhir.r4;
 
+# ValueSet URL for PAS LOINC attachment/document request codes
+const string PAS_ATTACHMENT_CODES_VALUESET_URL = "http://hl7.org/fhir/us/davinci-pas/ValueSet/pas-loinc-attachment-codes";
+const string PAS_ATTACHMENT_CODE_ID = "pas-loinc-attachment-codes";
+
+# ValueSet URL for act reason codes (used in CommunicationRequest.reasonCode)
+const string PAS_ACT_REASON_VALUESET_URL = "http://terminology.hl7.org/ValueSet/v3-ActReason";
+
 # Database configuration.
 #
 # + host - Database host
@@ -128,6 +135,15 @@ public type PARequestListItem record {
     string dateSubmitted; // PAS Claim.created
 };
 
+type PARequestDBRow record {|
+    string request_id;
+    string? response_id;
+    string priority; // MySQL ENUM is returned as CHAR; cast to PARequestUrgency at the call site
+    string patient_id;
+    string? practitioner_id;
+    string? provider_name;
+    string? date_submitted;
+|};
 
 # This is the analytics data related to PAS Claims from postgresql database
 #
@@ -153,26 +169,53 @@ type QuestionnaireResponseItem record {
     AIAnalysis analysis;
 };
 
+# A single additional information item with its code and human-readable display
+#
+# + code - Code from the PAS documentation ValueSet (stored as payload.contentString)
+# + display - Human-readable display name resolved from the FHIR ValueSet
+public type AdditionalInfoItem record {
+    string code;
+    string? display;
+};
+
+# Communication Request Item - Summarised view of a FHIR CommunicationRequest
+#
+# + id - CommunicationRequest resource ID
+# + status - Current status of the communication request
+# + priority - Urgency of the communication request
+# + requestedItems - Information items with codes and display names resolved from ValueSet
+# + reasonCode - Human-readable reason for the request
+# + requestedDate - Date/time the request was made
+public type CommunicationRequestItem record {
+    string id;
+    CommunicationRequestStatus status;
+    PARequestPriority priority;
+    AdditionalInfoItem[] requestedItems;
+    string? reasonCode;
+    string? requestedDate;
+};
+
 # PA Request Detail - Complete information for a specific PA request
 #
-# + id - field description  
+# + id - field description
 # + responseId - field description
-# + status - field description  
-# + use - field description  
-# + created - field description  
-# + targetDate - field description  
+# + status - field description
+# + use - field description
+# + created - field description
+# + targetDate - field description
 # + admissionDate - field description
 # + dischargeDate - field description
 # + questionnaires - field description
 # + attachments - field description
-# + priority - field description  
-# + summary - field description  
-# + patient - field description  
-# + provider - field description  
-# + items - field description  
-# + coverage - field description  
-# + total - field description  
+# + priority - field description
+# + summary - field description
+# + patient - field description
+# + provider - field description
+# + items - field description
+# + coverage - field description
+# + total - field description
 # + processNotes - field description
+# + communicationRequests - field description
 public type PARequestDetail record {
     string id;
     string responseId;
@@ -192,6 +235,7 @@ public type PARequestDetail record {
     CoverageInformation[]? coverage;
     ClaimTotals total;
     ProcessNote[]? processNotes;
+    CommunicationRequestItem[]? communicationRequests;
 };
 
 # Request Summary

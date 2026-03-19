@@ -17,7 +17,7 @@
 import ballerina/log;
 import ballerina/http;
 import ballerina/time;
-import ballerina/url;
+import ballerina/sql;
 import ballerinax/health.fhir.r4;
 import ballerinax/health.fhir.r4.ips;
 import ballerinax/health.fhir.r4.parser;
@@ -31,7 +31,7 @@ import ballerina/uuid;
 
 const string CLAIM_RESPONSE = "/ClaimResponse";
 
-# Query PA requests from FHIR Claim and ClaimResponse resources
+# Query PA requests from the pa_requests database table
 #
 # + page - Page number (1-indexed)
 # + pageSize - Number of items per page
@@ -47,297 +47,99 @@ function queryPARequests(
     PARequestProcessingStatus[]? status
 ) returns [PARequestListItem[], int]|error {
 
-    // Construct outcome parameter based on status filter
-    string outcomeParam = "";
-    if status is PARequestProcessingStatus[] {
-        string[] outcomeValues = [];
+    sql:ParameterizedQuery whereClause = ` WHERE 1=1`;
+
+    if search is string && search.trim().length() > 0 {
+        string searchPattern = "%" + search + "%";
+        whereClause = sql:queryConcat(whereClause, ` AND (patient_id LIKE ${searchPattern} OR request_id LIKE ${searchPattern})`);
+    }
+
+    PARequestUrgency[] effectiveUrgency = (urgency is PARequestUrgency[] && urgency.length() > 0)
+        ? urgency
+        : ["Urgent", "Standard", "Deferred"];
+    sql:ParameterizedQuery urgencyInClause = ` AND priority IN (`;
+    foreach int i in 0 ..< effectiveUrgency.length() {
+        if i > 0 {
+            urgencyInClause = sql:queryConcat(urgencyInClause, `, `);
+        }
+        urgencyInClause = sql:queryConcat(urgencyInClause, `${effectiveUrgency[i]}`);
+    }
+    urgencyInClause = sql:queryConcat(urgencyInClause, `)`);
+    whereClause = sql:queryConcat(whereClause, urgencyInClause);
+
+    if status is PARequestProcessingStatus[] && status.length() > 0 {
+        string[] dbStatuses = [];
         foreach PARequestProcessingStatus s in status {
             if s == "Pending" {
-                // outcomeValues.push("queued"); TODO: Add later after the support is added in the FHIR server
-                outcomeValues.push("partial");
+                dbStatuses.push("PENDING_ON_PROVIDER");
+                dbStatuses.push("PENDING_ON_PAYER");
+                dbStatuses.push("QUEUED");
             } else if s == "Completed" {
-                outcomeValues.push("complete");
+                dbStatuses.push("COMPLETED");
             } else if s == "Error" {
-                outcomeValues.push("error");
+                dbStatuses.push("ERROR");
             }
         }
-        if (outcomeValues.length() > 0) {
-            outcomeParam = "outcome=" + string:'join(",", ...outcomeValues);
+        if dbStatuses.length() > 0 {
+            sql:ParameterizedQuery statusInClause = ` AND status IN (`;
+            foreach int i in 0 ..< dbStatuses.length() {
+                if i > 0 {
+                    statusInClause = sql:queryConcat(statusInClause, `, `);
+                }
+                statusInClause = sql:queryConcat(statusInClause, `${dbStatuses[i]}`);
+            }
+            statusInClause = sql:queryConcat(statusInClause, `)`);
+            whereClause = sql:queryConcat(whereClause, statusInClause);
         }
     }
 
-    // Build query parameters list to avoid malformed URLs
-    string[] queryParams = [];
-    
-    // Add outcome parameter if present
-    if outcomeParam.length() > 0 {
-        queryParams.push(outcomeParam);
-    }
-    
-    // Add pagination parameters
-    queryParams.push(string `_count=${pageSize.toString()}`);
-    queryParams.push(string `page=${page.toString()}`);
-    
-    // Add patient search parameter if present (URL-encoded)
-    if search is string && search.trim().length() > 0 {
-        string encodedSearch = check url:encode(search, "UTF-8");
-        queryParams.push(string `patient=${encodedSearch}`);
-    }
-    
-    // Construct the final URL with properly formatted query string
-    string claimResponseSearchPath = CLAIM_RESPONSE + "?" + string:'join("&", ...queryParams);
+    record {| int count; |} countResult = check dbClient->queryRow(
+        sql:queryConcat(`SELECT COUNT(*) AS count FROM pa_requests`, whereClause)
+    );
 
-    r4:Bundle claimResponseBundle = check fhirHttpClient->get(claimResponseSearchPath);
+    sql:ParameterizedQuery dataQuery = sql:queryConcat(
+        `SELECT request_id, response_id, priority, patient_id, practitioner_id, provider_name, date_submitted FROM pa_requests`,
+        whereClause,
+        ` ORDER BY date_submitted DESC LIMIT ${pageSize} OFFSET ${(page - 1) * pageSize}`
+    );
 
-    // Extract total count from bundle
-    int totalCount = 0;
-    json|error totalJson = claimResponseBundle.total;
-    if totalJson is int {
-        totalCount = totalJson;
-    }
+    stream<PARequestDBRow, sql:Error?> dataStream = dbClient->query(dataQuery, PARequestDBRow);
+    PARequestDBRow[] rows = check from PARequestDBRow row in dataStream select row;
 
-    // Process each of the ClaimResponse entries to get the corresponding Claim and build PARequestListItem
     PARequestListItem[] paRequests = [];
-
-    // Process entries from the bundle
-    r4:BundleEntry[]? entries = claimResponseBundle.entry;
-    if entries is r4:BundleEntry[] {
-        foreach r4:BundleEntry entry in entries {
-            json resourceJson = <json>entry?.'resource;
-            // Extract the request reference from ClaimResponse
-            json|error requestRef = resourceJson.request;
-            json|error responseIdJson = resourceJson.id;
-            string responseId = responseIdJson is error ? "unknown" : <string>responseIdJson;
-            if requestRef is json {
-                json|error refString = requestRef.reference;
-                if refString is string {
-                    // Fetch the actual Claim resource
-                    json|http:ClientError claimResource = fhirHttpClient->get("/" + refString);
-                    if claimResource is json {
-                        // Parse Claim to PARequestListItem
-                        PARequestListItem|error paRequest = parseClaimToPARequestListItem(claimResource, responseId);
-                        if paRequest is PARequestListItem {
-                            // Apply urgency filter if provided
-                            boolean includeItem = true;
-                            if urgency is PARequestUrgency[] {
-                                includeItem = false;
-                                foreach PARequestUrgency urg in urgency {
-                                    if paRequest.urgency == urg {
-                                        includeItem = true;
-                                        break;
-                                    }
-                                }
-                            }
-                            if includeItem {
-                                paRequests.push(paRequest);
-                            }
-                        } else {
-                            log:printWarn("Failed to parse Claim to PARequestListItem: " + paRequest.message());
-                        }
-                    } else {
-                        log:printWarn("Failed to fetch Claim resource: " + claimResource.message());
-                    }
-                }
-            }
-        }
+    foreach PARequestDBRow row in rows {
+        paRequests.push({
+            requestId: row.request_id,
+            responseId: row.response_id ?: "",
+            urgency: <PARequestUrgency>row.priority,
+            patientId: row.patient_id,
+            practitionerId: row.practitioner_id,
+            provider: row.provider_name ?: "Unknown Provider",
+            dateSubmitted: row.date_submitted ?: ""
+        });
     }
-    
-    return [paRequests, totalCount];
+
+    return [paRequests, countResult.count];
 }
 
-# Parse FHIR Claim resource to PARequestListItem
-#
-# + claimResource - FHIR Claim resource as JSON
-# + responseId - FHIR Claim response ID
-# + return - PARequestListItem or error
-function parseClaimToPARequestListItem(json claimResource, string responseId) returns PARequestListItem|error {
-    // Extract Claim ID
-    string requestId = let var idVal = claimResource.id in idVal is string ? idVal : "";
-    
-    // Extract and map priority to urgency
-    string priorityStr = let var prioVal = claimResource.priority in prioVal is json ? 
-                         (let var coding = prioVal.coding in coding is json[] && coding.length() > 0 ?
-                          (let var code = coding[0].code in code is string ? code : "normal") : "normal") : "normal";
-    
-    PARequestUrgency urgency = mapPriorityToUrgency(priorityStr);
-    
-    // Extract patient reference
-    string patientId = "";
-    json|error patientJson = claimResource.patient;
-    if patientJson is json {
-        json|error refJson = patientJson.reference;
-        if refJson is string {
-            // Extract ID from reference like "Patient/123"
-            string:RegExp regex = re `/`;
-            string[] parts = regex.split(refJson);
-            if parts.length() > 1 {
-                patientId = parts[parts.length() - 1];
-            }
-        }
-    }
-    
-    // Extract practitioner from careTeam
-    string? practitionerId = ();
-    json|error careTeamJson = claimResource.careTeam;
-    if careTeamJson is json[] {
-        foreach json member in careTeamJson {
-            json|error providerJson = member.provider;
-            if providerJson is json {
-                json|error refJson = providerJson.reference;
-                if refJson is string && refJson.includes("Practitioner") {
-                    string:RegExp regex = re `/`;
-                    string[] parts = regex.split(refJson);
-                    if parts.length() > 1 {
-                        practitionerId = parts[parts.length() - 1];
-                    }
-                    break;
-                }
-            }
-        }
-    }
-    
-    // Extract provider name from provider or insurer reference
-    string provider = "Unknown Provider";
-    json|error providerJson = claimResource.provider;
-    if providerJson is json {
-        json|error displayJson = providerJson.display;
-        if (displayJson is string) {
-            provider = displayJson;
-        }
-    } else {
-        // Try insurer if provider not found
-        json|error insurerJson = claimResource.insurer;
-        if insurerJson is json {
-            json|error displayJson = insurerJson.display;
-            if (displayJson is string) {
-                provider = displayJson;
-            }
-        }
-    }
-    
-    // Extract created date
-    string dateSubmitted = let var createdVal = claimResource.created in createdVal is string ? createdVal : "";
-    
-    return {
-        requestId: requestId,
-        responseId: responseId,
-        urgency: urgency,
-        patientId: patientId,
-        practitionerId: practitionerId,
-        provider: provider,
-        dateSubmitted: dateSubmitted
-    };
-}
-
-# Map FHIR priority code to PARequestUrgency
-#
-# + priorityCode - FHIR priority code (stat, normal, deferred)
-# + return - PARequestUrgency
-function mapPriorityToUrgency(string priorityCode) returns PARequestUrgency {
-    match priorityCode.toLowerAscii() {
-        "stat" => {
-            return "Urgent";
-        }
-        "deferred" => {
-            return "Deferred";
-        }
-        _ => {
-            return "Standard"; // Default to Standard for "normal" or unknown
-        }
-    }
-}
-
-# Map FHIR ClaimResponse outcome to PARequestProcessingStatus
-#
-# + outcome - FHIR ClaimResponse outcome (queued, complete, error, partial)
-# + return - PARequestProcessingStatus
-function mapOutcomeToStatus(string outcome) returns PARequestProcessingStatus {
-    match outcome.toLowerAscii() {
-        "queued" => {
-            return "Pending";
-        }
-        "complete" => {
-            // Note: In real scenario, would need to check disposition to determine Approved vs Denied
-            // For now, defaulting to Completed for complete
-            return "Completed";
-        }
-        "error" => {
-            return "Error";
-        }
-        "partial" => {
-            return "Pending";
-        }
-        _ => {
-            return "Pending";
-        }
-    }
-}
-
-# Get PA request analytics from PostgreSQL database
+# Get PA request analytics from the pa_requests database table
 #
 # + return - PARequestAnalytics or error
 function getPARequestAnalytics() returns PARequestAnalytics|error {
-    // Query analytics counts from the pa_request_analytics table
-    PARequestAnalytics analytics = {
-        urgentCount: 0,
-        standardCount: 0,
-        reAuthorizationCount: 0,
-        appealCount: 0
+    record {| int urgentCount; int standardCount; int reAuthorizationCount; int appealCount; |} result = check dbClient->queryRow(
+        `SELECT
+            COUNT(IF(priority = 'Urgent', 1, NULL)) AS urgentCount,
+            COUNT(IF(priority = 'Standard', 1, NULL)) AS standardCount,
+            COUNT(IF(priority = 'Deferred', 1, NULL)) AS reAuthorizationCount,
+            COUNT(IF(is_appeal = TRUE, 1, NULL)) AS appealCount
+        FROM pa_requests`
+    );
+    return {
+        urgentCount: result.urgentCount,
+        standardCount: result.standardCount,
+        reAuthorizationCount: result.reAuthorizationCount,
+        appealCount: result.appealCount
     };
-    
-    // Query for urgent count
-    record {| int count; |}|error urgentResult = dbClient->queryRow(
-        `SELECT count FROM pa_request_analytics WHERE urgency_type = 'Urgent'`
-    );
-    if urgentResult is record {| int count; |} {
-        analytics.urgentCount = urgentResult.count;
-    }
-    
-    // Query for standard count
-    record {| int count; |}|error standardResult = dbClient->queryRow(
-        `SELECT count FROM pa_request_analytics WHERE urgency_type = 'Standard'`
-    );
-    if standardResult is record {| int count; |} {
-        analytics.standardCount = standardResult.count;
-    }
-    
-    // Query for re-authorization count
-    record {| int count; |}|error reAuthResult = dbClient->queryRow(
-        `SELECT count FROM pa_request_analytics WHERE urgency_type = 'Re-authorization'`
-    );
-    if reAuthResult is record {| int count; |} {
-        analytics.reAuthorizationCount = reAuthResult.count;
-    }
-    
-    // Query for appeal count
-    record {| int count; |}|error appealResult = dbClient->queryRow(
-        `SELECT count FROM pa_request_analytics WHERE urgency_type = 'Appeal'`
-    );
-    if appealResult is record {| int count; |} {
-        analytics.appealCount = appealResult.count;
-    }
-    
-    return analytics;
-}
-
-# Increment PA request analytics count
-#
-# + urgencyType - The urgency type to increment (Urgent, Standard, Deferred, Re-authorization, Appeal)
-# + return - Error if operation fails
-function incrementPARequestCount(string urgencyType) returns error? {
-    _ = check dbClient->execute(
-        `UPDATE pa_request_analytics SET count = count + 1 WHERE urgency_type = ${urgencyType}`
-    );
-}
-
-# Decrement PA request analytics count
-#
-# + urgencyType - The urgency type to decrement (Urgent, Standard, Deferred, Re-authorization, Appeal)
-# + return - Error if operation fails
-function decrementPARequestCount(string urgencyType) returns error? {
-    _ = check dbClient->execute(
-        `UPDATE pa_request_analytics SET count = GREATEST(count - 1, 0) WHERE urgency_type = ${urgencyType}`
-    );
 }
 
 // ============================================
@@ -349,34 +151,34 @@ function decrementPARequestCount(string urgencyType) returns error? {
 # + responseId - The ClaimResponse ID (if available) to get processing status and notes
 # + return - PARequestDetail or error
 public function getPARequestDetail(string responseId) returns PARequestDetail|error {
-    // 1. Get the ClaimResponse if it exists - DONE
+    // 1. Fetch pre-computed fields from DB using response_id
+    PARequestDBRow dbRow = check dbClient->queryRow(
+        `SELECT request_id, response_id, priority, patient_id, practitioner_id, provider_name, date_submitted
+        FROM pa_requests WHERE response_id = ${responseId}`,
+        PARequestDBRow
+    );
+    string requestId = dbRow.request_id;
+    PARequestUrgency priority = <PARequestUrgency>dbRow.priority;
+    string patientId = dbRow.patient_id;
+    string created = dbRow.date_submitted ?: "";
+
+    // 2. Fetch ClaimResponse (needed for adjudication, process notes, totals, and outcome status)
     international401:ClaimResponse claimResponse = check getClaimResponse(responseId, limited = false);
 
-    // 2. Get the PAS Claim - DONE
-    r4:Reference? requestRef = claimResponse.request;
-    if requestRef is () {
-        return error("ClaimResponse does not have a request reference");
-    }
-    json claim = check fhirHttpClient->get("/"+<string>requestRef.reference);
-    international401:Claim pasClaim = <international401:Claim> check parser:parse(claim);
-    
-    // 3. Extract patient ID from claim - DONE
-    string patientId = "";
-    string patientRef = <string>pasClaim.patient.reference;
-    string:RegExp regex = re `/`;
-    string[] parts = regex.split(patientRef);
-    patientId = parts[parts.length() - 1];
-    
-    // 4. Get IPS summary for patient - DONE
+    // 3. Fetch Claim directly using request_id from DB (no need to parse ClaimResponse.request)
+    json claim = check fhirHttpClient->get("/Claim/" + requestId);
+    international401:Claim pasClaim = <international401:Claim> check parser:parse(claim, international401:Claim);
+
+    // 4. Get IPS summary using patient_id from DB (no need to parse Claim.patient.reference)
     PatientInformation patientInfo = check getPatientIPSSummary(patientId);
-    
-    // 5. Extract practitioner/provider info - DONE
+
+    // 5. Extract provider information from Claim
     ProviderInformation providerInfo = check getProviderInformation(pasClaim.provider);
-    
-    // 6. Parse claim items with adjudication data from ClaimResponse - DONE
+
+    // 6. Parse claim items with adjudication data from ClaimResponse
     ClaimItem[] items = check parseClaimItems(<international401:ClaimItem[]>pasClaim.item, claimResponse);
 
-    // 7. Get the supporting information - DONE
+    // 7. Get the supporting information
     [string?, string?, string?, json[]?, json[]?] supportingInfo = check extractSupportingInformation(pasClaim.supportingInfo);
     string? admissionDate = supportingInfo[0];
     string? dischargeDate = supportingInfo[1];
@@ -384,8 +186,7 @@ public function getPARequestDetail(string responseId) returns PARequestDetail|er
     json[]? questionnairesJson = supportingInfo[3];
     json[]? attachmentsJson = supportingInfo[4];
 
-    QuestionnaireResponseItem [] questionnaireItems = [];
-    // 8. Add AI analysis to questionnaires - TODO
+    QuestionnaireResponseItem[] questionnaireItems = [];
     if questionnairesJson != () {
         foreach json questionnaire in questionnairesJson {
             QuestionnaireResponseItem item = {
@@ -395,55 +196,61 @@ public function getPARequestDetail(string responseId) returns PARequestDetail|er
             questionnaireItems.push(item);
         }
     }
-    
-    // 9. Build PARequestDetail - DONE
-    string claimId = <string>pasClaim.id;
+
+    // 8. Build PARequestDetail using priority and dates from DB
     string status = claimResponse.outcome;
-    string created = pasClaim.created;
-    string use = "preauthorization";
-    
-    // Extract priority - DONE
-    string priorityCode = <string>(<r4:Coding[]>(pasClaim.priority.coding))[0].code;
     string? targetDate = ();
-    PARequestUrgency priority = "Standard";
-    if priorityCode == "stat" {
-        priority = "Urgent";
-        // Have to do in 3 days
+    if priority == "Urgent" {
         targetDate = check AddDurationToDate(created, "3");
-    } else if priorityCode == "deferred" {
-        priority = "Deferred";
-        // Have to do in 30 days
+    } else if priority == "Deferred" {
         targetDate = check AddDurationToDate(created, "30");
     } else {
-        targetDate = check AddDurationToDate(created, "7"); // Default to 7 days for standard
+        targetDate = check AddDurationToDate(created, "7");
     }
-    
-    // Build summary - DONE
+
     RequestSummary summary = {
         serviceType: extractServiceType(items), // TODO
         clinicalJustification: clinicalJustification,
         submittedDate: created,
         targetDate: targetDate
     };
-    
-    // Extract coverage information - DONE
+
     CoverageInformation[]? coverage = extractCoverageInfo(pasClaim.insurance);
-    
-    // Calculate totals - DONE
+
     ClaimTotals|error total = calculateClaimTotals(items, claimResponse);
     if total is error {
         log:printError("Failed to calculate claim totals: " + total.message());
         return total;
     }
-    
-    // Extract process notes - DONE
+
     ProcessNote[]? processNotes = extractProcessNotes(claimResponse);
-    
-    PARequestDetail detail = {
-        id: claimId,
+
+    // 9. Fetch linked CommunicationRequests from ClaimResponse references
+    CommunicationRequestItem[] communicationRequests = [];
+    if claimResponse.communicationRequest is r4:Reference[] {
+        foreach r4:Reference commRef in <r4:Reference[]>claimResponse.communicationRequest {
+            string? refStr = commRef.reference;
+            if refStr is string {
+                json|http:ClientError commReqJson = fhirHttpClient->get("/" + refStr);
+                if commReqJson is json {
+                    CommunicationRequestItem|error commReqItem = parseCommunicationRequest(commReqJson);
+                    if commReqItem is CommunicationRequestItem {
+                        communicationRequests.push(commReqItem);
+                    } else {
+                        log:printWarn("Failed to parse CommunicationRequest " + refStr + ": " + commReqItem.message());
+                    }
+                } else {
+                    log:printWarn("Failed to fetch CommunicationRequest " + refStr + ": " + commReqJson.message());
+                }
+            }
+        }
+    }
+
+    return {
+        id: requestId,
         responseId: responseId,
         status: status,
-        use: use,
+        use: "preauthorization",
         created: created,
         targetDate: targetDate,
         admissionDate: admissionDate,
@@ -457,10 +264,100 @@ public function getPARequestDetail(string responseId) returns PARequestDetail|er
         items: items,
         coverage: coverage,
         total: total,
-        processNotes: processNotes
+        processNotes: processNotes,
+        communicationRequests: communicationRequests.length() > 0 ? communicationRequests : ()
     };
-    
-    return detail;
+}
+
+# Look up the display name for a code in a given FHIR ValueSet via $validate-code
+#
+# + code - The code to look up
+# + valueSetUrl - Canonical URL of the ValueSet to validate against
+# + return - Display string from the ValueSet, or () if not found / lookup fails
+function lookupValueSetDisplay(string code, string valueSetUrl) returns string? {
+    string path = string `/ValueSet/${PAS_ATTACHMENT_CODE_ID}/$validate-code?url=${valueSetUrl}&code=${code}&system=http://loinc.org`;
+    json|http:ClientError result = fhirHttpClient->get(path);
+    if result is map<json> {
+        json params = result["parameter"];
+        if params is json[] {
+            foreach json param in params {
+                if param is map<json> {
+                    json nameJson = param["name"];
+                    if nameJson is string && nameJson == "display" {
+                        json display = param["valueString"];
+                        if display is string {
+                            return display;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return ();
+}
+
+# Parse a FHIR CommunicationRequest JSON into a CommunicationRequestItem.
+# Uses davincipas:PASCommunicationRequest for type safety and enriches each
+# payload code via the PAS LOINC attachment ValueSet and the reason code
+# via the v3-ActReason ValueSet.
+#
+# + commReqJson - FHIR CommunicationRequest resource as JSON
+# + return - CommunicationRequestItem or error
+function parseCommunicationRequest(json commReqJson) returns CommunicationRequestItem|error {
+    davincipas:PASCommunicationRequest commReq = <davincipas:PASCommunicationRequest> check parser:parse(commReqJson);
+
+    string id = commReq.id ?: "";
+
+    string statusStr = <string>commReq.status;
+    CommunicationRequestStatus status = statusStr is CommunicationRequestStatus ? statusStr : "unknown";
+
+    string priorityStr = commReq.priority is davincipas:PASCommunicationRequestPriority
+        ? <string>commReq.priority : "routine";
+    PARequestPriority priority = priorityStr is PARequestPriority ? priorityStr : "routine";
+
+    // Build AdditionalInfoItem list — each payload contentString is a LOINC attachment code
+    AdditionalInfoItem[] requestedItems = [];
+    if commReq.payload is davincipas:PASCommunicationRequestPayload[] {
+        foreach davincipas:PASCommunicationRequestPayload payloadItem in
+                <davincipas:PASCommunicationRequestPayload[]>commReq.payload {
+            string? code = payloadItem.contentString;
+            if code is string {
+                requestedItems.push({
+                    code: code,
+                    display: lookupValueSetDisplay(code, PAS_ATTACHMENT_CODES_VALUESET_URL)
+                });
+            }
+        }
+    }
+
+    // Resolve reasonCode display from v3-ActReason ValueSet; fall back to .text then raw code
+    string? reasonCode = ();
+    if commReq.reasonCode is r4:CodeableConcept[] {
+        r4:CodeableConcept[] reasons = <r4:CodeableConcept[]>commReq.reasonCode;
+        if reasons.length() > 0 {
+            r4:CodeableConcept first = reasons[0];
+            if first.coding is r4:Coding[] {
+                r4:Coding[] codings = <r4:Coding[]>first.coding;
+                if codings.length() > 0 && codings[0].code is string {
+                    string actCode = <string>codings[0].code;
+                    reasonCode = lookupValueSetDisplay(actCode, PAS_ACT_REASON_VALUESET_URL)
+                        ?: first.text
+                        ?: actCode;
+                }
+            } else {
+                reasonCode = first.text;
+            }
+        }
+    }
+
+    return {
+        id: id,
+        status: status,
+        priority: priority,
+        requestedItems: requestedItems,
+        reasonCode: reasonCode,
+        requestedDate: commReq.occurrenceDateTime
+    };
 }
 
 # Get ClaimResponse for a given Claim ID
@@ -1371,17 +1268,12 @@ public function submitPARequestAdditionalInfo(string responseId, AdditionalInfor
         payload.push(payloadItem);
     }
 
-    r4:Reference? subjectJson = ();
-    if claimResponse.patient is r4:Reference {
-        subjectJson = claimResponse.patient;
-    }
+    r4:Reference? subjectJson = claimResponse.patient;
 
-    r4:Reference[] about = [];
-    if claimResponse.request is r4:Reference {
-        about.push(<r4:Reference>claimResponse.request);
-    }
+    r4:Reference? requestRef = claimResponse.request;
+    r4:Reference[] about = requestRef != () ? [requestRef] : [];
     r4:CodeableConcept[] reasonCode = [];
-    if additionalInformation.reasonCode is json && additionalInformation.reasonCode is r4:CodeableConcept[] {
+    if additionalInformation.reasonCode is r4:CodeableConcept[] {
         reasonCode = <r4:CodeableConcept[]>additionalInformation.reasonCode;
     } else {
         reasonCode = [{
@@ -1425,11 +1317,9 @@ public function submitPARequestAdditionalInfo(string responseId, AdditionalInfor
     }
 
     string commId = "";
-    if communicationResponse is json {
-        json|error commIdJson = communicationResponse.id;
-        if commIdJson is string {
-            commId = commIdJson;
-        }
+    json|error commIdJson = communicationResponse.id;
+    if commIdJson is string {
+        commId = commIdJson;
     }
 
     if commId.length() == 0 {

@@ -37,8 +37,7 @@ function AddDurationToDate(string date, string durationDays) returns string|erro
         regexp:RegExp spacePattern = re `\s`;
         string[] parts = spacePattern.split(date);
         dateOnly = parts[0];
-    } 
-    else {
+    } else {
         dateOnly = date;
     }
     

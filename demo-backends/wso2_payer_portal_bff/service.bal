@@ -248,15 +248,12 @@ service /v1 on bff_listener {
             return http:INTERNAL_SERVER_ERROR;
         }
         [PARequestListItem[], int] [paRequests, totalCount] = result;
-        // Get analytics from PostgreSQL
-        // PARequestAnalytics|error analyticsResult = getPARequestAnalytics();
-        // TODO: Discuss and implement analytics - For now, return dummy analytics data
-        PARequestAnalytics analytics = {
-            urgentCount: 0,
-            standardCount: 0,
-            reAuthorizationCount: 0,
-            appealCount: 0
-        };
+        
+        PARequestAnalytics|error analyticsResult = getPARequestAnalytics();
+        if (analyticsResult is error) {
+            log:printError("Failed to retrieve PA request analytics: " + analyticsResult.message());
+            return http:INTERNAL_SERVER_ERROR;
+        }
         PARequestListResponse response = {
             data: paRequests,
             pagination: {
@@ -265,7 +262,7 @@ service /v1 on bff_listener {
                 totalCount: totalCount,
                 totalPages: (totalCount + 'limit - 1) / 'limit
             },
-            analytics: analytics
+            analytics: analyticsResult
         };
         
         return response;

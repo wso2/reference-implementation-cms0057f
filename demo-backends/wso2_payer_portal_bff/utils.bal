@@ -25,13 +25,20 @@ function AddDurationToDate(string date, string durationDays) returns string|erro
     // Handle formats: YYYY, YYYY-MM, YYYY-MM-DD, or YYYY-MM-DDThh:mm:ss+zz:zz
     string dateOnly;
     boolean hasTime = date.includes("T");
+    boolean hasSpace = date.includes(" ");
     
     if hasTime {
         // Extract date part before 'T'
         regexp:RegExp tPattern = re `T`;
         string[] parts = tPattern.split(date);
         dateOnly = parts[0];
-    } else {
+    } else if hasSpace {
+        // Extract date part before space
+        regexp:RegExp spacePattern = re `\s`;
+        string[] parts = spacePattern.split(date);
+        dateOnly = parts[0];
+    } 
+    else {
         dateOnly = date;
     }
     

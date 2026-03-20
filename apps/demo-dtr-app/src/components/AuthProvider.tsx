@@ -28,6 +28,7 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const POST_LOGIN_REDIRECT_KEY = "dtrPostLoginRedirect";
 
 const useQuery = () => {
   return new URLSearchParams(useLocation().search);
@@ -38,6 +39,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const navigate = useNavigate();
   const originalPath = location.pathname;
+  const originalSearch = location.search;
 
   const query = useQuery();
 
@@ -46,17 +48,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     saveQueryParamsToSessionStorage();
 
-    // If embedded in an iframe (e.g., launched from EHR), bypass strict auth check for demo purposes
-    // Otherwise, we might get stuck on a login page inside the iframe.
-    const isEmbedded = window !== window.parent;
+    if (response.status == 200) {
+      const isAuthPopupWindow =
+        !!window.opener && window.name === "dtr-auth-popup";
 
-    if (response.status == 200 || isEmbedded) {
-      // In a real app we'd need proper auth passing. For demo, we allow embedded access.
+      if (isAuthPopupWindow) {
+        // Notify the opener iframe page and close popup automatically.
+        window.opener.postMessage({ type: "DTR_AUTH_SUCCESS" }, "*");
+        window.close();
+        return;
+      }
+
       setIsAuthenticated(true);
-      const redirectTo = originalPath || "/";
+      const storedRedirect = sessionStorage.getItem(POST_LOGIN_REDIRECT_KEY);
+      const redirectTo =
+        originalPath === "/login"
+          ? (storedRedirect || "/")
+          : `${originalPath || "/"}${originalSearch || ""}`;
+      sessionStorage.removeItem(POST_LOGIN_REDIRECT_KEY);
       navigate(redirectTo, { replace: true });
-    } else if (response.status == 401) {
+    } else {
       setIsAuthenticated(false);
+      // Preserve the launch route (with query params) so we can restore
+      // the iframe URL after completing login in a popup.
+      if (originalPath !== "/login" && originalPath !== "/fetching") {
+        sessionStorage.setItem(
+          POST_LOGIN_REDIRECT_KEY,
+          `${originalPath || "/"}${originalSearch || ""}`
+        );
+      }
       navigate("/login");
     }
   };

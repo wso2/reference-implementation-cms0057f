@@ -379,8 +379,12 @@ isolated function mapClaimPriority(json claimJson) returns string {
     return "Standard";
 }
 
-# Detect whether a Claim represents an appeal by checking extensions (URL containing "appeal")
-# and related claim relationships with code "prior".
+# Detect whether a Claim represents an appeal by checking extensions whose URL
+# contains "appeal". The extension value is used when present (valueBoolean),
+# otherwise the presence of a matching URL is treated as an implicit true.
+#
+# Note: related.relationship.coding code "prior" is intentionally NOT used as
+# an appeal signal — "prior" only indicates a predecessor claim, not an appeal.
 #
 # + claimJson - Claim resource as JSON
 # + return - true if the claim is an appeal
@@ -392,20 +396,6 @@ isolated function detectIsAppeal(json claimJson) returns boolean {
             if urlJson is string && urlJson.toLowerAscii().includes("appeal") {
                 json|error vb = ext.valueBoolean;
                 return vb is boolean ? vb : true;
-            }
-        }
-    }
-    json|error relatedJson = claimJson.related;
-    if relatedJson is json[] {
-        foreach json rel in relatedJson {
-            json|error codings = rel.relationship.coding;
-            if codings is json[] {
-                foreach json coding in codings {
-                    json|error codeJson = coding.code;
-                    if codeJson is string && codeJson == "prior" {
-                        return true;
-                    }
-                }
             }
         }
     }
@@ -634,16 +624,21 @@ public isolated function claimSubmit(r4:Bundle|international401:Parameters paylo
             string? practitionerId = providerInfo[0];
             string? providerName = providerInfo[1];
             boolean isAppeal = detectIsAppeal(claimJson);
+            time:Utc now = time:utcNow();
+            time:Civil civil = time:utcToCivil(now);
+            int sec = <int>(civil.second ?: 0.0d);
+            string dateSubmitted = string `${civil.year}-${civil.month < 10 ? "0" : ""}${civil.month}-${civil.day < 10 ? "0" : ""}${civil.day} ${civil.hour < 10 ? "0" : ""}${civil.hour}:${civil.minute < 10 ? "0" : ""}${civil.minute}:${sec < 10 ? "0" : ""}${sec}`;
 
             sql:ParameterizedQuery insertQuery = `INSERT INTO pa_requests
-                (request_id, response_id, priority, status, ai_summary, patient_id, practitioner_id, provider_name, is_appeal)
-                VALUES (${claimId}, ${responseId}, ${mappedPriority}, 'QUEUED', NULL, ${patientId}, ${practitionerId}, ${providerName}, ${isAppeal})`;
+                (request_id, response_id, priority, status, ai_summary, patient_id, practitioner_id, provider_name, is_appeal, date_submitted)
+                VALUES (${claimId}, ${responseId}, ${mappedPriority}, 'QUEUED', NULL, ${patientId}, ${practitionerId}, ${providerName}, ${isAppeal}, ${dateSubmitted})`;
             sql:ExecutionResult|sql:Error dbResult = dbClient->execute(insertQuery);
             if dbResult is sql:Error {
-                log:printError("Failed to insert PA request into database: " + dbResult.message());
-            } else {
-                log:printDebug("PA request inserted into database: request_id=" + claimId + ", response_id=" + responseId);
+                string errMsg = string `Failed to insert PA request into database: request_id=${claimId}, response_id=${responseId}: ${dbResult.message()}`;
+                log:printError(errMsg);
+                return error(errMsg);
             }
+            log:printDebug("PA request inserted into database: request_id=" + claimId + ", response_id=" + responseId);
 
             return responseBundle.clone();
         } else {

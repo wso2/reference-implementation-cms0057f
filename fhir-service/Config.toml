@@ -39,3 +39,10 @@ validateAgainstProfile=false
 enable = false
 url = ""
 authEnabled = false
+
+[databaseConfig]
+host = "localhost"
+port = 3306
+user = "root"
+password = ""
+database = "pa_requests_db"

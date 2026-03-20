@@ -635,7 +635,15 @@ public isolated function claimSubmit(r4:Bundle|international401:Parameters paylo
             sql:ExecutionResult|sql:Error dbResult = dbClient->execute(insertQuery);
             if dbResult is sql:Error {
                 string errMsg = string `Failed to insert PA request into database: request_id=${claimId}, response_id=${responseId}: ${dbResult.message()}`;
-                log:printError(errMsg);
+                log:printError(errMsg, dbResult);
+                r4:OperationOutcome|r4:FHIRError deleteResponseResult = deleteResource(fhirConnector, CLAIM_RESPONSE, responseId);
+                if deleteResponseResult is r4:FHIRError {
+                    log:printError("Compensating delete of ClaimResponse failed: response_id=" + responseId, deleteResponseResult);
+                }
+                r4:OperationOutcome|r4:FHIRError deleteClaimResult = deleteResource(fhirConnector, CLAIM, claimId);
+                if deleteClaimResult is r4:FHIRError {
+                    log:printError("Compensating delete of Claim failed: claim_id=" + claimId, deleteClaimResult);
+                }
                 return error(errMsg);
             }
             log:printDebug("PA request inserted into database: request_id=" + claimId + ", response_id=" + responseId);

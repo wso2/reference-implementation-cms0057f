@@ -301,29 +301,29 @@ function lookupValueSetDisplay(string code, string valueSetUrl, string valuesetI
 }
 
 # Parse a FHIR CommunicationRequest JSON into a CommunicationRequestItem.
-# Uses davincipas:PASCommunicationRequest for type safety and enriches each
+# Uses international401:CommunicationRequest for type safety and enriches each
 # payload code via the PAS LOINC attachment ValueSet and the reason code
 # via the v3-ActReason ValueSet.
 #
 # + commReqJson - FHIR CommunicationRequest resource as JSON
 # + return - CommunicationRequestItem or error
 function parseCommunicationRequest(json commReqJson) returns CommunicationRequestItem|error {
-    davincipas:PASCommunicationRequest commReq = <davincipas:PASCommunicationRequest> check parser:parse(commReqJson);
+    international401:CommunicationRequest commReq = <international401:CommunicationRequest> check parser:parse(commReqJson);
 
     string id = commReq.id ?: "";
 
     string statusStr = <string>commReq.status;
     CommunicationRequestStatus status = statusStr is CommunicationRequestStatus ? statusStr : "unknown";
 
-    string priorityStr = commReq.priority is davincipas:PASCommunicationRequestPriority
+    string priorityStr = commReq.priority is international401:CommunicationRequestPriority
         ? <string>commReq.priority : "routine";
     PARequestPriority priority = priorityStr is PARequestPriority ? priorityStr : "routine";
 
     // Build AdditionalInfoItem list — each payload contentString is a LOINC attachment code
     AdditionalInfoItem[] requestedItems = [];
-    if commReq.payload is davincipas:PASCommunicationRequestPayload[] {
-        foreach davincipas:PASCommunicationRequestPayload payloadItem in
-                <davincipas:PASCommunicationRequestPayload[]>commReq.payload {
+    if commReq.payload is international401:CommunicationRequestPayload[] {
+        foreach international401:CommunicationRequestPayload payloadItem in
+                <international401:CommunicationRequestPayload[]>commReq.payload {
             string? code = payloadItem.contentString;
             if code is string {
                 requestedItems.push({

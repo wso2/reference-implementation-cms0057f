@@ -1238,9 +1238,20 @@ public function submitPARequestAdjudication(string responseId, AdjudicationSubmi
     
     if updateResponse is http:ClientError {
         log:printError("Failed to update ClaimResponse: " + updateResponse.message());
+        sql:ParameterizedQuery errorStatusQuery = `UPDATE pa_requests SET status = 'ERROR' WHERE response_id = ${responseId}`;
+        sql:ExecutionResult|sql:Error errorDbResult = dbClient->execute(errorStatusQuery);
+        if errorDbResult is sql:Error {
+            log:printError("Failed to update pa_requests status to ERROR: " + errorDbResult.message());
+        }
         return error("Failed to update ClaimResponse: " + updateResponse.message());
     }
-    
+
+    sql:ParameterizedQuery completedStatusQuery = `UPDATE pa_requests SET status = 'COMPLETED' WHERE response_id = ${responseId}`;
+    sql:ExecutionResult|sql:Error completedDbResult = dbClient->execute(completedStatusQuery);
+    if completedDbResult is sql:Error {
+        log:printError("Failed to update pa_requests status to COMPLETED: " + completedDbResult.message());
+    }
+
     return {
         id: <string>pasClaimResponse.id,
         status: adjudication.decision,
@@ -1346,6 +1357,11 @@ public function submitPARequestAdditionalInfo(string responseId, AdditionalInfor
         return error("Failed to update ClaimResponse with CommunicationRequest: " + updateResponse.message());
     }
     log:printDebug("ClaimResponse updated with CommunicationRequest reference: " + commId);
+    sql:ParameterizedQuery pendingProviderQuery = `UPDATE pa_requests SET status = 'PENDING_ON_PROVIDER' WHERE response_id = ${responseId}`;
+    sql:ExecutionResult|sql:Error pendingDbResult = dbClient->execute(pendingProviderQuery);
+    if pendingDbResult is sql:Error {
+        log:printError("Failed to update pa_requests status to PENDING_ON_PROVIDER: " + pendingDbResult.message());
+    }
     return {
         id: commId,
         status: "active",

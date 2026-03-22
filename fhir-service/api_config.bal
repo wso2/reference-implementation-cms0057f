@@ -1444,3 +1444,59 @@ final r4:ResourceAPIConfig communicationRequestApiConfig = {
     serverConfig: (),
     authzConfig: ()
 };
+
+# ######################################################################################################################
+# ValueSet API Configs                                                                                                 #
+# ######################################################################################################################
+
+final r4:ResourceAPIConfig valuesetApiConfig = {
+    resourceType: "ValueSet",
+    profiles: [
+        "http://hl7.org/fhir/StructureDefinition/ValueSet"
+    ],
+    defaultProfile: (),
+    searchParameters: [],
+    operations: [
+        {name: "expand", active: true, parameters: []},
+        {name: "validate-code", active: true, parameters: []}
+    ],
+    serverConfig: (),
+    authzConfig: ()
+};
+
+# ######################################################################################################################
+# CodeSystem API Configs                                                                                                #
+# ######################################################################################################################
+
+final r4:ResourceAPIConfig codesystemApiConfig = {
+    resourceType: "CodeSystem",
+    profiles: [
+        "http://hl7.org/fhir/StructureDefinition/CodeSystem"
+    ],
+    defaultProfile: (),
+    searchParameters: [],
+    operations: [
+        {name: "lookup", active: true, parameters: []},
+        {name: "subsumes", active: true, parameters: []}
+    ],
+    serverConfig: (),
+    authzConfig: ()
+};
+
+# ######################################################################################################################
+# ConceptMap API Configs                                                                                                #
+# ######################################################################################################################
+
+final r4:ResourceAPIConfig conceptmapApiConfig = {
+    resourceType: "ConceptMap",
+    profiles: [
+        "http://hl7.org/fhir/StructureDefinition/ConceptMap"
+    ],
+    defaultProfile: (),
+    searchParameters: [],
+    operations: [
+        {name: "translate", active: true, parameters: []}
+    ],
+    serverConfig: (),
+    authzConfig: ()
+};

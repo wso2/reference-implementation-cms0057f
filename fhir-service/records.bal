@@ -149,7 +149,9 @@ public enum ResourceType {
     CARE_PLAN = "CarePlan",
     CLAIM = "Claim",
     CLAIM_RESPONSE = "ClaimResponse",
+    CODE_SYSTEM = "CodeSystem",
     COMMUNICATION_REQUEST = "CommunicationRequest",
+    CONCEPT_MAP = "ConceptMap",
     CONDITION = "Condition",
     COVERAGE = "Coverage",
     DEVICE = "Device",
@@ -171,6 +173,7 @@ public enum ResourceType {
     EXPLANATION_OF_BENEFIT = "ExplanationOfBenefit",
     GROUP = "Group",
     SERVICE_REQUEST = "ServiceRequest",
+    VALUE_SET = "ValueSet",
     AUDIT_EVENT = "AuditEvent"
 }
 

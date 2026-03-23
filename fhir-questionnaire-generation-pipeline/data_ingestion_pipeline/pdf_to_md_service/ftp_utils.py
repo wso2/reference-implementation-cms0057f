@@ -23,6 +23,7 @@ from settings import Configs
 
 async def read_pdf_file_ftp(file_name: str, configs: Configs, logger: logging.Logger):
     """Read PDF file from FTP server and return local temporary file path."""
+    ftp = None
     try:
         # Connect to FTP server
         ftp = ftplib.FTP()
@@ -37,13 +38,18 @@ async def read_pdf_file_ftp(file_name: str, configs: Configs, logger: logging.Lo
             # Download the PDF file from FTP server
             ftp.retrbinary(f'RETR {pdf_filename}', temp_file.write)
             temp_file_path = temp_file.name
-        # Close the FTP connection
-        ftp.quit()
         logger.info(f"Successfully downloaded PDF file for {file_name} from FTP server")
         return temp_file_path
     except Exception as e:
         logger.error(f"Error reading PDF file from FTP: {e}")
         return None
+    finally:
+        # Ensure FTP connection is always closed
+        if ftp is not None:
+            try:
+                ftp.quit()
+            except Exception:
+                ftp.close()
     
 async def store_md_content_ftp(file_name: str, content: str, temp_file_path: str, configs: Configs, logger: logging.Logger):
     """Store markdown content in FTP server."""
@@ -84,13 +90,20 @@ async def store_md_content_ftp(file_name: str, content: str, temp_file_path: str
 
 async def delete_pdf_file_ftp(file_name: str, configs: Configs, logger: logging.Logger):
     """Delete the original PDF file from the FTP server."""
+    ftp = None
     try:
         ftp = ftplib.FTP()
         ftp.connect(configs.FTP_HOST, configs.FTP_PORT)
         ftp.login(configs.FTP_USERNAME, configs.FTP_PASSWORD)
         ftp.cwd('/pdf')
         ftp.delete(f"{file_name}.pdf")
-        ftp.quit()
         logger.info(f"Successfully deleted PDF file {file_name}.pdf from FTP server")
     except Exception as e:
         logger.error(f"Error deleting PDF file from FTP: {e}")
+    finally:
+        # Ensure FTP connection is always closed
+        if ftp is not None:
+            try:
+                ftp.quit()
+            except Exception:
+                ftp.close()

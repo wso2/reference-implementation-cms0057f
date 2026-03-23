@@ -14,12 +14,25 @@
 # specific language governing permissions and limitations
 # under the License.
 
+import os
+import re
 from typing import List
-from pydantic import BaseModel
+
+from pydantic import BaseModel, field_validator
 
 class ConvertRequest(BaseModel):
     job_id: str
     file_name: str
+
+    @field_validator("file_name")
+    @classmethod
+    def validate_file_name(cls, value: str) -> str:
+        sanitized_name = os.path.basename(value)
+        if not re.fullmatch(r"[A-Za-z0-9_-]+(\.[A-Za-z0-9]+)?", sanitized_name):
+            raise ValueError(
+                "Invalid file_name: only alphanumerics, hyphen, underscore, and an optional extension are allowed"
+            )
+        return sanitized_name
 
 class BatchConvertRequest(BaseModel):
     requests: List[ConvertRequest]

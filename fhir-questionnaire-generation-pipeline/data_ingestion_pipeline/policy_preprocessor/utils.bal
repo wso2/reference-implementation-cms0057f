@@ -23,6 +23,9 @@ function isValidTitle(string documentContent, string title, int index) returns b
         return false;
     }
     foreach int i in 1...5{
+        if index - i < 0 {
+            break;
+        }
         if documentContent[index - i] == "#" {
             return true;
         }

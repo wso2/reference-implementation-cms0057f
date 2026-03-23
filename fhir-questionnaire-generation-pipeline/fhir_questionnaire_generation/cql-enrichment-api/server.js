@@ -45,7 +45,6 @@ app.get("/api/health", (req, res) => {
 app.post("/api/enrich", async (req, res) => {
   try {
     const questionnaire = req.body;
-    console.log(`Received enrichment request for Questionnaire: ${toStr(questionnaire)}`);
     if (!questionnaire || questionnaire.resourceType !== "Questionnaire") {
       return res.status(400).json({
         error: "Invalid input",

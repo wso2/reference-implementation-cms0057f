@@ -564,9 +564,8 @@ function saveFHIRTemplates(string file_name, string job_id) returns error? {
         log:printInfo("Using CQL-enriched bundle for: " + file_name);
     } else {
         json[] bundleEntries = [];
-        foreach [string, json] [_, questionnaire] in FHIR_QUESTIONNAIRE_STORE.entries() {
-            bundleEntries.push({"resource": questionnaire});
-        }
+        json questionnaire = FHIR_QUESTIONNAIRE_STORE[file_name];
+        bundleEntries.push({"resource": questionnaire});
         bundle = {
             "resourceType": "Bundle",
             "type": "collection",

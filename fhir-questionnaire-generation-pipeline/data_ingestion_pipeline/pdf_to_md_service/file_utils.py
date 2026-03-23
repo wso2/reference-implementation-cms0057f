@@ -15,21 +15,39 @@
 # under the License.
 
 import os
+import asyncio
 import logging
 import tempfile
 from settings import Configs
 
 async def read_pdf_file_local(file_name: str, configs: Configs, logger: logging.Logger):
-    """Read PDF file from local storage and return local temporary file path."""
+    """Read a PDF file from local storage and copy it to a temporary file.
+
+    Note:
+        The returned temporary file path is owned by the caller. The caller is
+        responsible for deleting the file after processing.
+    """
     try:
         # Prepare the PDF filename
         pdf_filename = os.path.join(configs.LOCAL_DIR, "pdf", f"{file_name}.pdf")
-        # Create a temporary file to store the PDF
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_file:
-            # Read the PDF file from local storage
-            with open(pdf_filename, 'rb') as f:
-                temp_file.write(f.read())
-            temp_file_path = temp_file.name
+
+        def _copy_pdf_to_temp() -> str:
+            temp_file_path = None
+            try:
+                # Create a temporary file to store the PDF
+                with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_file:
+                    temp_file_path = temp_file.name
+                    # Read the PDF file from local storage and copy content
+                    with open(pdf_filename, 'rb') as f:
+                        temp_file.write(f.read())
+                return temp_file_path
+            except Exception:
+                if temp_file_path and os.path.exists(temp_file_path):
+                    os.remove(temp_file_path)
+                raise
+
+        loop = asyncio.get_running_loop()
+        temp_file_path = await loop.run_in_executor(None, _copy_pdf_to_temp)
         logger.info(f"Successfully read PDF file for {file_name} from local storage")
         return temp_file_path
     except Exception as e:

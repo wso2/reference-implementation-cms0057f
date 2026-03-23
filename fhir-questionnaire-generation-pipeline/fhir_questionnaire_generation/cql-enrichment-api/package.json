@@ -2,12 +2,12 @@
   "name": "wso2-cql-enrichment-api",
   "version": "1.0.0",
   "description": "REST API for FHIR Questionnaire CQL Enrichment — generates EHR-executable CQL, resolves multi-terminology ValueSets, and produces DTR-ready $questionnaire-package bundles",
-  "main": "src/server.js",
+  "main": "server.js",
   "type": "module",
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "node --watch src/server.js",
-    "test": "node test/test-api.js"
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node test-api.js"
   },
   "dependencies": {
     "express": "^4.18.2",

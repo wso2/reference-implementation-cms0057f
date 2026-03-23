@@ -130,6 +130,10 @@ class PARequestsAPI {
       throw error;
     }
 
+    if (response.status === 204 || response.headers.get('Content-Length') === '0') {
+      return undefined as T;
+    }
+
     return response.json();
   }
 
@@ -209,22 +213,10 @@ class PARequestsAPI {
     requestId: string,
     payload: AdditionalInformation
   ): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/pa-requests/${requestId}/additional-info`, {
+    return this.request<void>(`/pa-requests/${requestId}/additional-info`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
-    if (!response.ok) {
-      const error: ErrorPayload = await response.json().catch(() => ({
-        timestamp: new Date().toISOString(),
-        status: response.status,
-        reason: response.statusText,
-        message: 'An error occurred',
-        path: `/pa-requests/${requestId}/additional-info`,
-        method: 'POST',
-      }));
-      throw error;
-    }
   }
 }
 

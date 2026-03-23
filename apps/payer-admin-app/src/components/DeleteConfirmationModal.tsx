@@ -38,6 +38,12 @@ export default function DeleteConfirmationModal({
     onClose();
   };
 
+  const handleDialogClose = (_event: unknown, reason?: 'backdropClick' | 'escapeKeyDown') => {
+    if (isDeleting) return;
+    if (reason === 'backdropClick' || reason === 'escapeKeyDown') return;
+    handleClose();
+  };
+
   const handleConfirm = () => {
     if (confirmChecked) {
       onConfirm();
@@ -52,7 +58,7 @@ export default function DeleteConfirmationModal({
   return (
     <Dialog
       open={open}
-      onClose={handleClose}
+      onClose={handleDialogClose}
       maxWidth="sm"
       fullWidth
     >

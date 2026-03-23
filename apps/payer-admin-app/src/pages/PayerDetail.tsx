@@ -168,7 +168,7 @@ export default function PayerDetail() {
 
     try {
       setUpdating(true);
-      const scopesValue = scopeChips.length > 0 ? scopeChips.join(' ') : null;
+      const scopesValue = scopeChips.length > 0 ? scopeChips.join(',') : null;
       await payersAPI.updatePayer(payerId, {
         name: formData.name,
         email: formData.email,
@@ -196,7 +196,7 @@ export default function PayerDetail() {
     if (payer) {
       setFormData(payer);
       // Reset scope chips
-      const initialScopes = payer.scopes ? payer.scopes.split(' ').filter(s => s.trim()) : [];
+      const initialScopes = payer.scopes ? payer.scopes.split(',').map(s => s.trim()).filter(s => s) : [];
       setScopeChips(initialScopes);
       setScopeInput('');
     }

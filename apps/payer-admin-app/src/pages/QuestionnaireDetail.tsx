@@ -48,10 +48,12 @@ export default function QuestionnaireDetail() {
   const [isLoading, setIsLoading] = useState(!isNewQuestionnaire);
   const [originalQuestionnaire, setOriginalQuestionnaire] = useState<Questionnaire | null>(null);
 
+  const newId = questionnaireId || generateUUID();
+
   // Initialize with minimal data - will be populated from fetch or kept for new questionnaires
   const [formData, setFormData] = useState<Questionnaire>({
     resourceType: 'Questionnaire',
-    id: questionnaireId || generateUUID(),
+    id: newId,
     meta: {
       versionId: '1',
       lastUpdated: new Date().toISOString(),
@@ -60,7 +62,7 @@ export default function QuestionnaireDetail() {
         profile: ['http://hl7.org/fhir/StructureDefinition/Questionnaire'],
       }),
     },
-    url: `urn:uuid:${questionnaireId || generateUUID()}`,
+    url: `urn:uuid:${newId}`,
     title: '',
     status: 'draft',
     description: '',

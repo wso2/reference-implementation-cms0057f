@@ -726,7 +726,7 @@ export default function PARequestDetail() {
                 <Box sx={{ display: 'flex', alignItems: 'center', height: '28px', paddingLeft: "0.2vw" }}>
                   <Chip 
                     label={paRequest.priority} 
-                    color={paRequest.priority === 'urgent' ? 'error' : 'default'} 
+                    color={paRequest.priority === 'Urgent' ? 'error' : 'default'} 
                     size="small" 
                   />
                 </Box>

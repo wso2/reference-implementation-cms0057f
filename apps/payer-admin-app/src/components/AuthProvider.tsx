@@ -4,7 +4,7 @@ import {
   useRef,
 } from "react";
 import { type ReactNode } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { AuthContext } from "./AuthContext";
 import type { UserInfo } from "./AuthContext";
 
@@ -19,7 +19,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const navigate = useNavigate();
   const hasCheckedAuth = useRef(false);
 
   useEffect(() => {
@@ -41,16 +40,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           });
           setIsAuthenticated(true);
           setIsLoading(false);
-          navigate("/", { replace: true });
 
         } else if (response.status === 401) {
           setIsAuthenticated(false);
           setUserInfo(null);
           setIsLoading(false);
-          
+
           // Only redirect to login if we're not already there
           if (location.pathname !== "/auth/login") {
-            navigate("/auth/login", { replace: true });
+            window.location.replace("/auth/login");
+          }
+        } else {
+          const text = await response.text().catch(() => "");
+          console.error(`Unexpected /auth/userinfo response: ${response.status}`, text);
+          setIsAuthenticated(false);
+          setUserInfo(null);
+          setIsLoading(false);
+
+          if (location.pathname !== "/auth/login") {
+            window.location.replace("/auth/login");
           }
         }
       } catch (error) {
@@ -60,13 +68,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setIsLoading(false);
         
         if (location.pathname !== "/auth/login") {
-          navigate("/auth/login", { replace: true });
+          window.location.replace("/auth/login");
         }
       }
     };
 
     checkAuth();
-  }, [location.pathname, navigate]);
+  }, [location.pathname]);
 
   const manualCheckAuth = async () => {
     try {
@@ -84,20 +92,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } else if (response.status === 401) {
         setIsAuthenticated(false);
         setUserInfo(null);
-        navigate("/auth/login", { replace: true });
+        window.location.replace("/auth/login");
+      } else {
+        const text = await response.text().catch(() => "");
+        console.error(`Unexpected /auth/userinfo response: ${response.status}`, text);
+        setIsAuthenticated(false);
+        setUserInfo(null);
+
+        if (location.pathname !== "/auth/login") {
+          window.location.replace("/auth/login");
+        }
       }
     } catch (error) {
       console.error("Authentication check failed:", error);
       setIsAuthenticated(false);
       setUserInfo(null);
-      navigate("/auth/login", { replace: true });
+      window.location.replace("/auth/login");
     }
   };
 
   const logout = () => {
     setIsAuthenticated(false);
     setUserInfo(null);
-    navigate("/auth/login", { replace: true });
+    window.location.replace("/auth/login");
   };
 
   return (

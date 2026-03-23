@@ -8,7 +8,7 @@ import type { AIAnalysis } from './claimItem';
 /**
  * PA Request Urgency
  */
-export type PARequestUrgency = 'routine' | 'urgent' | 'stat';
+export type PARequestUrgency = 'Urgent' | 'Standard' | 'Deferred';
 
 /**
  * Questionnaire Response Item with AI Analysis

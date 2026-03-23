@@ -91,7 +91,7 @@ export default function QuestionnaireBuilder({ items, onChange }: QuestionnaireB
   };
 
   const handleUpdateItem = (path: number[], updates: Partial<QuestionnaireItem>) => {
-    const updatedItems = [...items];
+    const updatedItems = JSON.parse(JSON.stringify(items));
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let current: any = updatedItems;
 

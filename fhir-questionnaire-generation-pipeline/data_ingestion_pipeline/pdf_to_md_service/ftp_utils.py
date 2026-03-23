@@ -53,6 +53,7 @@ async def read_pdf_file_ftp(file_name: str, configs: Configs, logger: logging.Lo
     
 async def store_md_content_ftp(file_name: str, content: str, temp_file_path: str, configs: Configs, logger: logging.Logger):
     """Store markdown content in FTP server."""
+    ftp = None
     try:
         # Connect to FTP server
         ftp = ftplib.FTP()
@@ -68,7 +69,6 @@ async def store_md_content_ftp(file_name: str, content: str, temp_file_path: str
                 ftp.cwd('/md')
             except ftplib.error_perm as e:
                 logger.error(f"Failed to create or access /md directory: {e}")
-                ftp.quit()
                 return False
         # Prepare the markdown content as a file-like object
         md_filename = f"{file_name}.md"
@@ -76,16 +76,20 @@ async def store_md_content_ftp(file_name: str, content: str, temp_file_path: str
         content_io = io.BytesIO(content_bytes)
         # Upload the file
         ftp.storbinary(f'STOR {md_filename}', content_io)
-        # Close the FTP connection
-        ftp.quit()
         logger.info(f"Successfully stored markdown content for {file_name} to FTP server")
         return True
     except Exception as e:
         logger.error(f"Error storing markdown content to FTP: {e}")
-        return False   
+        return False
     finally:
+        # Ensure FTP connection is always closed
+        if ftp is not None:
+            try:
+                ftp.quit()
+            except Exception:
+                ftp.close()
         # Delete the temporary PDF file if it exists
-        if 'temp_file_path' in locals() and temp_file_path and os.path.exists(temp_file_path):
+        if temp_file_path and os.path.exists(temp_file_path):
             os.remove(temp_file_path)
 
 async def delete_pdf_file_ftp(file_name: str, configs: Configs, logger: logging.Logger):

@@ -275,7 +275,7 @@ export default function PARequestDetail() {
               code: reasonEntry.code,
               display: reasonEntry.display,
             }],
-          } as unknown as JSON,
+          },
         }),
       };
 
@@ -1698,10 +1698,12 @@ export default function PARequestDetail() {
                                   updateItemAdjudication(item.sequence, 'adjudicationPercent', undefined);
                                 }
                               }}
-                              InputProps={{
-                                endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                              slotProps={{
+                                input: {
+                                  endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                                },
+                                htmlInput: { min: 0, max: 100 },
                               }}
-                              inputProps={{ min: 0, max: 100 }}
                             />
                           ) : (
                             <TextField
@@ -1718,10 +1720,12 @@ export default function PARequestDetail() {
                                   updateItemAdjudication(item.sequence, 'adjudicationAmount', undefined);
                                 }
                               }}
-                              InputProps={{
-                                startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                              slotProps={{
+                                input: {
+                                  startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                                },
+                                htmlInput: { min: 0 },
                               }}
-                              inputProps={{ min: 0 }}
                             />
                           )}
 

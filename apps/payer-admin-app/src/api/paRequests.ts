@@ -1,11 +1,8 @@
 const API_BASE_URL = window.config?.BFF_URL || 'http://localhost:6091/v1';
 
-import type { PARequestDetail } from '../types/api';
+import type { PARequestDetail, PARequestUrgency, PARequestPriority, CodeableConcept } from '../types/api';
 
-/**
- * PA Request Urgency (from OpenAPI spec)
- */
-export type PARequestUrgency = 'Urgent' | 'Standard' | 'Deferred';
+export type { PARequestUrgency, PARequestPriority };
 
 /**
  * PA Request Processing Status
@@ -82,14 +79,12 @@ export interface AdjudicationResponse {
   message: string;
 }
 
-export type PARequestPriority = "routine" | "urgent" | "asap" | "stat";
-
 /**
  * Additional Information for PA Request
  */
 export type AdditionalInformation = {
     informationCodes: string[];
-    reasonCode?: JSON; // FHIR CodeableConcept
+    reasonCode?: CodeableConcept;
     priority: PARequestPriority;
 };
 

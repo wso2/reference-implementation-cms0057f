@@ -653,9 +653,12 @@ isolated function extractConsentFromParameters(international401:ParametersParame
 # Function to evaluate consent based on comprehensive guidelines
 #
 # + consent - The consent resource to evaluate
-# + memberMatchResult - The matched member identifier from the member matcher
+# + inputPatientId - The `id` of the input MemberPatient resource from the request. Per HRex spec,
+#                   Consent.patient SHALL be a local reference (e.g. "Patient/1") that resolves to
+#                   the MemberPatient parameter — NOT the matched patient ID in this payer's system.
+#                   Ref: https://hl7.org/fhir/us/davinci-hrex/STU1/OperationDefinition-member-match.html
 # + return - The result of the consent evaluation
-isolated function evaluateConsent(Consent consent, string memberMatchResult) returns ConsentEvaluationResult {
+isolated function evaluateConsent(Consent consent, string inputPatientId) returns ConsentEvaluationResult {
     ConsentEvaluationResult result = {
         isValid: false,
         patientId: (),
@@ -667,27 +670,52 @@ isolated function evaluateConsent(Consent consent, string memberMatchResult) ret
         requestingPayer: ()
     };
 
-    if memberMatchResult == "" {
-        log:printError("Member match result is empty");
+    if inputPatientId == "" {
+        log:printError("Input patient id is empty");
         result.reason = CONSENT_EVALUATION_FAILED;
         return result;
     }
 
+    // Status check — consent must be active
+    if consent.status != international401:CODE_STATUS_ACTIVE {
+        log:printError("Consent is not active. Status: " + consent.status);
+        result.reason = CONSENT_STATUS_INVALID;
+        return result;
+    }
+
+    // Scope check — HRex Consent requires scope = "patient-privacy" (Must Support fixed value)
+    // Ref: https://hl7.org/fhir/us/davinci-hrex/STU1.1/StructureDefinition-hrex-consent.html
+    r4:Coding[]? scopeCodings = consent.scope?.coding;
+    if scopeCodings is r4:Coding[] {
+        boolean validScope = scopeCodings.some(c => c.code == "patient-privacy");
+        if !validScope {
+            log:printError("Consent scope is not 'patient-privacy'");
+            result.reason = CONSENT_SCOPE_INVALID;
+            return result;
+        }
+    } else {
+        log:printError("Consent scope is missing");
+        result.reason = CONSENT_SCOPE_REQUIRED;
+        return result;
+    }
+
     // Step 1: Member Identity Validation
-    // Confirm the Consent.patient reference matches the uniquely identified member
+    // Consent.patient SHALL be a local reference to the input MemberPatient (e.g. "Patient/1").
+    // Compare its id segment against the input patient's id — never against the matched patient id.
     if consent.patient?.reference is string {
         string consentPatientRef = <string>consent.patient?.reference;
-        // Extract patient ID from reference (e.g., "Patient/123" -> "123")
+        // Extract patient ID from reference (e.g., "Patient/123" or "http://server/Patient/123" -> "123")
         string:RegExp slash = re `/`;
         string[] refParts = slash.split(consentPatientRef);
-        if refParts.length() == 2 {
-            string consentPatientId = refParts[1];
-            // Compare with the matched member identifier
-            if consentPatientId == memberMatchResult {
-                result.memberIdentity = memberMatchResult;
+        // use last segment to support both relative ("Patient/id") and absolute URLs
+        if refParts.length() >= 1 {
+            string consentPatientId = refParts[refParts.length() - 1];
+            // Compare with the input MemberPatient id
+            if consentPatientId == inputPatientId {
+                result.memberIdentity = inputPatientId;
                 log:printDebug("Member identity validation successful: " + consentPatientId);
             } else {
-                log:printError("Member identity mismatch. Consent patient: " + consentPatientId + ", Matched member: " + memberMatchResult);
+                log:printError("Member identity mismatch. Consent patient: " + consentPatientId + ", Input patient: " + inputPatientId);
                 result.reason = CONSENT_INVALID_MEMBER;
                 return result;
             }
@@ -703,15 +731,58 @@ isolated function evaluateConsent(Consent consent, string memberMatchResult) ret
     }
 
     // Step 2: Payer Identity Validation
-    // Confirm the Consent.organization is the Receiving Payer and Consent.performer is the Requesting Payer
-    if consent.organization is r4:Reference[] {
-        // Check if organization matches the receiving payer (this system)
-        // This is a simplified check - in production you'd validate against actual payer identifiers
-        result.requestingPayer = "receiving-payer"; // Placeholder
-        log:printDebug("Payer identity validation successful");
+    // Per HRex Consent profile (STU1.1), payer roles are expressed via provision.actor slices
+    // (Must Support, cardinality 2..*). Consent.organization is NOT part of HRex Consent.
+    //   - role code "performer" → requesting/source payer (authorized to disclose)
+    //   - role code "IRCP"      → receiving payer (authorized to receive data)
+    // Ref: https://hl7.org/fhir/us/davinci-hrex/STU1.1/StructureDefinition-hrex-consent.html
+    international401:ConsentProvisionActor[]? actors = consent.provision?.actor;
+    if actors is international401:ConsentProvisionActor[] && actors.length() >= 2 {
+        boolean hasPerformer = false;
+        boolean hasRecipient = false;
+        string requestingPayerRef = "";
+        foreach international401:ConsentProvisionActor actor in actors {
+            r4:Coding[]? codings = actor.role.coding;
+            if codings is r4:Coding[] {
+                foreach r4:Coding coding in codings {
+                    if coding.code == "performer" {
+                        hasPerformer = true;
+                        requestingPayerRef = actor.reference.reference ?: "";
+                    } else if coding.code == "IRCP" {
+                        hasRecipient = true;
+                    }
+                }
+            }
+        }
+        if hasPerformer && hasRecipient {
+            result.requestingPayer = requestingPayerRef;
+            log:printDebug("Payer identity validation successful — source: " + requestingPayerRef);
+        } else {
+            log:printError("Missing required provision.actor role(s). performer=" + hasPerformer.toString() + " IRCP=" + hasRecipient.toString());
+            result.reason = CONSENT_INVALID_PAYER;
+            return result;
+        }
     } else {
-        log:printError("Organization reference not found in consent");
+        log:printError("provision.actor missing or has fewer than 2 entries");
         result.reason = CONSENT_INVALID_PAYER;
+        return result;
+    }
+
+    // Provision rules validation — HRex Consent fixed values (Must Support)
+    // provision.type must be "permit" and provision.action must include "disclose"
+    // Ref: https://hl7.org/fhir/us/davinci-hrex/STU1.1/StructureDefinition-hrex-consent.html
+    if consent.provision?.'type != international401:CODE_TYPE_PERMIT {
+        log:printError("Consent provision type is not 'permit'. Got: " + (consent.provision?.'type ?: "missing").toString());
+        result.reason = CONSENT_PROVISION_TYPE_INVALID;
+        return result;
+    }
+    r4:CodeableConcept[]? actions = consent.provision?.action;
+    boolean hasDisclose = actions is r4:CodeableConcept[] &&
+        actions.some(a => (a.coding is r4:Coding[]) &&
+            (<r4:Coding[]>a.coding).some(c => c.code == "disclose"));
+    if !hasDisclose {
+        log:printError("Consent provision does not include a 'disclose' action");
+        result.reason = CONSENT_PROVISION_ACTION_INVALID;
         return result;
     }
 
@@ -722,15 +793,31 @@ isolated function evaluateConsent(Consent consent, string memberMatchResult) ret
         result.consentStartDate = period.'start;
         result.consentEndDate = period.end;
 
-        // Check if consent is still valid
+        // Use proper UTC timestamp comparison instead of string lexicographic comparison.
+        // Normalize date-only values (FHIR dateTime may omit the time component).
         if period.end is r4:dateTime {
-            r4:dateTime now = time:utcToString(time:utcNow());
-            if period.end < now {
-                log:printError("Consent has expired. End date: " + <string>period.end + ", Current time: " + now);
+            string endStr = <string>period.end;
+            string endNormalized = endStr.includes("T") ? endStr : endStr + "T23:59:59Z";
+            time:Utc|error endUtc = time:utcFromString(endNormalized);
+            if endUtc is error || endUtc < time:utcNow() {
+                log:printError("Consent has expired. End date: " + endStr);
                 result.reason = CONSENT_EXPIRED;
                 return result;
             }
         }
+
+        // Also verify consent has already started
+        if period.'start is r4:dateTime {
+            string startStr = <string>period.'start;
+            string startNormalized = startStr.includes("T") ? startStr : startStr + "T00:00:00Z";
+            time:Utc|error startUtc = time:utcFromString(startNormalized);
+            if startUtc is time:Utc && startUtc > time:utcNow() {
+                log:printError("Consent not yet in effect. Start date: " + startStr);
+                result.reason = CONSENT_NOT_YET_EFFECTIVE;
+                return result;
+            }
+        }
+
         log:printDebug("Date validity validation successful");
     } else {
         // If no period specified, consider it invalid
@@ -741,29 +828,40 @@ isolated function evaluateConsent(Consent consent, string memberMatchResult) ret
 
     // Step 4: Policy Compliance Validation
     // Determine if the Receiving Payer can technically comply with the data segmentation request
+    // Check both consent.policy[].uri and consent.policyRule.coding[] (HRex uses policyRule)
     if consent.policy is international401:ConsentPolicy[] {
         result.consentPolicy = extractConsentPolicy(<international401:ConsentPolicy[]>consent.policy);
-
-        // Check if the requested policy is supported
-        if result.consentPolicy is string {
-            string policy = <string>result.consentPolicy;
-            // This is a simplified check - in production you'd validate against actual system capabilities
-            if policy == "http://hl7.org/fhir/us/davinci-hrex/StructureDefinition-hrex-consent.html#regular" ||
-                policy == "http://hl7.org/fhir/us/davinci-hrex/StructureDefinition-hrex-consent.html#sensitive" {
-                // Policy is supported
-                log:printDebug("Policy compliance validation successful. Policy: " + policy);
-            } else {
-                log:printError("Requested policy not supported: " + policy);
-                result.reason = CONSENT_POLICY_NOT_SUPPORTED;
-                return result;
+    }
+    // Also check policyRule as a fallback (HRex consent uses policyRule with hrex-temp codes)
+    if result.consentPolicy is () && consent.policyRule is r4:CodeableConcept {
+        r4:CodeableConcept pRule = <r4:CodeableConcept>consent.policyRule;
+        if pRule.coding is r4:Coding[] {
+            foreach r4:Coding coding in <r4:Coding[]>pRule.coding {
+                if coding.code is string {
+                    string code = <string>coding.code;
+                    if code == "regular" || code == "sensitive" {
+                        result.consentPolicy = code;
+                        break;
+                    }
+                }
             }
+        }
+    }
+
+    if result.consentPolicy is string {
+        string policy = <string>result.consentPolicy;
+        // Accept both full HRex policy URIs and short hrex-temp CodeSystem codes
+        if policy == "http://hl7.org/fhir/us/davinci-hrex/StructureDefinition-hrex-consent.html#regular" ||
+            policy == "http://hl7.org/fhir/us/davinci-hrex/StructureDefinition-hrex-consent.html#sensitive" ||
+            policy == "regular" || policy == "sensitive" {
+            log:printDebug("Policy compliance validation successful. Policy: " + policy);
         } else {
-            log:printError("Consent policy not found in provision policies");
+            log:printError("Requested policy not supported: " + policy);
             result.reason = CONSENT_POLICY_NOT_SUPPORTED;
             return result;
         }
     } else {
-        log:printError("Provision policies not found in consent");
+        log:printError("Consent policy not found in policy[] or policyRule");
         result.reason = CONSENT_POLICY_NOT_SUPPORTED;
         return result;
     }
@@ -987,7 +1085,7 @@ isolated function updateCommunicationRequestAndClaim(international401:Parameters
     log:printDebug(string `Claim ${claimId} updated successfully`);
 
     communicationRequest.status = "completed";
-    r4:DomainResource|r4:FHIRError updatedComReqJson = 
+    r4:DomainResource|r4:FHIRError updatedComReqJson =
         check update(fhirConnector, COMMUNICATION_REQUEST, commReqId, communicationRequest.toJson());
     if updatedComReqJson is r4:FHIRError {
         log:printError("Failed to update CommunicationRequest: " + updatedComReqJson.message());

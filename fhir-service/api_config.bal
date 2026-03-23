@@ -1035,6 +1035,53 @@ final r4:ResourceAPIConfig groupApiConfig = {
                     min: 0
                 }
             ]
+        },
+        {
+            name: "bulk-member-match",
+            active: true,
+            parameters: [
+                {
+                    name: "MemberBundle",
+                    active: true,
+                    min: 1
+                }
+            ]
+        },
+        {
+            name: "davinci-data-export",
+            active: true,
+            parameters: [
+                {
+                    name: "exportType",
+                    active: true,
+                    min: 0
+                },
+                {
+                    name: "_since",
+                    active: true,
+                    min: 0
+                },
+                {
+                    name: "_until",
+                    active: true,
+                    min: 0
+                },
+                {
+                    name: "_type",
+                    active: true,
+                    min: 0
+                },
+                {
+                    name: "_typeFilter",
+                    active: true,
+                    min: 0
+                },
+                {
+                    name: "patient",
+                    active: true,
+                    min: 0
+                }
+            ]
         }
     ],
     serverConfig: (),

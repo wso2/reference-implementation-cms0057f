@@ -58,6 +58,7 @@ export interface ItemAdjudicationSubmission {
   sequence: number;
   adjudicationCode: string;
   approvedAmount?: number;
+  approvedPercent?: number;
   itemNotes?: string;
 }
 

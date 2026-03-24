@@ -153,7 +153,25 @@ const initializeItemsWithState = (items: ClaimItem[], status?: string): ClaimIte
     const adjudicationEntries = (item.adjudication || []) as Array<{
       category?: { coding?: Array<{ code?: string; display?: string }> };
       amount?: { value?: number; currency?: string };
+      value?: number; // used by percent-based adjudications (e.g. eligpercent)
     }>;
+
+    const isComplete = status === 'complete';
+
+    // Check for percent-based adjudication (eligpercent uses .value, not .amount)
+    const eligpercentEntry = adjudicationEntries.find(
+      (adj) => adj.category?.coding?.[0]?.code === 'eligpercent'
+    );
+    if (eligpercentEntry) {
+      return {
+        ...item,
+        selectedAdjudicationCode: 'eligpercent',
+        adjudicationAmount: undefined,
+        adjudicationPercent: eligpercentEntry.value,
+        itemReviewNote: item.reviewNote || '',
+        isReviewed: isComplete || adjudicationEntries.length > 0,
+      };
+    }
 
     // Find the benefit entry or the first entry with an amount
     const benefitEntry = adjudicationEntries.find(
@@ -164,7 +182,6 @@ const initializeItemsWithState = (items: ClaimItem[], status?: string): ClaimIte
 
     const selectedCode = primaryEntry?.category?.coding?.[0]?.code;
     const amount = (benefitEntry || entryWithAmount)?.amount?.value ?? (item.net as { value: number })?.value;
-    const isComplete = status === 'complete';
 
     return {
       ...item,
@@ -201,6 +218,10 @@ export default function PARequestDetail() {
 
   // Fetch PA request details
   useEffect(() => {
+    if (authLoading || !isAuthenticated) {
+      return;
+    }
+
     const fetchPARequestDetail = async () => {
       if (!requestId) {
         setError('Request ID is missing');
@@ -223,7 +244,7 @@ export default function PARequestDetail() {
     };
 
     fetchPARequestDetail();
-  }, [requestId]);
+  }, [requestId, authLoading, isAuthenticated]);
 
   // Check if we're coming from the processed page or if the request is already complete
   const isFromProcessedPage = location.pathname.includes('processed');
@@ -449,12 +470,14 @@ export default function PARequestDetail() {
         itemAdjudications: itemsWithAdjudication.map((item) => ({
           sequence: item.sequence,
           adjudicationCode: item.selectedAdjudicationCode!,
-          approvedAmount: item.adjudicationAmount,
+          ...(item.selectedAdjudicationCode === 'eligpercent'
+            ? { approvedPercent: item.adjudicationPercent }
+            : { approvedAmount: item.adjudicationAmount }),
           itemNotes: item.itemReviewNote,
         })),
         reviewerNotes: overallNotes,
       };
-      
+
       const response = await paRequestsAPI.submitAdjudication(requestId, adjudication);
       console.log('Draft saved:', response);
       
@@ -490,12 +513,14 @@ export default function PARequestDetail() {
         itemAdjudications: claimItems.map((item) => ({
           sequence: item.sequence,
           adjudicationCode: item.selectedAdjudicationCode!,
-          approvedAmount: item.adjudicationAmount,
+          ...(item.selectedAdjudicationCode === 'eligpercent'
+            ? { approvedPercent: item.adjudicationPercent }
+            : { approvedAmount: item.adjudicationAmount }),
           itemNotes: item.itemReviewNote,
         })),
         reviewerNotes: overallNotes,
       };
-      
+
       const response = await paRequestsAPI.submitAdjudication(requestId, adjudication);
       console.log('Review completed:', response);
       
@@ -1608,17 +1633,18 @@ export default function PARequestDetail() {
                                 <TableHead>
                                   <TableRow sx={{ bgcolor: 'action.hover' }}>
                                     <TableCell sx={{ fontWeight: 600 }}>Category</TableCell>
-                                    <TableCell sx={{ fontWeight: 600 }} align="right">Amount</TableCell>
+                                    <TableCell sx={{ fontWeight: 600 }} align="right">Amount / Value</TableCell>
                                   </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                  {(item.adjudication as Array<{ category?: { coding?: Array<{ display?: string; code?: string }> }; amount?: { value?: number; currency?: string } }>)
-                                    .filter((adj) => adj.amount)
+                                  {(item.adjudication as Array<{ category?: { coding?: Array<{ display?: string; code?: string }> }; amount?: { value?: number; currency?: string }; value?: number }>)
+                                    .filter((adj) => adj.amount || adj.value !== undefined)
                                     .map((adj, idx) => {
                                       const code = adj.category?.coding?.[0]?.code;
                                       const displayName = code && ADJUDICATION_CODES.includes(code as AdjudicationCode)
                                         ? AdjudicationCodeDisplay[code as AdjudicationCode]
                                         : adj.category?.coding?.[0]?.display || code || 'N/A';
+                                      const isPercent = code === 'eligpercent';
                                       return (
                                         <TableRow key={idx}>
                                           <TableCell>
@@ -1628,7 +1654,9 @@ export default function PARequestDetail() {
                                           </TableCell>
                                           <TableCell align="right">
                                             <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                              ${adj.amount?.value?.toLocaleString() || '0'} {adj.amount?.currency || 'USD'}
+                                              {isPercent
+                                                ? `${adj.value ?? 0}%`
+                                                : `$${adj.amount?.value?.toLocaleString() || '0'} ${adj.amount?.currency || 'USD'}`}
                                             </Typography>
                                           </TableCell>
                                         </TableRow>
@@ -1689,7 +1717,7 @@ export default function PARequestDetail() {
                               size="small"
                               label="Eligible Percentage"
                               type="number"
-                              value={item.adjudicationPercent || ''}
+                              value={item.adjudicationPercent ?? ''}
                               onChange={(e) => {
                                 const value = parseFloat(e.target.value);
                                 if (!isNaN(value) && value >= 0) {
@@ -1711,7 +1739,7 @@ export default function PARequestDetail() {
                               size="small"
                               label="Amount"
                               type="number"
-                              value={item.adjudicationAmount || ''}
+                              value={item.adjudicationAmount ?? ''}
                               onChange={(e) => {
                                 const value = parseFloat(e.target.value);
                                 if (!isNaN(value) && value >= 0) {

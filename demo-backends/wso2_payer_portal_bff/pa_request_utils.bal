@@ -301,29 +301,29 @@ function lookupValueSetDisplay(string code, string valueSetUrl, string valuesetI
 }
 
 # Parse a FHIR CommunicationRequest JSON into a CommunicationRequestItem.
-# Uses davincipas:PASCommunicationRequest for type safety and enriches each
+# Uses international401:CommunicationRequest for type safety and enriches each
 # payload code via the PAS LOINC attachment ValueSet and the reason code
 # via the v3-ActReason ValueSet.
 #
 # + commReqJson - FHIR CommunicationRequest resource as JSON
 # + return - CommunicationRequestItem or error
 function parseCommunicationRequest(json commReqJson) returns CommunicationRequestItem|error {
-    davincipas:PASCommunicationRequest commReq = <davincipas:PASCommunicationRequest> check parser:parse(commReqJson);
+    international401:CommunicationRequest commReq = <international401:CommunicationRequest> check parser:parse(commReqJson);
 
     string id = commReq.id ?: "";
 
     string statusStr = <string>commReq.status;
     CommunicationRequestStatus status = statusStr is CommunicationRequestStatus ? statusStr : "unknown";
 
-    string priorityStr = commReq.priority is davincipas:PASCommunicationRequestPriority
+    string priorityStr = commReq.priority is international401:CommunicationRequestPriority
         ? <string>commReq.priority : "routine";
     PARequestPriority priority = priorityStr is PARequestPriority ? priorityStr : "routine";
 
     // Build AdditionalInfoItem list — each payload contentString is a LOINC attachment code
     AdditionalInfoItem[] requestedItems = [];
-    if commReq.payload is davincipas:PASCommunicationRequestPayload[] {
-        foreach davincipas:PASCommunicationRequestPayload payloadItem in
-                <davincipas:PASCommunicationRequestPayload[]>commReq.payload {
+    if commReq.payload is international401:CommunicationRequestPayload[] {
+        foreach international401:CommunicationRequestPayload payloadItem in
+                <international401:CommunicationRequestPayload[]>commReq.payload {
             string? code = payloadItem.contentString;
             if code is string {
                 requestedItems.push({
@@ -1238,9 +1238,20 @@ public function submitPARequestAdjudication(string responseId, AdjudicationSubmi
     
     if updateResponse is http:ClientError {
         log:printError("Failed to update ClaimResponse: " + updateResponse.message());
+        sql:ParameterizedQuery errorStatusQuery = `UPDATE pa_requests SET status = 'ERROR' WHERE response_id = ${responseId}`;
+        sql:ExecutionResult|sql:Error errorDbResult = dbClient->execute(errorStatusQuery);
+        if errorDbResult is sql:Error {
+            log:printError("Failed to update pa_requests status to ERROR: " + errorDbResult.message());
+        }
         return error("Failed to update ClaimResponse: " + updateResponse.message());
     }
-    
+
+    sql:ParameterizedQuery completedStatusQuery = `UPDATE pa_requests SET status = 'COMPLETED' WHERE response_id = ${responseId}`;
+    sql:ExecutionResult|sql:Error completedDbResult = dbClient->execute(completedStatusQuery);
+    if completedDbResult is sql:Error {
+        log:printError("Failed to update pa_requests status to COMPLETED: " + completedDbResult.message());
+    }
+
     return {
         id: <string>pasClaimResponse.id,
         status: adjudication.decision,
@@ -1346,6 +1357,11 @@ public function submitPARequestAdditionalInfo(string responseId, AdditionalInfor
         return error("Failed to update ClaimResponse with CommunicationRequest: " + updateResponse.message());
     }
     log:printDebug("ClaimResponse updated with CommunicationRequest reference: " + commId);
+    sql:ParameterizedQuery pendingProviderQuery = `UPDATE pa_requests SET status = 'PENDING_ON_PROVIDER' WHERE response_id = ${responseId}`;
+    sql:ExecutionResult|sql:Error pendingDbResult = dbClient->execute(pendingProviderQuery);
+    if pendingDbResult is sql:Error {
+        log:printError("Failed to update pa_requests status to PENDING_ON_PROVIDER: " + pendingDbResult.message());
+    }
     return {
         id: commId,
         status: "active",

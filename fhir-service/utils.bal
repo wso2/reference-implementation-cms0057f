@@ -16,6 +16,7 @@
 
 import ballerina/http;
 import ballerina/log;
+import ballerina/sql;
 import ballerina/time;
 import ballerina/url;
 import ballerina/uuid;
@@ -345,6 +346,198 @@ isolated function invokeX12ServiceAndCreateAuditRecord(string url, string payloa
     }
 }
 
+# Extract the logical ID from a FHIR reference string (e.g. "Patient/123" → "123").
+#
+# + reference - FHIR reference string, may be null
+# + return - Logical ID or null if reference is null/empty
+isolated function extractRefId(string? reference) returns string? {
+    if reference is () || reference == "" {
+        return ();
+    }
+    string[] parts = re`/`.split(reference);
+    return parts[parts.length() - 1];
+}
+
+# Map a FHIR Claim priority coding to the PA request priority string.
+# "stat" → "Urgent", "deferred" → "Deferred", anything else → "Standard".
+#
+# + claimJson - Claim resource as JSON
+# + return - Priority string: "Urgent", "Standard", or "Deferred"
+isolated function mapClaimPriority(json claimJson) returns string {
+    json|error codings = claimJson.priority.coding;
+    if codings is json[] && codings.length() > 0 {
+        json|error code = codings[0].code;
+        if code is string {
+            string lower = code.toLowerAscii();
+            if lower == "stat" {
+                return "Urgent";
+            } else if lower == "deferred" {
+                return "Deferred";
+            }
+        } else {
+            log:printWarn("Claim priority coding code is not a string. Defaulting to Standard. Value: " + (<error>code).toString());
+        }
+    }
+    return "Standard";
+}
+
+# Detect whether a Claim represents an appeal by checking extensions whose URL
+# contains "appeal". The extension value is used when present (valueBoolean),
+# otherwise the presence of a matching URL is treated as an implicit true.
+#
+# Note: related.relationship.coding code "prior" is intentionally NOT used as
+# an appeal signal — "prior" only indicates a predecessor claim, not an appeal.
+#
+# + claimJson - Claim resource as JSON
+# + return - true if the claim is an appeal
+isolated function detectIsAppeal(json claimJson) returns boolean {
+    json|error extensions = claimJson.extension;
+    if extensions is json[] {
+        foreach json ext in extensions {
+            json|error urlJson = ext.url;
+            if urlJson is string && urlJson.toLowerAscii().includes("appeal") {
+                json|error vb = ext.valueBoolean;
+                return vb is boolean ? vb : true;
+            }
+        }
+    }
+    return false;
+}
+
+# Resolve practitioner ID and provider name from a Claim resource.
+# Resolution order:
+# 1. careTeam entries (PractitionerRole → practitioner + org, or Practitioner directly)
+# 2. claim.provider reference (PractitionerRole, Organization, or Practitioner)
+# 3. Fallback to claim.provider.display
+#
+# + fhirConnector - FHIR connector for fetching related resources
+# + claimJson - Claim resource as JSON
+# + return - Tuple of [practitioner_id, provider_name], either may be null
+isolated function resolveProviderInfo(fhirClient:FHIRConnector fhirConnector, international401:Claim claimJson) returns [string?, string?] {
+    string? practitionerId = ();
+    string? providerName = ();
+
+    // 1. Check careTeam entries
+    international401:ClaimCareTeam[]? careTeamJson = claimJson.careTeam;
+    if careTeamJson is international401:ClaimCareTeam[] {
+        foreach international401:ClaimCareTeam member in careTeamJson {
+            if practitionerId is string && providerName is string {
+                break;
+            }
+            string? providerRef = member.provider.reference;
+            if providerRef is (){
+                log:printWarn("CareTeam member is missing provider reference");
+                continue;
+            }
+            if providerRef.includes("PractitionerRole/") {
+                string? prId = extractRefId(providerRef);
+                if prId is () {
+                    log:printWarn("CareTeam member provider reference includes PractitionerRole but ID is empty");
+                    continue;
+                }
+                r4:DomainResource|r4:FHIRError prRes = getById(fhirConnector, PRACTITIONER_ROLE, prId);
+                if prRes is r4:FHIRError {
+                    log:printWarn("Failed to retrieve PractitionerRole resource with ID " + prId + ": " + prRes.toString());
+                    continue;
+                }
+                international401:PractitionerRole|error pr = prRes.cloneWithType(international401:PractitionerRole);
+                if pr is error {
+                    log:printWarn("Failed to convert PractitionerRole resource with ID " + prId + " to international401:PractitionerRole: " + pr.toString());
+                    continue;
+                }
+                if practitionerId is () {
+                    practitionerId = extractRefId(pr.practitioner?.reference);
+                }
+                if providerName is () && pr.organization is r4:Reference {
+                    string? orgId = extractRefId((<r4:Reference>pr.organization).reference);
+                    if orgId is () {
+                        log:printWarn("Organization reference in PractitionerRole with ID " + prId + " is empty");
+                        continue;
+                    }
+                    r4:DomainResource|r4:FHIRError orgRes = getById(fhirConnector, ORGANIZATION, orgId);
+                    if orgRes is r4:FHIRError {
+                        log:printWarn("Failed to retrieve Organization resource with ID " + orgId + ": " + orgRes.toString());
+                        continue;
+                    }
+                    international401:Organization|error org = orgRes.cloneWithType(international401:Organization);
+                    if org is error {
+                        log:printWarn("Failed to convert Organization resource with ID " + orgId + " to international401:Organization: " + org.toString());
+                        continue;
+                    }
+                    providerName = org.name;
+                }
+                break;
+            } else if providerRef.includes("Practitioner/") {
+                practitionerId = extractRefId(providerRef);
+                break;
+            }
+        }
+    }
+
+    // 2. Check claim.provider reference
+    string? providerRef = claimJson.provider.reference;
+    string? providerDisplay = claimJson.provider.display;
+
+    if providerRef is string {
+        if providerRef.includes("PractitionerRole") {
+            string? prId = extractRefId(providerRef);
+            if prId is () {
+                log:printWarn("Claim provider reference includes PractitionerRole but ID is empty");
+                return [practitionerId, providerName];
+            }
+            r4:DomainResource|r4:FHIRError prRes = getById(fhirConnector, PRACTITIONER_ROLE, prId);
+            if prRes is r4:FHIRError {
+                log:printWarn("Failed to retrieve PractitionerRole resource with ID " + prId + ": " + prRes.toString());
+                return [practitionerId, providerName];
+            }
+            international401:PractitionerRole|error pr = prRes.cloneWithType(international401:PractitionerRole);
+            if pr is error {
+                log:printWarn("Failed to convert PractitionerRole resource with ID " + prId + " to international401:PractitionerRole: " + pr.toString());
+                return [practitionerId, providerName];
+            }
+            if practitionerId is () {
+                practitionerId = extractRefId(pr.practitioner?.reference);
+            }
+            if providerName is () && pr.organization is r4:Reference {
+                string? orgId = extractRefId((<r4:Reference>pr.organization).reference);
+                if orgId is string {
+                    r4:DomainResource|r4:FHIRError orgRes = getById(fhirConnector, ORGANIZATION, orgId);
+                    if orgRes is r4:FHIRError {
+                        log:printWarn("Failed to retrieve Organization resource with ID " + orgId + ": " + orgRes.toString());
+                        return [practitionerId, providerName];
+                    }
+                    international401:Organization|error org = orgRes.cloneWithType(international401:Organization);
+                    if org is international401:Organization {
+                        providerName = org.name;
+                    }
+                }
+            }
+        } else if providerRef.includes("Organization") && providerName is () {
+            string? orgId = extractRefId(providerRef);
+            if orgId is string {
+                r4:DomainResource|r4:FHIRError orgRes = getById(fhirConnector, ORGANIZATION, orgId);
+                if orgRes is r4:FHIRError {
+                    log:printWarn("Failed to retrieve Organization resource with ID " + orgId + ": " + orgRes.toString());
+                    return [practitionerId, providerName];
+                }
+                international401:Organization|error org = orgRes.cloneWithType(international401:Organization);
+                if org is international401:Organization {
+                    providerName = org.name;
+                }
+            }
+        } else if providerRef.includes("Practitioner") && practitionerId is () {
+            practitionerId = extractRefId(providerRef);
+        }
+    }
+
+    // 3. Fallback: use display field
+    if providerName is () && providerDisplay is string {
+        providerName = providerDisplay;
+    }
+
+    return [practitionerId, providerName];
+}
+
 public isolated function claimSubmit(r4:Bundle|international401:Parameters payload) returns r4:FHIRError|r4:Bundle|error {
     r4:Bundle submissionBundle;
     if payload is r4:Bundle {
@@ -445,6 +638,40 @@ public isolated function claimSubmit(r4:Bundle|international401:Parameters paylo
                 'type: r4:BUNDLE_TYPE_COLLECTION,
                 entry: [bundleEntryResponse]
             };
+
+            // Insert PA request record into the database
+            string responseId = <string>newClaimResponse.id;
+            json claimJson = claim.toJson();
+            string mappedPriority = mapClaimPriority(claimJson);
+            json|error patientRefJson = claimJson.patient.reference;
+            string patientId = patientRefJson is string ? (extractRefId(patientRefJson) ?: "") : "";
+            [string?, string?] providerInfo = resolveProviderInfo(fhirConnector, claim);
+            string? practitionerId = providerInfo[0];
+            string? providerName = providerInfo[1];
+            boolean isAppeal = detectIsAppeal(claimJson);
+            time:Utc now = time:utcNow();
+            time:Civil civil = time:utcToCivil(now);
+            int sec = <int>(civil.second ?: 0.0d);
+            string dateSubmitted = string `${civil.year}-${civil.month < 10 ? "0" : ""}${civil.month}-${civil.day < 10 ? "0" : ""}${civil.day} ${civil.hour < 10 ? "0" : ""}${civil.hour}:${civil.minute < 10 ? "0" : ""}${civil.minute}:${sec < 10 ? "0" : ""}${sec}`;
+
+            sql:ParameterizedQuery insertQuery = `INSERT INTO pa_requests
+                (request_id, response_id, priority, status, ai_summary, patient_id, practitioner_id, provider_name, is_appeal, date_submitted)
+                VALUES (${claimId}, ${responseId}, ${mappedPriority}, 'QUEUED', NULL, ${patientId}, ${practitionerId}, ${providerName}, ${isAppeal}, ${dateSubmitted})`;
+            sql:ExecutionResult|sql:Error dbResult = dbClient->execute(insertQuery);
+            if dbResult is sql:Error {
+                string errMsg = string `Failed to insert PA request into database: request_id=${claimId}, response_id=${responseId}: ${dbResult.message()}`;
+                log:printError(errMsg, dbResult);
+                r4:OperationOutcome|r4:FHIRError deleteResponseResult = deleteResource(fhirConnector, CLAIM_RESPONSE, responseId);
+                if deleteResponseResult is r4:FHIRError {
+                    log:printError("Compensating delete of ClaimResponse failed: response_id=" + responseId, deleteResponseResult);
+                }
+                r4:OperationOutcome|r4:FHIRError deleteClaimResult = deleteResource(fhirConnector, CLAIM, claimId);
+                if deleteClaimResult is r4:FHIRError {
+                    log:printError("Compensating delete of Claim failed: claim_id=" + claimId, deleteClaimResult);
+                }
+                return error(errMsg);
+            }
+            log:printDebug("PA request inserted into database: request_id=" + claimId + ", response_id=" + responseId);
 
             return responseBundle.clone();
         } else {
@@ -1094,7 +1321,54 @@ isolated function updateCommunicationRequestAndClaim(international401:Parameters
             "Failed to update CommunicationRequest");
     }
     log:printDebug(string `CommunicationRequest ${commReqId} updated to completed status successfully`);
-    
+
+    // Check if all CommunicationRequests linked to this claim's ClaimResponse are now completed.
+    // If so, move the PA request back to PENDING_ON_PAYER.
+    r4:Bundle|r4:FHIRError crSearchResult = search(fhirConnector, CLAIM_RESPONSE, {"request": ["Claim/" + claimId]});
+    if crSearchResult is r4:Bundle {
+        r4:BundleEntry[]? crEntries = crSearchResult.entry;
+        if crEntries is r4:BundleEntry[] && crEntries.length() > 0 {
+            international401:ClaimResponse|error claimResponse = (crEntries[0]?.'resource).cloneWithType(international401:ClaimResponse);
+            if claimResponse is international401:ClaimResponse && claimResponse.communicationRequest is r4:Reference[] {
+                r4:Reference[] allCommRefs = <r4:Reference[]>claimResponse.communicationRequest;
+                boolean allCompleted = true;
+                foreach r4:Reference commRef in allCommRefs {
+                    string? refStr = commRef.reference;
+                    if refStr is string {
+                        string? otherCrId = extractRefId(refStr);
+                        if otherCrId is string && otherCrId != commReqId {
+                            // Fetch the other CommunicationRequest and check its status
+                            r4:DomainResource|r4:FHIRError otherCrRes = getById(fhirConnector, COMMUNICATION_REQUEST, otherCrId);
+                            if otherCrRes is r4:DomainResource {
+                                json otherCrJson = otherCrRes.toJson();
+                                json|error statusJson = otherCrJson.status;
+                                if !(statusJson is string && statusJson == "completed") {
+                                    allCompleted = false;
+                                    break;
+                                }
+                            } else {
+                                allCompleted = false;
+                                break;
+                            }
+                        }
+                        // commReqId was just set to "completed" above, so it counts as completed
+                    }
+                }
+                if allCompleted {
+                    sql:ParameterizedQuery updateStatusQuery = `UPDATE pa_requests SET status = 'PENDING_ON_PAYER' WHERE request_id = ${claimId}`;
+                    sql:ExecutionResult|sql:Error dbResult = dbClient->execute(updateStatusQuery);
+                    if dbResult is sql:Error {
+                        log:printError("Failed to update PA request status in database: " + dbResult.message());
+                    } else {
+                        log:printDebug("All CommunicationRequests completed; PA request status set to PENDING_ON_PAYER for request_id: " + claimId);
+                    }
+                }
+            }
+        }
+    } else {
+        log:printWarn("Could not find ClaimResponse for claim " + claimId + "; skipping pa_requests status update");
+    }
+
     r4:OperationOutcome outcome = {
         resourceType: "OperationOutcome",
         issue: [

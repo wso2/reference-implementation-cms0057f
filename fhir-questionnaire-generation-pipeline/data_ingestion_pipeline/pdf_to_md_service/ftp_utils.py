@@ -24,6 +24,7 @@ from settings import Configs
 async def read_pdf_file_ftp(file_name: str, configs: Configs, logger: logging.Logger):
     """Read PDF file from FTP server and return local temporary file path."""
     ftp = None
+    temp_file_path = None
     try:
         # Connect to FTP server
         ftp = ftplib.FTP()
@@ -36,11 +37,13 @@ async def read_pdf_file_ftp(file_name: str, configs: Configs, logger: logging.Lo
         # Create a temporary file to store the downloaded PDF
         with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_file:
             # Download the PDF file from FTP server
-            ftp.retrbinary(f'RETR {pdf_filename}', temp_file.write)
             temp_file_path = temp_file.name
+            ftp.retrbinary(f'RETR {pdf_filename}', temp_file.write)
         logger.info(f"Successfully downloaded PDF file for {file_name} from FTP server")
         return temp_file_path
     except Exception as e:
+        if temp_file_path and os.path.exists(temp_file_path):
+            os.remove(temp_file_path)
         logger.error(f"Error reading PDF file from FTP: {e}")
         return None
     finally:

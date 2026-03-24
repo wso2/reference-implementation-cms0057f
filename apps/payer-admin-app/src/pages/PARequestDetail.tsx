@@ -417,23 +417,24 @@ export default function PARequestDetail() {
     valueCoding?: { system?: string; code?: string; display?: string };
   }>): string => {
     if (!answer || answer.length === 0) return 'No answer provided';
-    
-    const firstAnswer = answer[0];
-    
-    if (firstAnswer.valueCoding) {
-      return firstAnswer.valueCoding.display || firstAnswer.valueCoding.code || 'N/A';
-    }
-    if (firstAnswer.valueString) {
-      return firstAnswer.valueString;
-    }
-    if (firstAnswer.valueBoolean !== undefined) {
-      return firstAnswer.valueBoolean ? 'Yes' : 'No';
-    }
-    if (firstAnswer.valueInteger !== undefined) {
-      return firstAnswer.valueInteger.toString();
-    }
-    
-    return 'No answer provided';
+
+    const values = answer.map(entry => {
+      if (entry.valueCoding) {
+        return entry.valueCoding.display || entry.valueCoding.code || '';
+      }
+      if (entry.valueString) {
+        return entry.valueString;
+      }
+      if (entry.valueBoolean !== undefined) {
+        return entry.valueBoolean ? 'Yes' : 'No';
+      }
+      if (entry.valueInteger !== undefined) {
+        return entry.valueInteger.toString();
+      }
+      return '';
+    }).filter(v => v !== '');
+
+    return values.length > 0 ? values.join(', ') : 'No answer provided';
   };
 
   // Helper to extract attachment details
@@ -751,7 +752,7 @@ export default function PARequestDetail() {
                 <Box sx={{ display: 'flex', alignItems: 'center', height: '28px', paddingLeft: "0.2vw" }}>
                   <Chip 
                     label={paRequest.priority} 
-                    color={paRequest.priority === 'Urgent' ? 'error' : 'default'} 
+                    color={paRequest.priority.toLowerCase() === 'urgent' ? 'error' : 'default'} 
                     size="small" 
                   />
                 </Box>
@@ -952,7 +953,7 @@ export default function PARequestDetail() {
                     Address
                   </Typography>
                   <Typography variant="body2">
-                    {paRequest.provider.facility.address.line.join(', ')}
+                    {Array.isArray(paRequest.provider.facility.address.line) ? paRequest.provider.facility.address.line.join(', ') : ''}
                     {paRequest.provider.facility.address.city && (
                       <>
                         <br />

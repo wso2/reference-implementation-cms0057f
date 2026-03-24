@@ -74,6 +74,7 @@ async def process_pdf_file(job_id: str, file_name: str, logger: logging.Logger, 
             file_path = await read_pdf_file_local(file_name, configs, logger)
         if not file_path:
             logger.error(f"Job {job_id} failed - PDF file not found")
+            await send_notification(job_id, file_name, "failed", "pdf_not_found", configs, logger)
             return
         
         # Convert PDF to markdown

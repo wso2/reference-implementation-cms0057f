@@ -153,9 +153,23 @@ service / on new http:Listener(SERVICE_PORT) {
         };
     }
 
-    resource function post questionnaires(QuestionnaireUploadPayload payload) returns string|http:BadRequest {
+    resource function post questionnaires(QuestionnaireUploadPayload payload) returns string|http:BadRequest|http:NotFound {
         log:printInfo(string `Received questionnaire bundle for file: ${payload.file_name}, job: ${payload.job_id}`);
         string jobKey = payload.file_name + "_" + payload.job_id;
+
+        // Reject unknown jobs before mutating any state
+        lock {
+            if JOB_METADATA_STORE[jobKey] is () {
+                return <http:NotFound>{body: {"error": string `Job ${jobKey} not found`}};
+            }
+        }
+
+        // Validate bundle structure before mutating metadata
+        json bundle = payload.bundle;
+        json|error bundleType = bundle.'type;
+        if bundleType is error || bundleType != "collection" {
+            return <http:BadRequest>{body: {"error": "Bundle must be of type 'collection'"}};
+        }
 
         lock {
             JobMetadata? metadata = JOB_METADATA_STORE[jobKey];
@@ -172,13 +186,6 @@ service / on new http:Listener(SERVICE_PORT) {
                 metadata.status = STATUS_ENRICHING_AND_STORING;
                 JOB_METADATA_STORE[jobKey] = metadata;
             }
-        }
-        
-        // Validate bundle structure
-        json bundle = payload.bundle;
-        json|error bundleType = bundle.'type;
-        if bundleType is error || bundleType != "collection" {
-            return <http:BadRequest>{body: {"error": "Bundle must be of type 'collection'"}};
         }
         
         // Replace http://example.org URLs with FHIR server URL in the bundle

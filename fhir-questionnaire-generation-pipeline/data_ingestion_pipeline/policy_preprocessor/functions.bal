@@ -84,14 +84,14 @@ function splitDocument(string documentContent, string[] sectionTitles) returns m
     
     foreach string title in sectionTitles {
         int? index = documentContent.indexOf(title, searchStartIndex);
-        if index is null {
+        if index is () {
             log:printError("Title not found in document: " + title + " after index: " + searchStartIndex.toString());
             return error("Title not found in document: " + title);
         }
         int cur_index = index;
         while !isValidTitle(documentContent, title, cur_index) {
             int? new_index = documentContent.indexOf(title, cur_index + 1);
-            if new_index is null {
+            if new_index is () {
                 log:printWarn("No valid title found for: " + title + ". Using last occurrence at index: " + cur_index.toString());
                 break;
             }
@@ -261,7 +261,7 @@ function processDocumentFlow(string fileName, string jobId) returns error? {
     lock {
         JobMetadata? metadata = JOB_METADATA_STORE[jobKey];
         if metadata is JobMetadata {
-            metadata.status = STATUS_FHIR_QUESIONNAIRE_GEN_STARTED;
+            metadata.status = STATUS_FHIR_QUESTIONNAIRE_GEN_STARTED;
             JOB_METADATA_STORE[jobKey] = metadata;
         }
     }

@@ -374,6 +374,8 @@ isolated function mapClaimPriority(json claimJson) returns string {
             } else if lower == "deferred" {
                 return "Deferred";
             }
+        } else {
+            log:printWarn("Claim priority coding code is not a string. Defaulting to Standard. Value: " + (<error>code).toString());
         }
     }
     return "Standard";
@@ -411,103 +413,126 @@ isolated function detectIsAppeal(json claimJson) returns boolean {
 # + fhirConnector - FHIR connector for fetching related resources
 # + claimJson - Claim resource as JSON
 # + return - Tuple of [practitioner_id, provider_name], either may be null
-isolated function resolveProviderInfo(fhirClient:FHIRConnector fhirConnector, json claimJson) returns [string?, string?] {
+isolated function resolveProviderInfo(fhirClient:FHIRConnector fhirConnector, international401:Claim claimJson) returns [string?, string?] {
     string? practitionerId = ();
     string? providerName = ();
 
     // 1. Check careTeam entries
-    json|error careTeamJson = claimJson.careTeam;
-    if careTeamJson is json[] {
-        foreach json member in careTeamJson {
+    international401:ClaimCareTeam[]? careTeamJson = claimJson.careTeam;
+    if careTeamJson is international401:ClaimCareTeam[] {
+        foreach international401:ClaimCareTeam member in careTeamJson {
             if practitionerId is string && providerName is string {
                 break;
             }
-            json|error provRef = member.provider.reference;
-            if provRef is string {
-                if provRef.includes("PractitionerRole/") {
-                    string? prId = extractRefId(provRef);
-                    if prId is string {
-                        r4:DomainResource|r4:FHIRError prRes = getById(fhirConnector, PRACTITIONER_ROLE, prId);
-                        if prRes is r4:DomainResource {
-                            international401:PractitionerRole|error pr = prRes.cloneWithType(international401:PractitionerRole);
-                            if pr is international401:PractitionerRole {
-                                if practitionerId is () {
-                                    practitionerId = extractRefId(pr.practitioner?.reference);
-                                }
-                                if providerName is () && pr.organization is r4:Reference {
-                                    string? orgId = extractRefId((<r4:Reference>pr.organization).reference);
-                                    if orgId is string {
-                                        r4:DomainResource|r4:FHIRError orgRes = getById(fhirConnector, ORGANIZATION, orgId);
-                                        if orgRes is r4:DomainResource {
-                                            international401:Organization|error org = orgRes.cloneWithType(international401:Organization);
-                                            if org is international401:Organization {
-                                                providerName = org.name;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    break;
-                } else if provRef.includes("Practitioner/") {
-                    practitionerId = extractRefId(provRef);
-                    break;
+            string? providerRef = member.provider.reference;
+            if providerRef is (){
+                log:printWarn("CareTeam member is missing provider reference");
+                continue;
+            }
+            if providerRef.includes("PractitionerRole/") {
+                string? prId = extractRefId(providerRef);
+                if prId is () {
+                    log:printWarn("CareTeam member provider reference includes PractitionerRole but ID is empty");
+                    continue;
                 }
+                r4:DomainResource|r4:FHIRError prRes = getById(fhirConnector, PRACTITIONER_ROLE, prId);
+                if prRes is r4:FHIRError {
+                    log:printWarn("Failed to retrieve PractitionerRole resource with ID " + prId + ": " + prRes.toString());
+                    continue;
+                }
+                international401:PractitionerRole|error pr = prRes.cloneWithType(international401:PractitionerRole);
+                if pr is error {
+                    log:printWarn("Failed to convert PractitionerRole resource with ID " + prId + " to international401:PractitionerRole: " + pr.toString());
+                    continue;
+                }
+                if practitionerId is () {
+                    practitionerId = extractRefId(pr.practitioner?.reference);
+                }
+                if providerName is () && pr.organization is r4:Reference {
+                    string? orgId = extractRefId((<r4:Reference>pr.organization).reference);
+                    if orgId is () {
+                        log:printWarn("Organization reference in PractitionerRole with ID " + prId + " is empty");
+                        continue;
+                    }
+                    r4:DomainResource|r4:FHIRError orgRes = getById(fhirConnector, ORGANIZATION, orgId);
+                    if orgRes is r4:FHIRError {
+                        log:printWarn("Failed to retrieve Organization resource with ID " + orgId + ": " + orgRes.toString());
+                        continue;
+                    }
+                    international401:Organization|error org = orgRes.cloneWithType(international401:Organization);
+                    if org is error {
+                        log:printWarn("Failed to convert Organization resource with ID " + orgId + " to international401:Organization: " + org.toString());
+                        continue;
+                    }
+                    providerName = org.name;
+                }
+                break;
+            } else if providerRef.includes("Practitioner/") {
+                practitionerId = extractRefId(providerRef);
+                break;
             }
         }
     }
 
     // 2. Check claim.provider reference
-    json|error providerRefJson = claimJson.provider.reference;
-    json|error providerDisplayJson = claimJson.provider.display;
-    string? providerRefStr = providerRefJson is string ? providerRefJson : ();
+    string? providerRef = claimJson.provider.reference;
+    string? providerDisplay = claimJson.provider.display;
 
-    if providerRefStr is string {
-        if providerRefStr.includes("PractitionerRole/") {
-            string? prId = extractRefId(providerRefStr);
-            if prId is string {
-                r4:DomainResource|r4:FHIRError prRes = getById(fhirConnector, PRACTITIONER_ROLE, prId);
-                if prRes is r4:DomainResource {
-                    international401:PractitionerRole|error pr = prRes.cloneWithType(international401:PractitionerRole);
-                    if pr is international401:PractitionerRole {
-                        if practitionerId is () {
-                            practitionerId = extractRefId(pr.practitioner?.reference);
-                        }
-                        if providerName is () && pr.organization is r4:Reference {
-                            string? orgId = extractRefId((<r4:Reference>pr.organization).reference);
-                            if orgId is string {
-                                r4:DomainResource|r4:FHIRError orgRes = getById(fhirConnector, ORGANIZATION, orgId);
-                                if orgRes is r4:DomainResource {
-                                    international401:Organization|error org = orgRes.cloneWithType(international401:Organization);
-                                    if org is international401:Organization {
-                                        providerName = org.name;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+    if providerRef is string {
+        if providerRef.includes("PractitionerRole") {
+            string? prId = extractRefId(providerRef);
+            if prId is () {
+                log:printWarn("Claim provider reference includes PractitionerRole but ID is empty");
+                return [practitionerId, providerName];
             }
-        } else if providerRefStr.includes("Organization/") && providerName is () {
-            string? orgId = extractRefId(providerRefStr);
-            if orgId is string {
-                r4:DomainResource|r4:FHIRError orgRes = getById(fhirConnector, ORGANIZATION, orgId);
-                if orgRes is r4:DomainResource {
+            r4:DomainResource|r4:FHIRError prRes = getById(fhirConnector, PRACTITIONER_ROLE, prId);
+            if prRes is r4:FHIRError {
+                log:printWarn("Failed to retrieve PractitionerRole resource with ID " + prId + ": " + prRes.toString());
+                return [practitionerId, providerName];
+            }
+            international401:PractitionerRole|error pr = prRes.cloneWithType(international401:PractitionerRole);
+            if pr is error {
+                log:printWarn("Failed to convert PractitionerRole resource with ID " + prId + " to international401:PractitionerRole: " + pr.toString());
+                return [practitionerId, providerName];
+            }
+            if practitionerId is () {
+                practitionerId = extractRefId(pr.practitioner?.reference);
+            }
+            if providerName is () && pr.organization is r4:Reference {
+                string? orgId = extractRefId((<r4:Reference>pr.organization).reference);
+                if orgId is string {
+                    r4:DomainResource|r4:FHIRError orgRes = getById(fhirConnector, ORGANIZATION, orgId);
+                    if orgRes is r4:FHIRError {
+                        log:printWarn("Failed to retrieve Organization resource with ID " + orgId + ": " + orgRes.toString());
+                        return [practitionerId, providerName];
+                    }
                     international401:Organization|error org = orgRes.cloneWithType(international401:Organization);
                     if org is international401:Organization {
                         providerName = org.name;
                     }
                 }
             }
-        } else if providerRefStr.includes("Practitioner/") && practitionerId is () {
-            practitionerId = extractRefId(providerRefStr);
+        } else if providerRef.includes("Organization") && providerName is () {
+            string? orgId = extractRefId(providerRef);
+            if orgId is string {
+                r4:DomainResource|r4:FHIRError orgRes = getById(fhirConnector, ORGANIZATION, orgId);
+                if orgRes is r4:FHIRError {
+                    log:printWarn("Failed to retrieve Organization resource with ID " + orgId + ": " + orgRes.toString());
+                    return [practitionerId, providerName];
+                }
+                international401:Organization|error org = orgRes.cloneWithType(international401:Organization);
+                if org is international401:Organization {
+                    providerName = org.name;
+                }
+            }
+        } else if providerRef.includes("Practitioner") && practitionerId is () {
+            practitionerId = extractRefId(providerRef);
         }
     }
 
     // 3. Fallback: use display field
-    if providerName is () && providerDisplayJson is string {
-        providerName = providerDisplayJson;
+    if providerName is () && providerDisplay is string {
+        providerName = providerDisplay;
     }
 
     return [practitionerId, providerName];
@@ -620,7 +645,7 @@ public isolated function claimSubmit(r4:Bundle|international401:Parameters paylo
             string mappedPriority = mapClaimPriority(claimJson);
             json|error patientRefJson = claimJson.patient.reference;
             string patientId = patientRefJson is string ? (extractRefId(patientRefJson) ?: "") : "";
-            [string?, string?] providerInfo = resolveProviderInfo(fhirConnector, claimJson);
+            [string?, string?] providerInfo = resolveProviderInfo(fhirConnector, claim);
             string? practitionerId = providerInfo[0];
             string? providerName = providerInfo[1];
             boolean isAppeal = detectIsAppeal(claimJson);

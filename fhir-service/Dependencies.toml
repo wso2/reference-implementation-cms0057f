@@ -434,7 +434,7 @@ dependencies = [
 [[package]]
 org = "ballerinax"
 name = "health.clients.fhir"
-version = "3.0.4"
+version = "3.0.5"
 dependencies = [
 	{org = "ballerina", name = "file"},
 	{org = "ballerina", name = "ftp"},
@@ -662,7 +662,7 @@ dependencies = [
 [[package]]
 org = "ballerinax"
 name = "mysql"
-version = "1.16.3"
+version = "1.16.4"
 dependencies = [
 	{org = "ballerina", name = "crypto"},
 	{org = "ballerina", name = "io"},

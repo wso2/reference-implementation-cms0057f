@@ -40,9 +40,9 @@ enable = false
 url = ""
 authEnabled = false
 
-[databaseConfig]
-host = "localhost"
+[paDatabaseConfig]
+host = "<host>"
 port = 3306
-user = "root"
-password = ""
-database = "pa_requests_db"
+user = "<user>"
+password = "<password>"
+database = "<database_name>"

@@ -29,9 +29,7 @@ An AI-powered pipeline that ingests healthcare policy PDFs and produces CMS-0057
 
 The pipeline takes raw coverage policy documents as input and outputs structured FHIR R4 Questionnaire bundles that are ready for integration with EHR systems. Processing is fully automated: upload a PDF, and the system handles conversion, chunking, AI-driven generation, quality review, CQL enrichment, and optional posting to a FHIR server.
 
-```
-PDF Upload → Markdown Conversion → Document Chunking → FHIR Generation ⟲ Review → CQL Enrichment → DTR Bundle
-```
+<img width="984" height="305" alt="image" src="https://github.com/user-attachments/assets/dba2bec4-4749-4a5b-bb27-bf13b860e052" />
 
 ---
 
@@ -135,11 +133,11 @@ Each agent is a Ballerina service. Run them from their respective directories:
 ```bash
 # Generator Agent (port 7082)
 cd fhir_questionnaire_generation/fhir_questionnaire_agents/fhir_questionnaire_generator_agent
-ANTHROPIC_API_KEY=<your-key> bal run
+bal run
 
 # Reviewer Agent (port 7081)
 cd fhir_questionnaire_generation/fhir_questionnaire_agents/fhir_questionnaire_reviewer_agent
-ANTHROPIC_API_KEY=<your-key> bal run
+bal run
 ```
 
 Once running, the endpoints are:
@@ -248,13 +246,3 @@ Each subdirectory contains its own `README.md` with service-specific documentati
 | FHIR standard | FHIR R4 (ballerinax/health.fhir.r4) |
 | Containerisation | Docker, Java 21 (Eclipse Temurin) |
 | Clinical terminology | SNOMED CT, ICD-10-CM, LOINC, RxNorm, CPT |
-
----
-
-## Standards Compliance
-
-- **FHIR R4** — Questionnaire, Library, ValueSet, and Bundle resources
-- **CMS-0057-F** — Coverage policy document requirements
-- **CQL 1.5** — EHR-executable Clinical Quality Language expressions
-- **US Core FHIR R4** — Patient and clinical data profiles
-- **DTR** — `$questionnaire-package` bundle format for EHR pre-population

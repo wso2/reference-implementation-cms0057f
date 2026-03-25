@@ -16,28 +16,26 @@
 
 import {
   Button,
-  CardHeader,
-  CardContent,
-  Typography,
-  CardActions,
   SelectChangeEvent,
   Box,
   TextField,
   Alert,
   Snackbar,
+  Typography,
+  Link,
 } from "@mui/material";
 import { DropDownBox } from "../components/dropDown";
 import { LAB_TEST, ORDER_DISPATCH_CDS_REQUEST } from "../constants/data";
 import { SCREEN_WIDTH } from "../constants/page";
 import { useContext, useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Link } from "react-router-dom";
+import { Link as RouterLink } from "react-router-dom";
 import { updateCdsHook } from "../redux/cdsRequestSlice";
 import { ExpandedContext } from "../utils/expanded_context";
 import { updateCdsResponse } from "../redux/cdsResponseSlice";
 import axios from "axios";
 import { CdsCard, CdsResponse } from "../components/interfaces/cdsCard";
-import { Card } from "@chakra-ui/react";
+import { CdsHookCard } from "../components/cds_hook_card";
 
 function MedicalImagingSign() {
   const { expanded } = useContext(ExpandedContext);
@@ -198,45 +196,39 @@ function MedicalImagingSign() {
 
       <Box marginBottom={28}></Box>
 
-      <Box sx={{ display: "flex", flexDirection: "row" }} padding={10}>
-        {cdsCards.length > 0 &&
-          cdsCards.map((card) => (
-            <Box sx={{ boxShadow: 2, borderRadius: 3, marginRight: 2 }}>
-              <Card variant="outlined" width={310}>
-                <CardHeader title={card.summary} subheader={card.indicator} />
-                <CardContent>
-                  <Typography
-                    gutterBottom
-                    sx={{ color: "text.secondary", fontSize: 14, mb: 3 }}
-                  >
-                    {card.detail}
-                  </Typography>
-                  <Typography variant="h6" component="div">
-                    Suggestions
-                  </Typography>
-                  <Typography sx={{ color: "text.secondary", mb: 1.5 }}>
-                    {card.selectionBehavior}
-                  </Typography>
-                  <Typography variant="body2">
-                    <ul>
-                      {card.suggestions?.map((suggestion: { label: string }) => (
-                        <li>{suggestion.label}</li>
-                      ))}
-                    </ul>
-                  </Typography>
-                </CardContent>
-                {card.links != null && (
-                  <CardActions>
-                    Still, not applied?
-                    <Link target="_blank" to={`prior-auth?patientId=${patientId}`}>
+      {cdsCards.length > 0 && (
+        <Box
+          sx={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 2.5,
+            py: 3,
+            px: { xs: 1, md: 2 },
+          }}
+        >
+          {cdsCards.map((card) => (
+            <CdsHookCard
+              key={card.uuid ?? card.summary}
+              card={card}
+              flow="imaging"
+              footer={
+                card.links != null ? (
+                  <Typography variant="body2" color="text.secondary">
+                    Still, not applied?{" "}
+                    <Link
+                      component={RouterLink}
+                      to={`prior-auth?patientId=${patientId}`}
+                      sx={{ fontWeight: 700 }}
+                    >
                       Apply
                     </Link>
-                  </CardActions>
-                )}
-              </Card>
-            </Box>
+                  </Typography>
+                ) : undefined
+              }
+            />
           ))}
-      </Box>
+        </Box>
+      )}
 
       {enableNotification1 && (
         <Snackbar

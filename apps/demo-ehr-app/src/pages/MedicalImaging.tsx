@@ -27,14 +27,10 @@ import { useDispatch, useSelector } from "react-redux";
 import { CdsCard, CdsResponse } from "../components/interfaces/cdsCard";
 import axios from "axios";
 import { useAuth } from "../components/AuthProvider";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { Alert, Box, Snackbar, Step, StepLabel, Stepper } from "@mui/material";
 import PatientInfo from "../components/PatientInfo";
-import {
-  CHIP_COLOR_CRITICAL,
-  CHIP_COLOR_INFO,
-  CHIP_COLOR_WARNING,
-} from "../constants/color";
+import { CdsHookCardsSection } from "../components/cds_hook_card";
 import {
   appendRequestLog,
   clearRequestLogs,
@@ -55,11 +51,11 @@ import {
   CDS_REQUEST_METHOD,
   CDS_REQUEST_URL,
   CDS_RESPONSE,
-  SELECTED_PATIENT_ID,
   MEDICATION_REQUEST,
   MEDICATION_REQUEST_METHOD,
   MEDICATION_REQUEST_URL,
   MEDICATION_RESPONSE,
+  SELECTED_PATIENT_ID,
 } from "../constants/localStorageVariables";
 import { HTTP_METHODS } from "../constants/enum";
 import { selectPatient } from "../redux/patientSlice";
@@ -507,168 +503,6 @@ const ImagingOrderForm = ({
   );
 };
 
-// ── PayerRequirementsCard ────────────────────────────────────────────────────
-const PayerRequirementsCard = ({
-  cdsCards,
-  serviceRequestId
-}: {
-  cdsCards: CdsCard[],
-  serviceRequestId: string | null
-}) => {
-
-  if (cdsCards.length === 0) return null;
-
-  return (
-    <div style={{ marginTop: "40px" }}>
-      <h4>Payer Requirements</h4>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-          gap: "20px",
-          maxWidth: "800px",
-        }}
-      >
-        {cdsCards.map((card, index) => (
-          <RequirementCard key={index} card={card} serviceRequestId={serviceRequestId} />
-        ))}
-      </div>
-
-    </div>
-  );
-};
-
-// ── RequirementCard ──────────────────────────────────────────────────────────
-const RequirementCard = ({ card, serviceRequestId }: { card: CdsCard, serviceRequestId: string | null }) => {
-  const patientId = localStorage.getItem(SELECTED_PATIENT_ID);
-  const navigate = useNavigate();
-
-  const indicatorColor =
-    card.indicator === "warning"
-      ? CHIP_COLOR_WARNING
-      : card.indicator === "critical"
-        ? CHIP_COLOR_CRITICAL
-        : CHIP_COLOR_INFO;
-
-  return (
-    <div>
-      <Card
-        style={{
-          marginTop: "30px",
-          paddingLeft: "20px",
-          paddingRight: "20px",
-          paddingTop: "20px",
-        }}
-      >
-        <Card.Body>
-          <div>
-            <h4 style={{ marginBottom: "20px" }}>{card.summary}</h4>
-            <div
-              style={{
-                padding: "5px 10px",
-                marginTop: "10px",
-                backgroundColor: indicatorColor,
-                color: "black",
-                borderRadius: "30px",
-                fontSize: "12px",
-                textAlign: "center",
-                fontWeight: "bold",
-                width: "100px",
-              }}
-            >
-              {card.indicator}
-            </div>
-          </div>
-          <br />
-          <Card.Text>
-            <p style={{ textAlign: "justify" }}>{card.detail}</p>
-
-            {card.suggestions && card.suggestions.length > 0 && (
-              <div style={{ marginBottom: "10px", marginTop: "30px" }}>
-                <h5>Suggestions</h5>
-                <ul>
-                  {card.suggestions.map((suggestion, idx) => {
-                    // Look for a Task resource in suggestion actions
-                    const taskAction = suggestion.actions?.find(
-                      (action) =>
-                        (action.resource as any)?.resourceType === "Task"
-                    );
-
-                    if (taskAction) {
-                      const task = taskAction.resource as any;
-                      const questionnaireUrl = task.input?.find(
-                        (i: any) => i.type?.text === "questionnaire"
-                      )?.valueCanonical;
-                      const taskServiceRequestId =
-                        task.basedOn?.[0]?.reference?.split("/")[1];
-                      // Use the serviceRequestId from the task, or fall back to our locally created one
-                      const srId = taskServiceRequestId || serviceRequestId;
-
-                      console.log("DTR Launch - ServiceRequestId:", srId, "Patient:", patientId);
-
-                      const dtrUrl = [
-                        window.Config.dtrAppUrl,
-                        `?questionnaire=${encodeURIComponent(questionnaireUrl ?? "")}`,
-                        `&serviceRequestId=${srId ?? ""}`,
-                        `&patientId=${patientId ?? ""}`,
-                      ].join("");
-
-                      return (
-                        <div key={idx} style={{ marginBottom: "15px" }}>
-                          <li>{suggestion.label}</li>
-                          <div style={{ marginTop: "15px" }}>
-                            <Button
-                              variant="primary"
-                              style={{
-                                width: "100%",
-                                fontWeight: "600",
-                                padding: "10px 0",
-                              }}
-                              onClick={() => {
-                                navigate(`/dashboard/dtr-launch?dtrUrl=${encodeURIComponent(dtrUrl)}`);
-                              }}
-                            >
-                              Launch DTR
-                            </Button>
-                          </div>
-                        </div>
-                      );
-                    }
-
-                    return <li key={idx}>{suggestion.label}</li>;
-                  })}
-                </ul>
-              </div>
-            )}
-
-            {/* Fallback: render plain links if present */}
-            {card.links && card.links.length > 0 && (
-              <>
-                <br />
-                {card.links.map((link, idx) => (
-                  <div
-                    key={idx}
-                    style={{ display: "flex", justifyContent: "center" }}
-                  >
-                    <Button
-                      variant="secondary"
-                      onClick={() =>
-                        window.open(link.url, "_blank", "noopener,noreferrer")
-                      }
-                    >
-                      {link.label}
-                    </Button>
-                  </div>
-                ))}
-              </>
-            )}
-          </Card.Text>
-        </Card.Body>
-      </Card>
-    </div>
-  );
-};
-
 // ── Page root ────────────────────────────────────────────────────────────────
 export default function MedicalImagingPage() {
   const { isAuthenticated } = useAuth();
@@ -684,7 +518,11 @@ export default function MedicalImagingPage() {
         setServiceRequestId={setServiceRequestId}
         serviceRequestId={serviceRequestId}
       />
-      <PayerRequirementsCard cdsCards={cdsCards} serviceRequestId={serviceRequestId} />
+      <CdsHookCardsSection
+        cards={cdsCards}
+        serviceRequestId={serviceRequestId}
+        flow="imaging"
+      />
     </div>
   ) : (
     <Navigate to="/" replace />

@@ -61,7 +61,13 @@ import {
   STEPS,
 } from "../constants/localStorageVariables";
 
-export default function HorizontalNonLinearStepper() {
+type DevConsolePanelTheme = "dark" | "light";
+
+export default function HorizontalNonLinearStepper({
+  panelTheme = "light",
+}: {
+  panelTheme?: DevConsolePanelTheme;
+}) {
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -258,25 +264,94 @@ export default function HorizontalNonLinearStepper() {
   );
 
   useEffect(() => {
-    console.log(globalActiveStep);
     setCurrentStep(globalActiveStep);
   }, [globalActiveStep]);
+
+  const labelActive =
+    panelTheme === "light" ? "rgba(15,23,42,0.92)" : "rgba(255,255,255,0.92)";
+  const labelMuted =
+    panelTheme === "light" ? "rgba(15,23,42,0.62)" : "rgba(255,255,255,0.62)";
+  const connectorColor =
+    panelTheme === "light" ? "rgba(15,23,42,0.22)" : "rgba(255,255,255,0.35)";
 
   return (
     <Box
       sx={{
-        marginBottom: "40px",
-        paddingLeft: "10px",
-        paddingRight: "10px",
-        borderColor: "#000000",
+        marginBottom: "12px",
+        paddingLeft: "4px",
+        paddingRight: "4px",
       }}
     >
-      <Stepper alternativeLabel nonLinear activeStep={currentStep}>
+      <Stepper
+        alternativeLabel
+        nonLinear
+        activeStep={currentStep}
+        sx={{
+          width: "100%",
+          alignItems: "flex-start",
+          "& .MuiStepConnector-line": {
+            borderColor: connectorColor,
+            borderTopWidth: 2,
+          },
+          "& .MuiStepConnector-root.Mui-active .MuiStepConnector-line, & .MuiStepConnector-root.Mui-completed .MuiStepConnector-line":
+            {
+              borderColor: panelTheme === "light" ? "#1976d2" : "#90caf9",
+            },
+          "& .MuiStepLabel-labelContainer": {
+            minHeight: 52,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: "100%",
+          },
+          "& .MuiStepLabel-label": {
+            color: labelActive,
+            textAlign: "center",
+            lineHeight: 1.25,
+            whiteSpace: "normal",
+            fontSize: "0.72rem",
+            fontWeight: 600,
+            maxWidth: "6.8rem",
+          },
+        }}
+      >
         {stepsArray.map((step, index) => (
-          <Step key={step.name} completed={step.status == StepStatus.COMPLETED}>
+          <Step
+            key={step.name}
+            completed={step.status == StepStatus.COMPLETED}
+            sx={{
+              flex: "1 1 0",
+              minWidth: 0,
+              px: 0.125,
+            }}
+          >
             <StepButton
+              disableRipple
               disabled={step.status == StepStatus.NOT_STARTED}
               onClick={handleStep(index)}
+              sx={{
+                width: "100%",
+                py: 0.5,
+                px: 0.25,
+                borderRadius: 1,
+                "&:hover": {
+                  backgroundColor:
+                    panelTheme === "light"
+                      ? "rgba(15,23,42,0.04)"
+                      : "rgba(255,255,255,0.06)",
+                },
+                "&.Mui-disabled": {
+                  backgroundColor: "transparent !important",
+                  opacity: 1,
+                },
+                "& .MuiStepLabel-label": {
+                  color:
+                    step.status === StepStatus.NOT_STARTED ? labelMuted : labelActive,
+                },
+                "&.Mui-disabled .MuiStepLabel-label": {
+                  color: labelMuted,
+                },
+              }}
             >
               {step.name}
             </StepButton>

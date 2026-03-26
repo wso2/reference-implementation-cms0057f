@@ -1566,7 +1566,72 @@ service /fhir/r4/Consent on new fhirr4:Listener(config = consentApiConfig) {
 }
 
 // ######################################################################################################################
-// # Group API                                                                                                          #
+// # Library API                                                                                                        #
+// ######################################################################################################################
+
+public type Library international401:Library;
+
+service /fhir/r4/Library on new fhirr4:Listener(config = libraryApiConfig) {
+
+    // Read the current state of single resource based on its id.
+    isolated resource function get [string id](r4:FHIRContext fhirContext) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return getById(fhirConnector, LIBRARY, id);
+    }
+
+    // Read the state of a specific version of a resource based on its id.
+    isolated resource function get [string id]/_history/[string vid](r4:FHIRContext fhirContext) returns Library|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    // Search for resources based on a set of criteria.
+    isolated resource function get .(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError|error {
+        return check search(fhirConnector, LIBRARY, getQueryParamsMap(fhirContext.getRequestSearchParameters()));
+    }
+
+    // Create a new resource.
+    isolated resource function post .(r4:FHIRContext fhirContext, Library library) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        if library.id is () {
+            library.id = uuid:createType1AsString();
+        }
+        return create(fhirConnector, LIBRARY, library.toJson());
+    }
+
+    // Update the current state of a resource completely.
+    isolated resource function put [string id](r4:FHIRContext fhirContext, Library library) returns Library|r4:OperationOutcome|r4:FHIRError {
+        r4:DomainResource|r4:FHIRError result = update(fhirConnector, LIBRARY, id, library.toJson());
+        if result is r4:FHIRError {
+            return result;
+        }
+        Library|error updated = result.cloneWithType(Library);
+        if updated is error {
+            return r4:createFHIRError(updated.message(), r4:ERROR, r4:INVALID);
+        }
+        return updated;
+    }
+
+    // Update the current state of a resource partially.
+    isolated resource function patch [string id](r4:FHIRContext fhirContext, json patch) returns Library|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    // Delete a resource.
+    isolated resource function delete [string id](r4:FHIRContext fhirContext) returns r4:OperationOutcome|r4:FHIRError {
+        return deleteResource(fhirConnector, LIBRARY, id);
+    }
+
+    // Retrieve the update history for a particular resource.
+    isolated resource function get [string id]/_history(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    // Retrieve the update history for all resources.
+    isolated resource function get _history(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+}
+
+// ######################################################################################################################
+// # Group API                                                                                                          //
 // ######################################################################################################################
 
 public type Group international401:Group;

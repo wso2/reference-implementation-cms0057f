@@ -2972,6 +2972,391 @@ paths:
       security:
         - default: []
       x-auth-type: Application & Application User
+  /Library:
+    get:
+      tags:
+        - GET
+        - Library
+      parameters:
+        - name: composed-of
+          in: query
+          description: What resource is being referenced
+          required: false
+          schema:
+            type: string
+          x-wso2-oh-fhirType: reference
+        - name: content-type
+          in: query
+          description: The type of content in the library (e.g. text/cql)
+          required: false
+          schema:
+            type: string
+          x-wso2-oh-fhirType: token
+        - name: context
+          in: query
+          description: A use context assigned to the library
+          required: false
+          schema:
+            type: string
+          x-wso2-oh-fhirType: token
+        - name: context-quantity
+          in: query
+          description: A quantity- or range-valued use context assigned to the library
+          required: false
+          schema:
+            type: string
+          x-wso2-oh-fhirType: quantity
+        - name: context-type
+          in: query
+          description: A type of use context assigned to the library
+          required: false
+          schema:
+            type: string
+          x-wso2-oh-fhirType: token
+        - name: date
+          in: query
+          description: The library publication date
+          required: false
+          schema:
+            type: string
+          x-wso2-oh-fhirType: date
+        - name: depends-on
+          in: query
+          description: What resource is being referenced
+          required: false
+          schema:
+            type: string
+          x-wso2-oh-fhirType: reference
+        - name: derived-from
+          in: query
+          description: What resource is being referenced
+          required: false
+          schema:
+            type: string
+          x-wso2-oh-fhirType: reference
+        - name: description
+          in: query
+          description: The description of the library
+          required: false
+          schema:
+            type: string
+          x-wso2-oh-fhirType: string
+        - name: effective
+          in: query
+          description: The time during which the library is intended to be in use
+          required: false
+          schema:
+            type: string
+          x-wso2-oh-fhirType: date
+        - name: identifier
+          in: query
+          description: External identifier for the library
+          required: false
+          schema:
+            type: string
+          x-wso2-oh-fhirType: token
+        - name: jurisdiction
+          in: query
+          description: Intended jurisdiction for the library
+          required: false
+          schema:
+            type: string
+          x-wso2-oh-fhirType: token
+        - name: name
+          in: query
+          description: Computationally friendly name of the library
+          required: false
+          schema:
+            type: string
+          x-wso2-oh-fhirType: string
+        - name: predecessor
+          in: query
+          description: What resource is being referenced
+          required: false
+          schema:
+            type: string
+          x-wso2-oh-fhirType: reference
+        - name: publisher
+          in: query
+          description: Name of the publisher of the library
+          required: false
+          schema:
+            type: string
+          x-wso2-oh-fhirType: string
+        - name: status
+          in: query
+          description: The current status of the library
+          required: false
+          schema:
+            type: string
+          x-wso2-oh-fhirType: token
+        - name: successor
+          in: query
+          description: What resource is being referenced
+          required: false
+          schema:
+            type: string
+          x-wso2-oh-fhirType: reference
+        - name: title
+          in: query
+          description: The human-friendly name of the library
+          required: false
+          schema:
+            type: string
+          x-wso2-oh-fhirType: string
+        - name: topic
+          in: query
+          description: Topics associated with the module
+          required: false
+          schema:
+            type: string
+          x-wso2-oh-fhirType: token
+        - name: type
+          in: query
+          description:
+            "The type of the library (e.g. logic-library, model-definition,\
+            \ asset-collection, module-definition)"
+          required: false
+          schema:
+            type: string
+          x-wso2-oh-fhirType: token
+        - name: url
+          in: query
+          description: The uri that identifies the library
+          required: false
+          schema:
+            type: string
+          x-wso2-oh-fhirType: uri
+        - name: version
+          in: query
+          description: The business version of the library
+          required: false
+          schema:
+            type: string
+          x-wso2-oh-fhirType: token
+        - name: context-type-quantity
+          in: query
+          description:
+            A use context type and quantity- or range-based value assigned
+            to the library
+          required: false
+          schema:
+            type: string
+          x-wso2-oh-fhirType: composite
+        - name: context-type-value
+          in: query
+          description: A use context type and value assigned to the library
+          required: false
+          schema:
+            type: string
+          x-wso2-oh-fhirType: composite
+        - $ref: "#/components/parameters/_lastUpdatedParam"
+        - $ref: "#/components/parameters/_securityParam"
+        - $ref: "#/components/parameters/_tagParam"
+        - $ref: "#/components/parameters/_idParam"
+        - $ref: "#/components/parameters/_sourceParam"
+        - $ref: "#/components/parameters/_profileParam"
+      responses:
+        "200":
+          description: search Library operation successful
+          content:
+            application/fhir+json:
+              schema:
+                $ref: "#/components/schemas/Bundle"
+      security:
+        - default: []
+      x-auth-type: Application & Application User
+    post:
+      tags:
+        - POST
+        - Library
+      requestBody:
+        content:
+          application/fhir+json:
+            schema:
+              $ref: "#/components/schemas/Library"
+        required: true
+      responses:
+        "201":
+          description: create Library operation successful
+          content:
+            application/fhir+json:
+              schema:
+                $ref: "#/components/schemas/Library"
+      security:
+        - default: []
+      x-auth-type: Application & Application User
+  /Library/{id}:
+    get:
+      tags:
+        - GET
+        - Library
+      parameters:
+        - name: id
+          in: path
+          description: logical identifier
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: read Library operation successful
+          content:
+            application/fhir+json:
+              schema:
+                $ref: "#/components/schemas/Library"
+      security:
+        - default: []
+      x-auth-type: Application & Application User
+    put:
+      tags:
+        - PUT
+        - Library
+      parameters:
+        - name: id
+          in: path
+          description: logical identifier
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/fhir+json:
+            schema:
+              $ref: "#/components/schemas/Library"
+      responses:
+        "200":
+          description: update Library operation successful
+      security:
+        - default: []
+      x-auth-type: Application & Application User
+    delete:
+      tags:
+        - DELETE
+        - Library
+      parameters:
+        - name: id
+          in: path
+          description: logical identifier
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: delete Library operation successful
+      security:
+        - default: []
+      x-auth-type: Application & Application User
+    patch:
+      tags:
+        - PATCH
+        - Library
+      parameters:
+        - name: id
+          in: path
+          description: logical identifier
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: patch Library operation successful
+      security:
+        - default: []
+      x-auth-type: Application & Application User
+  # History Operations
+  /Library/_history:
+    get:
+      tags:
+        - GET
+        - Library
+        - History
+      responses:
+        "200":
+          description: Library history operation successful
+          content:
+            application/fhir+json:
+              schema:
+                $ref: "#/components/schemas/Bundle"
+      security:
+        - default: []
+      x-auth-type: Application & Application User
+  /Library/{id}/_history:
+    get:
+      tags:
+        - GET
+        - Library
+        - History
+      parameters:
+        - name: id
+          in: path
+          description: logical identifier
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Library resource history operation successful
+          content:
+            application/fhir+json:
+              schema:
+                $ref: "#/components/schemas/Bundle"
+      security:
+        - default: []
+      x-auth-type: Application & Application User
+  /Library/{id}/_history/{vid}:
+    get:
+      tags:
+        - GET
+        - Library
+        - History
+      parameters:
+        - name: id
+          in: path
+          description: logical identifier
+          required: true
+          schema:
+            type: string
+        - name: vid
+          in: path
+          description: version identifier
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: read Library version operation successful
+          content:
+            application/fhir+json:
+              schema:
+                $ref: "#/components/schemas/Library"
+      security:
+        - default: []
+      x-auth-type: Application & Application User
+  # FHIR Operations
+  /Library/$validate:
+    post:
+      tags:
+        - POST
+        - Library
+        - Operation
+      requestBody:
+        content:
+          application/fhir+json:
+            schema:
+              $ref: "#/components/schemas/Parameters"
+        required: true
+      responses:
+        "200":
+          description: validate Library operation successful
+          content:
+            application/fhir+json:
+              schema:
+                $ref: "#/components/schemas/OperationOutcome"
+      security:
+        - default: []
+      x-auth-type: Application & Application User
   /Patient:
     get:
       tags:
@@ -6133,6 +6518,13 @@ components:
           properties:
             outcomeReference:
               $ref: "#/components/schemas/Reference"
+    Library:
+      allOf:
+        - $ref: "#/components/schemas/DomainResource"
+        - type: object
+          properties:
+            content:
+              $ref: "#/components/schemas/Attachment"
     Location:
       allOf:
         - $ref: "#/components/schemas/DomainResource"

@@ -19,7 +19,6 @@ import ballerina/http;
 import ballerina/time;
 import ballerina/sql;
 import ballerinax/health.fhir.r4;
-import ballerinax/health.fhir.r4.ips;
 import ballerinax/health.fhir.r4.parser;
 import ballerinax/health.fhir.r4.international401;
 import ballerinax/health.fhir.r4.davincipas;
@@ -405,18 +404,18 @@ function getPatientIPSSummary(string patientId) returns PatientInformation|error
     return patientInfo;
 }
 
-# Parse IPS Patient resource to PatientInformation
+# Parse Patient resource to PatientInformation
 #
-# + patient - IPS Patient resource
+# + patient - Patient resource
 # + return - PatientInformation or error
-function parsePatientResource(ips:PatientUvIps patient) returns PatientInformation|error {
+function parsePatientResource(international401:Patient patient) returns PatientInformation|error {
     string patientId = patient.id ?: "unknown";
-    
+
     // Extract name - work with anydata
     string fullName = "Unknown";
-    ips:PatientUvIpsName[] nameData = patient.name;
+    r4:HumanName[] nameData = patient.name ?: [];
     if nameData.length() > 0 {
-        ips:PatientUvIpsName firstNameData = nameData[0];
+        r4:HumanName firstNameData = nameData[0];
         string[]? givenData = firstNameData.given;
         string? familyData = firstNameData.family;
         string? family = familyData is string ? familyData : ();
@@ -437,15 +436,15 @@ function parsePatientResource(ips:PatientUvIps patient) returns PatientInformati
     }
     
     // Extract birth date
-    r4:date birthDate = patient.birthDate;
-    
+    r4:date? birthDate = patient.birthDate;
+
     // Extract gender
-    ips:PatientUvIpsGender gender = patient.gender ?: "unknown";
-    
+    international401:PatientGender gender = patient.gender ?: "unknown";
+
     PatientDemographics demographics = {
         name: fullName,
-        dateOfBirth: birthDate,
-        age: calculateAge(birthDate),
+        dateOfBirth: birthDate ?: "unknown",
+        age: birthDate is r4:date ? calculateAge(birthDate) : (),
         gender: gender,
         mrn: patientId
     };
@@ -467,37 +466,37 @@ function parsePatientResource(ips:PatientUvIps patient) returns PatientInformati
 # + return - PatientInformation or error
 function parseIPSBundle(r4:Bundle ipsBundle, string patientId) returns PatientInformation|error {
 
-    ips:PatientUvIps? patientResource = ();
-    ips:AllergyIntoleranceUvIps[] allergyResources = [];
-    ips:MedicationStatementIPS[] medicationResources = [];
+    international401:Patient? patientResource = ();
+    international401:AllergyIntolerance[] allergyResources = [];
+    international401:MedicationStatement[] medicationResources = [];
 
     foreach r4:BundleEntry entry in <r4:BundleEntry[]>ipsBundle.entry{
         if (<string>(<r4:uri>entry.fullUrl)).includes("Patient"){
-            patientResource = check (entry?.'resource).cloneWithType(ips:PatientUvIps);
+            patientResource = check (entry?.'resource).cloneWithType(international401:Patient);
         } else if (<string>(<r4:uri>entry.fullUrl)).includes("AllergyIntolerance"){
-            ips:AllergyIntoleranceUvIps allergyResource = check (entry?.'resource).cloneWithType(ips:AllergyIntoleranceUvIps);
+            international401:AllergyIntolerance allergyResource = check (entry?.'resource).cloneWithType(international401:AllergyIntolerance);
             allergyResources.push(allergyResource);
         } else if (<string>(<r4:uri>entry.fullUrl)).includes("MedicationStatement"){
-            ips:MedicationStatementIPS medicationResource = check (entry?.'resource).cloneWithType(ips:MedicationStatementIPS);
+            international401:MedicationStatement medicationResource = check (entry?.'resource).cloneWithType(international401:MedicationStatement);
             medicationResources.push(medicationResource);
         }
     }
 
     // Parse patient demographics from the patient field
-    PatientInformation patientInfo = check parsePatientResource(<ips:PatientUvIps>patientResource);
-    
+    PatientInformation patientInfo = check parsePatientResource(<international401:Patient>patientResource);
+
     // Extract allergies from allergyIntolerance array
     AllergyIntolerance[] allergies = [];
-    foreach ips:AllergyIntoleranceUvIps allergyResource in allergyResources {
+    foreach international401:AllergyIntolerance allergyResource in allergyResources {
         AllergyIntolerance? allergy = parseAllergy(allergyResource);
         if allergy is AllergyIntolerance {
             allergies.push(allergy);
         }
     }
-    
+
     // Extract medications from medicationStatement array
     MedicationStatement[] medications = [];
-    foreach ips:MedicationStatementIPS medResource in medicationResources {
+    foreach international401:MedicationStatement medResource in medicationResources {
         MedicationStatement? med = parseMedicationStatement(medResource);
         if med is MedicationStatement {
             medications.push(med);
@@ -511,12 +510,12 @@ function parseIPSBundle(r4:Bundle ipsBundle, string patientId) returns PatientIn
 
 # Parse AllergyIntolerance resource
 #
-# + allergyResource - IPS AllergyIntolerance resource
+# + allergyResource - AllergyIntolerance resource
 # + return - AllergyIntolerance or null
-function parseAllergy(ips:AllergyIntoleranceUvIps allergyResource) returns AllergyIntolerance? {
-    ips:CodeableConceptUvIps? code = allergyResource.code;
+function parseAllergy(international401:AllergyIntolerance allergyResource) returns AllergyIntolerance? {
+    r4:CodeableConcept? code = allergyResource.code;
     string substance = "Unknown";
-    if code is ips:CodeableConceptUvIps{
+    if code is r4:CodeableConcept {
         substance = code.text ?: "Unknown";
     }
     string? severity = allergyResource.criticality;
@@ -528,15 +527,15 @@ function parseAllergy(ips:AllergyIntoleranceUvIps allergyResource) returns Aller
 
 # Parse MedicationStatement resource
 #
-# + medResource - IPS MedicationStatement resource
+# + medResource - MedicationStatement resource
 # + return - MedicationStatement or null
-function parseMedicationStatement(ips:MedicationStatementIPS medResource) returns MedicationStatement? {
+function parseMedicationStatement(international401:MedicationStatement medResource) returns MedicationStatement? {
     if medResource.status != "active" {
         return ();
     }
     string medication = "";
-    ips:CodeableConceptUvIps? medCodeData = medResource.medicationCodeableConcept;
-    if medCodeData is ips:CodeableConceptUvIps {
+    r4:CodeableConcept? medCodeData = medResource.medicationCodeableConcept;
+    if medCodeData is r4:CodeableConcept {
         medication = medCodeData.text ?: "Unknown";
     }
     return {

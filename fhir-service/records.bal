@@ -160,6 +160,7 @@ public enum ResourceType {
     ENCOUNTER = "Encounter",
     GOAL = "Goal",
     IMMUNIZATION = "Immunization",
+    LIBRARY = "Library",
     MEDICATION_REQUEST = "MedicationRequest",
     OBSERVATION = "Observation",
     ORGANIZATION = "Organization",

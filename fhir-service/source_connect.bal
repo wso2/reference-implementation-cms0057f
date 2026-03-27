@@ -22,6 +22,15 @@ public isolated function create(fhirClient:FHIRConnector fhirConnector, Resource
     fhirClient:FHIRResponse|fhirClient:FHIRError response = fhirConnector->create(payload, returnPreference = "representation");
 
     if response is fhirClient:FHIRError {
+        if response is fhirClient:FHIRServerError {
+            json|xml body = response.detail().'resource;
+            if body is json {
+                r4:OperationOutcome|error operationOutcome = body.cloneWithType();
+                if operationOutcome is r4:OperationOutcome {
+                    return operationOutcome;
+                }
+            }
+        }
         return r4:createFHIRError(response.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
     }
 

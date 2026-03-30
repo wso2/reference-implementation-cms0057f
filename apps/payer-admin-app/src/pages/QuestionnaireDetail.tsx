@@ -138,7 +138,14 @@ export default function QuestionnaireDetail() {
 
   // Full define blocks derived from cqlLibrary — passed to builder for inline preview
   const cqlDefineBlocks = useMemo(
-    () => (cqlLibrary ? extractDefineBlocks(decodeCqlFromLibrary(cqlLibrary)) : []),
+    () => {
+    if (!cqlLibrary) return [];
+    try {
+      return extractDefineBlocks(decodeCqlFromLibrary(cqlLibrary));
+    } catch {
+      return [];
+    }
+  },
     [cqlLibrary],
   );
 

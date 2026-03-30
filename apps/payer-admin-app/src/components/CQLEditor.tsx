@@ -189,9 +189,15 @@ export default function CQLEditor({
           : b,
       );
       const newCql = reconstructCql(preamble, updatedBlocks);
+      const otherContent = (library.content || []).filter(
+        (c) => c.contentType !== 'text/cql',
+      );
       const updated: FHIRLibrary = {
         ...library,
-        content: [{ contentType: 'text/cql', data: encodeCqlToBase64(newCql) }],
+        content: [
+          ...otherContent,
+          { contentType: 'text/cql', data: encodeCqlToBase64(newCql) },
+        ],
       };
       const saved = await libraryAPI.updateLibrary(library.id, updated);
       onLibraryChange(saved, parseCqlDefines(decodeCqlFromLibrary(saved)));

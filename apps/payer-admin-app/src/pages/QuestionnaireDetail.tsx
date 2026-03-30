@@ -365,6 +365,24 @@ export default function QuestionnaireDetail() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  const handleCqlLibraryChange = async (lib: FHIRLibrary, defines: string[]) => {
+    setCqlLibrary(lib);
+    setCqlDefines(defines);
+    // Always mirror the extension into formData (covers new questionnaire scenario)
+    if (lib.url) setFormData((prev) => withLibraryExtension(prev, lib.url!));
+    // Only auto-save questionnaire when the library link is NEW (skip if just updating CQL content)
+    const alreadyLinked = originalQuestionnaire ? extractLibraryUrlFromQuestionnaire(originalQuestionnaire) === lib.url : false;
+    if (lib.url && questionnaireId && !isNewQuestionnaire && originalQuestionnaire && !alreadyLinked) {
+      const base = withLibraryExtension(originalQuestionnaire, lib.url);
+      try {
+        const saved = await questionnairesAPI.updateQuestionnaire(questionnaireId, base);
+        setOriginalQuestionnaire(saved ?? base);
+      } catch {
+        notify('Library linked but questionnaire could not be updated. Please save manually.', 'warning');
+      }
+    }
+  };
+
   const linkedLibraryUrl = extractLibraryUrlFromQuestionnaire(formData);
 
   return (
@@ -553,45 +571,29 @@ export default function QuestionnaireDetail() {
                 {/* CQL Editor tab */}
                 <Box sx={{ display: activeTab === 2 ? 'block' : 'none' }}>
                   <CQLEditor
-                library={cqlLibrary}
-                isLoading={isCqlLoading}
-                valueSets={valueSets}
-                linkedLibraryUrl={linkedLibraryUrl}
-                suggestedLibraryName={formData.title || ''}
-                questionnaireUrl={formData.url || ''}
-                onLibraryChange={async (lib, defines) => {
-                  setCqlLibrary(lib);
-                  setCqlDefines(defines);
-                  // Always mirror the extension into formData (covers new questionnaire scenario)
-                  if (lib.url) setFormData((prev) => withLibraryExtension(prev, lib.url!));
-                  // Only auto-save questionnaire when the library link is NEW (skip if just updating CQL content)
-                  const alreadyLinked = originalQuestionnaire ? extractLibraryUrlFromQuestionnaire(originalQuestionnaire) === lib.url : false;
-                  if (lib.url && questionnaireId && !isNewQuestionnaire && originalQuestionnaire && !alreadyLinked) {
-                    const base = withLibraryExtension(originalQuestionnaire, lib.url);
-                    try {
-                      const saved = await questionnairesAPI.updateQuestionnaire(questionnaireId, base);
-                      setOriginalQuestionnaire(saved ?? base);
-                    } catch {
-                      notify('Library linked but questionnaire could not be updated. Please save manually.', 'warning');
-                    }
-                  }
-                }}
-                onLibraryDelete={async () => {
-                  setCqlLibrary(null);
-                  setCqlDefines([]);
-                  // Always update formData (covers new questionnaire scenario)
-                  setFormData((prev) => withoutLibraryExtension(prev));
-                  if (questionnaireId && !isNewQuestionnaire && originalQuestionnaire) {
-                    const base = withoutLibraryExtension(originalQuestionnaire);
-                    try {
-                      const saved = await questionnairesAPI.updateQuestionnaire(questionnaireId, base);
-                      setOriginalQuestionnaire(saved ?? base);
-                    } catch {
-                      notify('Library deleted but could not be unlinked from questionnaire. Please save manually.', 'warning');
-                    }
-                  }
-                }}
-                onNotify={notify}
+                    library={cqlLibrary}
+                    isLoading={isCqlLoading}
+                    valueSets={valueSets}
+                    linkedLibraryUrl={linkedLibraryUrl}
+                    suggestedLibraryName={formData.title || ''}
+                    questionnaireUrl={formData.url || ''}
+                    onLibraryChange={handleCqlLibraryChange}
+                    onLibraryDelete={async () => {
+                      setCqlLibrary(null);
+                      setCqlDefines([]);
+                      // Always update formData (covers new questionnaire scenario)
+                      setFormData((prev) => withoutLibraryExtension(prev));
+                      if (questionnaireId && !isNewQuestionnaire && originalQuestionnaire) {
+                        const base = withoutLibraryExtension(originalQuestionnaire);
+                        try {
+                          const saved = await questionnairesAPI.updateQuestionnaire(questionnaireId, base);
+                          setOriginalQuestionnaire(saved ?? base);
+                        } catch {
+                          notify('Library deleted but could not be unlinked from questionnaire. Please save manually.', 'warning');
+                        }
+                      }
+                    }}
+                    onNotify={notify}
                   />
                 </Box>
 

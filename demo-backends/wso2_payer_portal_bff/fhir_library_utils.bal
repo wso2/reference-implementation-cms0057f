@@ -29,7 +29,7 @@ const string VALUESET = "/ValueSet";
 # + libraryId - Unique Library identifier
 # + return - Library resource as JSON or error
 function getFHIRLibraryById(string libraryId) returns json|error {
-    string path = LIBRARY + "/" + libraryId;
+    string path = string `${LIBRARY}/${libraryId}`;
     json result = check fhirHttpClient->get(path, headers = {"Content-Type": "application/fhir+json"});
     return result;
 }
@@ -40,7 +40,7 @@ function getFHIRLibraryById(string libraryId) returns json|error {
 # + return - Library resource as JSON or error
 function getFHIRLibraryByUrl(string libraryUrl) returns json|error {
     string encodedUrl = check url:encode(libraryUrl, "UTF-8");
-    string path = LIBRARY + "?url=" + encodedUrl;
+    string path = string `${LIBRARY}?url=${encodedUrl}`;
     json bundle = check fhirHttpClient->get(path, headers = {"Content-Type": "application/fhir+json"});
 
     json|error totalJson = bundle.total;
@@ -74,7 +74,7 @@ function createFHIRLibrary(json library) returns json|error {
 # + library - Updated FHIR Library resource as JSON
 # + return - Updated Library resource as JSON or error
 function updateFHIRLibrary(string libraryId, json library) returns json|error {
-    string path = LIBRARY + "/" + libraryId;
+    string path = string `${LIBRARY}/${libraryId}`;
     http:Response response = check fhirHttpClient->put(path, library, headers = {"Content-Type": "application/fhir+json"});
     json result = check response.getJsonPayload();
     return result;
@@ -85,7 +85,7 @@ function updateFHIRLibrary(string libraryId, json library) returns json|error {
 # + libraryId - Unique Library identifier
 # + return - Error if operation fails, () if successful
 function deleteFHIRLibrary(string libraryId) returns error? {
-    string path = LIBRARY + "/" + libraryId;
+    string path = string `${LIBRARY}/${libraryId}`;
     http:Response response = check fhirHttpClient->delete(path, headers = {"Content-Type": "application/fhir+json"});
     int statusCode = response.statusCode;
     if statusCode != 200 && statusCode != 204 {
@@ -100,7 +100,7 @@ function deleteFHIRLibrary(string libraryId) returns error? {
 # + return - ValueSet resource as JSON or error
 function getFHIRValueSetByUrl(string valueSetUrl) returns json|error {
     string encodedUrl = check url:encode(valueSetUrl, "UTF-8");
-    string path = VALUESET + "?url=" + encodedUrl;
+    string path = string `${VALUESET}?url=${encodedUrl}`;
     json bundle = check fhirHttpClient->get(path, headers = {"Content-Type": "application/fhir+json"});
 
     json|error totalJson = bundle.total;
@@ -134,7 +134,7 @@ function createFHIRValueSet(json valueSet) returns json|error {
 # + valueSet - Updated FHIR ValueSet resource as JSON
 # + return - Updated ValueSet resource as JSON or error
 function updateFHIRValueSet(string valueSetId, json valueSet) returns json|error {
-    string path = VALUESET + "/" + valueSetId;
+    string path = string `${VALUESET}/${valueSetId}`;
     http:Response response = check fhirHttpClient->put(path, valueSet, headers = {"Content-Type": "application/fhir+json"});
     json result = check response.getJsonPayload();
     return result;

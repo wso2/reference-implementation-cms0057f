@@ -28,6 +28,8 @@ import ballerina/uuid;
 // Prior Authorization Request Utility Functions
 // ============================================
 
+const string ORGANIZATION = "/Organization";
+const string CLAIM = "/Claim";
 const string CLAIM_RESPONSE = "/ClaimResponse";
 
 # Query PA requests from the pa_requests database table
@@ -168,7 +170,7 @@ public function getPARequestDetail(string responseId) returns PARequestDetail|er
     international401:ClaimResponse claimResponse = check getClaimResponse(responseId, limited = false);
 
     // 3. Fetch Claim directly using request_id from DB (no need to parse ClaimResponse.request)
-    json claim = check fhirHttpClient->get("/Claim/" + requestId);
+    json claim = check fhirHttpClient->get(string `${CLAIM}/${requestId}`);
     international401:Claim pasClaim = <international401:Claim> check parser:parse(claim, international401:Claim);
 
     // 4. Get IPS summary using patient_id from DB (no need to parse Claim.patient.reference)
@@ -233,7 +235,7 @@ public function getPARequestDetail(string responseId) returns PARequestDetail|er
         foreach r4:Reference commRef in <r4:Reference[]>claimResponse.communicationRequest {
             string? refStr = commRef.reference;
             if refStr is string {
-                json|http:ClientError commReqJson = fhirHttpClient->get("/" + refStr);
+                json|http:ClientError commReqJson = fhirHttpClient->get(string `/${refStr}`);
                 if commReqJson is json {
                     CommunicationRequestItem|error commReqItem = parseCommunicationRequest(commReqJson);
                     if commReqItem is CommunicationRequestItem {
@@ -369,7 +371,7 @@ function parseCommunicationRequest(json commReqJson) returns CommunicationReques
 # + limited - Whether to fetch a limited set of elements
 # + return - ClaimResponse JSON or null if not found
 function getClaimResponse(string claimResId, boolean limited=true) returns international401:ClaimResponse|error{
-    string claimResponsePath = CLAIM_RESPONSE + "/" + claimResId;
+    string claimResponsePath = string `${CLAIM_RESPONSE}/${claimResId}`;
     if limited {
         claimResponsePath += "?_elements=outcome,disposition,processNote";
     }
@@ -389,7 +391,7 @@ function getClaimResponse(string claimResId, boolean limited=true) returns inter
 # + return - PatientInformation or error
 function getPatientIPSSummary(string patientId) returns PatientInformation|error {
     // Get patient summary using IPS $summary operation
-    json|error ipsSummary = fhirHttpClient->get("/Patient/" + patientId + "/$summary");
+    json|error ipsSummary = fhirHttpClient->get(string `/Patient/${patientId}/$summary`);
     if ipsSummary is error{
         log:printError("Failed to fetch IPS summary for patient " + patientId + ": " + ipsSummary.message());
         return ipsSummary;
@@ -594,10 +596,10 @@ function getProviderInformation(r4:Reference providerRef) returns ProviderInform
 # + practitionerId - Practitioner ID
 # + return - ProviderInformation or error
 function getPractitionerInfo(string practitionerId) returns ProviderInformation|error {
-    json practitionerRoleRes = check fhirHttpClient->get("/PractitionerRole/" + practitionerId);
+    json practitionerRoleRes = check fhirHttpClient->get(string `PractitionerRole/${practitionerId}`);
     international401:PractitionerRole practitionerRole = <international401:PractitionerRole> check parser:parse(practitionerRoleRes);
 
-    json practitionerRes = check fhirHttpClient->get("/" + <string>practitionerRole.practitioner?.reference);
+    json practitionerRes = check fhirHttpClient->get(string `/${<string>practitionerRole.practitioner?.reference}`);
     international401:Practitioner practitioner = <international401:Practitioner> check parser:parse(practitionerRes);
 
     string fullName = "Unknown Practitioner";
@@ -695,7 +697,7 @@ function getPractitionerInfo(string practitionerId) returns ProviderInformation|
 # + organizationId - Organization ID
 # + return - Facility or error
 function extractFacilityInfo(string organizationId) returns Facility|error {
-    json organizationJson = check fhirHttpClient->get("/Organization/" + organizationId);
+    json organizationJson = check fhirHttpClient->get(string `${ORGANIZATION}/${organizationId}`);
     international401:Organization org = check organizationJson.cloneWithType(international401:Organization);
 
     // Extract organization name
@@ -732,7 +734,7 @@ function extractFacilityInfo(string organizationId) returns Facility|error {
 # + organizationId - Organization ID
 # + return - ProviderInformation or error
 function getOrganizationInfo(string organizationId) returns ProviderInformation|error {
-    json organizationJson = check fhirHttpClient->get("/Organization/" + organizationId);
+    json organizationJson = check fhirHttpClient->get(string `${ORGANIZATION}/${organizationId}`);
     international401:Organization org = check organizationJson.cloneWithType(international401:Organization);
     
     // Extract organization name

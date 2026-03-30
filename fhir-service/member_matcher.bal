@@ -53,139 +53,98 @@ public isolated class DemoFHIRMemberMatcher {
         hrex100:HRexCoverage coverageToMatch = memberMatchResources.coverageToMatch;
         hrex100:HRexCoverage? _ = memberMatchResources.coverageToLink;
 
-        // Get patient resource from OLD payor
-        // Search Patient from given name
+        // Search candidates by given name (blocking step)
         uscore501:USCorePatientProfileName[] name = memberPatient.name;
-
         string[] given = name[0].given ?: [];
-        r4:Bundle nameMatchedPatients = check search(self.fhirConnector, PATIENT, {"given": [given[0]]});
+        if given.length() == 0 {
+            log:printInfo("[member-match] Input patient has no given name — returning no match");
+            return r4:createFHIRError("No match found", r4:ERROR, r4:PROCESSING_NOT_FOUND,
+                    httpStatusCode = http:STATUS_UNPROCESSABLE_ENTITY);
+        }
+        string givenName = given[0];
+        log:printInfo(string `[member-match] FHIR search request: GET Patient?given=${givenName}`);
+        r4:Bundle|r4:FHIRError candidateBundleResult = search(self.fhirConnector, PATIENT, {"given": [givenName]});
+        if candidateBundleResult is r4:FHIRError {
+            log:printError(string `[member-match] FHIR search error: Patient?given=${givenName}`, candidateBundleResult);
+            return candidateBundleResult;
+        }
+        r4:Bundle candidateBundle = candidateBundleResult;
+        int totalCandidates = candidateBundle.total ?: 0;
+        log:printInfo(string `[member-match] FHIR search response: total=${totalCandidates}`);
 
-        r4:BundleEntry[]? entry = nameMatchedPatients.entry;
-
-        if entry is r4:BundleEntry[] && entry.length() > 0 {
-            r4:BundleEntry firstEntry = entry[0];
-
-            anydata 'resource = firstEntry?.'resource;
-
-            international401:Patient|error cloneWithType = 'resource.cloneWithType(international401:Patient);
-            international401:Patient oldPatient = {};
-            if cloneWithType is international401:Patient {
-                oldPatient = self.filterPatientsByDemographics([cloneWithType], memberPatient.clone());
-            }
-            string patientId = <string>oldPatient.id;
-
-            // Get coverage from id
-            string coverageId = <string>coverageToMatch.id;
-            r4:Reference incomingCoverageBeneficiary = coverageToMatch.beneficiary;
-            r4:DomainResource|r4:FHIRError oldCoverage = check getById(self.fhirConnector, COVERAGE, coverageId);
-
-            if oldCoverage is r4:FHIRError {
-                log:printError("FHIR read response is not a valid FHIR Resource", oldCoverage);
-                return INTERNAL_ERROR;
-            }
-            international401:Coverage|error i4OldCoverage = oldCoverage.cloneWithType();
-            if i4OldCoverage is error {
-                log:printError("Failed to clone old coverage resource", i4OldCoverage);
-                return INTERNAL_ERROR;
-            }
-            string oldBeneficiaryRef = <string>i4OldCoverage.beneficiary.reference;
-
-            // string substring = oldBeneficiaryRef.substring(8);
-
-            // if substring != incomingCoverageBeneficiary.reference {
-            //     log:printError(string `Beneficiaries Mismatch. Old reference:${oldBeneficiaryRef}  Patient ID:${patientId}`);
-            //     //verify with incoming beneficiary reference
-            //     return INTERNAL_ERROR;
-            // }
-
-            // If both beneficiaryRef and oldPatient.id are same, we can derive it as a match
-            if oldBeneficiaryRef.substring(8) == patientId {
-                //match found
-
-                // Validate consent for the matched member ID
-                // ConsentEvaluationResponse|error consentResponse = self.queryConsentEvaluate(self.createConsentParamsPayload(consent, patientId));
-
-                // if consentResponse is error {
-                //     log:printError("Failed to evaluate consent", consentResponse);
-                //     return (r4:createFHIRError("Failed to evaluate consent",
-                //             r4:ERROR, r4:PROCESSING,
-                //             httpStatusCode = http:STATUS_INTERNAL_SERVER_ERROR));
-                // }
-
-                return <hrex100:MemberIdentifier>patientId;
-            }
-
+        r4:BundleEntry[]? entry = candidateBundle.entry;
+        if entry is () || entry.length() == 0 {
+            log:printInfo("[member-match] No candidates found in search response — returning no match");
             return r4:createFHIRError("No match found", r4:ERROR, r4:PROCESSING_NOT_FOUND, httpStatusCode = http:STATUS_UNPROCESSABLE_ENTITY);
         }
-        return r4:createFHIRError("No match found", r4:ERROR, r4:PROCESSING_NOT_FOUND, httpStatusCode = http:STATUS_UNPROCESSABLE_ENTITY);
-    }
 
-    private isolated function filterPatientsByDemographics(international401:Patient[] nameMatchedPatients, uscore501:USCorePatientProfile memberPatient)
-    returns international401:Patient {
-        international401:Patient filteredPatient = {};
-        uscore501:USCorePatientProfileGender incomingPatientGender = memberPatient.gender;
-        r4:date? birthDate = memberPatient.birthDate;
+        // Score each candidate and collect all that share the best score
+        decimal bestScore = 0.0d;
+        string[] topCandidateIds = [];
 
-        log:printDebug(string `Demographic values from the request: Gender = ${incomingPatientGender} , DoB = ${birthDate.toBalString()}`);
-
-        // Additional filter logic can be added here.
-        // foreach international401:Patient patient in nameMatchedPatients {
-
-        // }
-
-        // Selecting the first element as the matched patient for the reference Impl
-        filteredPatient = nameMatchedPatients[0];
-
-        return filteredPatient;
-    }
-
-    private isolated function getNameMatchedPatients(fhirClient:FHIRConnector fhirConnector, uscore501:USCorePatientProfileName[] name) returns international401:Patient[]|r4:FHIRError & readonly {
-
-        international401:Patient[] nameMatchedPatients = [];
-        string[] givenNames = [];
-
-        foreach uscore501:USCorePatientProfileName patientName in name {
-            if patientName.given is string[] {
-                if (<string[]>patientName.given).length() > 0 {
-                    foreach string givenName in <string[]>patientName.given {
-                        givenNames[givenNames.length()] = givenName;
-                    }
-                }
-
-            }
-        }
-
-        foreach string givenName in givenNames {
-            map<string[]> searchParams = {};
-            searchParams["given"] = [givenName];
-            // fhir:FHIRResponse|fhir:FHIRError searchRes = self.search("Patient", searchParams, ());
-            // if searchRes is fhir:FHIRError {
-            //     log:printError("FHIR search error", searchRes);
-            //     return INTERNAL_ERROR;
-            // }
-            // r4:Bundle|error searchBundle = searchRes.'resource.cloneWithType();
-            r4:FHIRError|r4:Bundle searchBundle = search(fhirConnector, PATIENT, searchParams);
-            if searchBundle is error {
-                log:printError("FHIR search response is not a valid FHIR Bundle", searchBundle);
-                return INTERNAL_ERROR;
-            }
-            r4:BundleEntry[]? patientBundleEntries = searchBundle.entry;
-            if patientBundleEntries == () || patientBundleEntries.length() == 0 { // No matches
+        foreach r4:BundleEntry bundleEntry in entry {
+            anydata 'resource = bundleEntry?.'resource;
+            uscore501:USCorePatientProfile|error candidate = 'resource.cloneWithType(uscore501:USCorePatientProfile);
+            if candidate is error {
+                log:printDebug("[member-match] Could not coerce candidate to USCorePatientProfile, skipping");
                 continue;
             }
-
-            foreach r4:BundleEntry bundleEntry in patientBundleEntries {
-                international401:Patient|error matchedPatient = bundleEntry?.'resource.cloneWithType();
-                if matchedPatient is international401:Patient {
-                    nameMatchedPatients.push(matchedPatient);
-                } else {
-                    log:printError("Matched patient resource is not a valid US Core patient resource", matchedPatient);
-                }
+            string candidateId = candidate.id ?: "unknown";
+            string candidateFamily = candidate.name.length() > 0 ? (candidate.name[0].family ?: "") : "";
+            string[] candidateGivenArr = candidate.name.length() > 0 ? (candidate.name[0].given ?: []) : [];
+            string candidateGiven = candidateGivenArr.length() > 0 ? candidateGivenArr[0] : "";
+            string candidateDob = candidate.birthDate ?: "";
+            string candidateGender = candidate.gender.toString();
+            decimal score = calculateScore(memberPatient, candidate);
+            log:printInfo(string `[member-match] Candidate: id=${candidateId} name="${candidateGiven} ${candidateFamily}" dob=${candidateDob} gender=${candidateGender} score=${score}`);
+            if score > bestScore {
+                bestScore = score;
+                topCandidateIds = [candidateId];
+            } else if score == bestScore && score > 0.0d {
+                topCandidateIds.push(candidateId);
             }
         }
 
-        return nameMatchedPatients;
+        string matchGrade = getMatchGrade(bestScore);
+        log:printInfo(string `[member-match] Best score: ${bestScore}, grade=${matchGrade}, top-candidates=${topCandidateIds.toString()}`);
 
+        if topCandidateIds.length() == 0 || matchGrade == "certainly-not" {
+            log:printInfo(string `[member-match] Score too low (${bestScore}) — returning no match`);
+            return r4:createFHIRError("No match found", r4:ERROR, r4:PROCESSING_NOT_FOUND, httpStatusCode = http:STATUS_UNPROCESSABLE_ENTITY);
+        }
+
+        // Verify coverage beneficiary — also serves as tie-breaker when multiple candidates share the best score
+        string? coverageIdOpt = coverageToMatch.id;
+        if coverageIdOpt is () {
+            log:printError("[member-match] coverageToMatch has no id — cannot look up coverage");
+            return INTERNAL_ERROR;
+        }
+        string coverageId = coverageIdOpt;
+        log:printInfo(string `[member-match] FHIR read request: GET Coverage/${coverageId}`);
+        r4:DomainResource|r4:FHIRError oldCoverage = getById(self.fhirConnector, COVERAGE, coverageId);
+        if oldCoverage is r4:FHIRError {
+            log:printError(string `[member-match] FHIR read error: Coverage/${coverageId}`, oldCoverage);
+            return INTERNAL_ERROR;
+        }
+        international401:Coverage|error i4OldCoverage = oldCoverage.cloneWithType();
+        if i4OldCoverage is error {
+            log:printError("[member-match] Failed to clone Coverage resource", i4OldCoverage);
+            return INTERNAL_ERROR;
+        }
+        string oldBeneficiaryRef = <string>i4OldCoverage.beneficiary.reference;
+        string[] refParts = re `/`.split(oldBeneficiaryRef);
+        string extractedBeneficiaryId = refParts[refParts.length() - 1];
+        log:printInfo(string `[member-match] Coverage beneficiary.reference="${oldBeneficiaryRef}" extracted-id="${extractedBeneficiaryId}" top-candidates=${topCandidateIds.toString()}`);
+
+        foreach string candidateId in topCandidateIds {
+            if extractedBeneficiaryId == candidateId {
+                log:printInfo(string `[member-match] Match successful: patient=${candidateId}`);
+                return <hrex100:MemberIdentifier>candidateId;
+            }
+        }
+
+        log:printInfo(string `[member-match] No coverage beneficiary match among top candidates — returning no match`);
+        return r4:createFHIRError("No match found", r4:ERROR, r4:PROCESSING_NOT_FOUND, httpStatusCode = http:STATUS_UNPROCESSABLE_ENTITY);
     }
 
     isolated function queryConsentEvaluate(international401:Parameters parameters) returns ConsentEvaluationResponse|r4:FHIRError {

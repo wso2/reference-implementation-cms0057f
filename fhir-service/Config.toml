@@ -53,8 +53,51 @@ url = ""
 authEnabled = false
 
 [paDatabaseConfig]
-host = "<host>"
+host = "localhost"
 port = 3306
-user = "<user>"
-password = "<password>"
-database = "<database_name>"
+user = "root"
+password = "test"
+database = "padb"
+
+
+[gradeThresholds]
+certain = 0.95
+probable = 0.80
+possible = 0.50
+
+## Member matching scoring weights and algorithms per field.
+## Algorithms: "exact" | "levenshtein" | "soundex" | "jarowinkler"
+## levenshteinThreshold: similarity cutoff for levenshtein (default 0.80)
+## jaroWinklerThreshold: similarity cutoff for jarowinkler (default 0.85)
+## jaroWinklerPrefixScale: prefix scaling factor p (default 0.1, max 0.25)
+[fields.identifier]
+weight = 0.30
+algorithm = "exact"
+
+[fields.family]
+weight = 0.20
+algorithm = "jarowinkler"
+jaroWinklerThreshold = 0.88
+jaroWinklerPrefixScale = 0.1
+
+[fields.given]
+weight = 0.15
+algorithm = "jarowinkler"
+jaroWinklerThreshold = 0.88
+jaroWinklerPrefixScale = 0.1
+
+[fields.birthDate]
+weight = 0.20
+algorithm = "exact"
+
+[fields.gender]
+weight = 0.05
+algorithm = "exact"
+
+[fields.phone]
+weight = 0.05
+algorithm = "exact"
+
+[fields.postalCode]
+weight = 0.05
+algorithm = "exact"

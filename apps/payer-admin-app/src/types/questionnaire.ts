@@ -176,6 +176,7 @@ export interface Expression {
 export interface Extension {
   url: string;
   valueString?: string;
+  valueCanonical?: string;
   valueCode?: string;
   valueBoolean?: boolean;
   valueInteger?: number;

@@ -596,7 +596,7 @@ function getProviderInformation(r4:Reference providerRef) returns ProviderInform
 # + practitionerId - Practitioner ID
 # + return - ProviderInformation or error
 function getPractitionerInfo(string practitionerId) returns ProviderInformation|error {
-    json practitionerRoleRes = check fhirHttpClient->get(string `PractitionerRole/${practitionerId}`);
+    json practitionerRoleRes = check fhirHttpClient->get(string `/PractitionerRole/${practitionerId}`);
     international401:PractitionerRole practitionerRole = <international401:PractitionerRole> check parser:parse(practitionerRoleRes);
 
     json practitionerRes = check fhirHttpClient->get(string `/${<string>practitionerRole.practitioner?.reference}`);

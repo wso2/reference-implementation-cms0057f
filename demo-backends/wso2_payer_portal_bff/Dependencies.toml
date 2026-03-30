@@ -434,7 +434,7 @@ dependencies = [
 [[package]]
 org = "ballerinax"
 name = "health.clients.fhir"
-version = "3.0.5"
+version = "3.0.6"
 dependencies = [
 	{org = "ballerina", name = "file"},
 	{org = "ballerina", name = "ftp"},
@@ -453,7 +453,7 @@ dependencies = [
 [[package]]
 org = "ballerinax"
 name = "health.fhir.r4"
-version = "6.3.0"
+version = "6.3.1"
 dependencies = [
 	{org = "ballerina", name = "constraint"},
 	{org = "ballerina", name = "http"},
@@ -488,7 +488,7 @@ modules = [
 [[package]]
 org = "ballerinax"
 name = "health.fhir.r4.international401"
-version = "4.0.2"
+version = "4.0.3"
 dependencies = [
 	{org = "ballerina", name = "constraint"},
 	{org = "ballerina", name = "log"},
@@ -501,7 +501,7 @@ modules = [
 [[package]]
 org = "ballerinax"
 name = "health.fhir.r4.parser"
-version = "7.1.0"
+version = "7.1.1"
 dependencies = [
 	{org = "ballerina", name = "constraint"},
 	{org = "ballerina", name = "http"},

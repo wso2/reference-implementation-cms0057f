@@ -125,10 +125,19 @@ export const libraryAPI = new LibraryAPI();
  * Returns empty string if no text/cql content is found.
  */
 export function decodeCqlFromLibrary(library: FHIRLibrary): string {
-  const cqlContent = library.content?.find((c) => c.contentType === 'text/cql');
-  if (!cqlContent?.data) return '';
+  const cqlContent = library.content?.find(
+    (c) => c.contentType === 'text/cql'
+  );
+  if (!cqlContent?.data) {
+    return '';
+  }
   try {
-    return atob(cqlContent.data);
+    const binaryString = atob(cqlContent.data);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    return new TextDecoder().decode(bytes);
   } catch {
     return '';
   }
@@ -138,7 +147,12 @@ export function decodeCqlFromLibrary(library: FHIRLibrary): string {
  * Encode CQL string to base64 for storing in a FHIR Library.
  */
 export function encodeCqlToBase64(cql: string): string {
-  return btoa(cql);
+  const bytes = new TextEncoder().encode(cql);
+  let binaryString = '';
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binaryString += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binaryString);
 }
 
 /**

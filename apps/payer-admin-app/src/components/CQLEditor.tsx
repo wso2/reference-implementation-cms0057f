@@ -50,8 +50,12 @@ import {
 
 /** Strip the `define "Name":` header and remove consistent 2-space indent from a block body. */
 function extractBodyOnly(fullBlock: string): string {
-  const lines = fullBlock.split('\n').slice(1);
-  return lines.map((l) => (l.startsWith('  ') ? l.slice(2) : l)).join('\n').trim();
+  const withoutHeader = fullBlock.replace(/^define\s+"[^"]+"\s*:\s*/, '');
+  return withoutHeader
+    .split('\n')
+    .map((l) => (l.startsWith('  ') ? l.slice(2) : l))
+    .join('\n')
+    .trim();
 }
 
 export interface CQLEditorProps {
@@ -120,9 +124,15 @@ export default function CQLEditor({
     if (!library?.id) return;
     setIsSaving(true);
     try {
+      const otherContent = (library.content || []).filter(
+        (c) => c.contentType !== 'text/cql',
+      );
       const updated: FHIRLibrary = {
         ...library,
-        content: [{ contentType: 'text/cql', data: encodeCqlToBase64(editingCql) }],
+        content: [
+          ...otherContent,
+          { contentType: 'text/cql', data: encodeCqlToBase64(editingCql) },
+        ],
       };
       const saved = await libraryAPI.updateLibrary(library.id, updated);
       onLibraryChange(saved, parseCqlDefines(decodeCqlFromLibrary(saved)));
@@ -205,9 +215,15 @@ export default function CQLEditor({
       const preamble = extractCqlPreamble(decodedCql);
       const updatedBlocks = defineBlocks.filter((b) => b.name !== name);
       const newCql = reconstructCql(preamble, updatedBlocks);
+      const otherContent = (library.content || []).filter(
+        (c) => c.contentType !== 'text/cql',
+      );
       const updated: FHIRLibrary = {
         ...library,
-        content: [{ contentType: 'text/cql', data: encodeCqlToBase64(newCql) }],
+        content: [
+          ...otherContent,
+          { contentType: 'text/cql', data: encodeCqlToBase64(newCql) },
+        ],
       };
       const saved = await libraryAPI.updateLibrary(library.id, updated);
       onLibraryChange(saved, parseCqlDefines(decodeCqlFromLibrary(saved)));
@@ -230,9 +246,15 @@ export default function CQLEditor({
     try {
       const indentedBody = newExprBody.trim().split('\n').join('\n  ');
       const appended = `${decodedCql}\n\ndefine "${newExprName.trim()}":\n  ${indentedBody}`;
+      const otherContent = (library.content || []).filter(
+        (c) => c.contentType !== 'text/cql',
+      );
       const updated: FHIRLibrary = {
         ...library,
-        content: [{ contentType: 'text/cql', data: encodeCqlToBase64(appended) }],
+        content: [
+          ...otherContent,
+          { contentType: 'text/cql', data: encodeCqlToBase64(appended) },
+        ],
       };
       const saved = await libraryAPI.updateLibrary(library.id, updated);
       onLibraryChange(saved, parseCqlDefines(decodeCqlFromLibrary(saved)));

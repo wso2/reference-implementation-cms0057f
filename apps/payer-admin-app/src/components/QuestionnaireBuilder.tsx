@@ -256,11 +256,19 @@ function QuestionnaireItemEditor({
 
   // ── Helpers for answerValueSet ─────────────────────────────────────
   const setAnswerValueSet = (url: string) => {
-    onUpdate(path, { answerValueSet: url || undefined });
+    onUpdate(path, {
+     answerValueSet: url || undefined,
+      ...(url ? { answerOption: undefined } : {}),
+    });
   };
 
   const handleTypeChange = (newType: QuestionnaireItemType) => {
-    const updates: Partial<QuestionnaireItem> = { type: newType };
+    const updates: Partial<QuestionnaireItem> = {
+      type: newType,
+      ...(newType === 'choice' || newType === 'open-choice'
+        ? {}
+        : { answerOption: undefined, answerValueSet: undefined }),
+    };
     if (newType === 'group') updates.item = item.item || [];
     else if (newType === 'choice' || newType === 'open-choice') updates.answerOption = item.answerOption || [];
     onUpdate(path, updates);

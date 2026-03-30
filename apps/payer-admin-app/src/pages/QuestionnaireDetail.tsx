@@ -152,8 +152,15 @@ export default function QuestionnaireDetail() {
   /** Fetch the linked CQL Library and any referenced ValueSets — non-blocking */
   const fetchCqlLibrary = useCallback(
     async (questionnaire: Questionnaire) => {
+      // Always clear previous state before fetching
+      setCqlLibrary(null);
+      setCqlDefines([]);
+      setValueSets([]);
+
       const libraryUrl = extractLibraryUrlFromQuestionnaire(questionnaire);
-      if (!libraryUrl) return;
+      if (!libraryUrl) {
+        return; // No library linked, so nothing to do
+      }
 
       setIsCqlLoading(true);
       try {
@@ -189,6 +196,10 @@ export default function QuestionnaireDetail() {
           'CQL Library could not be loaded. You can create one in the CQL Editor tab.',
           'info',
         );
+        // Clear state on error to avoid showing stale data
+        setCqlLibrary(null);
+        setCqlDefines([]);
+        setValueSets([]);
       } finally {
         setIsCqlLoading(false);
       }

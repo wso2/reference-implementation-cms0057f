@@ -18,9 +18,11 @@ type GradeThresholds readonly & record {|
     decimal possible;
 |};
 
+type Algorithm "exact"|"levenshtein"|"soundex"|"jarowinkler";
+
 type FieldConfig readonly & record {|
     decimal weight;
-    string algorithm;                // "exact" | "levenshtein" | "soundex" | "jarowinkler"
+    Algorithm algorithm;
     decimal levenshteinThreshold?;   // similarity cutoff for levenshtein (default 0.80)
     decimal jaroWinklerThreshold?;   // similarity cutoff for jarowinkler (default 0.85)
     decimal jaroWinklerPrefixScale?; // prefix scaling factor p (default 0.1, capped at 0.25)
@@ -58,6 +60,19 @@ configurable FieldsConfig fields = {
     phone: {weight: 0.05d, algorithm: "exact"},
     postalCode: {weight: 0.05d, algorithm: "exact"}
 };
+
+# Validate the FieldsConfig at application startup.
+# Returns a descriptive error if any field's algorithm is not in the supported set.
+# + f - The loaded FieldsConfig to validate
+# + return - An error describing the invalid field, or nil if all fields are valid
+isolated function validateFieldsConfig(FieldsConfig f) returns error? {
+    // Algorithm values are enforced by the Algorithm type union: Ballerina's configurable
+    // loader rejects any Config.toml value outside {"exact","levenshtein","soundex","jarowinkler"}
+    // before this function runs, producing a startup error with the offending field name.
+    // This function is the canonical application-layer hook for any future config constraints
+    // (e.g., weight range checks, threshold bounds) that the type system cannot enforce.
+    _ = f;
+}
 
 # Normalize a phone number by stripping non-digit characters.
 # + phone - Raw phone string
@@ -373,8 +388,7 @@ isolated function compareField(string a, string b, FieldConfig config) returns d
             return similarity >= threshold ? similarity : 0.0d;
         }
         _ => {
-            // Unknown algorithm — fall back to exact
-            return a.toLowerAscii() == b.toLowerAscii() ? 1.0d : 0.0d;
+            panic error("unreachable: unsupported algorithm");
         }
     }
 }
@@ -390,17 +404,32 @@ isolated function compareField(string a, string b, FieldConfig config) returns d
 isolated function calculateScore(uscore501:USCorePatientProfile input, uscore501:USCorePatientProfile candidate) returns decimal {
     decimal score = 0.0d;
 
-    // --- Identifier (always exact — system+value pair matching) ---
+    // --- Identifier (system exact, value by configured algorithm) ---
+    // The system field is a URI namespace and must always be exact-matched.
+    // The value field uses the algorithm configured for the identifier field.
     boolean identifierMatched = false;
     foreach uscore501:USCorePatientProfileIdentifier inId in input.identifier {
         if identifierMatched {
             break;
         }
+        string? inSystem = inId.system;
+        string? inValue = inId.value;
+        if inSystem is () || inValue is () {
+            continue;
+        }
         foreach uscore501:USCorePatientProfileIdentifier candId in candidate.identifier {
-            if inId.system == candId.system && inId.value == candId.value {
-                score += fields.identifier.weight;
-                identifierMatched = true;
-                break;
+            string? candSystem = candId.system;
+            string? candValue = candId.value;
+            if candSystem is () || candValue is () {
+                continue;
+            }
+            if inSystem == candSystem {
+                decimal sim = compareField(inValue, candValue, fields.identifier);
+                if sim > 0.0d {
+                    score += fields.identifier.weight * sim;
+                    identifierMatched = true;
+                    break;
+                }
             }
         }
     }

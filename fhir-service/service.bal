@@ -61,6 +61,7 @@ final http:Client fhirHttpClient = check new (baseUrl);
 isolated http:Client? x12ConnectionClient = ();
 
 isolated function init() returns error? {
+    check validateFieldsConfig(fields);
 
     if x12ConnectionConfig.enable {
         lock {

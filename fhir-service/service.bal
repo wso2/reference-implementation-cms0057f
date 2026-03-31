@@ -703,12 +703,36 @@ service /fhir/r4/ClaimResponse on new fhirr4:Listener(config = claimResponseApiC
     }
 
     // Update the current state of a resource completely.
-    isolated resource function put [string id](r4:FHIRContext fhirContext, ClaimResponse claimResponse) returns ClaimResponse|r4:OperationOutcome|r4:FHIRError {
+    isolated resource function put [string id](r4:FHIRContext fhirContext, ClaimResponse claimResponse) returns ClaimResponse|r4:OperationOutcome|r4:FHIRError|error {
+        
+        if claimResponse.outcome == COMPLETED {
+
+            string? claimReference = claimResponse.request.reference;
+
+            if claimReference is string {
+
+                // Parse Claim/xxxx format
+                string[] parts = re `/`.split(claimReference);
+                string claimId = parts[parts.length() - 1];
+                r4:DomainResource claimResource = check getById(fhirConnector, CLAIM, claimId);
+                international401:Claim claim = check claimResource.cloneWithType();
+                int claimType = determineClaimType(claimResponse, claim);
+                int timeToDecide = calculateTimeToDecide(claimResponse.meta?.lastUpdated.toString(), claim.created);
+
+                r4:PriorAuthorisationAnalyticsResponseEvent event = {
+                    claimType: claimType,
+                    claimStatus: determineClaimStatus(claimResponse),
+                    timeToDecide: timeToDecide,
+                    isSLAViolated: isSlaViolated(claimType, timeToDecide)
+                };
+                fhirContext.setProperty(r4:PRIOR_AUTH_ANALYTICS_EVENT, event);
+            }
+        }
+
         string|error organizationId = updateClaimResponse(fhirConnector, id, claimResponse.toJson());
         if organizationId is error {
             return r4:createFHIRError("Failed to update claim response", r4:ERROR, r4:INVALID);
         }
-
         // Trigger notification for the updated ClaimResponse
         international401:ClaimResponse|error intClaimResponse = claimResponse.cloneWithType(international401:ClaimResponse);
         if intClaimResponse is international401:ClaimResponse {

@@ -1,4 +1,4 @@
-# Publishing CMS Analytics Data to Moesif
+# Publishing CMS and Prior Authorisation Analytics Data to Moesif
 
 Follow the steps below to publish CMS data to the Moesif analytics platform.
 
@@ -18,7 +18,13 @@ Follow the steps below to publish CMS data to the Moesif analytics platform.
 	* ```module-ballerinax-health.fhir.r4/fhirr4/ballerina/src/main/resources/fhirservice/resources/analytics/moesif```
 7. Start the FHIR server with the analytics configuration enabled.
 8. Perform API calls.
-9. Check the dashboard.
+9. Import the relevant dashboard template to Moesif.
+    - For CMS Analytics: ![Sample CMS Analytics Dashboard Template](moesif-cms-dashboard-template.json)
+    - For Prior Authorisation Analytics: ![Sample Prior Authorisation Analytics Dashboard Template](prior-auth-analytics-moesif-dashboard-template.json)
+9. Check the dashboard. 
 
 # Sample Moesif Dashboard for Patient Access API Metrics
 ![Sample Dashboard](analytics_sample_moesif_dashboard.png)
+
+# Sample Moesif Dashboard for Prior Authorisation Analytics
+![Sample Dashboard](prior_auth_analytics_sample_moesif_dashboard.png)

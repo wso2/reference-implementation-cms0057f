@@ -123,6 +123,7 @@ isolated service /pdex on bulkExportListener {
         log:printDebug("Loaded payer data exchange request.", requestId = requestId, payerId = request.payerId, consent = request.consent ?: "");
 
         if !(request.consent ?: "").equalsIgnoreCaseAscii("APPROVED") {
+            _ = check updatePayerDataExchangeRequestStatus(requestId, "FAILED");
             return error("Consent not approved for data exchange.");
         }
 
@@ -151,7 +152,12 @@ isolated service /pdex on bulkExportListener {
             authEnabled: true
         };
 
-        http:Client httpClient = check createHttpClient(serverConfig);
+        http:Client|error httpClient = createHttpClient(serverConfig);
+        if httpClient is error {
+            log:printError("Error creating HTTP client for member match", httpClient);
+            _ = check updatePayerDataExchangeRequestStatus(requestId, "FAILED");
+            return error("Error creating HTTP client: " + httpClient.message());
+        }
 
         international401:Parameters memberMatchParams = check createMemberMatchParams(request, httpClient);
         log:printDebug("Created member match parameters.", requestId = requestId);
@@ -162,11 +168,13 @@ isolated service /pdex on bulkExportListener {
 
         if matchResponse is http:ClientError {
             log:printError("Error calling $member-match", matchResponse);
+            _ = check updatePayerDataExchangeRequestStatus(requestId, "FAILED");
             return error("Error calling $member-match: " + matchResponse.message());
         }
 
         if matchResponse.statusCode < 200 || matchResponse.statusCode >= 300 {
             log:printError("Member match failed with status: " + matchResponse.statusCode.toString());
+            _ = check updatePayerDataExchangeRequestStatus(requestId, "FAILED");
             return error("Member match failed");
         }
 

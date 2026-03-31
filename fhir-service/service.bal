@@ -63,6 +63,11 @@ isolated http:Client? x12ConnectionClient = ();
 isolated function init() returns error? {
     check validateFieldsConfig(fields);
 
+    if bulkMemberMatchMode != "respond-async" && bulkMemberMatchMode != "respond-sync" {
+        return error("Invalid bulkMemberMatchMode: '" + bulkMemberMatchMode
+            + "'. Accepted values: respond-async | respond-sync");
+    }
+
     if x12ConnectionConfig.enable {
         lock {
             string x12ServiceUrl = x12ConnectionConfig.url;

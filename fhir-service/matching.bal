@@ -42,9 +42,6 @@ type FieldsConfig readonly & record {|
 // CONFIGURABLE DECLARATIONS (overridden via config.toml)
 // ============================================================
 
-configurable decimal matchThreshold = 0.25d;
-configurable decimal dedupThreshold = 0.60d;
-
 configurable GradeThresholds gradeThresholds = {
     certain: 0.95d,
     probable: 0.80d,

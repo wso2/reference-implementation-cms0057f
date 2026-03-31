@@ -54,6 +54,10 @@ public isolated class DemoFHIRMemberMatcher {
 
         // Search candidates by given name (blocking step)
         uscore501:USCorePatientProfileName[] name = memberPatient.name;
+        if name.length() == 0 {
+            return r4:createFHIRError("No match found", r4:ERROR, r4:PROCESSING_NOT_FOUND,
+                    httpStatusCode = http:STATUS_UNPROCESSABLE_ENTITY);
+        }
         string[] given = name[0].given ?: [];
         if given.length() == 0 {
             return r4:createFHIRError("No match found", r4:ERROR, r4:PROCESSING_NOT_FOUND,
@@ -101,8 +105,8 @@ public isolated class DemoFHIRMemberMatcher {
         // cross-check only against the coverage submitted in the request, not a server-side lookup.
         string? beneficiaryRef = coverageToMatch.beneficiary.reference;
         if beneficiaryRef is () {
-            log:printError("[member-match] coverageToMatch missing beneficiary.reference");
-            return INTERNAL_ERROR;
+            log:printWarn("[member-match] coverageToMatch missing beneficiary.reference");
+            return r4:createFHIRError("coverageToMatch.beneficiary.reference is required", r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
         }
         string[] refParts = re `/`.split(beneficiaryRef);
         string extractedBeneficiaryId = refParts[refParts.length() - 1];

@@ -1383,3 +1383,36 @@ isolated function updateCommunicationRequestAndClaim(international401:Parameters
     fhirContext.setResponseStatusCode(200);
     return outcome;
 }
+
+# Validates that the Prefer header is present and contains the required value.
+# Returns () when valid, or a 400 FHIRError when the header is absent or the value does not match.
+#
+# + httpReq       - the raw HTTP request from FHIRContext; may be nil
+# + requiredValue - the configured required token ("respond-async" | "respond-sync")
+# + return        - () if valid, r4:FHIRError otherwise
+isolated function validatePreferHeader(r4:HTTPRequest? httpReq, string requiredValue)
+        returns r4:FHIRError? {
+
+    string[]? preferValues = ();
+    if httpReq !is () {
+        preferValues = httpReq.headers["prefer"] ?: httpReq.headers["Prefer"];
+    }
+    if preferValues is () {
+        return r4:createFHIRError(
+                BULK_MATCH_MISSING_PREFER_HEADER,
+                r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+    }
+
+    // Parse comma-separated token list (e.g., "respond-async, handling=strict").
+    foreach string pv in preferValues {
+        foreach string token in re `,`.split(pv) {
+            if token.trim().toLowerAscii() == requiredValue.toLowerAscii() {
+                return ();
+            }
+        }
+    }
+
+    return r4:createFHIRError(
+            "The 'Prefer' header value must be '" + requiredValue + "'",
+            r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+}

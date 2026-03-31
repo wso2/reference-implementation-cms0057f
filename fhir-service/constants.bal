@@ -116,6 +116,7 @@ const string BULK_MATCH_NO_MEMBER_BUNDLES = "No MemberBundle entries found in Pa
 const string BULK_MATCH_MISSING_PATIENT = "MemberBundle is missing required MemberPatient";
 const string BULK_MATCH_MISSING_COVERAGE = "MemberBundle is missing required CoverageToMatch";
 const string BULK_MATCH_MISSING_CONSENT = "MemberBundle is missing required Consent";
+const string BULK_MATCH_MISSING_PREFER_HEADER = "The 'Prefer' header is required for $bulk-member-match requests";
 const string PDEX_MULTI_MEMBER_MATCH_RESULT_CS = "http://hl7.org/fhir/us/davinci-pdex/CodeSystem/PdexMultiMemberMatchResultCS";
 const string BASE_EXT_MATCH_PARAMETERS_URL = "http://hl7.org/fhir/us/davinci-pdex/StructureDefinition/base-ext-match-parameters";
 const string PDEX_MATCH_CODE = "match";

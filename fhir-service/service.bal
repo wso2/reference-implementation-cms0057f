@@ -41,6 +41,10 @@ configurable string serverBaseUrl = "http://localhost:8081";
 // Resource types permitted for export. Derived from the DaVinci PDex payer-to-payer spec:
 // US Core clinical resources + PDex-specific claims/encounter types.
 // Override in Config.toml to restrict further.
+# Operation mode for $bulk-member-match. Accepted values: "respond-async" | "respond-sync".
+# The Prefer header must contain this value; the value also determines sync vs async routing.
+configurable string bulkMemberMatchMode = "respond-async";
+
 configurable string[] & readonly allowedExportResourceTypes = [
     "AllergyIntolerance", "CarePlan", "CareTeam", "Condition", "Consent",
     "Coverage", "Device", "DiagnosticReport", "DocumentReference", "Encounter",
@@ -1938,25 +1942,13 @@ service /fhir/r4/Group on new fhirr4:Listener(config = groupApiConfig) {
                     r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
         }
 
-        // Detect async preference via Prefer: respond-async header.
-        // Treat the header as a comma-separated token list so values like
-        // "respond-async, handling=strict" are handled correctly.
-        boolean asyncRequested = false;
-        r4:HTTPRequest? httpReq = fhirContext.getHTTPRequest();
-        if httpReq !is () {
-            string[]? preferValues = httpReq.headers["prefer"] ?: httpReq.headers["Prefer"];
-            if preferValues !is () {
-                foreach string pv in preferValues {
-                    foreach string token in re `,`.split(pv) {
-                        if token.trim().toLowerAscii() == "respond-async" {
-                            asyncRequested = true;
-                        }
-                    }
-                }
-            }
+        // Prefer header is mandatory; its value must match the configured mode.
+        r4:FHIRError? preferError = validatePreferHeader(fhirContext.getHTTPRequest(), bulkMemberMatchMode);
+        if preferError !is () {
+            return preferError;
         }
 
-        if asyncRequested {
+        if bulkMemberMatchMode == "respond-async" {
             string jobId = uuid:createType1AsString();
             evictExpiredBulkMatchJobs();
             lock {
@@ -1972,24 +1964,24 @@ service /fhir/r4/Group on new fhirr4:Listener(config = groupApiConfig) {
             // Start background processing — results stored in bulkMatchJobStore
             _ = start processAndStoreBulkMemberMatch(jobId, pdexParams.cloneReadOnly());
 
-            http:Response resp = new;
-            resp.statusCode = http:STATUS_ACCEPTED;
-            resp.setHeader("Content-Location",
+            http:Response asyncResp = new;
+            asyncResp.statusCode = http:STATUS_ACCEPTED;
+            asyncResp.setHeader("Content-Location",
                     serverBaseUrl + "/fhir/r4/_export/bulk-match-status/" + jobId);
-            return resp;
+            return asyncResp;
         }
 
-        // Synchronous path — delegate to the BulkMemberMatcher interface
+        // Synchronous path (bulkMemberMatchMode == "respond-sync")
         davincipdex220:BulkMemberMatchResult|r4:FHIRError matchResult =
                 bulkMemberMatcher.matchMembers({requestParameters: pdexParams});
         if matchResult is r4:FHIRError {
             return matchResult;
         }
-        http:Response resp = new;
-        resp.statusCode = http:STATUS_OK;
-        resp.setHeader("Content-Type", "application/fhir+json");
-        resp.setJsonPayload(matchResult.responseParameters.toJson());
-        return resp;
+        http:Response syncResp = new;
+        syncResp.statusCode = http:STATUS_OK;
+        syncResp.setHeader("Content-Type", "application/fhir+json");
+        syncResp.setJsonPayload(matchResult.responseParameters.toJson());
+        return syncResp;
     }
 
     // DaVinci Data Export — GET /fhir/r4/Group/{id}/$davinci-data-export

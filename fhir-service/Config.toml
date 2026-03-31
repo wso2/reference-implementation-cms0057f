@@ -3,6 +3,10 @@
 exportServiceUrl = "http://localhost:8090/bulk/export"
 serverBaseUrl = "http://localhost:8080"
 
+## Operation mode for $bulk-member-match. Options: "respond-async" | "respond-sync".
+## The Prefer header must contain this value on every request.
+bulkMemberMatchMode = "respond-async"
+
 ## Resource types permitted for $export and $davinci-data-export operations.
 ## Based on DaVinci PDex payer-to-payer spec: US Core clinical resources + PDex claims/encounter types.
 ## Remove types you do not support or wish to restrict.

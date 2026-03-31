@@ -83,9 +83,9 @@ class FileServiceAPI {
     return response.json();
   }
 
-  async convertPdf(file: File): Promise<ConvertResponse[]> {
+  async convertPdf(files: File[]): Promise<ConvertResponse[]> {
     const formData = new FormData();
-    formData.append('file', file);
+    files.forEach(file => formData.append('file', file));
 
     return this.request<ConvertResponse[]>('/convert', {
       method: 'POST',

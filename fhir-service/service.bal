@@ -1790,7 +1790,7 @@ service /fhir/r4/Consent on new fhirr4:Listener(config = consentApiConfig) {
 // # Device API                                                                                                         #
 // ######################################################################################################################
 
-public type Device international401:Device;
+public type Device uscore501:USCoreImplantableDeviceProfile;
 
 service /fhir/r4/Device on new fhirr4:Listener(config = deviceApiConfig) {
 
@@ -2210,7 +2210,7 @@ service /fhir/r4/Schedule on new fhirr4:Listener(config = scheduleApiConfig) {
 // # Slot API                                                                                                           #
 // ######################################################################################################################
 
-public type Slot r4:DomainResource;
+public type Slot international401:Slot;
 
 service /fhir/r4/Slot on new fhirr4:Listener(config = slotApiConfig) {
 

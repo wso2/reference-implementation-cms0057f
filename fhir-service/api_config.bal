@@ -1663,7 +1663,7 @@ final r4:ResourceAPIConfig consentApiConfig = {
 final r4:ResourceAPIConfig deviceApiConfig = {
     resourceType: "Device",
     profiles: [
-        "http://hl7.org/fhir/StructureDefinition/Device"
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-implantable-device"
     ],
     defaultProfile: (),
     searchParameters: [
@@ -1799,7 +1799,7 @@ final r4:ResourceAPIConfig deviceApiConfig = {
 final r4:ResourceAPIConfig goalApiConfig = {
     resourceType: "Goal",
     profiles: [
-        "http://hl7.org/fhir/StructureDefinition/Goal"
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-goal"
     ],
     defaultProfile: (),
     searchParameters: [
@@ -1926,7 +1926,7 @@ final r4:ResourceAPIConfig goalApiConfig = {
 final r4:ResourceAPIConfig immunizationApiConfig = {
     resourceType: "Immunization",
     profiles: [
-        "http://hl7.org/fhir/StructureDefinition/Immunization"
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-immunization"
     ],
     defaultProfile: (),
     searchParameters: [
@@ -2098,7 +2098,7 @@ final r4:ResourceAPIConfig immunizationApiConfig = {
 final r4:ResourceAPIConfig procedureApiConfig = {
     resourceType: "Procedure",
     profiles: [
-        "http://hl7.org/fhir/StructureDefinition/Procedure"
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-procedure"
     ],
     defaultProfile: (),
     searchParameters: [
@@ -2270,7 +2270,7 @@ final r4:ResourceAPIConfig procedureApiConfig = {
 final r4:ResourceAPIConfig documentreferenceApiConfig = {
     resourceType: "DocumentReference",
     profiles: [
-        "http://hl7.org/fhir/StructureDefinition/DocumentReference"
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-documentreference"
     ],
     defaultProfile: (),
     searchParameters: [
@@ -2523,11 +2523,7 @@ final r4:ResourceAPIConfig documentreferenceApiConfig = {
 final r4:ResourceAPIConfig provenanceApiConfig = {
     resourceType: "Provenance",
     profiles: [
-        "http://hl7.org/fhir/StructureDefinition/provenance-relevant-history",
-
-        "http://hl7.org/fhir/StructureDefinition/Provenance",
-
-        "http://hl7.org/fhir/StructureDefinition/ehrsrle-provenance"
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-provenance"
     ],
     defaultProfile: (),
     searchParameters: [
@@ -2819,7 +2815,7 @@ final r4:ResourceAPIConfig auditeventApiConfig = {
 final r4:ResourceAPIConfig locationApiConfig = {
     resourceType: "Location",
     profiles: [
-        "http://hl7.org/fhir/StructureDefinition/Location"
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-location"
     ],
     defaultProfile: (),
     searchParameters: [
@@ -3146,7 +3142,7 @@ final r4:ResourceAPIConfig slotApiConfig = {
 final r4:ResourceAPIConfig insuranceplanApiConfig = {
     resourceType: "InsurancePlan",
     profiles: [
-        "http://hl7.org/fhir/StructureDefinition/InsurancePlan"
+        "http://hl7.org/fhir/us/davinci-drug-formulary/StructureDefinition/usdf-PayerInsurancePlan"
     ],
     defaultProfile: (),
     searchParameters: [
@@ -3291,7 +3287,7 @@ final r4:ResourceAPIConfig insuranceplanApiConfig = {
 final r4:ResourceAPIConfig medicationknowledgeApiConfig = {
     resourceType: "MedicationKnowledge",
     profiles: [
-        "http://hl7.org/fhir/StructureDefinition/MedicationKnowledge"
+        "http://hl7.org/fhir/us/davinci-drug-formulary/StructureDefinition/usdf-FormularyDrug"
     ],
     defaultProfile: (),
     searchParameters: [

@@ -63,12 +63,23 @@ configurable FieldsConfig fields = {
 # + f - The loaded FieldsConfig to validate
 # + return - An error describing the invalid field, or nil if all fields are valid
 isolated function validateFieldsConfig(FieldsConfig f) returns error? {
-    // Algorithm values are enforced by the Algorithm type union: Ballerina's configurable
-    // loader rejects any Config.toml value outside {"exact","levenshtein","soundex","jarowinkler"}
-    // before this function runs, producing a startup error with the offending field name.
-    // This function is the canonical application-layer hook for any future config constraints
-    // (e.g., weight range checks, threshold bounds) that the type system cannot enforce.
-    _ = f;
+    check validateFieldAlgorithm("identifier", f.identifier.algorithm);
+    check validateFieldAlgorithm("family", f.family.algorithm);
+    check validateFieldAlgorithm("given", f.given.algorithm);
+    check validateFieldAlgorithm("birthDate", f.birthDate.algorithm);
+    check validateFieldAlgorithm("gender", f.gender.algorithm);
+    check validateFieldAlgorithm("phone", f.phone.algorithm);
+    check validateFieldAlgorithm("postalCode", f.postalCode.algorithm);
+}
+
+isolated function validateFieldAlgorithm(string fieldName, string algorithm) returns error? {
+    match algorithm {
+        "exact"|"levenshtein"|"soundex"|"jarowinkler" => {}
+        _ => {
+            return error("Unsupported algorithm '" + algorithm + "' for fields." + fieldName
+                + ". Accepted values: exact, levenshtein, soundex, jarowinkler");
+        }
+    }
 }
 
 # Normalize a phone number by stripping non-digit characters.
@@ -385,7 +396,8 @@ isolated function compareField(string a, string b, FieldConfig config) returns d
             return similarity >= threshold ? similarity : 0.0d;
         }
         _ => {
-            panic error("unreachable: unsupported algorithm");
+            panic error("BUG: unsupported algorithm '" + config.algorithm
+                + "' passed to compareField — should have been caught by validateFieldsConfig");
         }
     }
 }

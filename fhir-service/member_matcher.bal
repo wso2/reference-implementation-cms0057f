@@ -59,11 +59,18 @@ public isolated class DemoFHIRMemberMatcher {
                     httpStatusCode = http:STATUS_UNPROCESSABLE_ENTITY);
         }
         string[] given = name[0].given ?: [];
-        if given.length() == 0 {
+        string givenName = "";
+        foreach string g in given {
+            string trimmed = g.trim();
+            if trimmed.length() > 0 {
+                givenName = trimmed;
+                break;
+            }
+        }
+        if givenName.length() == 0 {
             return r4:createFHIRError("No match found", r4:ERROR, r4:PROCESSING_NOT_FOUND,
                     httpStatusCode = http:STATUS_UNPROCESSABLE_ENTITY);
         }
-        string givenName = given[0];
         r4:Bundle|r4:FHIRError candidateBundleResult = search(self.fhirConnector, PATIENT, {"given": [givenName]});
         if candidateBundleResult is r4:FHIRError {
             log:printError("[member-match] Patient search failed", candidateBundleResult);

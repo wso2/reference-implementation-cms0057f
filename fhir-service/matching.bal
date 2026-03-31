@@ -58,10 +58,11 @@ configurable FieldsConfig fields = {
     postalCode: {weight: 0.05d, algorithm: "exact"}
 };
 
-# Validate the FieldsConfig at application startup.
-# Returns a descriptive error if any field's algorithm is not in the supported set.
+# Validate the FieldsConfig and GradeThresholds at application startup.
+# Checks each field's algorithm, weight range [0.0, 1.0], total weight sum (≤ 1.0),
+# each gradeThreshold range [0.0, 1.0], and strictly descending order (certain > probable > possible).
 # + f - The loaded FieldsConfig to validate
-# + return - An error describing the invalid field, or nil if all fields are valid
+# + return - An error naming the offending field or threshold, or nil if all checks pass
 isolated function validateFieldsConfig(FieldsConfig f) returns error? {
     check validateFieldAlgorithm("identifier", f.identifier.algorithm);
     check validateFieldAlgorithm("family", f.family.algorithm);
@@ -70,6 +71,50 @@ isolated function validateFieldsConfig(FieldsConfig f) returns error? {
     check validateFieldAlgorithm("gender", f.gender.algorithm);
     check validateFieldAlgorithm("phone", f.phone.algorithm);
     check validateFieldAlgorithm("postalCode", f.postalCode.algorithm);
+
+    // Validate per-field weight range [0.0, 1.0]
+    map<decimal> fieldWeights = {
+        "identifier": f.identifier.weight,
+        "family": f.family.weight,
+        "given": f.given.weight,
+        "birthDate": f.birthDate.weight,
+        "gender": f.gender.weight,
+        "phone": f.phone.weight,
+        "postalCode": f.postalCode.weight
+    };
+    foreach var [name, weight] in fieldWeights.entries() {
+        if weight < 0.0d || weight > 1.0d {
+            return error("field '" + name + "' weight " + weight.toString() + " is out of range [0.0, 1.0]");
+        }
+    }
+
+    // Validate total weight sum does not exceed 1.0
+    decimal totalWeight = f.identifier.weight + f.family.weight + f.given.weight
+        + f.birthDate.weight + f.gender.weight + f.phone.weight + f.postalCode.weight;
+    if totalWeight > 1.0d {
+        return error("total field weight sum " + totalWeight.toString() + " exceeds 1.0");
+    }
+
+    // Validate gradeThresholds range [0.0, 1.0]
+    if gradeThresholds.certain < 0.0d || gradeThresholds.certain > 1.0d {
+        return error("gradeThresholds.certain value " + gradeThresholds.certain.toString() + " is out of range [0.0, 1.0]");
+    }
+    if gradeThresholds.probable < 0.0d || gradeThresholds.probable > 1.0d {
+        return error("gradeThresholds.probable value " + gradeThresholds.probable.toString() + " is out of range [0.0, 1.0]");
+    }
+    if gradeThresholds.possible < 0.0d || gradeThresholds.possible > 1.0d {
+        return error("gradeThresholds.possible value " + gradeThresholds.possible.toString() + " is out of range [0.0, 1.0]");
+    }
+
+    // Validate gradeThresholds strictly descending: certain > probable > possible
+    if gradeThresholds.certain <= gradeThresholds.probable {
+        return error("gradeThresholds.certain (" + gradeThresholds.certain.toString()
+            + ") must be greater than gradeThresholds.probable (" + gradeThresholds.probable.toString() + ")");
+    }
+    if gradeThresholds.probable <= gradeThresholds.possible {
+        return error("gradeThresholds.probable (" + gradeThresholds.probable.toString()
+            + ") must be greater than gradeThresholds.possible (" + gradeThresholds.possible.toString() + ")");
+    }
 }
 
 isolated function validateFieldAlgorithm(string fieldName, string algorithm) returns error? {
@@ -377,6 +422,9 @@ isolated function jaroWinklerSimilarity(string a, string b, decimal prefixScale)
 # + config - Field configuration specifying algorithm and parameters
 # + return - Similarity score (1.0 = match, 0.0 = no match)
 isolated function compareField(string a, string b, FieldConfig config) returns decimal {
+    if a.trim().length() == 0 || b.trim().length() == 0 {
+        return 0.0d;
+    }
     match config.algorithm {
         "exact" => {
             return a.toLowerAscii() == b.toLowerAscii() ? 1.0d : 0.0d;

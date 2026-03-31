@@ -1383,3 +1383,246 @@ isolated function updateCommunicationRequestAndClaim(international401:Parameters
     fhirContext.setResponseStatusCode(200);
     return outcome;
 }
+
+# Determines the type of the claim. Whether the claim is a standard claim or an expedited claim.
+# This function takes the related claim of the claim response and the claim response and checks
+# the claim.priority field. If the priority is "stat", then it is an expedited claim, otherwise it is a standard claim.
+# 
+# + claimResponse - The claim response resource to determine the type of
+# + claim - The claim of the claim response
+# 
+# + return - The type of the claim. "standard" for standard claims and "expedited" for expedited claims.
+isolated function determineClaimType(ClaimResponse claimResponse, international401:Claim claim) returns int {
+
+    if claim.priority?.coding is r4:Coding[] {
+        foreach r4:Coding coding in <r4:Coding[]>claim.priority?.coding {
+            if coding.code is string && coding.code == STAT {
+                log:printDebug(string `Claim type is: Expedited`);
+                return EXPEDITED;
+            }
+        }
+    }
+    log:printDebug(string `Claim type is: Standard`);
+    return STANDARD;
+}
+
+# Determines the status of the claim based on the claim response outcome and the item approvals.
+# Assumes that if the outcome is "complete", then the claim has finished processing and payer made the final decision. 
+# It will not be processed further. Only "completed" claims are considered.
+# 
+# The following strings are returned when the "outcome" is "complete",
+# 1. "approved" if all items are approved.
+# 2. "denied" if all items are denied. 
+# 3. "partially-approved" if a subset of items are approved. 
+# 
+# NOTE: If there are no items present in a completed claim, 
+# * If a "preAuthRef" is present in claim response, it is assumed that the claim is approved without needing to review items.
+# * If a "preAuthRef" is not present, it is assumed that the claim is rejected.
+# 
+# The approval/denial is decided based on the reviewActionCode of each item adjudication.
+# https://hl7.org/fhir/us/davinci-pas/STU2/StructureDefinition-extension-reviewAction.html
+# 
+# + claimResponse - The claim response resource to determine the status of
+# 
+# + return - returns 3 if approved, 5 if denied, 4 if partially approved. This should be fixed after the issue
+# https://github.com/wso2-enterprise/moesif-internal/issues/7
+isolated function determineClaimStatus(ClaimResponse claimResponse) returns int {
+ 
+    log:printDebug(string `Outcome of the claim response is: ${claimResponse.outcome}`);
+
+    int numberOfItems = 0;
+    int numberOfApprovedAdjudications = 0;
+
+    davincipas:PASClaimResponseItem[]? items = claimResponse.item;
+
+    if items is davincipas:PASClaimResponseItem[] {
+            
+        numberOfItems = items.length();
+        log:printDebug(string `Claim response has ${numberOfItems} items.`);
+
+        if numberOfItems == 0 {
+
+            // When a completed claim doesn't have items, if a "preAuthRef" is present, this can mean the whole 
+            // request is approved and no item review was required.
+            if claimResponse.preAuthRef is string {
+                log:printDebug(string `Number of items: ${numberOfItems}`);
+                log:printDebug(string `Number of approved adjudications: ${numberOfApprovedAdjudications}`);
+                log:printDebug(string `Aggregated status: Approved`);
+                return APPROVED;
+            }
+            // When there are no items present in a "completed" claim, this can mean the request is rejected.
+            log:printDebug(string `Number of items: ${numberOfItems}`);
+            log:printDebug(string `Number of approved adjudications: ${numberOfApprovedAdjudications}`);
+            log:printDebug(string `Aggregated status: Denied`);
+            return DENIED;
+        }
+
+        foreach davincipas:PASClaimResponseItem item in items {
+            davincipas:PASClaimResponseAdjudication[]? adjudications = item.adjudication;
+            
+            if adjudications is davincipas:PASClaimResponseAdjudication[] {
+                foreach davincipas:PASClaimResponseAdjudication adjudication in adjudications {
+                
+                    r4:Extension[]? adjudicationExtensions = adjudication.extension;
+                    if adjudicationExtensions is r4:Extension[] {
+                        
+                        foreach r4:Extension adjudicationExtension in adjudicationExtensions {
+                            if adjudicationExtension.url == REVIEW_ACTION_URL {
+                                
+                                r4:Extension[]? reviewActionExtensions = adjudicationExtension.extension;
+                                if reviewActionExtensions is r4:Extension[] {
+                                    
+                                    foreach r4:Extension reviewActionExtension in reviewActionExtensions {
+                                        if reviewActionExtension.url == REVIEW_ACTION_CODE_URL {
+                                            
+                                            r4:CodeableConceptExtension|error reviewActionCodeableConceptExtension = reviewActionExtension.cloneWithType();
+                                            if reviewActionCodeableConceptExtension is r4:CodeableConceptExtension {
+                                                r4:CodeableConcept reviewActionCodeableConcept = reviewActionCodeableConceptExtension.valueCodeableConcept;
+                                                r4:Coding[]? reviewActionCodings = reviewActionCodeableConcept.coding;
+                                                
+                                                if reviewActionCodings is r4:Coding[] {
+                                                    foreach r4:Coding reviewActionCoding in reviewActionCodings {
+                                                        r4:code? code = reviewActionCoding.code;
+                                                        if code is string && code == A1 {
+                                                                numberOfApprovedAdjudications += 1;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        log:printDebug(string `Number of items: ${numberOfItems}`);
+        log:printDebug(string `Number of approved adjudications: ${numberOfApprovedAdjudications}`);
+        if numberOfItems == numberOfApprovedAdjudications {
+            log:printDebug(string `Aggregated status: Approved`);
+            return APPROVED;
+        }
+        if numberOfApprovedAdjudications == 0 {
+            log:printDebug(string `Aggregated status: Denied`);
+            return DENIED;
+        }
+        if numberOfItems > numberOfApprovedAdjudications {
+            log:printDebug(string `Aggregated status: Partially Approved`);
+            return PARTIALLY_APPROVED;
+        }
+    }
+    // When a completed claim doesn't have items, if a "preAuthRef" is present, this can mean the whole 
+    // request is approved and no item review was required.
+    if claimResponse.preAuthRef is string {
+        log:printDebug(string `Number of items: ${numberOfItems}`);
+        log:printDebug(string `Number of approved adjudications: ${numberOfApprovedAdjudications}`);
+        log:printDebug(string `Aggregated status: Approved`);
+        return APPROVED;
+    }
+    log:printDebug(string `Number of items: ${numberOfItems}`);
+    log:printDebug(string `Number of approved adjudications: ${numberOfApprovedAdjudications}`);
+    // When there are no items present in a "completed" claim, this can mean the request is rejected.
+    log:printDebug(string `Aggregated status: Denied`);
+    return DENIED;
+}
+
+# This function calculates the time the payer took to make the final decision. 
+# 
+# This is calculated using the time difference between the time the claim was submitted and the final decision. The 
+# submission time is taken using the "Claim.created" time. The time of the final decision is taken using the 
+# "ClaimResponse.meta.lastUpdatedTime" field.
+# 
+# The times are expected in one of the following formats.
+# 
+# YYYY-MM-DD
+# YYYY-MM-DDThh:mm:ss+zz:zz
+# 
+# + lastUpdatedTime - claim response
+# + claimCreatedTime - claim created time string
+# 
+# + return - the time difference in hours, or 0 when lastUpdateTime is not present. The return logic should be changed
+# after this issue is fixed: https://github.com/wso2-enterprise/moesif-internal/issues/7
+isolated function calculateTimeToDecide(string? lastUpdatedTime, string claimCreatedTime) returns int {
+
+    if lastUpdatedTime is () {
+        log:printWarn("ClaimResponse.meta.lastUpdated is missing");
+        return 0;
+    }
+
+    string normalizedCreatedTime = normalizeDateTimeString(claimCreatedTime);
+    string normalizedUpdatedTime = normalizeDateTimeString(lastUpdatedTime);
+    log:printDebug(string `Normalised created time: ${normalizedCreatedTime}`);
+    log:printDebug(string `Normalised updated time: ${normalizedUpdatedTime}`);
+
+    // Convert to UTC timestamps
+    time:Utc|error createdUtc = time:utcFromString(normalizedCreatedTime);
+    time:Utc|error updatedUtc = time:utcFromString(normalizedUpdatedTime);
+
+    if createdUtc is time:Utc && updatedUtc is time:Utc {
+        // Calculate difference in seconds
+        decimal diffSeconds = time:utcDiffSeconds(updatedUtc, createdUtc);
+
+        // Convert to human-readable format
+        int formatted = formatTimeDifference(diffSeconds);
+        return formatted;
+    }
+    log:printWarn("Couldn't determine the time to decide, ");
+    return 0;
+}
+
+# Determines whether the payer violated the SLA of the claim.
+# 
+# For expedited claims, the SLA time is 72 hours
+# For standard claims, the SLA time is 7 days (168 hours)
+# 
+# + claimType - the type of the claim (whether standard or expedited)
+# + timeToDecide - the time the payer took to make the final decision in hours
+# 
+# + return - whether the SLA is violated or not
+isolated function isSlaViolated(int claimType, int timeToDecide) returns boolean {
+
+    // claimType will only be either expedited or standard
+    if claimType == EXPEDITED {
+        if timeToDecide <= 72 {
+            log:printDebug(string `Claim type: Expedited; Time to decide: ${timeToDecide}`);
+            return false;
+        } else {
+            log:printDebug(string `Claim type: Expedited; Time to decide: ${timeToDecide}`);
+            return true;
+        }
+    } else {
+        if timeToDecide <= 168 { // Number of hours equal to 7 days
+            log:printDebug(string `Claim type: Expedited; Time to decide: ${timeToDecide}`);
+            return false;
+        } else {
+            log:printDebug(string `Claim type: Expedited; Time to decide: ${timeToDecide}`);
+            return true;
+        }
+    }
+}
+
+# Normalizes a datetime string to UTC format that can be parsed by time:utcFromString().
+# Handles both YYYY-MM-DD and YYYY-MM-DDThh:mm:ss+zz:zz formats.
+#
+# + dateTimeStr - The datetime string to normalize
+# + return - Normalized datetime string in UTC format
+isolated function normalizeDateTimeString(string dateTimeStr) returns string {
+    // If the string already contains 'T', it's in datetime format
+    if dateTimeStr.includes("T") {
+        return dateTimeStr;
+    }
+    // If it's date-only format (YYYY-MM-DD), append midnight UTC time
+    return dateTimeStr + "T00:00:00Z";
+}
+
+# Formats a time difference in seconds to a human-readable string.
+#
+# + diffSeconds - Time difference in seconds
+# + return - Formatted string like "2 days, 3 hours, 15 minutes"
+isolated function formatTimeDifference(decimal diffSeconds) returns int {
+    
+    int totalSeconds = <int>diffSeconds;
+    return totalSeconds / 3600;
+}

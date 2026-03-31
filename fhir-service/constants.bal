@@ -121,3 +121,5 @@ const string BASE_EXT_MATCH_PARAMETERS_URL = "http://hl7.org/fhir/us/davinci-pde
 const string PDEX_MATCH_CODE = "match";
 const string PDEX_NO_MATCH_CODE = "nomatch";
 const string PDEX_CONSENT_CONSTRAINT_CODE = "consentconstraint";
+const string REVIEW_ACTION_URL = "http://hl7.org/fhir/us/davinci-pas/StructureDefinition/extension-reviewAction";
+const string REVIEW_ACTION_CODE_URL = "http://hl7.org/fhir/us/davinci-pas/StructureDefinition/extension-reviewActionCode";

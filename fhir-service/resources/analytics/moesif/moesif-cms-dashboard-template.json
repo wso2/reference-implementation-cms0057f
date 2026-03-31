@@ -1,27 +1,27 @@
 {
   "dashboards": [
     {
-      "_id": "698ab141cc1f526aed5c849d",
+      "_id": "69cb7c1dee3b090438037cac",
       "name": "Patient Access Dashboard",
       "dashboard_ids": [],
       "workspace_ids": [
         [
-          "698aba84f162f02cf73e8286",
-          "698abab3f162f02cf73e828a",
-          "698abb25cc1f526aed5c872c"
+          "69cb7c1e11ca7518d1329255",
+          "69cb7c1fee3b090438037cad",
+          "69cb7c1fa3f5b1073f389f7b"
         ],
         [
-          "698abd03cc1f526aed5c873c",
-          "698abefaf162f02cf73e8350"
+          "69cb7c2011ca7518d1329261",
+          "69cb7c2011ca7518d1329263"
         ]
       ],
       "parent": null,
-      "sort_order": 16
+      "sort_order": 1
     }
   ],
   "workspaces": [
     {
-      "_id": "698aba84f162f02cf73e8286",
+      "_id": "69cb7c1e11ca7518d1329255",
       "type": "events",
       "name": "Total Requests",
       "args": "",
@@ -52,7 +52,7 @@
       "urlQuery": "?seg[metrics][0][id]=03cb56f7&seg[metrics][0][metricName]=sum%28events%29&seg[metrics][0][customName]=Total%20Requests&seg[chartType]=bar"
     },
     {
-      "_id": "698abab3f162f02cf73e828a",
+      "_id": "69cb7c1fee3b090438037cad",
       "type": "events",
       "name": "Patient Count",
       "args": "",
@@ -111,7 +111,7 @@
       "urlQuery": "?evtcf[filtersGroups][0][filters][0][id]=f0&evtcf[filtersGroups][0][filters][0][field]=user_id.raw&evtcf[filtersGroups][0][filters][0][name]=&evtcf[filtersGroups][0][filters][0][op]=exists&evtcf[filtersGroups][0][filters][0][value]=&seg[metrics][0][id]=9c95d58f&seg[metrics][0][metricName]=count%28distinct%28user_id%29%29&seg[metrics][0][customName]=Distinct%20user%20count&seg[chartType]=bar"
     },
     {
-      "_id": "698abb25cc1f526aed5c872c",
+      "_id": "69cb7c1fa3f5b1073f389f7b",
       "type": "events",
       "name": "Invocation Count by Patient",
       "args": "",
@@ -190,7 +190,7 @@
       "urlQuery": "?evtcf[filtersGroups][0][filters][0][id]=f0&evtcf[filtersGroups][0][filters][0][field]=user_id.raw&evtcf[filtersGroups][0][filters][0][name]=&evtcf[filtersGroups][0][filters][0][op]=exists&evtcf[filtersGroups][0][filters][0][value]=&seg[groups][0][field]=user_id.raw&seg[groups][0][func]=terms&seg[groups][0][by]=metric&seg[metrics][0][metricName]=sum%28events%29&seg[metrics][0][customName]=Count&seg[chartType]=table"
     },
     {
-      "_id": "698abd03cc1f526aed5c873c",
+      "_id": "69cb7c2011ca7518d1329261",
       "type": "users",
       "name": "Patients with Requests > 1",
       "args": "",
@@ -276,7 +276,7 @@
       "urlQuery": "?entFilters[filtersGroups][0][filters][0][id]=f0&entFilters[filtersGroups][0][filters][0][field]=user_id&entFilters[filtersGroups][0][filters][0][name]=&entFilters[filtersGroups][0][filters][0][op]=exists&entFilters[filtersGroups][0][filters][0][value]=&behaviorFilters[filtersGroups][0][filters][0][id]=f0&behaviorFilters[filtersGroups][0][filters][0][field]=event_type&behaviorFilters[filtersGroups][0][filters][0][name]=&behaviorFilters[filtersGroups][0][filters][0][op]=contains&behaviorFilters[filtersGroups][0][filters][0][value][0]=api_call&behaviorFilters[filtersGroups][0][count]=2&behaviorFilters[filtersGroups][0][countOp]=gte&seg[metrics][0][field]=user_id&seg[metrics][0][func]=cardinality&seg[metrics][0][customName]=Patients%20with%20Requests%20%3E%201&seg[chartType]=bar"
     },
     {
-      "_id": "698abefaf162f02cf73e8350",
+      "_id": "69cb7c2011ca7518d1329263",
       "type": "events",
       "name": "Recent Logs",
       "args": "",
@@ -323,11 +323,11 @@
           "resource",
           "request.time",
           "user_id",
-          "metadata.client_id",
-          "metadata.iss",
           "request.verb",
           "response.status",
-          "request.route"
+          "request.route",
+          "metadata.cms.client_id",
+          "metadata.cms.iss"
         ],
         "sort": [
           {
@@ -344,7 +344,7 @@
       },
       "view": "table",
       "funnel_query": {},
-      "urlQuery": "?shown_fields[0]=request.time&shown_fields[1]=user_id.raw&shown_fields[2]=metadata.client_id.raw&shown_fields[3]=metadata.iss.raw&shown_fields[4]=request.verb.raw&shown_fields[5]=response.status&shown_fields[6]=request.route.raw"
+      "urlQuery": "?shown_fields[0]=request.time&shown_fields[1]=user_id.raw&shown_fields[2]=request.verb.raw&shown_fields[3]=response.status&shown_fields[4]=request.route.raw&shown_fields[5]=metadata.cms.client_id.raw&shown_fields[6]=metadata.cms.iss.raw"
     }
   ]
 }

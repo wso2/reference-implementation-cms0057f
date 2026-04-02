@@ -108,15 +108,34 @@ public isolated class DemoFHIRMemberMatcher {
             return r4:createFHIRError("No match found", r4:ERROR, r4:PROCESSING_NOT_FOUND, httpStatusCode = http:STATUS_UNPROCESSABLE_ENTITY);
         }
 
-        // Verify coverage beneficiary using the input coverageToMatch directly —
-        // cross-check only against the coverage submitted in the request, not a server-side lookup.
-        string? beneficiaryRef = coverageToMatch.beneficiary.reference;
-        if beneficiaryRef is () {
-            log:printWarn("[member-match] coverageToMatch missing beneficiary.reference");
-            return r4:createFHIRError("coverageToMatch.beneficiary.reference is required", r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+        // Step 2: Fetch the Coverage from the FHIR repo using the ID in the coverageToMatch parameter
+        string? coverageIdOpt = coverageToMatch.id;
+        if coverageIdOpt is () {
+            log:printError("[member-match] coverageToMatch has no id — cannot look up coverage");
+            return INTERNAL_ERROR;
         }
-        string[] refParts = re `/`.split(beneficiaryRef);
+        string coverageId = coverageIdOpt;
+        log:printInfo(string `[member-match] FHIR read request: GET Coverage/${coverageId}`);
+        r4:DomainResource|r4:FHIRError storedCoverage = getById(self.fhirConnector, COVERAGE, coverageId);
+        if storedCoverage is r4:FHIRError {
+            log:printError(string `[member-match] FHIR read error: Coverage/${coverageId}`, storedCoverage);
+            return INTERNAL_ERROR;
+        }
+        international401:Coverage|error i4Coverage = storedCoverage.cloneWithType();
+        if i4Coverage is error {
+            log:printError("[member-match] Failed to clone Coverage resource", i4Coverage);
+            return INTERNAL_ERROR;
+        }
+
+        // Step 3: Check whether the stored coverage's beneficiary matches the patient found in step 1
+        string? storedBeneficiaryRef = i4Coverage.beneficiary.reference;
+        if storedBeneficiaryRef is () {
+            log:printError(string `[member-match] Stored Coverage/${coverageId} has no beneficiary.reference`);
+            return INTERNAL_ERROR;
+        }
+        string[] refParts = re `/`.split(storedBeneficiaryRef);
         string extractedBeneficiaryId = refParts[refParts.length() - 1];
+        log:printInfo(string `[member-match] Coverage/${coverageId} beneficiary.reference="${storedBeneficiaryRef}" extracted-id="${extractedBeneficiaryId}" top-candidates=${topCandidateIds.toString()}`);
 
         foreach string candidateId in topCandidateIds {
             if extractedBeneficiaryId == candidateId {
@@ -125,6 +144,7 @@ public isolated class DemoFHIRMemberMatcher {
             }
         }
 
+        log:printInfo("[member-match] Coverage beneficiary does not match any top-scored candidate — returning no match");
         return r4:createFHIRError("No match found", r4:ERROR, r4:PROCESSING_NOT_FOUND, httpStatusCode = http:STATUS_UNPROCESSABLE_ENTITY);
     }
 

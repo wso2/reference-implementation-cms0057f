@@ -27,8 +27,7 @@ import {
   ListItemText,
   Typography,
 } from "@mui/material";
-import OpenInNewRoundedIcon from "@mui/icons-material/OpenInNewRounded";
-import LaunchRoundedIcon from "@mui/icons-material/LaunchRounded";
+import { OpenInNewRounded as OpenInNewRoundedIcon, LaunchRounded as LaunchRoundedIcon } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { CdsCard } from "./interfaces/cdsCard";
 import { SELECTED_PATIENT_ID } from "../constants/localStorageVariables";

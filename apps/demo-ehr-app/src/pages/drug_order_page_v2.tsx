@@ -127,7 +127,7 @@ const PrescribeForm = ({
         frequency: number;
         frequencyUnit: string;
         period: number;
-        startDate: Date;
+        startDate: string | null;
       };
     }) => state.medicationFormData
   );
@@ -164,7 +164,7 @@ const PrescribeForm = ({
   };
 
   const handleDateSelectChange = (date: Date | null) => {
-    dispatch(updateMedicationFormData({ startDate: date as Date | null }));
+    dispatch(updateMedicationFormData({ startDate: date ? date.toISOString() : null }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -323,7 +323,7 @@ const PrescribeForm = ({
       medicationFormData.frequency,
       medicationFormData.frequencyUnit,
       medicationFormData.period,
-      medicationFormData.startDate.toISOString().split("T")[0]
+      medicationFormData.startDate ? medicationFormData.startDate.split("T")[0] : ""
     );
     const Config = window.Config;
 
@@ -506,8 +506,8 @@ const PrescribeForm = ({
                 <br />
                 <DatePicker
                   selected={
-                    medicationFormData.startDate instanceof Date
-                      ? medicationFormData.startDate
+                    medicationFormData.startDate
+                      ? new Date(medicationFormData.startDate)
                       : null
                   }
                   onChange={handleDateSelectChange}

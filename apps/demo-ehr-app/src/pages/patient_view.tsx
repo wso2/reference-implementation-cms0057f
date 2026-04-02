@@ -128,13 +128,9 @@ export function PatientViewPage() {
   const selectedPatientId = useSelector(
     (state: any) => state.patient.selectedPatientId
   );
-  let currentPatient = PATIENT_DETAILS.find(
-    (patient) => patient.id === selectedPatientId
-  );
-
-  if (!currentPatient) {
-    currentPatient = PATIENT_DETAILS[0];
-  }
+  const currentPatient =
+    PATIENT_DETAILS.find((patient) => patient.id === selectedPatientId) ??
+    PATIENT_DETAILS[0]!;
 
   const dispatch = useDispatch();
   const Config = window.Config;

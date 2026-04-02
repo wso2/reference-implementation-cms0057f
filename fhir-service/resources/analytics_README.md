@@ -6,12 +6,12 @@ CMS requires Patient Access API Metrics to be published to CMS annually. This re
 
 CMS-0057-F requires Prior Authorisation Metrics to be published on the public websites of the payers annually.
 
-- For standard prior authorization requests, aggregated for all items and services:
+- For standard prior authorisation requests, aggregated for all items and services:
 -- Percentage approved in the calendar year
 -- Percentage denied in the calendar year
 -- The average (mean) response times that elapsed between the submission of a request and a determination by the payer
 
-- For expedited prior authorization requests, aggregated for all items and services:
+- For expedited prior authorisation requests, aggregated for all items and services:
 -- Percentage approved in the calendar year
 -- Percentage denied in the calendar year
 -- The average (mean) response times that elapsed between the submission of a request and a determination by the payer

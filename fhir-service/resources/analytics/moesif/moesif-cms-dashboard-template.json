@@ -326,8 +326,8 @@
           "request.verb",
           "response.status",
           "request.route",
-          "metadata.cms.client_id",
-          "metadata.cms.iss"
+          "metadata.cms-patient-access.client_id",
+          "metadata.cms-patient-access.iss"
         ],
         "sort": [
           {
@@ -344,7 +344,7 @@
       },
       "view": "table",
       "funnel_query": {},
-      "urlQuery": "?shown_fields[0]=request.time&shown_fields[1]=user_id.raw&shown_fields[2]=request.verb.raw&shown_fields[3]=response.status&shown_fields[4]=request.route.raw&shown_fields[5]=metadata.cms.client_id.raw&shown_fields[6]=metadata.cms.iss.raw"
+      "urlQuery": "?shown_fields[0]=request.time&shown_fields[1]=user_id.raw&shown_fields[2]=request.verb.raw&shown_fields[3]=response.status&shown_fields[4]=request.route.raw&shown_fields[5]=metadata.cms-patient-access.client_id.raw&shown_fields[6]=metadata.cms-patient-access.iss.raw"
     }
   ]
 }

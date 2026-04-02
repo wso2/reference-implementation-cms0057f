@@ -706,24 +706,29 @@ service /fhir/r4/ClaimResponse on new fhirr4:Listener(config = claimResponseApiC
     isolated resource function put [string id](r4:FHIRContext fhirContext, ClaimResponse claimResponse) returns ClaimResponse|r4:OperationOutcome|r4:FHIRError|error {
         
         if claimResponse.outcome == COMPLETED {
-
             string? claimReference = claimResponse.request.reference;
-
             if claimReference is string {
-
                 // Parse Claim/xxxx format
                 string[] parts = re `/`.split(claimReference);
                 string claimId = parts[parts.length() - 1];
-                r4:DomainResource claimResource = check getById(fhirConnector, CLAIM, claimId);
-                international401:Claim claim = check claimResource.cloneWithType();
+                r4:DomainResource|error claimResource = getById(fhirConnector, CLAIM, claimId);
+                if claimResource is error {
+                    log:printError("Failed to fetch claim for the completed claim response");
+                    return r4:createFHIRError("Failed to fetch claim for the completed claim response", r4:ERROR, 
+                    r4:PROCESSING_NOT_FOUND);
+                }
+                international401:Claim|error claim = claimResource.cloneWithType();
+                if claim is error {
+                    log:printError("Failed to parse the retrieved claim for the completed claim response");
+                    return r4:createFHIRError("Failed to parse the retrieved claim for the completed claim response", 
+                    r4:ERROR, r4:PROCESSING_NOT_FOUND);
+                }
+                
                 int claimType = determineClaimType(claimResponse, claim);
-                int timeToDecide = calculateTimeToDecide(claimResponse.meta?.lastUpdated.toString(), claim.created);
-
-                r4:PriorAuthorisationAnalyticsResponseEvent event = {
+                json event = {
                     claimType: claimType,
                     claimStatus: determineClaimStatus(claimResponse),
-                    timeToDecide: timeToDecide,
-                    isSLAViolated: isSlaViolated(claimType, timeToDecide)
+                    claimCreatedTime: claim.created
                 };
                 fhirContext.setProperty(r4:PRIOR_AUTH_ANALYTICS_EVENT, event);
             }

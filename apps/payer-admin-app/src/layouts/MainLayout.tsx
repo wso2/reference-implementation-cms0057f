@@ -32,6 +32,7 @@ import {
     FileText,
     ArrowLeftRight,
     ClipboardList,
+    Activity,
     Settings,
     User,
     LogOut,
@@ -136,6 +137,12 @@ export default function MainLayout() {
                     path: '/manage/payers',
                 },
             ],
+        },
+        {
+            id: 'logs',
+            label: 'Logs',
+            icon: <Activity size={20} />,
+            path: '/logs',
         },
     ];
 

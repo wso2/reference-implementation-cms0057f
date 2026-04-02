@@ -410,7 +410,7 @@ const PrescribedForm = () => {
         frequency: string;
         frequencyUnit: string;
         period: number;
-        startDate: Date;
+        startDate: string | null;
       };
     }) => state.medicationFormData
   );
@@ -478,7 +478,7 @@ const PrescribedForm = () => {
               <Form.Label>Starting Date</Form.Label>
               <br />
               <DatePicker
-                selected={medicationFormData.startDate instanceof Date ? medicationFormData.startDate : null}
+                selected={medicationFormData.startDate ? new Date(medicationFormData.startDate) : null}
                 dateFormat="yyyy/MM/dd"
                 className="form-control"
                 wrapperClassName="date-picker-full-width"

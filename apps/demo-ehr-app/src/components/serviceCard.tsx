@@ -19,7 +19,7 @@ import CardContent from "@mui/material/CardContent";
 import CardMedia from "@mui/material/CardMedia";
 import Typography from "@mui/material/Typography";
 import { Box, CardActionArea } from "@mui/material";
-import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
+import { ArrowForwardRounded as ArrowForwardRoundedIcon } from "@mui/icons-material";
 import { ServiceCardProps } from "./interfaces/card";
 import { Link } from "react-router-dom";
 

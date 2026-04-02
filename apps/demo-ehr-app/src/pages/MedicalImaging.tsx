@@ -123,9 +123,13 @@ const ImagingOrderForm = ({
   const [openSnackbar, setOpenSnackbar] = useState(false);
 
   const savedPatientId = localStorage.getItem(SELECTED_PATIENT_ID);
-  if (savedPatientId) {
-    dispatch(selectPatient(savedPatientId));
-  }
+
+  useEffect(() => {
+    if (savedPatientId) {
+      dispatch(selectPatient(savedPatientId));
+    }
+  }, [dispatch, savedPatientId]);
+
   const selectedPatientId = useSelector(
     (state: any) => state.patient.selectedPatientId
   ) || savedPatientId || "101";

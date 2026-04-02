@@ -533,3 +533,19 @@ public type AdditionalInfoResponse record {
     string status;
     string message;
 };
+
+# Time window options for log filtering
+public type TimeFilter "PAST_10_MIN"|"PAST_30_MIN"|"PAST_1_HOUR"|"PAST_2_HOURS"|"PAST_12_HOURS"|"PAST_24_HOURS";
+
+# Response for the GET /logs endpoint
+#
+# + logs - Matching log entries as raw JSON objects
+# + totalCount - Total number of matching entries
+# + timeFilter - Applied time filter (null if none)
+# + keyword - Applied keyword filter (null if none)
+public type LogsResponse record {|
+    json[] logs;
+    int totalCount;
+    string? timeFilter;
+    string? keyword;
+|};

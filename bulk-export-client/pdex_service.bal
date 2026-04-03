@@ -201,10 +201,7 @@ isolated service /pdex on bulkExportListener {
         log:printDebug("Extracted matched patient.", requestId = requestId, patientId = matchedPatient.id, systemId = matchedPatient.systemId ?: "");
 
         string? _outputFormat = ();
-        string? _since = ();
-        // string? _since = request.coverageStartDate;
-        // TODO: _since parameter is not supported for /Patient/ID/$export in fhir repository
-        // Issue: https://github.com/wso2-enterprise/open-healthcare/issues/2005
+        string? _since = request.coverageStartDate;
 
         // Defining types to export, maybe configurable or fixed for PDEX.
         string _type = "Patient,ExplanationOfBenefit,Coverage,AllergyIntolerance,Condition,Immunization,Procedure,Encounter,Observation";

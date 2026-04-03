@@ -133,7 +133,7 @@ const string REVIEW_ACTION_CODE_URL = "http://hl7.org/fhir/us/davinci-pas/Struct
 const string PROVIDER_MEMBER_MATCH_JOB_NOT_FOUND = "Provider member match job not found";
 const string PROVIDER_MEMBER_MATCH_NO_MEMBERS = "No member references provided for provider-member-match";
 const string PROVIDER_MEMBER_MATCH_MISSING_PROVIDER = "Missing required provider identifier for provider-member-match";
-const string PROVIDER_MEMBER_MATCH_STATUS_PATH = "/fhir/r4/_export/provider-member-match-status/";
+const string PROVIDER_MEMBER_MATCH_STATUS_PATH = "/_export/provider-member-match-status/";
 const string PROVIDER_MEMBER_MATCH_OPERATION_NAME = "provider-member-match";
 
 # Group profile URLs — base IG: http://hl7.org/fhir/us/davinci-pdex (PDex Data Exchange IG)

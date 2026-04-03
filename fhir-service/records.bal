@@ -69,15 +69,6 @@ public type BulkMemberMatchJob record {|
 // Provider Access v2 Types
 // ============================================================================
 
-# Canonical provider-access-v2 Group profiles handled by the service.
-# Base IG: http://hl7.org/fhir/us/davinci-pdex (PDex Data Exchange IG, NOT Plan-Net)
-public enum ProviderAccessGroupProfile {
-    PROVIDER_ACCESS_TRL_GROUP_PROFILE = "http://hl7.org/fhir/us/davinci-pdex/StructureDefinition/member-provider-treatment-relationship-group",
-    PROVIDER_ACCESS_OPT_OUT_GROUP_PROFILE = "http://hl7.org/fhir/us/davinci-pdex/StructureDefinition/member-opt-out-group",
-    PROVIDER_ACCESS_NO_MATCH_GROUP_PROFILE = "http://hl7.org/fhir/us/davinci-pdex/StructureDefinition/pdex-member-no-match-group",
-    PROVIDER_ACCESS_MATCHED_GROUP_PROFILE = "http://hl7.org/fhir/us/davinci-pdex/StructureDefinition/provider-access-matched-member-group"
-}
-
 # Provider-member-match outcome bucket.
 public enum ProviderMemberMatchOutcome {
     PROVIDER_MATCHED = "matched",
@@ -155,6 +146,7 @@ public enum ProviderMemberMatchStatus {
 
 # Internal record tracking an async provider-member-match job.
 # + jobId - Unique async job identifier
+# + providerIdentifier - Requesting provider identifier that owns this job
 # + status - Current job lifecycle status
 # + createdAt - Time the job was accepted
 # + completedAt - Time the job finished; () while running
@@ -162,6 +154,7 @@ public enum ProviderMemberMatchStatus {
 # + errorMessage - Failure message when status is failed
 public type ProviderMemberMatchJob record {|
     string jobId;
+    string providerIdentifier;
     ProviderMemberMatchStatus status;
     time:Utc createdAt;
     time:Utc? completedAt;

@@ -56,14 +56,28 @@ isolated function evictExpiredProviderMemberMatchJobs() {
 # Get an async provider-member-match job by ID.
 #
 # + jobId - Async job identifier
+# + providerIdentifier - Requesting provider identifier (must match job ownership)
 # + return - Stored job copy, or () if not found
-isolated function getProviderMemberMatchJob(string jobId) returns ProviderMemberMatchJob? {
+isolated function getProviderMemberMatchJob(string jobId, string providerIdentifier) returns ProviderMemberMatchJob? {
     lock {
         if providerMemberMatchJobStore.hasKey(jobId) {
-            return providerMemberMatchJobStore.get(jobId).clone();
+            ProviderMemberMatchJob job = providerMemberMatchJobStore.get(jobId);
+            if job.providerIdentifier == providerIdentifier {
+                return job.clone();
+            }
         }
     }
     return ();
+}
+
+# Check whether an async provider-member-match job exists by ID.
+#
+# + jobId - Async job identifier
+# + return - True if the job exists
+isolated function hasProviderMemberMatchJob(string jobId) returns boolean {
+    lock {
+        return providerMemberMatchJobStore.hasKey(jobId);
+    }
 }
 
 # Run provider-member-match in background and persist result in the async job store.
@@ -77,6 +91,7 @@ isolated function processAndStoreProviderMemberMatch(string jobId, string provid
             ProviderMemberMatchJob current = providerMemberMatchJobStore.get(jobId);
             providerMemberMatchJobStore[jobId] = {
                 jobId: current.jobId,
+                providerIdentifier: current.providerIdentifier,
                 status: PROVIDER_MEMBER_MATCH_PROCESSING,
                 createdAt: current.createdAt,
                 completedAt: (),
@@ -93,6 +108,7 @@ isolated function processAndStoreProviderMemberMatch(string jobId, string provid
             if result is map<json> {
                 providerMemberMatchJobStore[jobId] = {
                     jobId: current.jobId,
+                    providerIdentifier: current.providerIdentifier,
                     status: PROVIDER_MEMBER_MATCH_COMPLETED,
                     createdAt: current.createdAt,
                     completedAt: time:utcNow(),
@@ -104,6 +120,7 @@ isolated function processAndStoreProviderMemberMatch(string jobId, string provid
                 log:printError("Provider member match job " + jobId + " failed: " + errMsg);
                 providerMemberMatchJobStore[jobId] = {
                     jobId: current.jobId,
+                    providerIdentifier: current.providerIdentifier,
                     status: PROVIDER_MEMBER_MATCH_FAILED,
                     createdAt: current.createdAt,
                     completedAt: time:utcNow(),
@@ -334,7 +351,8 @@ isolated function claimHasRenderingProvider(r4:BundleEntry[] claimEntries, strin
             r4:Period? servicedPeriod = item.servicedPeriod;
             if servicedPeriod is r4:Period {
                 string? periodStart = servicedPeriod.'start;
-                if periodStart is string && periodStart.substring(0, 10) >= cutoffDate {
+                if periodStart is string && periodStart.length() >= 10
+                        && periodStart.substring(0, 10) >= cutoffDate {
                     withinWindow = true;
                     break;
                 }
@@ -343,7 +361,7 @@ isolated function claimHasRenderingProvider(r4:BundleEntry[] claimEntries, strin
         // If claim has no items, fall back to claim.created as a proxy for service date
         if !withinWindow && items.length() == 0 {
             string? created = claim.created;
-            if created is string && created.substring(0, 10) >= cutoffDate {
+            if created is string && created.length() >= 10 && created.substring(0, 10) >= cutoffDate {
                 withinWindow = true;
             }
         }
@@ -763,9 +781,14 @@ isolated function groupResourceHasProfile(international401:Group grp, string pro
 # + providerIdentifier - Provider identifier to include as a group member
 # + return - Created Group reference (`Group/<id>`) or FHIRError
 isolated function persistTrlGroup(string memberPatientId, string providerIdentifier) returns string|r4:FHIRError {
-    // Resolve providerIdentifier (NPI) to an actual Practitioner resource ID
-    // by searching Practitioner?identifier=<npi> and using the first result's resource id
-    string practitionerRef = "Practitioner/" + providerIdentifier; // fallback
+    // Resolve providerIdentifier (NPI) to an actual Practitioner resource ID via search; never
+    // synthesize Practitioner/{npi} — if unresolved, carry NPI on Reference.identifier (US NPI system).
+    r4:Reference practitionerEntity = {
+        identifier: {
+            system: "http://hl7.org/fhir/sid/us-npi",
+            value: providerIdentifier
+        }
+    };
     r4:Bundle|r4:FHIRError practSearchResult = search(fhirConnector, PRACTITIONER, {"identifier": [providerIdentifier]});
     if practSearchResult is r4:Bundle {
         r4:BundleEntry[] practEntries = practSearchResult.entry ?: [];
@@ -774,7 +797,7 @@ isolated function persistTrlGroup(string memberPatientId, string providerIdentif
             if practEntryJson is json {
                 json|error practIdJson = practEntryJson.'resource.id;
                 if practIdJson is string {
-                    practitionerRef = "Practitioner/" + practIdJson;
+                    practitionerEntity = {reference: "Practitioner/" + practIdJson};
                 }
             }
         }
@@ -788,7 +811,7 @@ isolated function persistTrlGroup(string memberPatientId, string providerIdentif
     ];
 
     international401:GroupMember practitionerMember = {
-        entity: {reference: practitionerRef},
+        entity: practitionerEntity,
         extension: memberEntryExtensions
     };
 

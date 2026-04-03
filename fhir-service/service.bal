@@ -387,11 +387,28 @@ service http:InterceptableService /fhir/r4/_export on httpListener {
     }
 
     // Async polling endpoint for $provider-member-match jobs
-    isolated resource function get provider\-member\-match\-status/[string jobId]() returns http:Response {
-        ProviderMemberMatchJob? job = getProviderMemberMatchJob(jobId);
+    isolated resource function get provider\-member\-match\-status/[string jobId](http:Request request) returns http:Response {
         http:Response resp = new;
+        string providerIdentifier = "";
+        string|error providerHeader = request.getHeader("X-Provider-Identifier");
+        if providerHeader is string {
+            providerIdentifier = providerHeader.trim();
+        }
+        if providerIdentifier == "" {
+            resp.statusCode = http:STATUS_BAD_REQUEST;
+            resp.setJsonPayload({"error": PROVIDER_MEMBER_MATCH_MISSING_PROVIDER, "jobId": jobId});
+            return resp;
+        }
+
+        ProviderMemberMatchJob? job = getProviderMemberMatchJob(jobId, providerIdentifier);
 
         if job is () {
+            // Avoid revealing ownership details: 403 when job exists but belongs to another provider.
+            if hasProviderMemberMatchJob(jobId) {
+                resp.statusCode = http:STATUS_FORBIDDEN;
+                resp.setJsonPayload({"error": "Provider identifier does not match job owner", "jobId": jobId});
+                return resp;
+            }
             resp.statusCode = http:STATUS_NOT_FOUND;
             resp.setJsonPayload({"error": PROVIDER_MEMBER_MATCH_JOB_NOT_FOUND, "jobId": jobId});
             return resp;
@@ -2707,6 +2724,7 @@ service /fhir/r4/Group on new fhirr4:Listener(config = groupApiConfig) {
             lock {
                 providerMemberMatchJobStore[jobId] = {
                     jobId: jobId,
+                    providerIdentifier: providerIdentifier,
                     status: PROVIDER_MEMBER_MATCH_PENDING,
                     createdAt: time:utcNow(),
                     completedAt: (),

@@ -2,11 +2,30 @@
 
 CMS requires Patient Access API Metrics to be published to CMS annually. This requirement can be achieved using the `AnalyticsResponseInterceptor`, which comes inbuilt in the `health.fhirr4` service.
 
+# Prior Authorisation Analytics
+
+CMS-0057-F requires Prior Authorisation Metrics to be published on the public websites of the payers annually.
+
+- For standard prior authorisation requests, aggregated for all items and services:
+-- Percentage approved in the calendar year
+-- Percentage denied in the calendar year
+-- The average (mean) response times that elapsed between the submission of a request and a determination by the payer
+
+- For expedited prior authorisation requests, aggregated for all items and services:
+-- Percentage approved in the calendar year
+-- Percentage denied in the calendar year
+-- The average (mean) response times that elapsed between the submission of a request and a determination by the payer
+
+In addition to the above analytics, following analytics are supported,
+
+- SLA violation analytics for standard and expedited requests
+- Partial approval analytics for claims
+
 ## Overview
 
 This implementation contains a response interceptor that intercepts CMS FHIR requests and persists data to a configurable log file. As a sidecar, [Fluent Bit](https://fluentbit.io/) will listen to this log file where the analytics data is persisted. Fluent Bit then publishes the analytics data to different analytics solutions like Moesif and Microsoft Fabric.
 
-The solution currently supports publishing CMS API data to two analytics solutions.
+The solution currently supports publishing CMS API data to two analytics solutions. Prior Authorisation Analytics are only published to Moesif currently.
 
 1.  [Moesif](https://www.moesif.com/)
 2.  [Microsoft Fabric](https://app.fabric.microsoft.com/)
@@ -50,7 +69,7 @@ excludedApiContexts = []
 > - allowedApiContexts:
 	- a list of comma-separated regexes. If it requires allowing only a set of defined APIs through the interceptor, they should be configured in this list as comma-separated strings. These can be valid regexes.
 > - excludedApiContexts: 
-	- a list of comma-separated regexes. If it requires to not to allow only a set of defined APIs through the interceptor, they should be configured in this list as comma-separated strings. These can be valid regexes. If both lists are configured, the priority will be given to the excluded list, and the allowed list will be ignored.
+	- a list of comma-separated regexes. If it requires to not to allow only a set of defined APIs through the interceptor, they should be configured in this list as comma-separated strings. These can be valid regexes. If both lists are configured, the priority will be given to the excluded list, and the allowed list will be ignored. If prior authorisation analytics are required, do not exclude the prior authorisation APIs.
 
 ## Enrich Analytics Payload Endpoint
 
@@ -76,7 +95,7 @@ password = ""
     
 Check ```enrich_analytics_payload_api.yaml``` in ```module-ballerinax-health.fhir.r4/fhirr4/ballerina/src/main/resources/fhirservice/resources``` for a sample open-api swagger.
 
-## Publishing CMS Analytics Data to Moesif
+## Publishing CMS Analytics and Prior Authorisation Data to Moesif
 Refer to [Publish CMS Analytics to Moesif](../resources/analytics/moesif/moesif_README.md)
 
 ## Publishing CMS Analytics Data to Microsoft Fabric

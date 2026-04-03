@@ -704,11 +704,40 @@ service /fhir/r4/ClaimResponse on new fhirr4:Listener(config = claimResponseApiC
 
     // Update the current state of a resource completely.
     isolated resource function put [string id](r4:FHIRContext fhirContext, ClaimResponse claimResponse) returns ClaimResponse|r4:OperationOutcome|r4:FHIRError {
+        
+        if claimResponse.outcome == COMPLETED {
+            string? claimReference = claimResponse.request.reference;
+            if claimReference is string {
+                // Parse Claim/xxxx format
+                string[] parts = re `/`.split(claimReference);
+                string claimId = parts[parts.length() - 1];
+                r4:DomainResource|error claimResource = getById(fhirConnector, CLAIM, claimId);
+                if claimResource is error {
+                    log:printError("Failed to fetch claim for the completed claim response");
+                    return r4:createFHIRError("Failed to fetch claim for the completed claim response", r4:ERROR, 
+                    r4:PROCESSING_NOT_FOUND);
+                }
+                international401:Claim|error claim = claimResource.cloneWithType();
+                if claim is error {
+                    log:printError("Failed to parse the retrieved claim for the completed claim response");
+                    return r4:createFHIRError("Failed to parse the retrieved claim for the completed claim response", 
+                    r4:ERROR, r4:PROCESSING_NOT_FOUND);
+                }
+                
+                int claimType = determineClaimType(claimResponse, claim);
+                json event = {
+                    claimType: claimType,
+                    claimStatus: determineClaimStatus(claimResponse),
+                    claimCreatedTime: claim.created
+                };
+                fhirContext.setProperty(r4:PRIOR_AUTH_ANALYTICS_EVENT, event);
+            }
+        }
+
         string|error organizationId = updateClaimResponse(fhirConnector, id, claimResponse.toJson());
         if organizationId is error {
             return r4:createFHIRError("Failed to update claim response", r4:ERROR, r4:INVALID);
         }
-
         // Trigger notification for the updated ClaimResponse
         international401:ClaimResponse|error intClaimResponse = claimResponse.cloneWithType(international401:ClaimResponse);
         if intClaimResponse is international401:ClaimResponse {

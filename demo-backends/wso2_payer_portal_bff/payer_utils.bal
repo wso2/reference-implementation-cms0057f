@@ -22,7 +22,7 @@ import ballerina/uuid;
 // Payer Management Utility Functions
 // ============================================
 
-function queryPayers(int page, int pageSize, string? search = ()) returns Payer[]|error {
+isolated function queryPayers(int page, int pageSize, string? search = ()) returns Payer[]|error {
     stream<Payer, sql:Error?> dataStream;
     
     if search is string && search.trim().length() > 0 {
@@ -56,7 +56,7 @@ function queryPayers(int page, int pageSize, string? search = ()) returns Payer[
     return payers;
 }
 
-function getTotalPayers(string? search = ()) returns int|error {
+isolated function getTotalPayers(string? search = ()) returns int|error {
     if search is string && search.trim().length() > 0 {
         string searchPattern = "%" + search + "%";
         record {| int count; |} result = check dbClient->queryRow(
@@ -70,7 +70,7 @@ function getTotalPayers(string? search = ()) returns int|error {
     }
 }
 
-function getPayerById(string payerId) returns Payer|error? {
+isolated function getPayerById(string payerId) returns Payer|error? {
     Payer|error? payer = dbClient->queryRow(
         `SELECT id, name, email, address, state, fhir_server_url, app_client_id, app_client_secret, smart_config_url, scopes, created_at, updated_at FROM payers WHERE id = ${payerId}`,
         Payer
@@ -82,14 +82,14 @@ function getPayerById(string payerId) returns Payer|error? {
     return payer;
 }
 
-function createPayer(PayerFormData payload) returns error? {
+isolated function createPayer(PayerFormData payload) returns error? {
     string newPayerId = uuid:createType4AsString();
     sql:ParameterizedQuery query = `INSERT INTO payers (id, name, email, address, state, fhir_server_url, app_client_id, app_client_secret, smart_config_url, scopes, created_at, updated_at) 
         VALUES (${newPayerId}, ${payload.name}, ${payload.email}, ${payload.address}, ${payload.state}, ${payload.fhir_server_url}, ${payload.app_client_id}, ${payload.app_client_secret}, ${payload.smart_config_url}, ${payload.scopes}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`;
     _ = check dbClient->execute(query);
 }
 
-function updatePayer(string payerId, PayerFormData payload) returns Payer|error? {
+isolated function updatePayer(string payerId, PayerFormData payload) returns Payer|error? {
     sql:ParameterizedQuery query = `UPDATE payers SET 
         name = ${payload.name}, 
         email = ${payload.email}, 
@@ -117,7 +117,7 @@ function updatePayer(string payerId, PayerFormData payload) returns Payer|error?
     return updatedPayer;
 }
 
-function deletePayer(string payerId) returns error? {
+isolated function deletePayer(string payerId) returns error? {
     sql:ExecutionResult result = check dbClient->execute(`DELETE FROM payers WHERE id = ${payerId}`);
     
     if (result.affectedRowCount == 0) {

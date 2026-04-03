@@ -1000,7 +1000,12 @@ final r4:ResourceAPIConfig diagnosticReportApiConfig = {
 final r4:ResourceAPIConfig groupApiConfig = {
     resourceType: "Group",
     profiles: [
-        "http://hl7.org/fhir/StructureDefinition/Group"
+        "http://hl7.org/fhir/StructureDefinition/Group",
+        "http://hl7.org/fhir/us/davinci-pdex/StructureDefinition/member-provider-treatment-relationship-group",
+        "http://hl7.org/fhir/us/davinci-pdex/StructureDefinition/member-opt-out-group",
+        "http://hl7.org/fhir/us/davinci-pdex/StructureDefinition/pdex-member-opt-out",
+        "http://hl7.org/fhir/us/davinci-pdex/StructureDefinition/pdex-member-no-match-group",
+        "http://hl7.org/fhir/us/davinci-pdex/StructureDefinition/provider-access-matched-member-group"
     ],
     defaultProfile: (),
     searchParameters: [
@@ -1011,6 +1016,42 @@ final r4:ResourceAPIConfig groupApiConfig = {
                 description: "Entity that is the custodian of the Group's record",
                 builtin: false,
                 documentation: "http://hl7.org/fhir/SearchParameter/Group-managing-entity"
+            }
+        },
+        {
+            name: "characteristic",
+            active: true,
+            information: {
+                description: "Kind of characteristic (e.g. pdexprovidergroup, member)",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Group-characteristic"
+            }
+        },
+        {
+            name: "characteristic-value",
+            active: true,
+            information: {
+                description: "A composite of both characteristic and value — used to find Groups by their characteristic reference value (e.g. Practitioner NPI or Patient ID)",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Group-characteristic-value"
+            }
+        },
+        {
+            name: "member",
+            active: true,
+            information: {
+                description: "Reference to the group member — Patient or Practitioner",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Group-member"
+            }
+        },
+        {
+            name: "code",
+            active: true,
+            information: {
+                description: "The kind of resources contained (e.g. person, practitioner)",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Group-code"
             }
         }
     ],
@@ -1048,8 +1089,34 @@ final r4:ResourceAPIConfig groupApiConfig = {
             ]
         },
         {
+            name: "provider-member-match",
+            active: true,
+            additionalProperties: {
+                "meta": {
+                    "operationLevels": {
+                        "typeLevel": true,
+                        "instanceLevel": false,
+                        "systemLevel": false
+                    }
+                }
+            },
+            parameters: [
+                {name: "member", active: true, min: 1},
+                {name: "providerIdentifier", active: true, min: 0}
+            ]
+        },
+        {
             name: "davinci-data-export",
             active: true,
+            additionalProperties: {
+                "meta": {
+                    "operationLevels": {
+                        "typeLevel": false,
+                        "instanceLevel": true,
+                        "systemLevel": false
+                    }
+                }
+            },
             parameters: [
                 {
                     name: "exportType",

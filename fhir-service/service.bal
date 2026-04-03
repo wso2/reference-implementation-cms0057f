@@ -385,6 +385,43 @@ service http:InterceptableService /fhir/r4/_export on httpListener {
         });
         return resp;
     }
+
+    // Async polling endpoint for $provider-member-match jobs
+    isolated resource function get provider\-member\-match\-status/[string jobId]() returns http:Response {
+        ProviderMemberMatchJob? job = getProviderMemberMatchJob(jobId);
+        http:Response resp = new;
+
+        if job is () {
+            resp.statusCode = http:STATUS_NOT_FOUND;
+            resp.setJsonPayload({"error": PROVIDER_MEMBER_MATCH_JOB_NOT_FOUND, "jobId": jobId});
+            return resp;
+        }
+
+        if job.status == PROVIDER_MEMBER_MATCH_PENDING || job.status == PROVIDER_MEMBER_MATCH_PROCESSING {
+            resp.statusCode = http:STATUS_ACCEPTED;
+            resp.setHeader("Retry-After", "5");
+            resp.setJsonPayload({"status": job.status, "jobId": jobId});
+            return resp;
+        }
+
+        if job.status == PROVIDER_MEMBER_MATCH_COMPLETED {
+            map<json>? result = job.result;
+            if result is map<json> {
+                resp.statusCode = http:STATUS_OK;
+                resp.setHeader("Content-Type", "application/fhir+json");
+                resp.setJsonPayload(result);
+                return resp;
+            }
+        }
+
+        resp.statusCode = http:STATUS_INTERNAL_SERVER_ERROR;
+        resp.setJsonPayload({
+            "status": job.status,
+            "error": job.errorMessage ?: "Processing failed",
+            "jobId": jobId
+        });
+        return resp;
+    }
 }
 
 // ######################################################################################################################
@@ -803,12 +840,7 @@ service /fhir/r4/Coverage on new fhirr4:Listener(config = coverageApiConfig) {
 
     // Create a new resource.
     isolated resource function post .(r4:FHIRContext fhirContext, Coverage coverage) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
-        string|error result = createCoverage(fhirConnector, coverage.toJson());
-        if result is error {
-            return r4:createFHIRError("Failed to create coverage", r4:ERROR, r4:INVALID);
-        }
-        coverage.id = result;
-        return coverage;
+        return create(fhirConnector, COVERAGE, coverage.toJson());
     }
 
     // Update the current state of a resource completely.
@@ -2639,11 +2671,74 @@ service /fhir/r4/Group on new fhirr4:Listener(config = groupApiConfig) {
         return resp;
     }
 
-    // DaVinci Data Export — GET /fhir/r4/Group/{id}/$davinci-data-export
+    // Provider Access v2 provider-member-match operation.
+    // Accepts Parameters with repeated "member" entries (Reference or string) and requires
+    // X-Provider-Identifier header for provider identity context.
+    isolated resource function post \$provider\-member\-match(r4:FHIRContext fhirContext,
+            international401:Parameters parameters) returns http:Response|r4:FHIRError {
+        [string, string[]]|r4:FHIRError inputs = extractProviderMemberMatchInputs(fhirContext, parameters);
+        if inputs is r4:FHIRError {
+            return inputs;
+        }
+        string providerIdentifier = inputs[0];
+        string[] memberPatientIds = inputs[1];
+
+        boolean asyncRequested = false;
+        r4:HTTPRequest? httpReq = fhirContext.getHTTPRequest();
+        if httpReq !is () {
+            string[]? preferValues = httpReq.headers["prefer"] ?: httpReq.headers["Prefer"];
+            if preferValues !is () {
+                foreach string pv in preferValues {
+                    foreach string token in re `,`.split(pv) {
+                        if token.trim().toLowerAscii() == "respond-async" {
+                            asyncRequested = true;
+                        }
+                    }
+                }
+            }
+        }
+        if memberPatientIds.length() > providerMatchSynchronousThreshold {
+            asyncRequested = true;
+        }
+
+        if asyncRequested {
+            string jobId = uuid:createType1AsString();
+            evictExpiredProviderMemberMatchJobs();
+            lock {
+                providerMemberMatchJobStore[jobId] = {
+                    jobId: jobId,
+                    status: PROVIDER_MEMBER_MATCH_PENDING,
+                    createdAt: time:utcNow(),
+                    completedAt: (),
+                    result: (),
+                    errorMessage: ()
+                };
+            }
+            _ = start processAndStoreProviderMemberMatch(jobId, providerIdentifier, memberPatientIds.cloneReadOnly());
+            http:Response accepted = new;
+            accepted.statusCode = http:STATUS_ACCEPTED;
+            accepted.setHeader("Content-Location", serverBaseUrl + PROVIDER_MEMBER_MATCH_STATUS_PATH + jobId);
+            return accepted;
+        }
+
+        map<json>|r4:FHIRError result = processProviderMemberMatch(providerIdentifier, memberPatientIds);
+        if result is r4:FHIRError {
+            return result;
+        }
+
+        http:Response response = new;
+        response.statusCode = http:STATUS_OK;
+        response.setHeader("Content-Type", "application/fhir+json");
+        response.setJsonPayload(result);
+        return response;
+    }
+
+    // DaVinci Data Export — POST /fhir/r4/Group/{id}/$davinci-data-export
     // Profiled extension of Bulk Data Export for DaVinci use cases (Da Vinci ATR STU 2.1).
-    // Accepts exportType, _since, _until, _type, _typeFilter, patient query parameters.
+    // HTTP POST is mandatory per IG §pdex-303; Prefer: respond-async is required per §pdex-304.
+    // Accepts exportType, _since, _until, _type, _typeFilter, patient as body Parameters or query params.
     // Returns 202 Accepted with Content-Location pointing to the davinci-export-status endpoint.
-    isolated resource function get [string id]/\$davinci\-data\-export(
+    isolated resource function post [string id]/\$davinci\-data\-export(
             r4:FHIRContext fhirContext) returns r4:FHIRError|http:Response {
 
         log:printDebug("DaVinci Data Export invoked for group id: " + id);
@@ -2654,15 +2749,21 @@ service /fhir/r4/Group on new fhirr4:Listener(config = groupApiConfig) {
             queryParameters = getQueryParamsMap(fhirRequest.getSearchParameters());
         }
 
-        // Validate exportType when provided — only PDex P2P is supported here
+        // Validate exportType when provided.
+        // Supported: PDex P2P (§pdex-303) and v2 provider export types:
+        //   provider-delta | provider-download | provider-snapshot
         string[]? exportTypeParam = queryParameters["exportType"];
-        string exportType = PDEX_EXPORT_TYPE_P2P;
+        string exportType = PDEX_EXPORT_TYPE_PROVIDER_DELTA; // v2 default
         if exportTypeParam !is () && exportTypeParam.length() > 0 {
-            if exportTypeParam[0] != PDEX_EXPORT_TYPE_P2P {
+            string requested = exportTypeParam[0];
+            if requested != PDEX_EXPORT_TYPE_P2P
+                    && requested != PDEX_EXPORT_TYPE_PROVIDER_DELTA
+                    && requested != PDEX_EXPORT_TYPE_PROVIDER_DOWNLOAD
+                    && requested != PDEX_EXPORT_TYPE_PROVIDER_SNAPSHOT {
                 return r4:createFHIRError(BULK_MATCH_INVALID_EXPORT_TYPE, r4:ERROR,
                         r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
             }
-            exportType = exportTypeParam[0];
+            exportType = requested;
         }
 
         // Build typed DataExportParameters from query params using direct field assignment

@@ -181,6 +181,35 @@ public type PayerConfig record {|
     boolean authEnabled = false;
 |};
 
+# Payer record.
+#
+# + id - Payer ID
+# + name - Payer Name
+# + email - Contact email
+# + address - Mailing address
+# + state - State of operation
+# + fhir_server_url - FHIR server base URL
+# + app_client_id - OAuth client ID for FHIR server (masked in responses)
+# + app_client_secret - OAuth client secret for FHIR server (masked in responses)
+# + smart_config_url - SMART on FHIR configuration URL
+# + scopes - Optional scopes for OAuth token request
+# + createdAt - Creation timestamp
+# + updatedAt - Last update timestamp
+public type Payer record {|
+    string id?;
+    string name;
+    string email;
+    string? address;
+    string state?;
+    string fhir_server_url;
+    string app_client_id;
+    string app_client_secret;
+    string smart_config_url;
+    string? scopes;
+    string createdAt?;
+    string updatedAt?;
+|};
+
 # Client FHIR server configuration.
 #
 # + baseUrl - Base URL of the server

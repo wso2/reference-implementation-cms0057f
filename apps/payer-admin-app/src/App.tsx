@@ -25,6 +25,7 @@ import Questionnaires from './pages/Questionnaires';
 import QuestionnaireDetail from './pages/QuestionnaireDetail';
 import Payers from './pages/Payers';
 import PayerDetail from './pages/PayerDetail';
+import Logs from './pages/Logs';
 
 function App() {
   return (
@@ -43,6 +44,7 @@ function App() {
             <Route path="questionnaires/:questionnaireId" element={<QuestionnaireDetail />} />
             <Route path="manage/payers" element={<Payers />} />
             <Route path="manage/payers/:payerId" element={<PayerDetail />} />
+            <Route path="logs" element={<Logs />} />
           </Route>
         </Routes>
       </AuthProvider>

@@ -17,7 +17,7 @@
 import ballerina/time;
 import ballerina/lang.regexp;
 
-function AddDurationToDate(string date, string durationDays) returns string|error {
+isolated function AddDurationToDate(string date, string durationDays) returns string|error {
     // Parse the duration days
     int days = check int:fromString(durationDays);
     

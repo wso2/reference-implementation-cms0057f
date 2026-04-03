@@ -546,7 +546,7 @@ service /fhir/r4/Patient on new fhirr4:Listener(config = patientApiConfig) {
 
     // Create a new resource.
     isolated resource function post .(r4:FHIRContext fhirContext, Patient patient) returns r4:DomainResource|error {
-        return create(fhirConnector, PATIENT, patient.toJson());
+        return create(fhirConnector, PATIENT, patient.toJson(), fhirContext);
     }
 
     // Update the current state of a resource completely.
@@ -628,7 +628,7 @@ service /fhir/r4/Claim on new fhirr4:Listener(config = ClaimApiConfig) {
 
     // Create a new resource.
     isolated resource function post .(r4:FHIRContext fhirContext, Claim claim) returns error|http:Response {
-        r4:DomainResource createResult = check create(fhirConnector, CLAIM, claim.toJson());
+        r4:DomainResource createResult = check create(fhirConnector, CLAIM, claim.toJson(), fhirContext);
         http:Response response = new;
         response.setJsonPayload(createResult.toJson());
         return response;
@@ -696,7 +696,7 @@ service /fhir/r4/ClaimResponse on new fhirr4:Listener(config = claimResponseApiC
     // Create a new resource.
     isolated resource function post .(r4:FHIRContext fhirContext, ClaimResponse claimResponse) returns error|http:Response {
         http:Response response = new;
-        r4:DomainResource result = check create(fhirConnector, CLAIM_RESPONSE, claimResponse.toJson());
+        r4:DomainResource result = check create(fhirConnector, CLAIM_RESPONSE, claimResponse.toJson(), fhirContext);
         response.setJsonPayload(result.toJson());
         response.statusCode = http:STATUS_CREATED;
         return response;
@@ -833,7 +833,7 @@ service /fhir/r4/ExplanationOfBenefit on new fhirr4:Listener(config = eobApiConf
 
     // Create a new resource.
     isolated resource function post .(r4:FHIRContext fhirContext, ExplanationOfBenefit procedure) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
-        return create(fhirConnector, EXPLANATION_OF_BENEFIT, procedure.toJson());
+        return create(fhirConnector, EXPLANATION_OF_BENEFIT, procedure.toJson(), fhirContext);
     }
 
     // Update the current state of a resource completely.
@@ -888,7 +888,7 @@ service /fhir/r4/MedicationRequest on new fhirr4:Listener(config = medicationReq
 
     // Create a new resource.
     isolated resource function post .(r4:FHIRContext fhirContext, MedicationRequest medicationRequest) returns error|http:Response {
-        r4:DomainResource createResult = check create(fhirConnector, MEDICATION_REQUEST, medicationRequest.toJson());
+        r4:DomainResource createResult = check create(fhirConnector, MEDICATION_REQUEST, medicationRequest.toJson(), fhirContext);
         http:Response response = new;
         response.setJsonPayload(createResult.toJson());
         return response;
@@ -946,7 +946,7 @@ service /fhir/r4/ServiceRequest on new fhirr4:Listener(config = serviceRequestAp
 
     // Create a new resource.
     isolated resource function post .(r4:FHIRContext fhirContext, ServiceRequest serviceRequest) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
-        return create(fhirConnector, SERVICE_REQUEST, serviceRequest.toJson());
+        return create(fhirConnector, SERVICE_REQUEST, serviceRequest.toJson(), fhirContext);
     }
 
     // Update the current state of a resource completely.
@@ -1001,7 +1001,7 @@ service /fhir/r4/Organization on new fhirr4:Listener(config = organizationApiCon
 
     // Create a new resource.
     isolated resource function post .(r4:FHIRContext fhirContext, Organization organization) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
-        return create(fhirConnector, ORGANIZATION, organization.toJson());
+        return create(fhirConnector, ORGANIZATION, organization.toJson(), fhirContext);
     }
 
     // Update the current state of a resource completely.
@@ -1056,7 +1056,7 @@ service /fhir/r4/Practitioner on new fhirr4:Listener(config = practitionerApiCon
 
     // Create a new resource.
     isolated resource function post .(r4:FHIRContext fhirContext, Practitioner practitioner) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
-        return create(fhirConnector, PRACTITIONER, practitioner.toJson());
+        return create(fhirConnector, PRACTITIONER, practitioner.toJson(), fhirContext);
     }
 
     // Update the current state of a resource completely.
@@ -1111,7 +1111,7 @@ service /fhir/r4/PractitionerRole on new fhirr4:Listener(config = practitionerRo
 
     // Create a new resource.
     isolated resource function post .(r4:FHIRContext fhirContext, PractitionerRole practitionerRole) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
-        return create(fhirConnector, PRACTITIONER_ROLE, practitionerRole.toJson());
+        return create(fhirConnector, PRACTITIONER_ROLE, practitionerRole.toJson(), fhirContext);
     }
 
     // Update the current state of a resource completely.
@@ -1174,7 +1174,7 @@ service /fhir/r4/AllergyIntolerance on new fhirr4:Listener(config = allergyIntol
 
     // Create a new resource.
     isolated resource function post .(r4:FHIRContext fhirContext, AllergyIntolerance allergyIntolerance) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
-        return create(fhirConnector, ALLERGY_INTOLERENCE, allergyIntolerance.toJson());
+        return create(fhirConnector, ALLERGY_INTOLERENCE, allergyIntolerance.toJson(), fhirContext);
     }
 
     // Update the current state of a resource completely.
@@ -1229,7 +1229,7 @@ service /fhir/r4/Observation on new fhirr4:Listener(config = observationApiConfi
 
     // Create a new resource.
     isolated resource function post .(r4:FHIRContext fhirContext, Observation observation) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
-        return create(fhirConnector, OBSERVATION, observation.toJson());
+        return create(fhirConnector, OBSERVATION, observation.toJson(), fhirContext);
     }
 
     // Update the current state of a resource completely.
@@ -1284,7 +1284,7 @@ service /fhir/r4/DiagnosticReport on new fhirr4:Listener(config = diagnosticRepo
 
     // Create a new resource.
     isolated resource function post .(r4:FHIRContext fhirContext, DiagnosticReport diagnosticReport) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
-        return create(fhirConnector, DIAGNOSTIC_REPORT, diagnosticReport.toJson());
+        return create(fhirConnector, DIAGNOSTIC_REPORT, diagnosticReport.toJson(), fhirContext);
     }
 
     // Update the current state of a resource completely.
@@ -1342,7 +1342,7 @@ service /fhir/r4/Encounter on new fhirr4:Listener(config = encounterApiConfig) {
 
     // Create a new resource.
     isolated resource function post .(r4:FHIRContext fhirContext, Encounter procedure) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
-        return create(fhirConnector, ENCOUNTER, procedure.toJson());
+        return create(fhirConnector, ENCOUNTER, procedure.toJson(), fhirContext);
     }
 
     // Update the current state of a resource completely.
@@ -1464,7 +1464,7 @@ service /fhir/r4/Questionnaire on new fhirr4:Listener(config = questionnaireApiC
         if questionnaire.id is () {
             questionnaire.id = uuid:createType1AsString();
         }
-        return create(fhirConnector, QUESTIONNAIRE, questionnaire.toJson());
+        return create(fhirConnector, QUESTIONNAIRE, questionnaire.toJson(), fhirContext);
     }
 
     // Update the current state of a resource completely.
@@ -1529,7 +1529,7 @@ service /fhir/r4/QuestionnaireResponse on new fhirr4:Listener(config = questionn
         if questionnaireResponse.id is () {
             questionnaireResponse.id = uuid:createType1AsString();
         }
-        return create(fhirConnector, QUESTIONNAIRE_RESPONSE, questionnaireResponse.toJson());
+        return create(fhirConnector, QUESTIONNAIRE_RESPONSE, questionnaireResponse.toJson(), fhirContext);
     }
 
     // Update the current state of a resource completely.
@@ -2366,7 +2366,7 @@ service /fhir/r4/Library on new fhirr4:Listener(config = libraryApiConfig) {
         if library.id is () {
             library.id = uuid:createType1AsString();
         }
-        return create(fhirConnector, LIBRARY, library.toJson());
+        return create(fhirConnector, LIBRARY, library.toJson(), fhirContext);
     }
 
     // Update the current state of a resource completely.
@@ -2429,7 +2429,7 @@ service /fhir/r4/Group on new fhirr4:Listener(config = groupApiConfig) {
 
     // Create a new resource.
     isolated resource function post .(r4:FHIRContext fhirContext, Group fhirGroup) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
-        return create(fhirConnector, GROUP, fhirGroup.toJson());
+        return create(fhirConnector, GROUP, fhirGroup.toJson(), fhirContext);
     }
 
     // Export a group.
@@ -2816,7 +2816,7 @@ service /fhir/r4/CommunicationRequest on new fhirr4:Listener(config = communicat
 
     // Create a new resource.
     isolated resource function post .(r4:FHIRContext fhirContext, CommunicationRequest communicationRequest) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
-        return create(fhirConnector, COMMUNICATION_REQUEST, communicationRequest.toJson());
+        return create(fhirConnector, COMMUNICATION_REQUEST, communicationRequest.toJson(), fhirContext);
     }
 
     // Update the current state of a resource completely.
@@ -2885,7 +2885,7 @@ service /fhir/r4/ValueSet on new fhirr4:Listener(config = valuesetApiConfig) {
     }
 
     isolated resource function post .(r4:FHIRContext fhirContext, r4:ValueSet valueSet) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
-        return create(fhirConnector, VALUE_SET, valueSet.toJson());
+        return create(fhirConnector, VALUE_SET, valueSet.toJson(), fhirContext);
     }
 
     isolated resource function put [string id](r4:FHIRContext fhirContext, r4:ValueSet valueSet) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
@@ -2969,7 +2969,7 @@ service /fhir/r4/CodeSystem on new fhirr4:Listener(config = codesystemApiConfig)
     }
 
     isolated resource function post .(r4:FHIRContext fhirContext, r4:CodeSystem codeSystem) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
-        return create(fhirConnector, CODE_SYSTEM, codeSystem.toJson());
+        return create(fhirConnector, CODE_SYSTEM, codeSystem.toJson(), fhirContext);
     }
 
     isolated resource function put [string id](r4:FHIRContext fhirContext, r4:CodeSystem codeSystem) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
@@ -3043,7 +3043,7 @@ service /fhir/r4/ConceptMap on new fhirr4:Listener(config = conceptmapApiConfig)
     }
 
     isolated resource function post .(r4:FHIRContext fhirContext, r4:ConceptMap conceptMap) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
-        return create(fhirConnector, CONCEPT_MAP, conceptMap.toJson());
+        return create(fhirConnector, CONCEPT_MAP, conceptMap.toJson(), fhirContext);
     }
 
     isolated resource function put [string id](r4:FHIRContext fhirContext, r4:ConceptMap conceptMap) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {

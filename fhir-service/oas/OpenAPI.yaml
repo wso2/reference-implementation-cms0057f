@@ -3198,6 +3198,87 @@ paths:
       security:
       - default: []
       x-auth-type: Application & Application User
+  /Group/$provider-member-match:
+    post:
+      tags:
+      - POST
+      - Group
+      - Operation
+      summary: Provider Access v2 provider-member-match
+      description: Matches provider-attributed members and creates profile-specific Group resources for matched, no-match, and consent-constrained outcomes.
+      parameters:
+      - name: X-Provider-Identifier
+        in: header
+        description: Provider identifier context for treatment relationship evaluation
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/fhir+json:
+            schema:
+              $ref: '#/components/schemas/Parameters'
+      responses:
+        '200':
+          description: Synchronous provider-member-match result
+          content:
+            application/fhir+json:
+              schema:
+                type: object
+        '202':
+          description: Asynchronous provider-member-match accepted
+          headers:
+            Content-Location:
+              schema:
+                type: string
+              description: URL to poll status
+        '400':
+          description: Bad request
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/FHIRError'
+      security:
+      - default: []
+      x-auth-type: Application & Application User
+  /_export/provider-member-match-status/{jobId}:
+    get:
+      tags:
+      - GET
+      - Operation
+      summary: Poll provider-member-match async status
+      parameters:
+      - name: jobId
+        in: path
+        description: provider-member-match async job ID
+        required: true
+        schema:
+          type: string
+      - name: X-Provider-Identifier
+        in: header
+        description: Provider identifier context; must match the provider that created the async job
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Completed provider-member-match result
+          content:
+            application/fhir+json:
+              schema:
+                type: object
+        '202':
+          description: Job is still processing
+        '400':
+          description: Missing provider identifier
+        '403':
+          description: Provider identifier does not own this job
+        '404':
+          description: Job not found
+      security:
+      - default: []
+      x-auth-type: Application & Application User
   /Library:
     get:
       tags:

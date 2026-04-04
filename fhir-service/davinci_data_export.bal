@@ -250,10 +250,11 @@ isolated function processAndStoreDaVinciExport(
         int attempt = 0;
         while !patientDone && attempt < MAX_POLL_ATTEMPTS {
             attempt += 1;
+            log:printDebug("polling url: " + clientBase + pollPath);
             http:Response|error pollRes = statusClient->get(pollPath);
             if pollRes is error {
                 log:printError("Patient " + patientId + ": poll error on attempt " + attempt.toString()
-                        + ": " + pollRes.message());
+                        + ": " + pollRes.message(), pollRes);
                 runtime:sleep(POLL_INTERVAL_SECONDS);
                 continue;
             }

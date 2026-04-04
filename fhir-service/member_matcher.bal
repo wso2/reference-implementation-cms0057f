@@ -76,7 +76,6 @@ public isolated class DemoFHIRMemberMatcher {
 
             // Get coverage from id
             string coverageId = <string>coverageToMatch.id;
-            r4:Reference incomingCoverageBeneficiary = coverageToMatch.beneficiary;
             r4:DomainResource|r4:FHIRError oldCoverage = check getById(self.fhirConnector, COVERAGE, coverageId);
 
             if oldCoverage is r4:FHIRError {

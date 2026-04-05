@@ -104,7 +104,7 @@ public isolated class DemoFHIRMemberMatcher {
         }
 
         string matchGrade = getMatchGrade(bestScore);
-        if topCandidateIds.length() == 0 || matchGrade == "certainly-not" {
+        if topCandidateIds.length() == 0 || matchGrade == "certainly-not" || matchGrade == "possible" {
             return r4:createFHIRError("No match found", r4:ERROR, r4:PROCESSING_NOT_FOUND, httpStatusCode = http:STATUS_UNPROCESSABLE_ENTITY);
         }
 
@@ -115,7 +115,7 @@ public isolated class DemoFHIRMemberMatcher {
             return INTERNAL_ERROR;
         }
         string coverageId = coverageIdOpt;
-        log:printInfo(string `[member-match] FHIR read request: GET Coverage/${coverageId}`);
+        log:printDebug(string `[member-match] FHIR read request: GET Coverage/${coverageId}`);
         r4:DomainResource|r4:FHIRError storedCoverage = getById(self.fhirConnector, COVERAGE, coverageId);
         if storedCoverage is r4:FHIRError {
             log:printError(string `[member-match] FHIR read error: Coverage/${coverageId}`, storedCoverage);
@@ -135,16 +135,16 @@ public isolated class DemoFHIRMemberMatcher {
         }
         string[] refParts = re `/`.split(storedBeneficiaryRef);
         string extractedBeneficiaryId = refParts[refParts.length() - 1];
-        log:printInfo(string `[member-match] Coverage/${coverageId} beneficiary.reference="${storedBeneficiaryRef}" extracted-id="${extractedBeneficiaryId}" top-candidates=${topCandidateIds.toString()}`);
+        log:printDebug(string `[member-match] Coverage/${coverageId} beneficiary.reference="${storedBeneficiaryRef}" extracted-id="${extractedBeneficiaryId}" top-candidates=${topCandidateIds.toString()}`);
 
         foreach string candidateId in topCandidateIds {
             if extractedBeneficiaryId == candidateId {
-                log:printInfo(string `[member-match] Match successful: patientId=${candidateId} score=${bestScore} grade=${matchGrade}`);
+                log:printDebug(string `[member-match] Match successful: patientId=${candidateId} score=${bestScore} grade=${matchGrade}`);
                 return <hrex100:MemberIdentifier>candidateId;
             }
         }
 
-        log:printInfo("[member-match] Coverage beneficiary does not match any top-scored candidate — returning no match");
+        log:printDebug("[member-match] Coverage beneficiary does not match any top-scored candidate — returning no match");
         return r4:createFHIRError("No match found", r4:ERROR, r4:PROCESSING_NOT_FOUND, httpStatusCode = http:STATUS_UNPROCESSABLE_ENTITY);
     }
 

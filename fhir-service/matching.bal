@@ -1,5 +1,19 @@
-// Copyright (c) 2025, WSO2 LLC. (http://www.wso2.com).
-// Licensed under the Apache License, Version 2.0
+// Copyright (c) 2026, WSO2 LLC. (http://www.wso2.com).
+
+// WSO2 LLC. licenses this file to you under the Apache License,
+// Version 2.0 (the "License"); you may not use this file except
+// in compliance with the License.
+// You may obtain a copy of the License at
+
+// http://www.apache.org/licenses/LICENSE-2.0
+
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
 
 // Configurable Patient Matching Engine
 // =====================================
@@ -38,32 +52,39 @@ type FieldsConfig readonly & record {|
     FieldConfig postalCode;
 |};
 
+type MemberMatchConfig readonly & record {|
+    GradeThresholds gradeThresholds;
+    FieldsConfig fields;
+|};
+
 // ============================================================
 // CONFIGURABLE DECLARATIONS (overridden via config.toml)
 // ============================================================
 
-configurable GradeThresholds gradeThresholds = {
-    certain: 0.95d,
-    probable: 0.80d,
-    possible: 0.60d
+configurable MemberMatchConfig memberMatchConfig = {
+    gradeThresholds: {
+        certain: 0.95d,
+        probable: 0.80d,
+        possible: 0.60d
+    },
+    fields: {
+        identifier: {weight: 0.30d, algorithm: "exact"},
+        family: {weight: 0.20d, algorithm: "exact"},
+        given: {weight: 0.15d, algorithm: "exact"},
+        birthDate: {weight: 0.20d, algorithm: "exact"},
+        gender: {weight: 0.05d, algorithm: "exact"},
+        phone: {weight: 0.05d, algorithm: "exact"},
+        postalCode: {weight: 0.05d, algorithm: "exact"}
+    }
 };
 
-configurable FieldsConfig fields = {
-    identifier: {weight: 0.30d, algorithm: "exact"},
-    family: {weight: 0.20d, algorithm: "exact"},
-    given: {weight: 0.15d, algorithm: "exact"},
-    birthDate: {weight: 0.20d, algorithm: "exact"},
-    gender: {weight: 0.05d, algorithm: "exact"},
-    phone: {weight: 0.05d, algorithm: "exact"},
-    postalCode: {weight: 0.05d, algorithm: "exact"}
-};
-
-# Validate the FieldsConfig and GradeThresholds at application startup.
+# Validate the MemberMatchConfig at application startup.
 # Checks each field's algorithm, weight range [0.0, 1.0], total weight sum (≤ 1.0),
 # each gradeThreshold range [0.0, 1.0], and strictly descending order (certain > probable > possible).
-# + f - The loaded FieldsConfig to validate
+# + cfg - The loaded MemberMatchConfig to validate
 # + return - An error naming the offending field or threshold, or nil if all checks pass
-isolated function validateFieldsConfig(FieldsConfig f) returns error? {
+isolated function validateFieldsConfig(MemberMatchConfig cfg) returns error? {
+    FieldsConfig f = cfg.fields;
     check validateFieldAlgorithm("identifier", f.identifier.algorithm);
     check validateFieldAlgorithm("family", f.family.algorithm);
     check validateFieldAlgorithm("given", f.given.algorithm);
@@ -96,24 +117,25 @@ isolated function validateFieldsConfig(FieldsConfig f) returns error? {
     }
 
     // Validate gradeThresholds range [0.0, 1.0]
-    if gradeThresholds.certain < 0.0d || gradeThresholds.certain > 1.0d {
-        return error("gradeThresholds.certain value " + gradeThresholds.certain.toString() + " is out of range [0.0, 1.0]");
+    GradeThresholds gt = cfg.gradeThresholds;
+    if gt.certain < 0.0d || gt.certain > 1.0d {
+        return error("gradeThresholds.certain value " + gt.certain.toString() + " is out of range [0.0, 1.0]");
     }
-    if gradeThresholds.probable < 0.0d || gradeThresholds.probable > 1.0d {
-        return error("gradeThresholds.probable value " + gradeThresholds.probable.toString() + " is out of range [0.0, 1.0]");
+    if gt.probable < 0.0d || gt.probable > 1.0d {
+        return error("gradeThresholds.probable value " + gt.probable.toString() + " is out of range [0.0, 1.0]");
     }
-    if gradeThresholds.possible < 0.0d || gradeThresholds.possible > 1.0d {
-        return error("gradeThresholds.possible value " + gradeThresholds.possible.toString() + " is out of range [0.0, 1.0]");
+    if gt.possible < 0.0d || gt.possible > 1.0d {
+        return error("gradeThresholds.possible value " + gt.possible.toString() + " is out of range [0.0, 1.0]");
     }
 
     // Validate gradeThresholds strictly descending: certain > probable > possible
-    if gradeThresholds.certain <= gradeThresholds.probable {
-        return error("gradeThresholds.certain (" + gradeThresholds.certain.toString()
-            + ") must be greater than gradeThresholds.probable (" + gradeThresholds.probable.toString() + ")");
+    if gt.certain <= gt.probable {
+        return error("gradeThresholds.certain (" + gt.certain.toString()
+            + ") must be greater than gradeThresholds.probable (" + gt.probable.toString() + ")");
     }
-    if gradeThresholds.probable <= gradeThresholds.possible {
-        return error("gradeThresholds.probable (" + gradeThresholds.probable.toString()
-            + ") must be greater than gradeThresholds.possible (" + gradeThresholds.possible.toString() + ")");
+    if gt.probable <= gt.possible {
+        return error("gradeThresholds.probable (" + gt.probable.toString()
+            + ") must be greater than gradeThresholds.possible (" + gt.possible.toString() + ")");
     }
 }
 
@@ -481,9 +503,9 @@ isolated function calculateScore(uscore501:USCorePatientProfile input, uscore501
                 continue;
             }
             if inSystem == candSystem {
-                decimal sim = compareField(inValue, candValue, fields.identifier);
+                decimal sim = compareField(inValue, candValue, memberMatchConfig.fields.identifier);
                 if sim > 0.0d {
-                    score += fields.identifier.weight * sim;
+                    score += memberMatchConfig.fields.identifier.weight * sim;
                     identifierMatched = true;
                     break;
                 }
@@ -495,41 +517,41 @@ isolated function calculateScore(uscore501:USCorePatientProfile input, uscore501
     string? inFamily = getFamily(input);
     string? candFamily = getFamily(candidate);
     if inFamily is string && candFamily is string {
-        decimal sim = compareField(inFamily, candFamily, fields.family);
-        score += fields.family.weight * sim;
+        decimal sim = compareField(inFamily, candFamily, memberMatchConfig.fields.family);
+        score += memberMatchConfig.fields.family.weight * sim;
     }
 
     // --- Given name ---
     string? inGiven = getGiven(input);
     string? candGiven = getGiven(candidate);
     if inGiven is string && candGiven is string {
-        decimal sim = compareField(inGiven, candGiven, fields.given);
-        score += fields.given.weight * sim;
+        decimal sim = compareField(inGiven, candGiven, memberMatchConfig.fields.given);
+        score += memberMatchConfig.fields.given.weight * sim;
     }
 
     // --- Birth date ---
     if input.birthDate is string && candidate.birthDate is string {
-        decimal sim = compareField(<string>input.birthDate, <string>candidate.birthDate, fields.birthDate);
-        score += fields.birthDate.weight * sim;
+        decimal sim = compareField(<string>input.birthDate, <string>candidate.birthDate, memberMatchConfig.fields.birthDate);
+        score += memberMatchConfig.fields.birthDate.weight * sim;
     }
 
     // --- Gender ---
-    score += fields.gender.weight * compareField(input.gender, candidate.gender, fields.gender);
+    score += memberMatchConfig.fields.gender.weight * compareField(input.gender, candidate.gender, memberMatchConfig.fields.gender);
 
     // --- Phone (normalize before comparison to handle different formatting) ---
     string? inPhone = getTelecom(input, "phone");
     string? candPhone = getTelecom(candidate, "phone");
     if inPhone is string && candPhone is string {
-        decimal sim = compareField(canonicalizePhone(inPhone), canonicalizePhone(candPhone), fields.phone);
-        score += fields.phone.weight * sim;
+        decimal sim = compareField(canonicalizePhone(inPhone), canonicalizePhone(candPhone), memberMatchConfig.fields.phone);
+        score += memberMatchConfig.fields.phone.weight * sim;
     }
 
     // --- Postal code ---
     string? inPostal = getAddressField(input, "postalCode");
     string? candPostal = getAddressField(candidate, "postalCode");
     if inPostal is string && candPostal is string {
-        decimal sim = compareField(inPostal, candPostal, fields.postalCode);
-        score += fields.postalCode.weight * sim;
+        decimal sim = compareField(inPostal, candPostal, memberMatchConfig.fields.postalCode);
+        score += memberMatchConfig.fields.postalCode.weight * sim;
     }
 
     return score > 1.0d ? 1.0d : score;
@@ -539,13 +561,13 @@ isolated function calculateScore(uscore501:USCorePatientProfile input, uscore501
 # + score - The decimal score to evaluate
 # + return - Match grade: "certain", "probable", "possible", or "certainly-not"
 isolated function getMatchGrade(decimal score) returns string {
-    if score >= gradeThresholds.certain {
+    if score >= memberMatchConfig.gradeThresholds.certain {
         return "certain";
     }
-    if score >= gradeThresholds.probable {
+    if score >= memberMatchConfig.gradeThresholds.probable {
         return "probable";
     }
-    if score >= gradeThresholds.possible {
+    if score >= memberMatchConfig.gradeThresholds.possible {
         return "possible";
     }
     return "certainly-not";

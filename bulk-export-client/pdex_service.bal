@@ -123,7 +123,12 @@ isolated service /pdex on bulkExportListener {
         log:printDebug("Loaded payer data exchange request.", requestId = requestId, payerId = request.payerId, consent = request.consent ?: "");
 
         if !(request.consent ?: "").equalsIgnoreCaseAscii("APPROVED") {
-            return error("Consent not approved for data exchange.");
+            error consentError = error("Consent not approved for data exchange.");
+            string|error dbResult = updatePayerDataExchangeRequestStatus(requestId, "FAILED");
+            if dbResult is error {
+                log:printError("Failed to update request status after consent rejection", dbResult, requestId = requestId);
+            }
+            return consentError;
         }
 
         if request.bulkDataSyncStatus == "IN_PROGRESS" || request.bulkDataSyncStatus == "COMPLETED" {
@@ -151,7 +156,15 @@ isolated service /pdex on bulkExportListener {
             authEnabled: true
         };
 
-        http:Client httpClient = check createHttpClient(serverConfig);
+        http:Client|error httpClient = createHttpClient(serverConfig);
+        if httpClient is error {
+            log:printError("Error creating HTTP client for member match", httpClient);
+            string|error dbResult = updatePayerDataExchangeRequestStatus(requestId, "FAILED");
+            if dbResult is error {
+                log:printError("Failed to update request status after HTTP client creation error", dbResult, requestId = requestId);
+            }
+            return error("Error creating HTTP client: " + httpClient.message());
+        }
 
         international401:Parameters memberMatchParams = check createMemberMatchParams(request, httpClient);
         log:printDebug("Created member match parameters.", requestId = requestId);
@@ -162,12 +175,22 @@ isolated service /pdex on bulkExportListener {
 
         if matchResponse is http:ClientError {
             log:printError("Error calling $member-match", matchResponse);
-            return error("Error calling $member-match: " + matchResponse.message());
+            error memberMatchError = error("Error calling $member-match: " + matchResponse.message());
+            string|error dbResult = updatePayerDataExchangeRequestStatus(requestId, "FAILED");
+            if dbResult is error {
+                log:printError("Failed to update request status after $member-match client error", dbResult, requestId = requestId);
+            }
+            return memberMatchError;
         }
 
         if matchResponse.statusCode < 200 || matchResponse.statusCode >= 300 {
             log:printError("Member match failed with status: " + matchResponse.statusCode.toString());
-            return error("Member match failed");
+            error memberMatchError = error("Member match failed");
+            string|error dbResult = updatePayerDataExchangeRequestStatus(requestId, "FAILED");
+            if dbResult is error {
+                log:printError("Failed to update request status after $member-match failure", dbResult, requestId = requestId);
+            }
+            return memberMatchError;
         }
 
         log:printDebug("Member match succeeded.", requestId = requestId, statusCode = matchResponse.statusCode.toString());

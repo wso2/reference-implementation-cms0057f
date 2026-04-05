@@ -20,6 +20,7 @@ import {
   Box,
   Typography,
   Button,
+  IconButton,
   TextField,
   Dialog,
   DialogTitle,
@@ -31,7 +32,7 @@ import {
   LinearProgress,
   Pagination,
 } from '@wso2/oxygen-ui';
-import { Plus, Search, UploadIcon, Sparkles } from '@wso2/oxygen-ui-icons-react';
+import { Plus, Search, UploadIcon, Sparkles, X } from '@wso2/oxygen-ui-icons-react';
 import QuestionnaireCard from '../components/QuestionnaireCard';
 import LoadingCardSkeleton from '../components/LoadingCardSkeleton';
 import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
@@ -41,17 +42,28 @@ import { questionnairesAPI, type QuestionnaireListItem } from '../api/questionna
 import { fileServiceAPI } from '../api/fileService';
 import { useAuth } from '../components/useAuth';
 
+const STATUS_PROGRESS_MAP: Record<string, { progress: number; message: string }> = {
+  PDF_TO_MD_CONVERSION_STARTED: { progress: 15, message: 'Converting PDF to text...' },
+  PDF_TO_MD_CONVERSION_ENDED:   { progress: 30, message: 'PDF conversion complete.' },
+  PREPROCESSING_STARTED:        { progress: 40, message: 'Preprocessing policy data...' },
+  PREPROCESSING_ENDED:          { progress: 55, message: 'Preprocessing complete.' },
+  FHIR_QUESTIONNAIRE_GEN_STARTED: { progress: 65, message: 'Generating FHIR questionnaires...' },
+  FHIR_QUESTIONNAIRE_GEN_ENDED:   { progress: 80, message: 'Questionnaire generation complete.' },
+  ENRICHING_AND_STORING:        { progress: 90, message: 'Enriching and storing questionnaires...' },
+  COMPLETED:                    { progress: 100, message: 'Completed!' },
+};
+
 export default function Questionnaires() {
   const navigate = useNavigate();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const pdfInputRef = useRef<HTMLInputElement>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [aiGenerateDialogOpen, setAiGenerateDialogOpen] = useState(false);
-  const [selectedPdfFile, setSelectedPdfFile] = useState<File | null>(null);
+  const [selectedPdfFiles, setSelectedPdfFiles] = useState<File[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingProgress, setProcessingProgress] = useState(0);
   const [processingMessage, setProcessingMessage] = useState('');
-  const [activeJob, setActiveJob] = useState<{ fileName: string; jobId: string } | null>(null);
+  const [activeJobs, setActiveJobs] = useState<{ fileName: string; jobId: string }[]>([]);
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
@@ -101,37 +113,59 @@ export default function Questionnaires() {
 
   // Continuous polling effect for active jobs
   useEffect(() => {
-    if (!activeJob) return;
+    if (!activeJobs.length) return;
 
     const pollInterval = 5000; // 5 seconds
     let isMounted = true;
 
-    const checkJobStatus = async () => {
-      if (!activeJob || !isMounted) return;
+    const checkJobStatuses = async () => {
+      if (!activeJobs.length || !isMounted) return;
 
       try {
-        const jobStatus = await fileServiceAPI.getJobStatus(activeJob.fileName, activeJob.jobId);
-        
+        const statuses = await Promise.all(
+          activeJobs.map(job => fileServiceAPI.getJobStatus(job.fileName, job.jobId))
+        );
+
         if (!isMounted) return;
 
-        setProcessingMessage(`Job status: ${jobStatus.status}`);
-        
-        if (jobStatus.status === 'COMPLETED') {
-          setProcessingProgress(100);
-          setProcessingMessage('Job completed! Refreshing questionnaires...');
-          
-          // Wait a moment before refreshing
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          
-          if (!isMounted) return;
+        // Use the last status for display (as per requirement)
+        const lastStatus = statuses[statuses.length - 1];
+        const statusInfo = STATUS_PROGRESS_MAP[lastStatus.status];
+        if (statusInfo) {
+          setProcessingProgress(statusInfo.progress);
+          setProcessingMessage(statusInfo.message);
+        }
 
-          // Clear active job and reset state
-          setActiveJob(null);
+        // Check if any job failed
+        const failedJob = statuses.find(s => s.status === 'FAILED');
+        if (failedJob) {
+          setActiveJobs([]);
           setIsProcessing(false);
           setProcessingProgress(0);
           setProcessingMessage('');
-          setSelectedPdfFile(null);
-          
+          setSnackbar({
+            open: true,
+            message: failedJob.error_message || 'Job failed',
+            severity: 'error',
+          });
+          return;
+        }
+
+        // Check if all jobs completed
+        if (statuses.every(s => s.status === 'COMPLETED')) {
+          setProcessingProgress(100);
+          setProcessingMessage('All files processed! Refreshing questionnaires...');
+
+          await new Promise(resolve => setTimeout(resolve, 1000));
+
+          if (!isMounted) return;
+
+          setActiveJobs([]);
+          setIsProcessing(false);
+          setProcessingProgress(0);
+          setProcessingMessage('');
+          setSelectedPdfFiles([]);
+
           if (pdfInputRef.current) {
             pdfInputRef.current.value = '';
           }
@@ -141,25 +175,11 @@ export default function Questionnaires() {
             message: 'Questionnaires generated successfully!',
             severity: 'success',
           });
-          
-          // Refresh questionnaires list
+
           setCurrentPage(1);
-        } else if (jobStatus.status === 'FAILED') {
-          setActiveJob(null);
-          setIsProcessing(false);
-          setProcessingProgress(0);
-          setProcessingMessage('');
-          setSnackbar({
-            open: true,
-            message: jobStatus.error_message || 'Job failed',
-            severity: 'error',
-          });
-        } else {
-          // Job still in progress, update progress incrementally
-          setProcessingProgress((prev) => Math.min(prev + 5, 90));
         }
       } catch (error) {
-        console.error('Error polling job status:', error);
+        console.error('Error polling job statuses:', error);
         if (isMounted) {
           setSnackbar({
             open: true,
@@ -171,17 +191,17 @@ export default function Questionnaires() {
     };
 
     // Initial check
-    checkJobStatus();
+    checkJobStatuses();
 
     // Set up polling interval
-    const intervalId = setInterval(checkJobStatus, pollInterval);
+    const intervalId = setInterval(checkJobStatuses, pollInterval);
 
     // Cleanup
     return () => {
       isMounted = false;
       clearInterval(intervalId);
     };
-  }, [activeJob, currentPage]);
+  }, [activeJobs, currentPage]);
 
   const handleCreateQuestionnaire = () => {
     // Generate a random UUID for the new questionnaire
@@ -243,49 +263,61 @@ export default function Questionnaires() {
   }
 
   const handlePdfFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file && file.type === 'application/pdf') {
-      setSelectedPdfFile(file);
-    } else if (file) {
+    const files = Array.from(event.target.files || []);
+    const validFiles = files.filter(f => f.type === 'application/pdf');
+
+    if (validFiles.length !== files.length) {
       setSnackbar({
         open: true,
-        message: 'Please select a valid PDF file.',
-        severity: 'error',
+        message: 'Some files were skipped. Only PDF files are supported.',
+        severity: 'warning',
       });
+    }
+
+    if (validFiles.length > 0) {
+      setSelectedPdfFiles(prev => {
+        const existingNames = new Set(prev.map(f => f.name));
+        const newFiles = validFiles.filter(f => !existingNames.has(f.name));
+        return [...prev, ...newFiles];
+      });
+    }
+
+    // Reset input so the same file can be re-selected after removal
+    if (pdfInputRef.current) {
+      pdfInputRef.current.value = '';
     }
   };
 
+  const handleRemovePdfFile = (index: number) => {
+    setSelectedPdfFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleGenerateWithAI = async () => {
-    if (!selectedPdfFile) {
+    if (!selectedPdfFiles.length) {
       setSnackbar({
         open: true,
-        message: 'Please upload a PDF file first.',
+        message: 'Please upload at least one PDF file.',
         severity: 'warning',
       });
       return;
     }
 
-    // Close dialog and start processing
     setAiGenerateDialogOpen(false);
     setIsProcessing(true);
     setProcessingProgress(10);
-    setProcessingMessage('Uploading PDF and starting conversion...');
+    setProcessingMessage(`Uploading ${selectedPdfFiles.length} PDF file(s) and starting conversion...`);
 
     try {
-      // Upload PDF and get job ID
-      const convertResponse = await fileServiceAPI.convertPdf(selectedPdfFile);
-      
-      if (!convertResponse || convertResponse.length === 0) {
+      const convertResponses = await fileServiceAPI.convertPdf(selectedPdfFiles);
+
+      if (!convertResponses || convertResponses.length === 0) {
         throw new Error('No conversion response received');
       }
 
-      const { job_id, file_name } = convertResponse[0];
-      
       setProcessingProgress(20);
-      setProcessingMessage('PDF uploaded. Processing in background...');
-      
-      // Set active job to trigger continuous polling
-      setActiveJob({ fileName: file_name, jobId: job_id });
+      setProcessingMessage('PDFs uploaded. Processing in background...');
+
+      setActiveJobs(convertResponses.map(r => ({ fileName: r.file_name, jobId: r.job_id })));
     } catch (error) {
       console.error('Error generating questionnaires:', error);
       setIsProcessing(false);
@@ -451,7 +483,7 @@ export default function Questionnaires() {
         open={aiGenerateDialogOpen}
         onClose={() => {
           setAiGenerateDialogOpen(false);
-          setSelectedPdfFile(null);
+          setSelectedPdfFiles([]);
           if (pdfInputRef.current) {
             pdfInputRef.current.value = '';
           }
@@ -536,12 +568,12 @@ export default function Questionnaires() {
             sx={{
               p: 3,
               border: '2px dashed',
-              borderColor: selectedPdfFile ? 'primary.main' : 'divider',
+              borderColor: selectedPdfFiles.length ? 'primary.main' : 'divider',
               borderRadius: 2,
               textAlign: 'center',
               cursor: 'pointer',
               transition: 'all 0.2s ease',
-              bgcolor: selectedPdfFile ? 'action.hover' : 'transparent',
+              bgcolor: selectedPdfFiles.length ? 'action.hover' : 'transparent',
               '&:hover': {
                 borderColor: 'primary.main',
                 bgcolor: 'action.hover',
@@ -552,31 +584,62 @@ export default function Questionnaires() {
             <input
               type="file"
               accept=".pdf,application/pdf"
+              multiple
               onChange={handlePdfFileSelect}
               ref={pdfInputRef}
               style={{ display: 'none' }}
               id="pdf-file-input"
             />
-            <UploadIcon size={40} style={{ marginBottom: '16px', opacity: 0.6 }} />
-            {selectedPdfFile ? (
+            {selectedPdfFiles.length > 0 ? (
               <>
-                <Typography variant="h6" sx={{ mb: 0.5, fontWeight: 500 }}>
-                  {selectedPdfFile.name}
+                <Typography variant="h6" sx={{ mb: 1, fontWeight: 500 }}>
+                  {selectedPdfFiles.length} file{selectedPdfFiles.length > 1 ? 's' : ''} selected
                 </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                  {(selectedPdfFile.size / 1024 / 1024).toFixed(2)} MB
-                </Typography>
-                <Typography variant="caption" color="primary" sx={{ fontWeight: 500 }}>
-                  Click to change file
-                </Typography>
+                <Box sx={{ maxHeight: 150, overflowY: 'auto', mb: 1.5 }}>
+                  {selectedPdfFiles.map((file, idx) => (
+                    <Box
+                      key={idx}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        px: 1.5,
+                        py: 0.5,
+                        borderRadius: 1,
+                        '&:hover': { bgcolor: 'action.selected' },
+                      }}
+                      onClick={e => e.stopPropagation()}
+                    >
+                      <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'left' }}>
+                        {file.name} <Typography component="span" variant="caption" color="text.disabled">({(file.size / 1024 / 1024).toFixed(2)} MB)</Typography>
+                      </Typography>
+                      <IconButton
+                        size="small"
+                        onClick={e => { e.stopPropagation(); handleRemovePdfFile(idx); }}
+                        aria-label={`Remove ${file.name}`}
+                      >
+                        <X size={14} />
+                      </IconButton>
+                    </Box>
+                  ))}
+                </Box>
+                <Button
+                  size="small"
+                  startIcon={<Plus size={14} />}
+                  onClick={e => { e.stopPropagation(); pdfInputRef.current?.click(); }}
+                  sx={{ textTransform: 'none' }}
+                >
+                  Add more files
+                </Button>
               </>
             ) : (
               <>
+                <UploadIcon size={40} style={{ marginBottom: '16px', opacity: 0.6 }} />
                 <Typography variant="body1" sx={{ mb: 0.5, fontWeight: 500 }}>
-                  Drop your PDF here or click to browse
+                  Drop your PDFs here or click to browse
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Supported format: PDF • Max file size: 10MB
+                  Supported format: PDF • Multiple files supported • Max file size: 10MB each
                 </Typography>
               </>
             )}
@@ -586,7 +649,7 @@ export default function Questionnaires() {
           <Button
             onClick={() => {
               setAiGenerateDialogOpen(false);
-              setSelectedPdfFile(null);
+              setSelectedPdfFiles([]);
               if (pdfInputRef.current) {
                 pdfInputRef.current.value = '';
               }
@@ -598,11 +661,11 @@ export default function Questionnaires() {
           <Button
             variant="contained"
             onClick={handleGenerateWithAI}
-            disabled={!selectedPdfFile}
+            disabled={!selectedPdfFiles.length}
             sx={{
-              background: !selectedPdfFile ? undefined : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              background: !selectedPdfFiles.length ? undefined : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
               '&:hover': {
-                background: !selectedPdfFile ? undefined : 'linear-gradient(135deg, #5568d3 0%, #63408a 100%)',
+                background: !selectedPdfFiles.length ? undefined : 'linear-gradient(135deg, #5568d3 0%, #63408a 100%)',
               },
             }}
           >

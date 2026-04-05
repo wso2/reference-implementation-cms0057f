@@ -1415,4 +1415,146 @@ isolated function validatePreferHeader(r4:HTTPRequest? httpReq, string requiredV
     return r4:createFHIRError(
             "The 'Prefer' header value must be '" + requiredValue + "'",
             r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+# Determines the type of the claim. Whether the claim is a standard claim or an expedited claim.
+# This function takes the related claim of the claim response and the claim response and checks
+# the claim.priority field. If the priority is "stat", then it is an expedited claim, otherwise it is a standard claim.
+# 
+# + claimResponse - The claim response resource to determine the type of
+# + claim - The claim of the claim response
+# 
+# + return - The type of the claim. "standard" for standard claims and "expedited" for expedited claims.
+isolated function determineClaimType(ClaimResponse claimResponse, international401:Claim claim) returns int {
+
+    if claim.priority?.coding is r4:Coding[] {
+        foreach r4:Coding coding in <r4:Coding[]>claim.priority?.coding {
+            if coding.code is string && coding.code == STAT {
+                log:printDebug(string `Claim type is: Expedited`);
+                return EXPEDITED;
+            }
+        }
+    }
+    log:printDebug(string `Claim type is: Standard`);
+    return STANDARD;
+}
+
+# Determines the status of the claim based on the claim response outcome and the item approvals.
+# Assumes that if the outcome is "complete", then the claim has finished processing and payer made the final decision. 
+# It will not be processed further. Only "completed" claims are considered.
+# 
+# The following strings are returned when the "outcome" is "complete",
+# 1. "approved" if all items are approved.
+# 2. "denied" if all items are denied. 
+# 3. "partially-approved" if a subset of items are approved. 
+# 
+# NOTE: If there are no items present in a completed claim, 
+# * If a "preAuthRef" is present in claim response, it is assumed that the claim is approved without needing to review items.
+# * If a "preAuthRef" is not present, it is assumed that the claim is rejected.
+# 
+# The approval/denial is decided based on the reviewActionCode of each item adjudication.
+# https://hl7.org/fhir/us/davinci-pas/STU2/StructureDefinition-extension-reviewAction.html
+# 
+# + claimResponse - The claim response resource to determine the status of
+# 
+# + return - returns 3 if approved, 5 if denied, 4 if partially approved. This should be fixed after the issue
+# https://github.com/wso2-enterprise/moesif-internal/issues/7
+isolated function determineClaimStatus(ClaimResponse claimResponse) returns int {
+ 
+    log:printDebug(string `Outcome of the claim response is: ${claimResponse.outcome}`);
+
+    int numberOfItems = 0;
+    int numberOfApprovedAdjudications = 0;
+
+    davincipas:PASClaimResponseItem[]? items = claimResponse.item;
+
+    if items is davincipas:PASClaimResponseItem[] {
+            
+        numberOfItems = items.length();
+        log:printDebug(string `Claim response has ${numberOfItems} items.`);
+
+        if numberOfItems == 0 {
+
+            // When a completed claim doesn't have items, if a "preAuthRef" is present, this can mean the whole 
+            // request is approved and no item review was required.
+            if claimResponse.preAuthRef is string {
+                log:printDebug(string `Number of items: ${numberOfItems}`);
+                log:printDebug(string `Number of approved adjudications: ${numberOfApprovedAdjudications}`);
+                log:printDebug(string `Aggregated status: Approved`);
+                return APPROVED;
+            }
+            // When there are no items present in a "completed" claim, this can mean the request is rejected.
+            log:printDebug(string `Number of items: ${numberOfItems}`);
+            log:printDebug(string `Number of approved adjudications: ${numberOfApprovedAdjudications}`);
+            log:printDebug(string `Aggregated status: Denied`);
+            return DENIED;
+        }
+
+        foreach davincipas:PASClaimResponseItem item in items {
+            davincipas:PASClaimResponseAdjudication[]? adjudications = item.adjudication;
+            
+            if adjudications is davincipas:PASClaimResponseAdjudication[] {
+                foreach davincipas:PASClaimResponseAdjudication adjudication in adjudications {
+                
+                    r4:Extension[]? adjudicationExtensions = adjudication.extension;
+                    if adjudicationExtensions is r4:Extension[] {
+                        
+                        foreach r4:Extension adjudicationExtension in adjudicationExtensions {
+                            if adjudicationExtension.url == REVIEW_ACTION_URL {
+                                
+                                r4:Extension[]? reviewActionExtensions = adjudicationExtension.extension;
+                                if reviewActionExtensions is r4:Extension[] {
+                                    
+                                    foreach r4:Extension reviewActionExtension in reviewActionExtensions {
+                                        if reviewActionExtension.url == REVIEW_ACTION_CODE_URL {
+                                            
+                                            r4:CodeableConceptExtension|error reviewActionCodeableConceptExtension = reviewActionExtension.cloneWithType();
+                                            if reviewActionCodeableConceptExtension is r4:CodeableConceptExtension {
+                                                r4:CodeableConcept reviewActionCodeableConcept = reviewActionCodeableConceptExtension.valueCodeableConcept;
+                                                r4:Coding[]? reviewActionCodings = reviewActionCodeableConcept.coding;
+                                                
+                                                if reviewActionCodings is r4:Coding[] {
+                                                    foreach r4:Coding reviewActionCoding in reviewActionCodings {
+                                                        r4:code? code = reviewActionCoding.code;
+                                                        if code is string && code == A1 {
+                                                                numberOfApprovedAdjudications += 1;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        log:printDebug(string `Number of items: ${numberOfItems}`);
+        log:printDebug(string `Number of approved adjudications: ${numberOfApprovedAdjudications}`);
+        if numberOfItems == numberOfApprovedAdjudications {
+            log:printDebug(string `Aggregated status: Approved`);
+            return APPROVED;
+        }
+        if numberOfApprovedAdjudications == 0 {
+            log:printDebug(string `Aggregated status: Denied`);
+            return DENIED;
+        }
+        if numberOfItems > numberOfApprovedAdjudications {
+            log:printDebug(string `Aggregated status: Partially Approved`);
+            return PARTIALLY_APPROVED;
+        }
+    }
+    // When a completed claim doesn't have items, if a "preAuthRef" is present, this can mean the whole 
+    // request is approved and no item review was required.
+    if claimResponse.preAuthRef is string {
+        log:printDebug(string `Number of items: ${numberOfItems}`);
+        log:printDebug(string `Number of approved adjudications: ${numberOfApprovedAdjudications}`);
+        log:printDebug(string `Aggregated status: Approved`);
+        return APPROVED;
+    }
+    log:printDebug(string `Number of items: ${numberOfItems}`);
+    log:printDebug(string `Number of approved adjudications: ${numberOfApprovedAdjudications}`);
+    // When there are no items present in a "completed" claim, this can mean the request is rejected.
+    log:printDebug(string `Aggregated status: Denied`);
+    return DENIED;
 }

@@ -160,16 +160,23 @@ public enum ResourceType {
     ENCOUNTER = "Encounter",
     GOAL = "Goal",
     IMMUNIZATION = "Immunization",
+    INSURANCE_PLAN = "InsurancePlan",
+    LIBRARY = "Library",
+    LOCATION = "Location",
     MEDICATION_REQUEST = "MedicationRequest",
+    MEDICATION_KNOWLEDGE = "MedicationKnowledge",
     OBSERVATION = "Observation",
     ORGANIZATION = "Organization",
     PATIENT = "Patient",
     PRACTITIONER = "Practitioner",
     PRACTITIONER_ROLE = "PractitionerRole",
     PROCEDURE = "Procedure",
+    PROVENANCE = "Provenance",
     QUESTIONNAIRE = "Questionnaire",
     QUESTIONNAIRE_PACKAGE = "QuestionnairePackage",
     QUESTIONNAIRE_RESPONSE = "QuestionnaireResponse",
+    SCHEDULE = "Schedule",
+    SLOT = "Slot",
     EXPLANATION_OF_BENEFIT = "ExplanationOfBenefit",
     GROUP = "Group",
     SERVICE_REQUEST = "ServiceRequest",
@@ -643,3 +650,29 @@ public type FhirToX12ServicePayload record {|
     json payload;
     json x12Headers;
 |};
+
+public enum ClaimPriority {
+    NORMAL = "normal",
+    STAT = "stat",
+    DEFERRED = "deferred"
+}
+
+//todo: Remove integer mappings and use string mappings after this issue is fixed: https://github.com/wso2-enterprise/moesif-internal/issues/7
+// Claim type
+final int STANDARD = 1;
+final int EXPEDITED = 2;
+
+// Claim statuses
+final int APPROVED = 3;
+final int PARTIALLY_APPROVED = 4;
+final int DENIED = 5;
+
+public enum X12ReviewActionCodes {
+    A1 = "A1", // Approved
+    A2 = "A2", // Partially Approved
+    A3 = "A3" // Denied
+}
+
+public enum ClaimResponseOutcome {
+    COMPLETED = "complete"
+}

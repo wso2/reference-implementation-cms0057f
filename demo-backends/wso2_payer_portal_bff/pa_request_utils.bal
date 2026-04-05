@@ -19,7 +19,6 @@ import ballerina/http;
 import ballerina/time;
 import ballerina/sql;
 import ballerinax/health.fhir.r4;
-import ballerinax/health.fhir.r4.ips;
 import ballerinax/health.fhir.r4.parser;
 import ballerinax/health.fhir.r4.international401;
 import ballerinax/health.fhir.r4.davincipas;
@@ -29,6 +28,8 @@ import ballerina/uuid;
 // Prior Authorization Request Utility Functions
 // ============================================
 
+const string ORGANIZATION = "/Organization";
+const string CLAIM = "/Claim";
 const string CLAIM_RESPONSE = "/ClaimResponse";
 
 # Query PA requests from the pa_requests database table
@@ -169,7 +170,7 @@ public function getPARequestDetail(string responseId) returns PARequestDetail|er
     international401:ClaimResponse claimResponse = check getClaimResponse(responseId, limited = false);
 
     // 3. Fetch Claim directly using request_id from DB (no need to parse ClaimResponse.request)
-    json claim = check fhirHttpClient->get("/Claim/" + requestId);
+    json claim = check fhirHttpClient->get(string `${CLAIM}/${requestId}`);
     international401:Claim pasClaim = <international401:Claim> check parser:parse(claim, international401:Claim);
 
     // 4. Get IPS summary using patient_id from DB (no need to parse Claim.patient.reference)
@@ -234,7 +235,7 @@ public function getPARequestDetail(string responseId) returns PARequestDetail|er
         foreach r4:Reference commRef in <r4:Reference[]>claimResponse.communicationRequest {
             string? refStr = commRef.reference;
             if refStr is string {
-                json|http:ClientError commReqJson = fhirHttpClient->get("/" + refStr);
+                json|http:ClientError commReqJson = fhirHttpClient->get(string `/${refStr}`);
                 if commReqJson is json {
                     CommunicationRequestItem|error commReqItem = parseCommunicationRequest(commReqJson);
                     if commReqItem is CommunicationRequestItem {
@@ -370,7 +371,7 @@ function parseCommunicationRequest(json commReqJson) returns CommunicationReques
 # + limited - Whether to fetch a limited set of elements
 # + return - ClaimResponse JSON or null if not found
 function getClaimResponse(string claimResId, boolean limited=true) returns international401:ClaimResponse|error{
-    string claimResponsePath = CLAIM_RESPONSE + "/" + claimResId;
+    string claimResponsePath = string `${CLAIM_RESPONSE}/${claimResId}`;
     if limited {
         claimResponsePath += "?_elements=outcome,disposition,processNote";
     }
@@ -390,7 +391,7 @@ function getClaimResponse(string claimResId, boolean limited=true) returns inter
 # + return - PatientInformation or error
 function getPatientIPSSummary(string patientId) returns PatientInformation|error {
     // Get patient summary using IPS $summary operation
-    json|error ipsSummary = fhirHttpClient->get("/Patient/" + patientId + "/$summary");
+    json|error ipsSummary = fhirHttpClient->get(string `/Patient/${patientId}/$summary`);
     if ipsSummary is error{
         log:printError("Failed to fetch IPS summary for patient " + patientId + ": " + ipsSummary.message());
         return ipsSummary;
@@ -405,18 +406,18 @@ function getPatientIPSSummary(string patientId) returns PatientInformation|error
     return patientInfo;
 }
 
-# Parse IPS Patient resource to PatientInformation
+# Parse Patient resource to PatientInformation
 #
-# + patient - IPS Patient resource
+# + patient - Patient resource
 # + return - PatientInformation or error
-function parsePatientResource(ips:PatientUvIps patient) returns PatientInformation|error {
+function parsePatientResource(international401:Patient patient) returns PatientInformation|error {
     string patientId = patient.id ?: "unknown";
-    
+
     // Extract name - work with anydata
     string fullName = "Unknown";
-    ips:PatientUvIpsName[] nameData = patient.name;
+    r4:HumanName[] nameData = patient.name ?: [];
     if nameData.length() > 0 {
-        ips:PatientUvIpsName firstNameData = nameData[0];
+        r4:HumanName firstNameData = nameData[0];
         string[]? givenData = firstNameData.given;
         string? familyData = firstNameData.family;
         string? family = familyData is string ? familyData : ();
@@ -437,15 +438,15 @@ function parsePatientResource(ips:PatientUvIps patient) returns PatientInformati
     }
     
     // Extract birth date
-    r4:date birthDate = patient.birthDate;
-    
+    r4:date? birthDate = patient.birthDate;
+
     // Extract gender
-    ips:PatientUvIpsGender gender = patient.gender ?: "unknown";
-    
+    international401:PatientGender gender = patient.gender ?: "unknown";
+
     PatientDemographics demographics = {
         name: fullName,
-        dateOfBirth: birthDate,
-        age: calculateAge(birthDate),
+        dateOfBirth: birthDate ?: "unknown",
+        age: birthDate is r4:date ? calculateAge(birthDate) : (),
         gender: gender,
         mrn: patientId
     };
@@ -467,37 +468,37 @@ function parsePatientResource(ips:PatientUvIps patient) returns PatientInformati
 # + return - PatientInformation or error
 function parseIPSBundle(r4:Bundle ipsBundle, string patientId) returns PatientInformation|error {
 
-    ips:PatientUvIps? patientResource = ();
-    ips:AllergyIntoleranceUvIps[] allergyResources = [];
-    ips:MedicationStatementIPS[] medicationResources = [];
+    international401:Patient? patientResource = ();
+    international401:AllergyIntolerance[] allergyResources = [];
+    international401:MedicationStatement[] medicationResources = [];
 
     foreach r4:BundleEntry entry in <r4:BundleEntry[]>ipsBundle.entry{
         if (<string>(<r4:uri>entry.fullUrl)).includes("Patient"){
-            patientResource = check (entry?.'resource).cloneWithType(ips:PatientUvIps);
+            patientResource = check (entry?.'resource).cloneWithType(international401:Patient);
         } else if (<string>(<r4:uri>entry.fullUrl)).includes("AllergyIntolerance"){
-            ips:AllergyIntoleranceUvIps allergyResource = check (entry?.'resource).cloneWithType(ips:AllergyIntoleranceUvIps);
+            international401:AllergyIntolerance allergyResource = check (entry?.'resource).cloneWithType(international401:AllergyIntolerance);
             allergyResources.push(allergyResource);
         } else if (<string>(<r4:uri>entry.fullUrl)).includes("MedicationStatement"){
-            ips:MedicationStatementIPS medicationResource = check (entry?.'resource).cloneWithType(ips:MedicationStatementIPS);
+            international401:MedicationStatement medicationResource = check (entry?.'resource).cloneWithType(international401:MedicationStatement);
             medicationResources.push(medicationResource);
         }
     }
 
     // Parse patient demographics from the patient field
-    PatientInformation patientInfo = check parsePatientResource(<ips:PatientUvIps>patientResource);
-    
+    PatientInformation patientInfo = check parsePatientResource(<international401:Patient>patientResource);
+
     // Extract allergies from allergyIntolerance array
     AllergyIntolerance[] allergies = [];
-    foreach ips:AllergyIntoleranceUvIps allergyResource in allergyResources {
+    foreach international401:AllergyIntolerance allergyResource in allergyResources {
         AllergyIntolerance? allergy = parseAllergy(allergyResource);
         if allergy is AllergyIntolerance {
             allergies.push(allergy);
         }
     }
-    
+
     // Extract medications from medicationStatement array
     MedicationStatement[] medications = [];
-    foreach ips:MedicationStatementIPS medResource in medicationResources {
+    foreach international401:MedicationStatement medResource in medicationResources {
         MedicationStatement? med = parseMedicationStatement(medResource);
         if med is MedicationStatement {
             medications.push(med);
@@ -511,12 +512,12 @@ function parseIPSBundle(r4:Bundle ipsBundle, string patientId) returns PatientIn
 
 # Parse AllergyIntolerance resource
 #
-# + allergyResource - IPS AllergyIntolerance resource
+# + allergyResource - AllergyIntolerance resource
 # + return - AllergyIntolerance or null
-function parseAllergy(ips:AllergyIntoleranceUvIps allergyResource) returns AllergyIntolerance? {
-    ips:CodeableConceptUvIps? code = allergyResource.code;
+function parseAllergy(international401:AllergyIntolerance allergyResource) returns AllergyIntolerance? {
+    r4:CodeableConcept? code = allergyResource.code;
     string substance = "Unknown";
-    if code is ips:CodeableConceptUvIps{
+    if code is r4:CodeableConcept {
         substance = code.text ?: "Unknown";
     }
     string? severity = allergyResource.criticality;
@@ -528,15 +529,15 @@ function parseAllergy(ips:AllergyIntoleranceUvIps allergyResource) returns Aller
 
 # Parse MedicationStatement resource
 #
-# + medResource - IPS MedicationStatement resource
+# + medResource - MedicationStatement resource
 # + return - MedicationStatement or null
-function parseMedicationStatement(ips:MedicationStatementIPS medResource) returns MedicationStatement? {
+function parseMedicationStatement(international401:MedicationStatement medResource) returns MedicationStatement? {
     if medResource.status != "active" {
         return ();
     }
     string medication = "";
-    ips:CodeableConceptUvIps? medCodeData = medResource.medicationCodeableConcept;
-    if medCodeData is ips:CodeableConceptUvIps {
+    r4:CodeableConcept? medCodeData = medResource.medicationCodeableConcept;
+    if medCodeData is r4:CodeableConcept {
         medication = medCodeData.text ?: "Unknown";
     }
     return {
@@ -595,10 +596,10 @@ function getProviderInformation(r4:Reference providerRef) returns ProviderInform
 # + practitionerId - Practitioner ID
 # + return - ProviderInformation or error
 function getPractitionerInfo(string practitionerId) returns ProviderInformation|error {
-    json practitionerRoleRes = check fhirHttpClient->get("/PractitionerRole/" + practitionerId);
+    json practitionerRoleRes = check fhirHttpClient->get(string `/PractitionerRole/${practitionerId}`);
     international401:PractitionerRole practitionerRole = <international401:PractitionerRole> check parser:parse(practitionerRoleRes);
 
-    json practitionerRes = check fhirHttpClient->get("/" + <string>practitionerRole.practitioner?.reference);
+    json practitionerRes = check fhirHttpClient->get(string `/${<string>practitionerRole.practitioner?.reference}`);
     international401:Practitioner practitioner = <international401:Practitioner> check parser:parse(practitionerRes);
 
     string fullName = "Unknown Practitioner";
@@ -696,7 +697,7 @@ function getPractitionerInfo(string practitionerId) returns ProviderInformation|
 # + organizationId - Organization ID
 # + return - Facility or error
 function extractFacilityInfo(string organizationId) returns Facility|error {
-    json organizationJson = check fhirHttpClient->get("/Organization/" + organizationId);
+    json organizationJson = check fhirHttpClient->get(string `${ORGANIZATION}/${organizationId}`);
     international401:Organization org = check organizationJson.cloneWithType(international401:Organization);
 
     // Extract organization name
@@ -733,7 +734,7 @@ function extractFacilityInfo(string organizationId) returns Facility|error {
 # + organizationId - Organization ID
 # + return - ProviderInformation or error
 function getOrganizationInfo(string organizationId) returns ProviderInformation|error {
-    json organizationJson = check fhirHttpClient->get("/Organization/" + organizationId);
+    json organizationJson = check fhirHttpClient->get(string `${ORGANIZATION}/${organizationId}`);
     international401:Organization org = check organizationJson.cloneWithType(international401:Organization);
     
     // Extract organization name

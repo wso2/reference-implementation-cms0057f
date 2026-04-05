@@ -18,10 +18,23 @@ import ballerina/http;
 import ballerinax/health.clients.fhir as fhirClient;
 import ballerinax/health.fhir.r4;
 
-public isolated function create(fhirClient:FHIRConnector fhirConnector, ResourceType resourceType, json payload) returns r4:DomainResource|r4:FHIRError {
+public isolated function create(fhirClient:FHIRConnector fhirConnector, ResourceType resourceType, json payload, r4:FHIRContext? fhirContext = ()) returns r4:DomainResource|r4:FHIRError {
     fhirClient:FHIRResponse|fhirClient:FHIRError response = fhirConnector->create(payload, returnPreference = "representation");
 
     if response is fhirClient:FHIRError {
+        if response is fhirClient:FHIRServerError {
+            int statusCode = response.detail().httpStatusCode;
+            json|xml body = response.detail().'resource;
+            if body is json {
+                r4:OperationOutcome|error operationOutcome = body.cloneWithType();
+                if operationOutcome is r4:OperationOutcome {
+                    if fhirContext is r4:FHIRContext {
+                        fhirContext.setResponseStatusCode(statusCode);
+                    }
+                    return operationOutcome;
+                }
+            }
+        }
         return r4:createFHIRError(response.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
     }
 

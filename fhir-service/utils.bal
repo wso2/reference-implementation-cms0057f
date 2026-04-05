@@ -1415,6 +1415,8 @@ isolated function validatePreferHeader(r4:HTTPRequest? httpReq, string requiredV
     return r4:createFHIRError(
             "The 'Prefer' header value must be '" + requiredValue + "'",
             r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+}
+
 # Determines the type of the claim. Whether the claim is a standard claim or an expedited claim.
 # This function takes the related claim of the claim response and the claim response and checks
 # the claim.priority field. If the priority is "stat", then it is an expedited claim, otherwise it is a standard claim.

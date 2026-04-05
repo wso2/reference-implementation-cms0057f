@@ -118,6 +118,10 @@ public isolated class DemoFHIRMemberMatcher {
         log:printDebug(string `[member-match] FHIR read request: GET Coverage/${coverageId}`);
         r4:DomainResource|r4:FHIRError storedCoverage = getById(self.fhirConnector, COVERAGE, coverageId);
         if storedCoverage is r4:FHIRError {
+            if storedCoverage.detail().httpStatusCode == http:STATUS_NOT_FOUND {
+                log:printDebug(string `[member-match] Coverage/${coverageId} not found — returning no match`);
+                return r4:createFHIRError("Coverage not matched with any existing records", r4:ERROR, r4:PROCESSING_NOT_FOUND, httpStatusCode = http:STATUS_UNPROCESSABLE_ENTITY);
+            }
             log:printError(string `[member-match] FHIR read error: Coverage/${coverageId}`, storedCoverage);
             return INTERNAL_ERROR;
         }

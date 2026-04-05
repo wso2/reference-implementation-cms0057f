@@ -62,7 +62,7 @@ final http:Client fhirHttpClient = check new (baseUrl);
 isolated http:Client? x12ConnectionClient = ();
 
 isolated function init() returns error? {
-    check validateFieldsConfig(fields);
+    check validateFieldsConfig(memberMatchConfig);
 
     if bulkMemberMatchMode != "respond-async" && bulkMemberMatchMode != "respond-sync" {
         return error("Invalid bulkMemberMatchMode: '" + bulkMemberMatchMode
@@ -1700,7 +1700,7 @@ service /fhir/r4/Consent on new fhirr4:Listener(config = consentApiConfig) {
             consentStore[<string>consent.id] = consentCopy;
         }
 
-        log:printInfo("Consent created with ID: " + <string>consent.id);
+        log:printDebug("Consent created with ID: " + <string>consent.id);
         return consent;
     }
 
@@ -1729,7 +1729,7 @@ service /fhir/r4/Consent on new fhirr4:Listener(config = consentApiConfig) {
             consentStore[<string>id] = consent.clone();
         }
 
-        log:printInfo("Consent updated with ID: " + id);
+        log:printDebug("Consent updated with ID: " + id);
         return consent;
     }
 
@@ -1746,7 +1746,7 @@ service /fhir/r4/Consent on new fhirr4:Listener(config = consentApiConfig) {
             _ = consentStore.remove(<string>id);
         }
 
-        log:printInfo("Consent deleted with ID: " + id);
+        log:printDebug("Consent deleted with ID: " + id);
 
         r4:OperationOutcome outcome = {
             resourceType: "OperationOutcome",
@@ -1814,7 +1814,7 @@ service /fhir/r4/Consent on new fhirr4:Listener(config = consentApiConfig) {
         ConsentEvaluationResult result = evaluateConsent(consent, matchedMember);
 
         if result.isValid {
-            log:printInfo("Consent evaluation successful for patient: " + (result.patientId ?: "unknown"));
+            log:printDebug("Consent evaluation successful for patient: " + (result.patientId ?: "unknown"));
             // Return success response with patient ID
             return createSuccessResponse(result);
         } else {

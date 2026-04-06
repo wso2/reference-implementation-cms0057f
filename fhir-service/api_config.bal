@@ -1101,7 +1101,7 @@ final r4:ResourceAPIConfig groupApiConfig = {
                 }
             },
             parameters: [
-                {name: "member", active: true, min: 1},
+                {name: "MemberBundle", active: true, min: 1},
                 {name: "providerIdentifier", active: true, min: 0}
             ]
         },

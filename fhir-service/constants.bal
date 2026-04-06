@@ -176,4 +176,3 @@ const string OPT_OUT_SCOPE_PROVIDER_SPECIFIC = "provider-specific";
 const string OPT_OUT_SCOPE_PURPOSE_SPECIFIC = "purpose-specific";
 const string OPT_OUT_SCOPE_PAYER_SPECIFIC = "payer-specific";
 const string OPT_OUT_SCOPE_PROVIDER_CATEGORY = "provider-category";
->>>>>>> 8fdb284 (Add member attribution support for provider access)

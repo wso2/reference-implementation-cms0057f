@@ -1110,32 +1110,31 @@ isolated function extractProviderMemberMatchInputs(r4:FHIRContext fhirContext, i
     }
 
     string[] memberPatientIds = [];
-    // parameters.'parameter may arrive as json[] at runtime — use JSON traversal to avoid TypeCastError
+    // Per spec inputs are MemberBundle
+    // parameters, each with parts: MemberPatient (1..1), CoverageToMatch (1..1), Consent (1..1),
+    // and optionally CoverageToLink (0..1). Extract patient ID from MemberPatient.resource.id.
     json parametersJson = parameters.toJson();
     json[]|error rawParams = (parametersJson).'parameter.ensureType();
     json[] paramList = rawParams is json[] ? rawParams : [];
     foreach json p in paramList {
         json|error nameVal = p.name;
-        if nameVal is string && nameVal == "member" {
-            // Try valueReference.reference first
-            json|error refVal = p.valueReference.reference;
-            if refVal is string && refVal.trim() != "" {
-                string ref = refVal.trim();
-                if ref.startsWith("Patient/") {
-                    memberPatientIds.push(ref.substring(8));
-                } else {
-                    memberPatientIds.push(ref);
-                }
-            } else {
-                // Fall back to valueString
-                json|error strVal = p.valueString;
-                if strVal is string && strVal.trim() != "" {
-                    string val = strVal.trim();
-                    if val.startsWith("Patient/") {
-                        memberPatientIds.push(val.substring(8));
-                    } else {
-                        memberPatientIds.push(val);
+        if nameVal is string && nameVal == "MemberBundle" {
+            json|error partsVal = p.part;
+            if partsVal is error {
+                continue;
+            }
+            json[]|error parts = partsVal.ensureType();
+            if parts is error {
+                continue;
+            }
+            foreach json part in parts {
+                json|error partName = part.name;
+                if partName is string && partName == "MemberPatient" {
+                    json|error patientId = part.'resource.id;
+                    if patientId is string && patientId.trim() != "" {
+                        memberPatientIds.push(patientId.trim());
                     }
+                    break;
                 }
             }
         }

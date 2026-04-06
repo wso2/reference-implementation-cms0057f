@@ -80,7 +80,9 @@ configurable MemberMatchConfig memberMatchConfig = {
 
 # Validate the MemberMatchConfig at application startup.
 # Checks each field's algorithm, weight range [0.0, 1.0], total weight sum (≤ 1.0),
-# each gradeThreshold range [0.0, 1.0], and strictly descending order (certain > probable > possible).
+# each gradeThreshold range [0.0, 1.0], strictly descending order (certain > probable > possible),
+# and per-algorithm numeric knobs: levenshteinThreshold and jaroWinklerThreshold in [0.0, 1.0],
+# jaroWinklerPrefixScale in [0.0, 0.25].
 # + cfg - The loaded MemberMatchConfig to validate
 # + return - An error naming the offending field or threshold, or nil if all checks pass
 isolated function validateFieldsConfig(MemberMatchConfig cfg) returns error? {
@@ -92,6 +94,14 @@ isolated function validateFieldsConfig(MemberMatchConfig cfg) returns error? {
     check validateFieldAlgorithm("gender", f.gender.algorithm);
     check validateFieldAlgorithm("phone", f.phone.algorithm);
     check validateFieldAlgorithm("postalCode", f.postalCode.algorithm);
+
+    check validateFieldThresholds("identifier", f.identifier);
+    check validateFieldThresholds("family", f.family);
+    check validateFieldThresholds("given", f.given);
+    check validateFieldThresholds("birthDate", f.birthDate);
+    check validateFieldThresholds("gender", f.gender);
+    check validateFieldThresholds("phone", f.phone);
+    check validateFieldThresholds("postalCode", f.postalCode);
 
     // Validate per-field weight range [0.0, 1.0]
     map<decimal> fieldWeights = {
@@ -146,6 +156,24 @@ isolated function validateFieldAlgorithm(string fieldName, string algorithm) ret
             return error("Unsupported algorithm '" + algorithm + "' for fields." + fieldName
                 + ". Accepted values: exact, levenshtein, soundex, jarowinkler");
         }
+    }
+}
+
+isolated function validateFieldThresholds(string fieldName, FieldConfig fc) returns error? {
+    decimal? lev = fc.levenshteinThreshold;
+    if lev != () && (lev < 0.0d || lev > 1.0d) {
+        return error("fields." + fieldName + " levenshteinThreshold " + lev.toString()
+            + " is out of range [0.0, 1.0]");
+    }
+    decimal? jt = fc.jaroWinklerThreshold;
+    if jt != () && (jt < 0.0d || jt > 1.0d) {
+        return error("fields." + fieldName + " jaroWinklerThreshold " + jt.toString()
+            + " is out of range [0.0, 1.0]");
+    }
+    decimal? ps = fc.jaroWinklerPrefixScale;
+    if ps != () && (ps < 0.0d || ps > 0.25d) {
+        return error("fields." + fieldName + " jaroWinklerPrefixScale " + ps.toString()
+            + " is out of range [0.0, 0.25]");
     }
 }
 

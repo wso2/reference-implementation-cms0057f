@@ -53,7 +53,12 @@ public isolated function getById(fhirClient:FHIRConnector fhirConnector, Resourc
     fhirClient:FHIRResponse|fhirClient:FHIRError response = fhirConnector->getById(resourceType, id);
 
     if response is fhirClient:FHIRError {
-        return r4:createFHIRError(response.message(), r4:ERROR, r4:PROCESSING_NOT_FOUND, httpStatusCode = http:STATUS_NOT_FOUND);
+        if response is fhirClient:FHIRServerError {
+            int statusCode = response.detail().httpStatusCode;
+            r4:IssueType issueType = statusCode == http:STATUS_NOT_FOUND ? r4:PROCESSING_NOT_FOUND : r4:PROCESSING;
+            return r4:createFHIRError(response.message(), r4:ERROR, issueType, httpStatusCode = statusCode);
+        }
+        return r4:createFHIRError(response.message(), r4:ERROR, r4:PROCESSING, httpStatusCode = http:STATUS_INTERNAL_SERVER_ERROR);
     }
 
     if response.'resource is json {

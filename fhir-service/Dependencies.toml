@@ -409,7 +409,7 @@ org = "ballerinax"
 name = "confluent.cregistry"
 version = "0.4.4"
 dependencies = [
-	{org = "ballerina", name = "jballerina.java"}
+	{org = "ballerina", name = "jballerina.java"},
 	{org = "ballerinai", name = "observe"}
 ]
 

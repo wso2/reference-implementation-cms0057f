@@ -389,27 +389,6 @@ dependencies = [
 	{org = "ballerina", name = "io"},
 	{org = "ballerina", name = "jballerina.java"},
 	{org = "ballerina", name = "log"},
-	{org = "ballerinai", name = "observe"},
-	{org = "ballerinax", name = "kafka"}
-]
-
-[[package]]
-org = "ballerinax"
-name = "confluent.cavroserdes"
-version = "1.0.2"
-dependencies = [
-	{org = "ballerina", name = "avro"},
-	{org = "ballerina", name = "jballerina.java"},
-	{org = "ballerinai", name = "observe"},
-	{org = "ballerinax", name = "confluent.cregistry"}
-]
-
-[[package]]
-org = "ballerinax"
-name = "confluent.cregistry"
-version = "0.4.4"
-dependencies = [
-	{org = "ballerina", name = "jballerina.java"},
 	{org = "ballerinai", name = "observe"}
 ]
 
@@ -452,7 +431,7 @@ modules = [
 [[package]]
 org = "ballerinax"
 name = "health.fhir.r4"
-version = "6.3.1"
+version = "6.3.2"
 dependencies = [
 	{org = "ballerina", name = "constraint"},
 	{org = "ballerina", name = "http"},

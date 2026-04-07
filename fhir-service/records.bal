@@ -27,7 +27,9 @@ import ballerinax/health.fhir.r4.international401;
 # the result Group resources. Per spec:
 # - MatchedMembers: memberRef = the receiving-payer Patient reference (e.g. "Patient/1001")
 # - NonMatched / ConsentConstrained: memberRef = () (entity will reference the contained patient)
-# originalPatient may be () for error cases where parsing failed before we had a patient.
+# + originalPatient - Input member patient from the request bundle; may be () if parse failed
+# + memberRef - Outcome Patient reference for matched members; () for non-match paths
+# + displayOnly - Fallback label when entity has no resolvable patient reference
 public type MemberOutcomeEntry record {|
     international401:Patient? originalPatient;
     r4:Reference? memberRef;
@@ -60,6 +62,103 @@ public type BulkMemberMatchJob record {|
     time:Utc createdAt;
     time:Utc? completedAt;
     (davincipdex220:PDexMultiMemberMatchResponseParameters & readonly)? result;
+    string? errorMessage;
+|};
+
+// ============================================================================
+// Provider Access v2 Types
+// ============================================================================
+
+# Provider-member-match outcome bucket.
+public enum ProviderMemberMatchOutcome {
+    PROVIDER_MATCHED = "matched",
+    PROVIDER_NO_MATCH = "no-match",
+    PROVIDER_CONSENT_CONSTRAINED = "consent-constrained"
+}
+
+# Internal lifecycle state for provider access groups.
+public enum ProviderAccessGroupLifecycleStatus {
+    PROVIDER_GROUP_ACTIVE = "active",
+    PROVIDER_GROUP_EXPIRED = "expired"
+}
+
+# Member and provider treatment relationship data used for classification.
+# + memberPatientId - Logical id of the member Patient
+# + providerIdentifier - Provider identifier context (e.g. NPI)
+# + relationshipCode - Relationship or role code from attribution logic
+# + lastEncounterDate - Optional last qualifying encounter or service date
+public type TreatmentRelationshipEntry record {|
+    string memberPatientId;
+    string providerIdentifier;
+    string relationshipCode;
+    string lastEncounterDate?;
+|};
+
+# Member opt-out details with scope metadata.
+# + memberPatientId - Logical id of the member Patient
+# + scope - Opt-out scope code (e.g. global, provider-specific)
+# + reason - Optional reason text or code
+public type MemberOptOutEntry record {|
+    string memberPatientId;
+    string scope;
+    string reason?;
+|};
+
+# A classified no-match outcome with reason code/details.
+# + memberPatientId - Logical id of the member Patient
+# + reasonCode - Machine-readable no-match reason
+# + details - Optional human-readable diagnostics
+public type ProviderNoMatchReason record {|
+    string memberPatientId;
+    string reasonCode;
+    string details?;
+|};
+
+# Expiry metadata for short-lived matched member groups.
+# + expiresAt - UTC instant when the matched group expires
+# + ttlDays - TTL in days used when computing expiry
+public type MatchedGroupExpiryMetadata record {|
+    time:Utc expiresAt;
+    int ttlDays;
+|};
+
+# One provider-member-match decision entry.
+# + memberPatientId - Logical id of the member Patient
+# + providerIdentifier - Requesting provider identifier for this decision
+# + outcome - Matched, no-match, or consent-constrained bucket
+# + reason - Short reason code or diagnostics for the outcome
+# + memberRef - Patient reference when matched; () otherwise
+public type ProviderMatchDecision record {|
+    string memberPatientId;
+    string providerIdentifier;
+    ProviderMemberMatchOutcome outcome;
+    string reason;
+    r4:Reference? memberRef;
+|};
+
+# Status enum for async provider-member-match jobs
+public enum ProviderMemberMatchStatus {
+    PROVIDER_MEMBER_MATCH_PENDING = "pending",
+    PROVIDER_MEMBER_MATCH_PROCESSING = "processing",
+    PROVIDER_MEMBER_MATCH_COMPLETED = "completed",
+    PROVIDER_MEMBER_MATCH_FAILED = "failed"
+}
+
+# Internal record tracking an async provider-member-match job.
+# + jobId - Unique async job identifier
+# + providerIdentifier - Requesting provider identifier that owns this job
+# + status - Current job lifecycle status
+# + createdAt - Time the job was accepted
+# + completedAt - Time the job finished; () while running
+# + result - JSON summary payload when completed; () until then
+# + errorMessage - Failure message when status is failed
+public type ProviderMemberMatchJob record {|
+    string jobId;
+    string providerIdentifier;
+    ProviderMemberMatchStatus status;
+    time:Utc createdAt;
+    time:Utc? completedAt;
+    readonly & map<json>? result;
     string? errorMessage;
 |};
 

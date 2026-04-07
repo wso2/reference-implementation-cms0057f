@@ -248,15 +248,12 @@ service /v1 on bff_listener {
             return http:INTERNAL_SERVER_ERROR;
         }
         [PARequestListItem[], int] [paRequests, totalCount] = result;
-        // Get analytics from PostgreSQL
-        // PARequestAnalytics|error analyticsResult = getPARequestAnalytics();
-        // TODO: Discuss and implement analytics - For now, return dummy analytics data
-        PARequestAnalytics analytics = {
-            urgentCount: 0,
-            standardCount: 0,
-            reAuthorizationCount: 0,
-            appealCount: 0
-        };
+        
+        PARequestAnalytics|error analyticsResult = getPARequestAnalytics();
+        if (analyticsResult is error) {
+            log:printError("Failed to retrieve PA request analytics: " + analyticsResult.message());
+            return http:INTERNAL_SERVER_ERROR;
+        }
         PARequestListResponse response = {
             data: paRequests,
             pagination: {
@@ -265,7 +262,7 @@ service /v1 on bff_listener {
                 totalCount: totalCount,
                 totalPages: (totalCount + 'limit - 1) / 'limit
             },
-            analytics: analytics
+            analytics: analyticsResult
         };
         
         return response;
@@ -309,6 +306,27 @@ service /v1 on bff_listener {
         return response;
     }
 
+    # Request additional information for a PA request
+    #
+    # + requestId - PA claim response identifier
+    # + return - returns can be any of following types 
+    # http:Ok (Adjudication submitted successfully)
+    # http:NotFound (PA request not found)
+    # http:InternalServerError (Internal server error)
+    resource function post pa\-requests/[string requestId]/additional\-info(@http:Payload AdditionalInformation payload) 
+        returns http:Ok|http:NotFound|http:InternalServerError {
+
+        AdditionalInfoResponse|error result = submitPARequestAdditionalInfo(requestId, payload);
+        if (result is error) {
+            log:printError("Failed to submit additional info: " + result.message());
+            if (result.message().includes("not found") || result.message().includes("404")) {
+                return http:NOT_FOUND;
+            }
+            return http:INTERNAL_SERVER_ERROR;
+        }
+        return http:OK;
+    }
+
     resource function get patients/[string patientId]() returns json|http:NotFound|http:InternalServerError {
         json|error patient = getFHIRPatientById(patientId);
         if (patient is error) {
@@ -319,6 +337,140 @@ service /v1 on bff_listener {
             return http:INTERNAL_SERVER_ERROR;
         }
         return patient;
+    }
+
+    // ============================================================
+    // CQL Library endpoints
+    // ============================================================
+
+    # Get a FHIR Library by ID
+    #
+    # + libraryId - Unique Library identifier
+    # + return - Library resource or error status
+    resource function get libraries/[string libraryId]() returns json|http:NotFound|http:InternalServerError {
+        json|error library = getFHIRLibraryById(libraryId);
+        if library is error {
+            log:printError("Failed to retrieve library: " + library.message());
+            if library.message().includes("not found") || library.message().includes("404") {
+                return http:NOT_FOUND;
+            }
+            return http:INTERNAL_SERVER_ERROR;
+        }
+        return library;
+    }
+
+    # Search for a FHIR Library by canonical URL
+    #
+    # + url - Canonical URL of the Library
+    # + return - Library resource or error status
+    resource function get libraries(string? url) returns json|http:NotFound|http:InternalServerError {
+        if url is () {
+            return http:NOT_FOUND;
+        }
+        json|error library = getFHIRLibraryByUrl(url);
+        if library is error {
+            log:printError("Failed to retrieve library by URL: " + library.message());
+            if library.message().includes("not found") {
+                return http:NOT_FOUND;
+            }
+            return http:INTERNAL_SERVER_ERROR;
+        }
+        return library;
+    }
+
+    # Create a new FHIR Library
+    #
+    # + return - Created Library resource or error status
+    resource function post libraries(@http:Payload json payload) returns json|http:InternalServerError {
+        json|error result = createFHIRLibrary(payload);
+        if result is error {
+            log:printError("Failed to create library: " + result.message());
+            return http:INTERNAL_SERVER_ERROR;
+        }
+        return result;
+    }
+
+    # Update an existing FHIR Library
+    #
+    # + libraryId - Unique Library identifier
+    # + return - Updated Library resource or error status
+    resource function put libraries/[string libraryId](@http:Payload json payload) returns json|http:NotFound|http:InternalServerError {
+        json|error result = updateFHIRLibrary(libraryId, payload);
+        if result is error {
+            log:printError("Failed to update library: " + result.message());
+            if result.message().includes("not found") || result.message().includes("404") {
+                return http:NOT_FOUND;
+            }
+            return http:INTERNAL_SERVER_ERROR;
+        }
+        return result;
+    }
+
+    # Delete a FHIR Library
+    #
+    # + libraryId - Unique Library identifier
+    # + return - No content or error status
+    resource function delete libraries/[string libraryId]() returns http:NoContent|http:NotFound|http:InternalServerError {
+        error? result = deleteFHIRLibrary(libraryId);
+        if result is error {
+            log:printError("Failed to delete library: " + result.message());
+            if result.message().includes("not found") || result.message().includes("404") {
+                return http:NOT_FOUND;
+            }
+            return http:INTERNAL_SERVER_ERROR;
+        }
+        return http:NO_CONTENT;
+    }
+
+    // ============================================================
+    // ValueSet endpoints
+    // ============================================================
+
+    # Search for a FHIR ValueSet by canonical URL
+    #
+    # + url - Canonical URL of the ValueSet
+    # + return - ValueSet resource or error status
+    resource function get value\-sets(string? url) returns json|http:NotFound|http:InternalServerError {
+        if url is () {
+            return http:NOT_FOUND;
+        }
+        json|error valueSet = getFHIRValueSetByUrl(url);
+        if valueSet is error {
+            log:printError("Failed to retrieve value set by URL: " + valueSet.message());
+            if valueSet.message().includes("not found") {
+                return http:NOT_FOUND;
+            }
+            return http:INTERNAL_SERVER_ERROR;
+        }
+        return valueSet;
+    }
+
+    # Create a new FHIR ValueSet
+    #
+    # + return - Created ValueSet resource or error status
+    resource function post value\-sets(@http:Payload json payload) returns json|http:InternalServerError {
+        json|error result = createFHIRValueSet(payload);
+        if result is error {
+            log:printError("Failed to create value set: " + result.message());
+            return http:INTERNAL_SERVER_ERROR;
+        }
+        return result;
+    }
+
+    # Update an existing FHIR ValueSet
+    #
+    # + valueSetId - Unique ValueSet identifier
+    # + return - Updated ValueSet resource or error status
+    resource function put value\-sets/[string valueSetId](@http:Payload json payload) returns json|http:NotFound|http:InternalServerError {
+        json|error result = updateFHIRValueSet(valueSetId, payload);
+        if result is error {
+            log:printError("Failed to update value set: " + result.message());
+            if result.message().includes("not found") || result.message().includes("404") {
+                return http:NOT_FOUND;
+            }
+            return http:INTERNAL_SERVER_ERROR;
+        }
+        return result;
     }
 
 }

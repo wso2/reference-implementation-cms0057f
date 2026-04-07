@@ -18,7 +18,8 @@ import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import CardMedia from "@mui/material/CardMedia";
 import Typography from "@mui/material/Typography";
-import { CardActionArea } from "@mui/material";
+import { Box, CardActionArea } from "@mui/material";
+import { ArrowForwardRounded as ArrowForwardRoundedIcon } from "@mui/icons-material";
 import { ServiceCardProps } from "./interfaces/card";
 import { Link } from "react-router-dom";
 
@@ -30,34 +31,125 @@ export default function MultiActionAreaCard({
 }: ServiceCardProps) {
   return (
     <Card
-      sx={{ maxWidth: "30vw", borderRadius: 2, backgroundColor: "#F8FAFC" }}
+      elevation={0}
+      sx={{
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        borderRadius: 3,
+        border: "1px solid",
+        borderColor: "divider",
+        bgcolor: "background.paper",
+        overflow: "hidden",
+        transition: "box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease",
+        "&:hover": {
+          boxShadow: "0 12px 40px rgba(15, 23, 42, 0.08)",
+          transform: "translateY(-3px)",
+          borderColor: "primary.main",
+        },
+      }}
     >
-      <Link to={path} style={{ textDecoration: "none", color: "black" }}>
-        <CardActionArea sx={{ display: "flex", justifyContent: "flex-start" }}>
-          <CardMedia
-            component="img"
-            image={serviceImagePath}
-            alt="service image"
+      <CardActionArea
+        component={Link}
+        to={path}
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "stretch",
+          height: "100%",
+          textAlign: "left",
+        }}
+      >
+        <Box
+          sx={{
+            width: "100%",
+            px: 2.5,
+            pt: 2.5,
+            pb: 1,
+            background:
+              "linear-gradient(180deg, rgba(126, 153, 163, 0.12) 0%, rgba(248, 250, 252, 0.9) 100%)",
+          }}
+        >
+          <Box
             sx={{
-              objectFit: "contain",
-              width: "100px",
-              height: "100px",
-              margin: "1vw",
-              padding: "0.3vw",
-              // backgroundColor: "white",
-              borderRadius: 2,
+              mx: "auto",
+              width: 112,
+              height: 112,
+              borderRadius: 2.5,
+              bgcolor: "rgba(255,255,255,0.85)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "0 1px 3px rgba(15,23,42,0.06)",
             }}
-          />
-          <CardContent>
-            <Typography gutterBottom variant="h5" component="div">
-              {serviceName}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {serviceDescription}
-            </Typography>
-          </CardContent>
-        </CardActionArea>
-      </Link>
+          >
+            <CardMedia
+              component="img"
+              image={serviceImagePath}
+              alt=""
+              sx={{
+                objectFit: "contain",
+                width: 88,
+                height: 88,
+                p: 0.5,
+              }}
+            />
+          </Box>
+        </Box>
+        <CardContent
+          sx={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            pt: 1,
+            pb: 2,
+            px: 2.5,
+          }}
+        >
+          <Typography
+            variant="h6"
+            component="h2"
+            sx={{
+              fontWeight: 700,
+              fontSize: "1.05rem",
+              lineHeight: 1.35,
+              color: "text.primary",
+              letterSpacing: "-0.02em",
+            }}
+          >
+            {serviceName}
+          </Typography>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{
+              mt: 1,
+              lineHeight: 1.55,
+              display: "-webkit-box",
+              WebkitLineClamp: 3,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+              flex: 1,
+            }}
+          >
+            {serviceDescription}
+          </Typography>
+          <Box
+            sx={{
+              mt: 2,
+              display: "flex",
+              alignItems: "center",
+              gap: 0.5,
+              color: "primary.main",
+              fontWeight: 600,
+              fontSize: "0.875rem",
+            }}
+          >
+            Open
+            <ArrowForwardRoundedIcon sx={{ fontSize: 18 }} />
+          </Box>
+        </CardContent>
+      </CardActionArea>
     </Card>
   );
 }

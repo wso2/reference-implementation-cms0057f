@@ -14,12 +14,12 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import { SERVICE_CARD_DETAILS, PATIENT_DETAILS } from "../constants/data";
+import { SERVICE_CARD_DETAILS } from "../constants/data";
 import { ServiceCardListProps } from "../components/interfaces/card";
 import MultiActionAreaCard from "../components/serviceCard";
 import { useContext, useEffect } from "react";
 import { ExpandedContext } from "../utils/expanded_context";
-import { useSelector, useDispatch } from "react-redux";
+import { useDispatch } from "react-redux";
 import { selectPatient } from "../redux/patientSlice";
 import { useAuth } from "../components/AuthProvider";
 import { Navigate } from "react-router-dom";
@@ -30,14 +30,22 @@ import {
 } from "../redux/currentStateSlice";
 import { SELECTED_PATIENT_ID } from "../constants/localStorageVariables";
 import { clearLocalStorageForPAPrococess } from "../utils/clearLocalStorage";
+import { Box, Typography } from "@mui/material";
 
 function ServiceCardList({ services, expanded }: ServiceCardListProps) {
   return (
-    <div
-      style={{
+    <Box
+      sx={{
         display: "grid",
-        gridTemplateColumns: expanded ? "repeat(1, 1fr)" : "repeat(3, 1fr)",
-        gap: "20px",
+        gridTemplateColumns: expanded
+          ? "minmax(0, 1fr)"
+          : {
+              xs: "minmax(0, 1fr)",
+              sm: "repeat(2, minmax(0, 1fr))",
+              lg: "repeat(3, minmax(0, 1fr))",
+            },
+        gap: { xs: 2.5, md: 3 },
+        width: "100%",
       }}
     >
       {services.map((service, index) => (
@@ -49,78 +57,84 @@ function ServiceCardList({ services, expanded }: ServiceCardListProps) {
           path={service.path}
         />
       ))}
-    </div>
+    </Box>
   );
 }
 
 const DetailsDiv = () => {
   const dispatch = useDispatch();
 
-  const savedPatientId = localStorage.getItem(SELECTED_PATIENT_ID);
-  console.log("savedPatientId", savedPatientId);
-  if (savedPatientId) {
-    dispatch(selectPatient(savedPatientId));
-  }
-
-  const selectedPatientId = useSelector(
-    (state: any) => state.patient.selectedPatientId
-  );
-  let currentPatient = PATIENT_DETAILS.find(
-    (patient) => patient.id === selectedPatientId
-  );
-
-  if (!currentPatient) {
-    currentPatient = PATIENT_DETAILS[0];
-  }
+  useEffect(() => {
+    const savedPatientId = localStorage.getItem(SELECTED_PATIENT_ID);
+    if (savedPatientId) {
+      dispatch(selectPatient(savedPatientId));
+    }
+  }, [dispatch]);
 
   return (
-    <div>
+    <Box sx={{ mb: 1 }}>
       <PatientInfo />
-    </div>
+    </Box>
   );
 };
 
 function PractitionerDashBoard() {
   const { isAuthenticated } = useAuth();
   const { expanded } = useContext(ExpandedContext);
-  const selectedPatientId = useSelector(
-    (state: any) => state.patient.selectedPatientId
-  );
   const dispatch = useDispatch();
 
   useEffect(() => {
     dispatch(resetCurrentRequest());
     dispatch(updateIsProcess(false));
     clearLocalStorageForPAPrococess();
-  }, []);
-
-  let currentPatient = PATIENT_DETAILS.find(
-    (patient) => patient.id === selectedPatientId
-  );
-
-  if (!currentPatient) {
-    currentPatient = PATIENT_DETAILS[0];
-  }
+  }, [dispatch]);
 
   return isAuthenticated ? (
-    <div style={{ marginLeft: 50, marginBottom: 50 }}>
+    <Box
+      component="main"
+      sx={{
+        width: "100%",
+        maxWidth: 1180,
+        mx: "auto",
+        px: { xs: 2, sm: 3, md: 4 },
+        pb: 6,
+        pt: { xs: 1, md: 2 },
+      }}
+    >
       <DetailsDiv />
-      <div
-        style={{
-          display: "flex",
-          flexDirection: expanded ? "column" : "row",
-          alignItems: "center",
-          justifyContent: "space-between",
+
+      <Box
+        sx={{
+          mb: 3,
+          pb: 2.5,
+          borderBottom: "1px solid",
+          borderColor: "divider",
         }}
-      ></div>
-      <br />
-      <div className="page-heading" style={{ marginTop: "10px" }}>
-        E-Health Services
-      </div>
-      <div style={{ height: "5vh" }}>
-        <ServiceCardList services={SERVICE_CARD_DETAILS} expanded={expanded} />
-      </div>
-    </div>
+      >
+        <Typography
+          variant="h4"
+          component="h1"
+          sx={{
+            fontWeight: 800,
+            letterSpacing: "-0.03em",
+            color: "text.primary",
+            fontSize: { xs: "1.65rem", sm: "2rem" },
+          }}
+        >
+          E-Health Services
+        </Typography>
+        <Typography
+          variant="body1"
+          color="text.secondary"
+          sx={{ mt: 1, maxWidth: 640, lineHeight: 1.6 }}
+        >
+          Select a service to open the workflow. Your current patient context
+          is shown above.
+        </Typography>
+      </Box>
+
+      <ServiceCardList services={SERVICE_CARD_DETAILS} expanded={expanded} />
+    </Box>
   ) : (
     <Navigate to="/" replace />
   );

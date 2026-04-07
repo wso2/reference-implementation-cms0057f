@@ -34,9 +34,9 @@ export const SERVICE_CARD_DETAILS = [
   },
   {
     serviceImagePath: "/drug_order_service.png",
-    serviceName: "Order Drugs",
+    serviceName: "Prescribe Medications",
     serviceDescription:
-      "Order and manage medications for patients, ensuring timely and accurate delivery.",
+      "Manage patient prescriptions, check medication interactions, and initiate Prior Authorization",
     path: "/dashboard/drug-order-v2",
   },
   {
@@ -975,118 +975,112 @@ export const CLAIM_REQUEST_BODY = (
   created: string
 ) => {
   return {
-    resourceType: "Parameters",
-    parameter: [
+    resourceType: "Bundle",
+    type: "collection",
+    entry: [
       {
-        name: "resource",
         resource: {
-          resourceType: "Bundle",
-          type: "collection",
-          entry: [
+          resourceType: "Claim",
+          id: "claim-med-001", // Or generate one
+          meta: {
+            profile: [
+              "http://hl7.org/fhir/us/davinci-pas/StructureDefinition/profile-claim"
+            ]
+          },
+          identifier: [
             {
-              resource: {
-                resourceType: "Claim",
-                identifier: [
+              system: "http://hospital.org/claims",
+              value: "PA-" + new Date().getTime(),
+            },
+          ],
+          status: "active",
+          type: {
+            coding: [
+              {
+                system: "http://terminology.hl7.org/CodeSystem/claim-type",
+                code: "professional",
+                display: "Professional",
+              },
+            ],
+          },
+          use: `${use}`,
+          priority: {
+            coding: [
+              {
+                system: "http://terminology.hl7.org/CodeSystem/processpriority",
+                code: "stat",
+                display: "Immediate",
+              },
+            ],
+          },
+          patient: {
+            reference: `${patient}`,
+          },
+          created: `${created}`,
+          insurer: {
+            reference: `${insurer}`,
+          },
+          provider: {
+            reference: `${provider}`,
+            identifier: {
+              system: "http://hl7.org/fhir/sid/us-npi",
+              value: "N123456"
+            }
+          },
+          insurance: [
+            {
+              sequence: 1,
+              focal: true,
+              coverage: {
+                reference: "Coverage/insurance-coverage",
+              },
+            },
+          ],
+          supportingInfo: [
+            {
+              sequence: 1,
+              category: {
+                coding: [
                   {
-                    system: "http://hospital.org/claims",
-                    value: "PA-20250302-001",
+                    system: "http://hl7.org/fhir/us/davinci-pas/CodeSystem/PASTempCodes",
+                    code: "additionalInformation",
+                    display: "Additional Information",
                   },
                 ],
-                status: "active",
-                type: {
-                  coding: [
-                    {
-                      system:
-                        "http://terminology.hl7.org/CodeSystem/claim-type",
-                      code: "professional",
-                      display: "Professional",
-                    },
-                  ],
-                },
-                use: `${use}`,
-                priority: {
-                  coding: [
-                    {
-                      system:
-                        "http://terminology.hl7.org/CodeSystem/processpriority",
-                      code: "stat",
-                      display: "Immediate",
-                    },
-                  ],
-                },
-                patient: {
-                  reference: `${patient}`,
-                },
-                created: `${created}`,
-                insurer: {
-                  reference: `${insurer}`,
-                },
-                provider: {
-                  reference: `${provider}`,
-                  identifier: {
-                    system: "http://hl7.org/fhir/sid/us-npi",
-                    value: "N123456"
-                  }
-                },
-                insurance: [
+              },
+              valueReference: {
+                reference: `${supportingInfo}`,
+              },
+            },
+          ],
+          item: [
+            {
+              sequence: 1,
+              category: {
+                coding: [
                   {
-                    sequence: 1,
-                    focal: true,
-                    coverage: {
-                      reference: "Coverage/insurance-coverage",
-                    },
+                    system: "http://terminology.hl7.org/CodeSystem/ex-benefitcategory",
+                    code: "pharmacy",
+                    display: `${category}`,
                   },
                 ],
-                supportingInfo: [
+              },
+              productOrService: {
+                coding: [
                   {
-                    sequence: 1,
-                    category: {
-                      coding: [
-                        {
-                          system:
-                            "http://hl7.org/fhir/us/davinci-pas/CodeSystem/PASTempCodes",
-                          code: "additionalInformation",
-                          display: "Additional Information",
-                        },
-                      ],
-                    },
-                    valueReference: {
-                      reference: `${supportingInfo}`,
-                    },
+                    system: "http://www.nlm.nih.gov/research/umls/rxnorm",
+                    code: "1746007",
+                    display: `${medication}`,
                   },
                 ],
-                item: [
-                  {
-                    sequence: 1,
-                    category: {
-                      coding: [
-                        {
-                          system:
-                            "http://terminology.hl7.org/CodeSystem/ex-benefitcategory",
-                          code: "pharmacy",
-                          display: `${category}`,
-                        },
-                      ],
-                    },
-                    productOrService: {
-                      coding: [
-                        {
-                          system: "http://www.nlm.nih.gov/research/umls/rxnorm",
-                          code: "1746007",
-                          display: `${medication}`,
-                        },
-                      ],
-                    },
-                    servicedDate: `${created}`,
-                    unitPrice: {
-                      value: +`${unitPrice}`.split(" ")[0],
-                      currency: `${unitPrice}`.split(" ")[1],
-                    },
-                    quantity: {
-                      value: quantity,
-                    },
-                  },
-                ],
+              },
+              servicedDate: `${created}`,
+              unitPrice: {
+                value: +`${unitPrice}`.split(" ")[0],
+                currency: `${unitPrice}`.split(" ")[1],
+              },
+              quantity: {
+                value: quantity,
               },
             },
           ],
@@ -1496,3 +1490,164 @@ export const MEDICATION_OPTIONS = [
     ],
   },
 ];
+
+export const CREATE_PAS_CLAIM_BUNDLE = (
+  patient: any,
+  request: any, // Can be ServiceRequest or MedicationRequest
+  questionnaireResponse: any,
+  coverage: any,
+  providerOrg: any,
+  payerOrg: any
+) => {
+  const timestamp = new Date().toISOString();
+  const claimId = uuidv4();
+  const Config = (window as any).Config;
+  const isMedication = request.resourceType === "MedicationRequest";
+
+  const claimResource: any = {
+    resourceType: "Claim",
+    id: claimId,
+    meta: {
+      profile: [
+        "http://hl7.org/fhir/us/davinci-pas/StructureDefinition/profile-claim",
+      ],
+    },
+    identifier: [
+      {
+        system: "http://hospital.org/claims",
+        value: `REQ-${timestamp.replace(/[:.-]/g, "").slice(0, 14)}`,
+      },
+    ],
+    status: "active",
+    type: {
+      coding: [
+        {
+          system: "http://terminology.hl7.org/CodeSystem/claim-type",
+          code: "professional",
+          display: "Professional",
+        },
+      ],
+    },
+    use: "preauthorization",
+    patient: {
+      reference: `Patient/${patient.id}`,
+    },
+    created: timestamp,
+    insurer: {
+      reference: `Organization/${payerOrg.id}`,
+    },
+    provider: {
+      reference: "Organization/53",
+    },
+    priority: {
+      coding: [
+        {
+          system: "http://terminology.hl7.org/CodeSystem/processpriority",
+          code: "stat",
+        },
+      ],
+    },
+    supportingInfo: [
+      {
+        sequence: 1,
+        category: {
+          coding: [
+            {
+              system: "http://terminology.hl7.org/CodeSystem/claim-supportinginfo-category",
+              code: "additionalInformation",
+              display: "Additional Information",
+            },
+          ],
+        },
+        valueReference: {
+          reference: `QuestionnaireResponse/${questionnaireResponse.id}`,
+        },
+      },
+    ],
+    insurance: [
+      {
+        sequence: 1,
+        focal: true,
+        coverage: {
+          reference: `Coverage/${coverage.id}`,
+        },
+      },
+    ],
+    item: [
+      {
+        sequence: 1,
+        servicedDate: timestamp.split("T")[0],
+        locationCodeableConcept: {
+          coding: [
+            {
+              system: "http://terminology.hl7.org/CodeSystem/v3-RoleCode",
+              code: "HOSP",
+              display: "Hospital",
+            },
+          ],
+        },
+      },
+    ],
+  };
+
+  if (isMedication) {
+    // For medication claims, category might be pharmacy
+    claimResource.item[0].category = {
+      coding: [
+        {
+          system: "http://terminology.hl7.org/CodeSystem/ex-benefitcategory",
+          code: "pharmacy",
+          display: "Pharmacy",
+        },
+      ],
+    };
+    claimResource.item[0].productOrService = request.medicationCodeableConcept || request.medicationReference;
+    // Link to MedicationRequest
+    claimResource.prescription = {
+      reference: `MedicationRequest/${request.id}`
+    };
+  } else {
+    // Link to ServiceRequest
+    claimResource.referral = {
+      reference: `ServiceRequest/${request.id}`,
+    };
+    claimResource.item[0].productOrService = request.code;
+  }
+
+  return {
+    resourceType: "Bundle",
+    id: `bundle-pas-request-${uuidv4()}`,
+    type: "collection",
+    timestamp: timestamp,
+    entry: [
+      {
+        fullUrl: `urn:uuid:${claimId}`,
+        resource: claimResource,
+      },
+      {
+        fullUrl: `${Config?.demoHospitalUrl || ""}Patient/${patient.id}`,
+        resource: patient,
+      },
+      {
+        fullUrl: `${Config?.demoHospitalUrl || ""}${request.resourceType}/${request.id}`,
+        resource: request,
+      },
+      {
+        fullUrl: `${Config?.demoHospitalUrl || ""}QuestionnaireResponse/${questionnaireResponse.id}`,
+        resource: questionnaireResponse,
+      },
+      {
+        fullUrl: `urn:uuid:${coverage.id}`,
+        resource: coverage,
+      },
+      {
+        fullUrl: `urn:uuid:${providerOrg.id}`,
+        resource: providerOrg,
+      },
+      {
+        fullUrl: `urn:uuid:${payerOrg.id}`,
+        resource: payerOrg,
+      },
+    ],
+  };
+};

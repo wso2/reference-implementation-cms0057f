@@ -244,108 +244,108 @@ final r4:ResourceAPIConfig claimResponseApiConfig = {
     ],
     defaultProfile: (),
     searchParameters: [
-            {
-        name: "created",
-        active: true,
-        information: {
-            description: "The creation date",
-            builtin: false,
-            documentation: "http://hl7.org/fhir/SearchParameter/ClaimResponse-created"
+        {
+            name: "created",
+            active: true,
+            information: {
+                description: "The creation date",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/ClaimResponse-created"
+            }
+        },
+        {
+            name: "request",
+            active: true,
+            information: {
+                description: "The claim reference",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/ClaimResponse-request"
+            }
+        },
+        {
+            name: "payment-date",
+            active: true,
+            information: {
+                description: "The expected payment date",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/ClaimResponse-payment-date"
+            }
+        },
+        {
+            name: "outcome",
+            active: true,
+            information: {
+                description: "The processing outcome",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/ClaimResponse-outcome"
+            }
+        },
+        {
+            name: "status",
+            active: true,
+            information: {
+                description: "The status of the ClaimResponse",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/ClaimResponse-status"
+            }
+        },
+        {
+            name: "requestor",
+            active: true,
+            information: {
+                description: "The Provider of the claim",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/ClaimResponse-requestor"
+            }
+        },
+        {
+            name: "identifier",
+            active: true,
+            information: {
+                description: "The identity of the ClaimResponse",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/ClaimResponse-identifier"
+            }
+        },
+        {
+            name: "use",
+            active: true,
+            information: {
+                description: "The type of claim",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/ClaimResponse-use"
+            }
+        },
+        {
+            name: "insurer",
+            active: true,
+            information: {
+                description: "The organization which generated this resource",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/ClaimResponse-insurer"
+            }
+        },
+        {
+            name: "patient",
+            active: true,
+            information: {
+                description: "The subject of care",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/ClaimResponse-patient"
+            }
+        },
+        {
+            name: "disposition",
+            active: true,
+            information: {
+                description: "The contents of the disposition message",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/ClaimResponse-disposition"
+            }
         }
-    },
-            {
-        name: "request",
-        active: true,
-        information: {
-            description: "The claim reference",
-            builtin: false,
-            documentation: "http://hl7.org/fhir/SearchParameter/ClaimResponse-request"
-        }
-    },
-            {
-        name: "payment-date",
-        active: true,
-        information: {
-            description: "The expected payment date",
-            builtin: false,
-            documentation: "http://hl7.org/fhir/SearchParameter/ClaimResponse-payment-date"
-        }
-    },
-            {
-        name: "outcome",
-        active: true,
-        information: {
-            description: "The processing outcome",
-            builtin: false,
-            documentation: "http://hl7.org/fhir/SearchParameter/ClaimResponse-outcome"
-        }
-    },
-            {
-        name: "status",
-        active: true,
-        information: {
-            description: "The status of the ClaimResponse",
-            builtin: false,
-            documentation: "http://hl7.org/fhir/SearchParameter/ClaimResponse-status"
-        }
-    },
-            {
-        name: "requestor",
-        active: true,
-        information: {
-            description: "The Provider of the claim",
-            builtin: false,
-            documentation: "http://hl7.org/fhir/SearchParameter/ClaimResponse-requestor"
-        }
-    },
-            {
-        name: "identifier",
-        active: true,
-        information: {
-            description: "The identity of the ClaimResponse",
-            builtin: false,
-            documentation: "http://hl7.org/fhir/SearchParameter/ClaimResponse-identifier"
-        }
-    },
-            {
-        name: "use",
-        active: true,
-        information: {
-            description: "The type of claim",
-            builtin: false,
-            documentation: "http://hl7.org/fhir/SearchParameter/ClaimResponse-use"
-        }
-    },
-            {
-        name: "insurer",
-        active: true,
-        information: {
-            description: "The organization which generated this resource",
-            builtin: false,
-            documentation: "http://hl7.org/fhir/SearchParameter/ClaimResponse-insurer"
-        }
-    },
-            {
-        name: "patient",
-        active: true,
-        information: {
-            description: "The subject of care",
-            builtin: false,
-            documentation: "http://hl7.org/fhir/SearchParameter/ClaimResponse-patient"
-        }
-    },
-            {
-        name: "disposition",
-        active: true,
-        information: {
-            description: "The contents of the disposition message",
-            builtin: false,
-            documentation: "http://hl7.org/fhir/SearchParameter/ClaimResponse-disposition"
-        }
-    }
-        ],
+    ],
     operations: [
-    
+
     ],
     serverConfig: (),
     authzConfig: ()
@@ -404,6 +404,39 @@ final r4:ResourceAPIConfig ClaimApiConfig = {
                     name: "return",
                     active: true,
                     min: 0
+                }
+            ]
+        },
+        {
+            name: "submit-attachment",
+            active: true,
+            parameters: [
+                {
+                    name: "Attachment",
+                    active: true,
+                    min: 1,
+                    parts: [
+                        {
+                            name: "Content",
+                            active: true,
+                            min: 1
+                        },
+                        {
+                            name: "Code",
+                            active: true,
+                            min: 0
+                        },
+                        {
+                            name: "LineItem",
+                            active: true,
+                            min: 0
+                        }
+                    ]
+                },
+                {
+                    name: "TrackingId",
+                    active: true,
+                    min: 1
                 }
             ]
         }
@@ -511,6 +544,43 @@ final r4:ResourceAPIConfig medicationRequestApiConfig = {
 };
 
 # ######################################################################################################################
+# Service Request API Configs                                                                                          #
+# ######################################################################################################################
+
+final r4:ResourceAPIConfig serviceRequestApiConfig = {
+    resourceType: "ServiceRequest",
+    profiles: [
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-servicerequest"
+    ],
+    defaultProfile: (),
+    searchParameters: [
+        {
+            name: "patient",
+            active: true,
+            information: {
+                description: "The patient that the service request is for",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/ServiceRequest-patient"
+            }
+        },
+        {
+            name: "status",
+            active: true,
+            information: {
+                description: "The status of the service request",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/ServiceRequest-status"
+            }
+        }
+    ],
+    operations: [
+
+    ],
+    serverConfig: (),
+    authzConfig: ()
+};
+
+# ######################################################################################################################
 # Organization API Configs                                                                                             #
 # ######################################################################################################################
 
@@ -522,12 +592,131 @@ final r4:ResourceAPIConfig organizationApiConfig = {
     defaultProfile: (),
     searchParameters: [
         {
+            name: "address-state",
+            active: true,
+            information: {
+                description: "A state specified in an address",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Organization-address-state"
+            }
+        },
+
+        {
+            name: "address-use",
+            active: true,
+            information: {
+                description: "A use code specified in an address",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Organization-address-use"
+            }
+        },
+
+        {
+            name: "endpoint",
+            active: true,
+            information: {
+                description: "Technical endpoints providing access to services operated for the organization",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Organization-endpoint"
+            }
+        },
+        {
             name: "type",
             active: true,
             information: {
                 description: "A code for the type of organization",
                 builtin: false,
                 documentation: "http://hl7.org/fhir/SearchParameter/Organization-type"
+            }
+        },
+
+        {
+            name: "active",
+            active: true,
+            information: {
+                description: "Is the Organization record active",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Organization-active"
+            }
+        },
+
+        {
+            name: "identifier",
+            active: true,
+            information: {
+                description: "Any identifier for the organization (not the accreditation issuer's identifier)",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Organization-identifier"
+            }
+        },
+
+        {
+            name: "address-country",
+            active: true,
+            information: {
+                description: "A country specified in an address",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Organization-address-country"
+            }
+        },
+
+        {
+            name: "address-postalcode",
+            active: true,
+            information: {
+                description: "A postal code specified in an address",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Organization-address-postalcode"
+            }
+        },
+
+        {
+            name: "address",
+            active: true,
+            information: {
+                description: "A server defined search that may match any of the string fields in the Address, including line, city, district, state, country, postalCode, and/or text",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Organization-address"
+            }
+        },
+
+        {
+            name: "address-city",
+            active: true,
+            information: {
+                description: "A city specified in an address",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Organization-address-city"
+            }
+        },
+
+        {
+            name: "name",
+            active: true,
+            information: {
+                description: "A portion of the organization's name or alias",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Organization-name"
+            }
+        },
+
+        {
+            name: "partof",
+            active: true,
+            information: {
+                description: "An organization of which this organization forms a part",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Organization-partof"
+            }
+        },
+
+        {
+            name: "phonetic",
+            active: true,
+            information: {
+                description: "A portion of the organization's name using some kind of phonetic matching algorithm",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Organization-phonetic"
             }
         }
     ],
@@ -558,6 +747,25 @@ final r4:ResourceAPIConfig practitionerApiConfig = {
                 documentation: "http://hl7.org/fhir/SearchParameter/Patient-name"
             }
         }
+    ],
+    operations: [
+
+    ],
+    serverConfig: (),
+    authzConfig: ()
+};
+
+# ######################################################################################################################
+# PractitionerRole API Configs                                                                                         #
+# ######################################################################################################################
+
+final r4:ResourceAPIConfig practitionerRoleApiConfig = {
+    resourceType: "PractitionerRole",
+    profiles: [
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-practitionerrole"
+    ],
+    defaultProfile: (),
+    searchParameters: [
     ],
     operations: [
 
@@ -774,6 +982,432 @@ final r4:ResourceAPIConfig diagnosticReportApiConfig = {
                 description: "**The subject of the report if a patient**  **NOTE**: This US Core SearchParameter definition extends the usage context of the[Conformance expectation extension](http://hl7.org/fhir/R4/extension-capabilitystatement-expectation.html) - multipleAnd - multipleOr - comparator - modifier - chain",
                 builtin: false,
                 documentation: "http://hl7.org/fhir/us/core/SearchParameter/us-core-diagnosticreport-patient"
+            }
+        }
+
+    ],
+    operations: [
+
+    ],
+    serverConfig: (),
+    authzConfig: ()
+};
+
+# ######################################################################################################################
+# Group API Configs                                                                                                      #
+# ######################################################################################################################
+
+final r4:ResourceAPIConfig groupApiConfig = {
+    resourceType: "Group",
+    profiles: [
+        "http://hl7.org/fhir/StructureDefinition/Group",
+        "http://hl7.org/fhir/us/davinci-pdex/StructureDefinition/member-provider-treatment-relationship-group",
+        "http://hl7.org/fhir/us/davinci-pdex/StructureDefinition/member-opt-out-group",
+        "http://hl7.org/fhir/us/davinci-pdex/StructureDefinition/pdex-member-opt-out",
+        "http://hl7.org/fhir/us/davinci-pdex/StructureDefinition/pdex-member-no-match-group",
+        "http://hl7.org/fhir/us/davinci-pdex/StructureDefinition/provider-access-matched-member-group"
+    ],
+    defaultProfile: (),
+    searchParameters: [
+        {
+            name: "managing-entity",
+            active: true,
+            information: {
+                description: "Entity that is the custodian of the Group's record",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Group-managing-entity"
+            }
+        },
+        {
+            name: "characteristic",
+            active: true,
+            information: {
+                description: "Kind of characteristic (e.g. pdexprovidergroup, member)",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Group-characteristic"
+            }
+        },
+        {
+            name: "characteristic-value",
+            active: true,
+            information: {
+                description: "A composite of both characteristic and value — used to find Groups by their characteristic reference value (e.g. Practitioner NPI or Patient ID)",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Group-characteristic-value"
+            }
+        },
+        {
+            name: "member",
+            active: true,
+            information: {
+                description: "Reference to the group member — Patient or Practitioner",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Group-member"
+            }
+        },
+        {
+            name: "code",
+            active: true,
+            information: {
+                description: "The kind of resources contained (e.g. person, practitioner)",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Group-code"
+            }
+        }
+    ],
+    operations: [
+        {
+            name: "export",
+            active: true,
+            parameters: [
+                {
+                    name: "_outputFormat",
+                    active: true,
+                    min: 0
+                },
+                {
+                    name: "_since",
+                    active: true,
+                    min: 0
+                },
+                {
+                    name: "_type",
+                    active: true,
+                    min: 0
+                }
+            ]
+        },
+        {
+            name: "bulk-member-match",
+            active: true,
+            parameters: [
+                {
+                    name: "MemberBundle",
+                    active: true,
+                    min: 1
+                }
+            ]
+        },
+        {
+            name: "provider-member-match",
+            active: true,
+            additionalProperties: {
+                "meta": {
+                    "operationLevels": {
+                        "typeLevel": true,
+                        "instanceLevel": false,
+                        "systemLevel": false
+                    }
+                }
+            },
+            parameters: [
+                {name: "MemberBundle", active: true, min: 1},
+                {name: "providerIdentifier", active: true, min: 0}
+            ]
+        },
+        {
+            name: "davinci-data-export",
+            active: true,
+            additionalProperties: {
+                "meta": {
+                    "operationLevels": {
+                        "typeLevel": false,
+                        "instanceLevel": true,
+                        "systemLevel": false
+                    }
+                }
+            },
+            parameters: [
+                {
+                    name: "exportType",
+                    active: true,
+                    min: 0
+                },
+                {
+                    name: "_since",
+                    active: true,
+                    min: 0
+                },
+                {
+                    name: "_until",
+                    active: true,
+                    min: 0
+                },
+                {
+                    name: "_type",
+                    active: true,
+                    min: 0
+                },
+                {
+                    name: "_typeFilter",
+                    active: true,
+                    min: 0
+                },
+                {
+                    name: "patient",
+                    active: true,
+                    min: 0
+                }
+            ]
+        }
+    ],
+    serverConfig: (),
+    authzConfig: ()
+};
+
+# ######################################################################################################################
+# Library API Configs                                                                                                  #
+# ######################################################################################################################
+
+final r4:ResourceAPIConfig libraryApiConfig = {
+    resourceType: "Library",
+    profiles: [
+        "http://hl7.org/fhir/StructureDefinition/Library",
+
+        "http://hl7.org/fhir/StructureDefinition/cqllibrary",
+
+        "http://hl7.org/fhir/StructureDefinition/shareablelibrary"
+
+    ],
+    defaultProfile: (),
+    searchParameters: [
+        {
+            name: "predecessor",
+            active: true,
+            information: {
+                description: "What resource is being referenced",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Library-predecessor"
+            }
+        },
+
+        {
+            name: "identifier",
+            active: true,
+            information: {
+                description: "External identifier for the library",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Library-identifier"
+            }
+        },
+
+        {
+            name: "context",
+            active: true,
+            information: {
+                description: "A use context assigned to the library",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Library-context"
+            }
+        },
+
+        {
+            name: "type",
+            active: true,
+            information: {
+                description: "The type of the library (e.g. logic-library, model-definition, asset-collection, module-definition)",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Library-type"
+            }
+        },
+
+        {
+            name: "context-quantity",
+            active: true,
+            information: {
+                description: "A quantity- or range-valued use context assigned to the library",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Library-context-quantity"
+            }
+        },
+
+        {
+            name: "publisher",
+            active: true,
+            information: {
+                description: "Name of the publisher of the library",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Library-publisher"
+            }
+        },
+
+        {
+            name: "title",
+            active: true,
+            information: {
+                description: "The human-friendly name of the library",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Library-title"
+            }
+        },
+
+        {
+            name: "content-type",
+            active: true,
+            information: {
+                description: "The type of content in the library (e.g. text/cql)",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Library-content-type"
+            }
+        },
+
+        {
+            name: "description",
+            active: true,
+            information: {
+                description: "The description of the library",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Library-description"
+            }
+        },
+
+        {
+            name: "context-type-quantity",
+            active: true,
+            information: {
+                description: "A use context type and quantity- or range-based value assigned to the library",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Library-context-type-quantity"
+            }
+        },
+
+        {
+            name: "url",
+            active: true,
+            information: {
+                description: "The uri that identifies the library",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Library-url"
+            }
+        },
+
+        {
+            name: "composed-of",
+            active: true,
+            information: {
+                description: "What resource is being referenced",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Library-composed-of"
+            }
+        },
+
+        {
+            name: "name",
+            active: true,
+            information: {
+                description: "Computationally friendly name of the library",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Library-name"
+            }
+        },
+
+        {
+            name: "context-type",
+            active: true,
+            information: {
+                description: "A type of use context assigned to the library",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Library-context-type"
+            }
+        },
+
+        {
+            name: "status",
+            active: true,
+            information: {
+                description: "The current status of the library",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Library-status"
+            }
+        },
+
+        {
+            name: "successor",
+            active: true,
+            information: {
+                description: "What resource is being referenced",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Library-successor"
+            }
+        },
+
+        {
+            name: "version",
+            active: true,
+            information: {
+                description: "The business version of the library",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Library-version"
+            }
+        },
+
+        {
+            name: "effective",
+            active: true,
+            information: {
+                description: "The time during which the library is intended to be in use",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Library-effective"
+            }
+        },
+
+        {
+            name: "jurisdiction",
+            active: true,
+            information: {
+                description: "Intended jurisdiction for the library",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Library-jurisdiction"
+            }
+        },
+
+        {
+            name: "date",
+            active: true,
+            information: {
+                description: "The library publication date",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Library-date"
+            }
+        },
+
+        {
+            name: "context-type-value",
+            active: true,
+            information: {
+                description: "A use context type and value assigned to the library",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Library-context-type-value"
+            }
+        },
+
+        {
+            name: "depends-on",
+            active: true,
+            information: {
+                description: "What resource is being referenced",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Library-depends-on"
+            }
+        },
+
+        {
+            name: "derived-from",
+            active: true,
+            information: {
+                description: "What resource is being referenced",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Library-derived-from"
+            }
+        },
+
+        {
+            name: "topic",
+            active: true,
+            information: {
+                description: "Topics associated with the module",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Library-topic"
             }
         }
 
@@ -1091,6 +1725,1764 @@ final r4:ResourceAPIConfig consentApiConfig = {
 };
 
 # ######################################################################################################################
+# Device API Configs
+# ######################################################################################################################
+final r4:ResourceAPIConfig deviceApiConfig = {
+    resourceType: "Device",
+    profiles: [
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-implantable-device"
+    ],
+    defaultProfile: (),
+    searchParameters: [
+        {
+            name: "status",
+            active: true,
+            information: {
+                description: "active | inactive | entered-in-error | unknown",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Device-status"
+            }
+        },
+        {
+            name: "din",
+            active: true,
+            information: {
+                description: "The donation identification number (DIN)",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/device-extensions-Device-din"
+            }
+        },
+        {
+            name: "manufacturer",
+            active: true,
+            information: {
+                description: "The manufacturer of the device",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Device-manufacturer"
+            }
+        },
+        {
+            name: "url",
+            active: true,
+            information: {
+                description: "Network address to contact device",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Device-url"
+            }
+        },
+        {
+            name: "udi-di",
+            active: true,
+            information: {
+                description: "The udi Device Identifier (DI)",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Device-udi-di"
+            }
+        },
+        {
+            name: "udi-carrier",
+            active: true,
+            information: {
+                description: "UDI Barcode (RFID or other technology) string in *HRF* format.",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Device-udi-carrier"
+            }
+        },
+        {
+            name: "model",
+            active: true,
+            information: {
+                description: "The model of the device",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Device-model"
+            }
+        },
+        {
+            name: "device-name",
+            active: true,
+            information: {
+                description: "A server defined search that may match any of the string fields in Device.deviceName or Device.type.",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Device-device-name"
+            }
+        },
+        {
+            name: "patient",
+            active: true,
+            information: {
+                description: "Patient information, if the resource is affixed to a person",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Device-patient"
+            }
+        },
+        {
+            name: "organization",
+            active: true,
+            information: {
+                description: "The organization responsible for the device",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Device-organization"
+            }
+        },
+        {
+            name: "location",
+            active: true,
+            information: {
+                description: "A location, where the resource is found",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Device-location"
+            }
+        },
+        {
+            name: "identifier",
+            active: true,
+            information: {
+                description: "Instance id from manufacturer, owner, and others",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Device-identifier"
+            }
+        },
+        {
+            name: "type",
+            active: true,
+            information: {
+                description: "The type of the device",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Device-type"
+            }
+        }
+
+    ],
+    operations: [
+
+    ],
+    serverConfig: (),
+    authzConfig: ()
+};
+
+# ######################################################################################################################
+# Goal API Configs
+# ######################################################################################################################
+final r4:ResourceAPIConfig goalApiConfig = {
+    resourceType: "Goal",
+    profiles: [
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-goal"
+    ],
+    defaultProfile: (),
+    searchParameters: [
+        {
+            name: "workflow-protectiveFactorRef",
+            active: true,
+            information: {
+                description: "SearchParameter for Protective Factor Extension with Reference data type",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/workflow-protectiveFactorRef"
+            }
+        },
+        {
+            name: "category",
+            active: true,
+            information: {
+                description: "E.g. Treatment, dietary, behavioral, etc.",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Goal-category"
+            }
+        },
+        {
+            name: "target-date",
+            active: true,
+            information: {
+                description: "Reach goal on or before",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Goal-target-date"
+            }
+        },
+        {
+            name: "workflow-barrierRef",
+            active: true,
+            information: {
+                description: "SearchParameter for Barrier Extension with Reference value",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/workflow-barrierRef"
+            }
+        },
+        {
+            name: "achievement-status",
+            active: true,
+            information: {
+                description: "in-progress | improving | worsening | no-change | achieved | sustaining | not-achieved | no-progress | not-attainable",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Goal-achievement-status"
+            }
+        },
+        {
+            name: "workflow-protectiveFactorCode",
+            active: true,
+            information: {
+                description: "SearchParameter for Protective Factor Extension with CodeableConcept data type",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/workflow-protectiveFactorCode"
+            }
+        },
+        {
+            name: "identifier",
+            active: true,
+            information: {
+                description: "[Goal](goal.html): External Ids for this goal",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/clinical-identifier"
+            }
+        },
+        {
+            name: "start-date",
+            active: true,
+            information: {
+                description: "When goal pursuit begins",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Goal-start-date"
+            }
+        },
+        {
+            name: "patient",
+            active: true,
+            information: {
+                description: "[Goal](goal.html): Who this goal is intended for",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/clinical-patient"
+            }
+        },
+        {
+            name: "subject",
+            active: true,
+            information: {
+                description: "Who this goal is intended for",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Goal-subject"
+            }
+        },
+        {
+            name: "lifecycle-status",
+            active: true,
+            information: {
+                description: "proposed | planned | accepted | active | on-hold | completed | cancelled | entered-in-error | rejected",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Goal-lifecycle-status"
+            }
+        },
+        {
+            name: "workflow-barrierCode",
+            active: true,
+            information: {
+                description: "SearchParameter for Barrier Extension with CodeableConcept value",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/workflow-barrierCode"
+            }
+        }
+
+    ],
+    operations: [
+
+    ],
+    serverConfig: (),
+    authzConfig: ()
+};
+
+# ######################################################################################################################
+# Immunization API Configs
+# ######################################################################################################################
+final r4:ResourceAPIConfig immunizationApiConfig = {
+    resourceType: "Immunization",
+    profiles: [
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-immunization"
+    ],
+    defaultProfile: (),
+    searchParameters: [
+        {
+            name: "lot-number",
+            active: true,
+            information: {
+                description: "Vaccine Lot Number",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Immunization-lot-number"
+            }
+        },
+        {
+            name: "series",
+            active: true,
+            information: {
+                description: "The series being followed by the provider",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Immunization-series"
+            }
+        },
+        {
+            name: "identifier",
+            active: true,
+            information: {
+                description: "[Immunization](immunization.html): Business identifier",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/clinical-identifier"
+            }
+        },
+        {
+            name: "status",
+            active: true,
+            information: {
+                description: "Immunization event status",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Immunization-status"
+            }
+        },
+        {
+            name: "date",
+            active: true,
+            information: {
+                description: "[Immunization](immunization.html): Vaccination  (non)-Administration Date",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/clinical-date"
+            }
+        },
+        {
+            name: "patient",
+            active: true,
+            information: {
+                description: "[Immunization](immunization.html): The patient for the vaccination record",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/clinical-patient"
+            }
+        },
+        {
+            name: "reaction-date",
+            active: true,
+            information: {
+                description: "When reaction started",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Immunization-reaction-date"
+            }
+        },
+        {
+            name: "reaction",
+            active: true,
+            information: {
+                description: "Additional information on reaction",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Immunization-reaction"
+            }
+        },
+        {
+            name: "vaccine-code",
+            active: true,
+            information: {
+                description: "Vaccine Product Administered",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Immunization-vaccine-code"
+            }
+        },
+        {
+            name: "researchStudy",
+            active: true,
+            information: {
+                description: "SearchParameter for Research Study Extension",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/workflow-researchStudy"
+            }
+        },
+        {
+            name: "target-disease",
+            active: true,
+            information: {
+                description: "The target disease the dose is being administered against",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Immunization-target-disease"
+            }
+        },
+        {
+            name: "manufacturer",
+            active: true,
+            information: {
+                description: "Vaccine Manufacturer",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Immunization-manufacturer"
+            }
+        },
+        {
+            name: "status-reason",
+            active: true,
+            information: {
+                description: "Reason why the vaccine was not administered",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Immunization-status-reason"
+            }
+        },
+        {
+            name: "reason-code",
+            active: true,
+            information: {
+                description: "Reason why the vaccine was administered",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Immunization-reason-code"
+            }
+        },
+        {
+            name: "performer",
+            active: true,
+            information: {
+                description: "The practitioner or organization who played a role in the vaccination",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Immunization-performer"
+            }
+        },
+        {
+            name: "location",
+            active: true,
+            information: {
+                description: "The service delivery location or facility in which the vaccine was / was to be administered",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Immunization-location"
+            }
+        },
+        {
+            name: "reason-reference",
+            active: true,
+            information: {
+                description: "Why immunization occurred",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Immunization-reason-reference"
+            }
+        }
+
+    ],
+    operations: [
+
+    ],
+    serverConfig: (),
+    authzConfig: ()
+};
+
+# ######################################################################################################################
+# Procedure API Configs
+# ######################################################################################################################
+final r4:ResourceAPIConfig procedureApiConfig = {
+    resourceType: "Procedure",
+    profiles: [
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-procedure"
+    ],
+    defaultProfile: (),
+    searchParameters: [
+        {
+            name: "code",
+            active: true,
+            information: {
+                description: "[Procedure](procedure.html): A code to identify a  procedure",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/clinical-code"
+            }
+        },
+        {
+            name: "reason-reference",
+            active: true,
+            information: {
+                description: "The justification that the procedure was performed",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Procedure-reason-reference"
+            }
+        },
+        {
+            name: "identifier",
+            active: true,
+            information: {
+                description: "[Procedure](procedure.html): A unique identifier for a procedure",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/clinical-identifier"
+            }
+        },
+        {
+            name: "performer",
+            active: true,
+            information: {
+                description: "The reference to the practitioner",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Procedure-performer"
+            }
+        },
+        {
+            name: "reason-code",
+            active: true,
+            information: {
+                description: "Coded reason procedure performed",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Procedure-reason-code"
+            }
+        },
+        {
+            name: "date",
+            active: true,
+            information: {
+                description: "[Procedure](procedure.html): When the procedure was performed",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/clinical-date"
+            }
+        },
+        {
+            name: "patient",
+            active: true,
+            information: {
+                description: "[Procedure](procedure.html): Search by subject - a patient",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/clinical-patient"
+            }
+        },
+        {
+            name: "subject",
+            active: true,
+            information: {
+                description: "Search by subject",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Procedure-subject"
+            }
+        },
+        {
+            name: "part-of",
+            active: true,
+            information: {
+                description: "Part of referenced event",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Procedure-part-of"
+            }
+        },
+        {
+            name: "based-on",
+            active: true,
+            information: {
+                description: "A request for this procedure",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Procedure-based-on"
+            }
+        },
+        {
+            name: "category",
+            active: true,
+            information: {
+                description: "Classification of the procedure",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Procedure-category"
+            }
+        },
+        {
+            name: "instantiates-uri",
+            active: true,
+            information: {
+                description: "Instantiates external protocol or definition",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Procedure-instantiates-uri"
+            }
+        },
+        {
+            name: "encounter",
+            active: true,
+            information: {
+                description: "[Procedure](procedure.html): Encounter created as part of",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/clinical-encounter"
+            }
+        },
+        {
+            name: "instantiates-canonical",
+            active: true,
+            information: {
+                description: "Instantiates FHIR protocol or definition",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Procedure-instantiates-canonical"
+            }
+        },
+        {
+            name: "researchStudy",
+            active: true,
+            information: {
+                description: "SearchParameter for Research Study Extension",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/workflow-researchStudy"
+            }
+        },
+        {
+            name: "status",
+            active: true,
+            information: {
+                description: "preparation | in-progress | not-done | on-hold | stopped | completed | entered-in-error | unknown",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Procedure-status"
+            }
+        },
+        {
+            name: "location",
+            active: true,
+            information: {
+                description: "Where the procedure happened",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Procedure-location"
+            }
+        }
+
+    ],
+    operations: [
+
+    ],
+    serverConfig: (),
+    authzConfig: ()
+};
+
+# ######################################################################################################################
+# DocumentReference API Configs
+# ######################################################################################################################
+final r4:ResourceAPIConfig documentreferenceApiConfig = {
+    resourceType: "DocumentReference",
+    profiles: [
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-documentreference"
+    ],
+    defaultProfile: (),
+    searchParameters: [
+        {
+            name: "category",
+            active: true,
+            information: {
+                description: "Categorization of document",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/DocumentReference-category"
+            }
+        },
+        {
+            name: "relatesto",
+            active: true,
+            information: {
+                description: "Target of the relationship",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/DocumentReference-relatesto"
+            }
+        },
+        {
+            name: "facility",
+            active: true,
+            information: {
+                description: "Kind of facility where patient was seen",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/DocumentReference-facility"
+            }
+        },
+        {
+            name: "relation",
+            active: true,
+            information: {
+                description: "replaces | transforms | signs | appends",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/DocumentReference-relation"
+            }
+        },
+        {
+            name: "period",
+            active: true,
+            information: {
+                description: "Time of service that is being documented",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/DocumentReference-period"
+            }
+        },
+        {
+            name: "related",
+            active: true,
+            information: {
+                description: "Related identifiers or resources",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/DocumentReference-related"
+            }
+        },
+        {
+            name: "identifier",
+            active: true,
+            information: {
+                description: "[DocumentReference](documentreference.html): Master Version Specific Identifier",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/clinical-identifier"
+            }
+        },
+        {
+            name: "contenttype",
+            active: true,
+            information: {
+                description: "Mime type of the content, with charset etc.",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/DocumentReference-contenttype"
+            }
+        },
+        {
+            name: "security-label",
+            active: true,
+            information: {
+                description: "Document security-tags",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/DocumentReference-security-label"
+            }
+        },
+        {
+            name: "description",
+            active: true,
+            information: {
+                description: "Human-readable description",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/DocumentReference-description"
+            }
+        },
+        {
+            name: "author",
+            active: true,
+            information: {
+                description: "Who and/or what authored the document",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/DocumentReference-author"
+            }
+        },
+        {
+            name: "patient",
+            active: true,
+            information: {
+                description: "[DocumentReference](documentreference.html): Who/what is the subject of the document",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/clinical-patient"
+            }
+        },
+        {
+            name: "event",
+            active: true,
+            information: {
+                description: "Main clinical acts documented",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/DocumentReference-event"
+            }
+        },
+        {
+            name: "format",
+            active: true,
+            information: {
+                description: "Format/content rules for the document",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/DocumentReference-format"
+            }
+        },
+        {
+            name: "type",
+            active: true,
+            information: {
+                description: "[DocumentReference](documentreference.html): Kind of document (LOINC if possible)",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/clinical-type"
+            }
+        },
+        {
+            name: "relationship",
+            active: true,
+            information: {
+                description: "Combination of relation and relatesTo",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/DocumentReference-relationship"
+            }
+        },
+        {
+            name: "authenticator",
+            active: true,
+            information: {
+                description: "Who/what authenticated the document",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/DocumentReference-authenticator"
+            }
+        },
+        {
+            name: "location",
+            active: true,
+            information: {
+                description: "Uri where the data can be found",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/DocumentReference-location"
+            }
+        },
+        {
+            name: "date",
+            active: true,
+            information: {
+                description: "When this document reference was created",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/DocumentReference-date"
+            }
+        },
+        {
+            name: "encounter",
+            active: true,
+            information: {
+                description: "[DocumentReference](documentreference.html): Context of the document  content",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/clinical-encounter"
+            }
+        },
+        {
+            name: "setting",
+            active: true,
+            information: {
+                description: "Additional details about where the content was created (e.g. clinical specialty)",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/DocumentReference-setting"
+            }
+        },
+        {
+            name: "researchStudy",
+            active: true,
+            information: {
+                description: "SearchParameter for Research Study Extension",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/workflow-researchStudy"
+            }
+        },
+        {
+            name: "status",
+            active: true,
+            information: {
+                description: "current | superseded | entered-in-error",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/DocumentReference-status"
+            }
+        },
+        {
+            name: "subject",
+            active: true,
+            information: {
+                description: "Who/what is the subject of the document",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/DocumentReference-subject"
+            }
+        },
+        {
+            name: "custodian",
+            active: true,
+            information: {
+                description: "Organization which maintains the document",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/DocumentReference-custodian"
+            }
+        },
+        {
+            name: "language",
+            active: true,
+            information: {
+                description: "Human language of the content (BCP-47)",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/DocumentReference-language"
+            }
+        }
+
+    ],
+    operations: [
+
+    ],
+    serverConfig: (),
+    authzConfig: ()
+};
+
+# ######################################################################################################################
+# Provenance API Configs
+# ######################################################################################################################
+final r4:ResourceAPIConfig provenanceApiConfig = {
+    resourceType: "Provenance",
+    profiles: [
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-provenance"
+    ],
+    defaultProfile: (),
+    searchParameters: [
+        {
+            name: "signature-type",
+            active: true,
+            information: {
+                description: "Indication of the reason the entity signed the object(s)",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Provenance-signature-type"
+            }
+        },
+        {
+            name: "entity",
+            active: true,
+            information: {
+                description: "Identity of entity",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Provenance-entity"
+            }
+        },
+        {
+            name: "agent-role",
+            active: true,
+            information: {
+                description: "What the agents role was",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Provenance-agent-role"
+            }
+        },
+        {
+            name: "when",
+            active: true,
+            information: {
+                description: "When the activity occurred",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Provenance-when"
+            }
+        },
+        {
+            name: "location",
+            active: true,
+            information: {
+                description: "Where the activity occurred, if relevant",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Provenance-location"
+            }
+        },
+        {
+            name: "recorded",
+            active: true,
+            information: {
+                description: "When the activity was recorded / updated",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Provenance-recorded"
+            }
+        },
+        {
+            name: "target",
+            active: true,
+            information: {
+                description: "Target Reference(s) (usually version specific)",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Provenance-target"
+            }
+        },
+        {
+            name: "patient",
+            active: true,
+            information: {
+                description: "Target Reference(s) (usually version specific)",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Provenance-patient"
+            }
+        },
+        {
+            name: "agent",
+            active: true,
+            information: {
+                description: "Who participated",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Provenance-agent"
+            }
+        },
+        {
+            name: "agent-type",
+            active: true,
+            information: {
+                description: "How the agent participated",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Provenance-agent-type"
+            }
+        }
+
+    ],
+    operations: [
+
+    ],
+    serverConfig: (),
+    authzConfig: ()
+};
+
+# ######################################################################################################################
+# AuditEvent API Configs
+# ######################################################################################################################
+final r4:ResourceAPIConfig auditeventApiConfig = {
+    resourceType: "AuditEvent",
+    profiles: [
+        "http://hl7.org/fhir/StructureDefinition/ehrsrle-auditevent",
+
+        "http://hl7.org/fhir/StructureDefinition/AuditEvent"
+    ],
+    defaultProfile: (),
+    searchParameters: [
+        {
+            name: "entity-name",
+            active: true,
+            information: {
+                description: "Descriptor for entity",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/AuditEvent-entity-name"
+            }
+        },
+        {
+            name: "patient",
+            active: true,
+            information: {
+                description: "Identifier of who",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/AuditEvent-patient"
+            }
+        },
+        {
+            name: "address",
+            active: true,
+            information: {
+                description: "Identifier for the network access point of the user device",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/AuditEvent-address"
+            }
+        },
+        {
+            name: "type",
+            active: true,
+            information: {
+                description: "Type/identifier of event",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/AuditEvent-type"
+            }
+        },
+        {
+            name: "site",
+            active: true,
+            information: {
+                description: "Logical source location within the enterprise",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/AuditEvent-site"
+            }
+        },
+        {
+            name: "agent-name",
+            active: true,
+            information: {
+                description: "Human friendly name for the agent",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/AuditEvent-agent-name"
+            }
+        },
+        {
+            name: "agent",
+            active: true,
+            information: {
+                description: "Identifier of who",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/AuditEvent-agent"
+            }
+        },
+        {
+            name: "entity-role",
+            active: true,
+            information: {
+                description: "What role the entity played",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/AuditEvent-entity-role"
+            }
+        },
+        {
+            name: "entity",
+            active: true,
+            information: {
+                description: "Specific instance of resource",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/AuditEvent-entity"
+            }
+        },
+        {
+            name: "outcome",
+            active: true,
+            information: {
+                description: "Whether the event succeeded or failed",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/AuditEvent-outcome"
+            }
+        },
+        {
+            name: "altid",
+            active: true,
+            information: {
+                description: "Alternative User identity",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/AuditEvent-altid"
+            }
+        },
+        {
+            name: "subtype",
+            active: true,
+            information: {
+                description: "More specific type/id for the event",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/AuditEvent-subtype"
+            }
+        },
+        {
+            name: "entity-type",
+            active: true,
+            information: {
+                description: "Type of entity involved",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/AuditEvent-entity-type"
+            }
+        },
+        {
+            name: "action",
+            active: true,
+            information: {
+                description: "Type of action performed during the event",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/AuditEvent-action"
+            }
+        },
+        {
+            name: "date",
+            active: true,
+            information: {
+                description: "Time when the event was recorded",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/AuditEvent-date"
+            }
+        },
+        {
+            name: "source",
+            active: true,
+            information: {
+                description: "The identity of source detecting the event",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/AuditEvent-source"
+            }
+        },
+        {
+            name: "agent-role",
+            active: true,
+            information: {
+                description: "Agent role in the event",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/AuditEvent-agent-role"
+            }
+        },
+        {
+            name: "policy",
+            active: true,
+            information: {
+                description: "Policy that authorized event",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/AuditEvent-policy"
+            }
+        }
+
+    ],
+    operations: [
+
+    ],
+    serverConfig: (),
+    authzConfig: ()
+};
+
+# ######################################################################################################################
+# Location API Configs
+# ######################################################################################################################
+final r4:ResourceAPIConfig locationApiConfig = {
+    resourceType: "Location",
+    profiles: [
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-location"
+    ],
+    defaultProfile: (),
+    searchParameters: [
+        {
+            name: "partof",
+            active: true,
+            information: {
+                description: "A location of which this location is a part",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Location-partof"
+            }
+        },
+        {
+            name: "organization",
+            active: true,
+            information: {
+                description: "Searches for locations that are managed by the provided organization",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Location-organization"
+            }
+        },
+        {
+            name: "address-country",
+            active: true,
+            information: {
+                description: "A country specified in an address",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Location-address-country"
+            }
+        },
+        {
+            name: "operational-status",
+            active: true,
+            information: {
+                description: "Searches for locations (typically bed/room) that have an operational status (e.g. contaminated, housekeeping)",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Location-operational-status"
+            }
+        },
+        {
+            name: "type",
+            active: true,
+            information: {
+                description: "A code for the type of location",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Location-type"
+            }
+        },
+        {
+            name: "address-postalcode",
+            active: true,
+            information: {
+                description: "A postal code specified in an address",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Location-address-postalcode"
+            }
+        },
+        {
+            name: "near",
+            active: true,
+            information: {
+                description: "Search for locations where the location.position is near to, or within a specified distance of, the provided coordinates expressed as [latitude]|[longitude]|[distance]|[units] (using the WGS84 datum, see notes).If the units are omitted, then kms should be assumed. If the distance is omitted, then the server can use its own discretion as to what distances should be considered near (and units are irrelevant)Servers may search using various techniques that might have differing accuracies, depending on implementation efficiency.Requires the near-distance parameter to be provided also",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Location-near"
+            }
+        },
+        {
+            name: "address-state",
+            active: true,
+            information: {
+                description: "A state specified in an address",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Location-address-state"
+            }
+        },
+        {
+            name: "address-city",
+            active: true,
+            information: {
+                description: "A city specified in an address",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Location-address-city"
+            }
+        },
+        {
+            name: "address",
+            active: true,
+            information: {
+                description: "A (part of the) address of the location",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Location-address"
+            }
+        },
+        {
+            name: "name",
+            active: true,
+            information: {
+                description: "A portion of the location's name or alias",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Location-name"
+            }
+        },
+        {
+            name: "endpoint",
+            active: true,
+            information: {
+                description: "Technical endpoints providing access to services operated for the location",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Location-endpoint"
+            }
+        },
+        {
+            name: "status",
+            active: true,
+            information: {
+                description: "Searches for locations with a specific kind of status",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Location-status"
+            }
+        },
+        {
+            name: "identifier",
+            active: true,
+            information: {
+                description: "An identifier for the location",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Location-identifier"
+            }
+        },
+        {
+            name: "address-use",
+            active: true,
+            information: {
+                description: "A use code specified in an address",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Location-address-use"
+            }
+        }
+
+    ],
+    operations: [
+
+    ],
+    serverConfig: (),
+    authzConfig: ()
+};
+
+# ######################################################################################################################
+# Schedule API Configs
+# ######################################################################################################################
+final r4:ResourceAPIConfig scheduleApiConfig = {
+    resourceType: "Schedule",
+    profiles: [
+        "http://hl7.org/fhir/StructureDefinition/Schedule"
+    ],
+    defaultProfile: (),
+    searchParameters: [
+        {
+            name: "specialty",
+            active: true,
+            information: {
+                description: "Type of specialty needed",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Schedule-specialty"
+            }
+        },
+        {
+            name: "service-type",
+            active: true,
+            information: {
+                description: "The type of appointments that can be booked into associated slot(s)",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Schedule-service-type"
+            }
+        },
+        {
+            name: "date",
+            active: true,
+            information: {
+                description: "Search for Schedule resources that have a period that contains this date specified",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Schedule-date"
+            }
+        },
+        {
+            name: "actor",
+            active: true,
+            information: {
+                description: "The individual(HealthcareService, Practitioner, Location, ...) to find a Schedule for",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Schedule-actor"
+            }
+        },
+        {
+            name: "active",
+            active: true,
+            information: {
+                description: "Is the schedule in active use",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Schedule-active"
+            }
+        },
+        {
+            name: "identifier",
+            active: true,
+            information: {
+                description: "A Schedule Identifier",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Schedule-identifier"
+            }
+        },
+        {
+            name: "service-category",
+            active: true,
+            information: {
+                description: "High-level category",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Schedule-service-category"
+            }
+        }
+
+    ],
+    operations: [
+
+    ],
+    serverConfig: (),
+    authzConfig: ()
+};
+
+# ######################################################################################################################
+# Slot API Configs
+# ######################################################################################################################
+final r4:ResourceAPIConfig slotApiConfig = {
+    resourceType: "Slot",
+    profiles: [
+        "http://hl7.org/fhir/StructureDefinition/Slot"
+    ],
+    defaultProfile: (),
+    searchParameters: [
+        {
+            name: "status",
+            active: true,
+            information: {
+                description: "The free/busy status of the appointment",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Slot-status"
+            }
+        },
+        {
+            name: "identifier",
+            active: true,
+            information: {
+                description: "A Slot Identifier",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Slot-identifier"
+            }
+        },
+        {
+            name: "schedule",
+            active: true,
+            information: {
+                description: "The Schedule Resource that we are seeking a slot within",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Slot-schedule"
+            }
+        },
+        {
+            name: "start",
+            active: true,
+            information: {
+                description: "Appointment date/time.",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Slot-start"
+            }
+        },
+        {
+            name: "service-type",
+            active: true,
+            information: {
+                description: "The type of appointments that can be booked into the slot",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Slot-service-type"
+            }
+        },
+        {
+            name: "service-category",
+            active: true,
+            information: {
+                description: "A broad categorization of the service that is to be performed during this appointment",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Slot-service-category"
+            }
+        },
+        {
+            name: "specialty",
+            active: true,
+            information: {
+                description: "The specialty of a practitioner that would be required to perform the service requested in this appointment",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Slot-specialty"
+            }
+        },
+        {
+            name: "appointment-type",
+            active: true,
+            information: {
+                description: "The style of appointment or patient that may be booked in the slot (not service type)",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/Slot-appointment-type"
+            }
+        }
+
+    ],
+    operations: [
+
+    ],
+    serverConfig: (),
+    authzConfig: ()
+};
+
+# ######################################################################################################################
+# InsurancePlan API Configs
+# ######################################################################################################################
+final r4:ResourceAPIConfig insuranceplanApiConfig = {
+    resourceType: "InsurancePlan",
+    profiles: [
+        "http://hl7.org/fhir/us/davinci-drug-formulary/StructureDefinition/usdf-PayerInsurancePlan"
+    ],
+    defaultProfile: (),
+    searchParameters: [
+        {
+            name: "endpoint",
+            active: true,
+            information: {
+                description: "Technical endpoint",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/InsurancePlan-endpoint"
+            }
+        },
+        {
+            name: "address-postalcode",
+            active: true,
+            information: {
+                description: "A postal code specified in an address",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/InsurancePlan-address-postalcode"
+            }
+        },
+        {
+            name: "type",
+            active: true,
+            information: {
+                description: "A code for the type of organization",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/InsurancePlan-type"
+            }
+        },
+        {
+            name: "address-use",
+            active: true,
+            information: {
+                description: "A use code specified in an address",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/InsurancePlan-address-use"
+            }
+        },
+        {
+            name: "phonetic",
+            active: true,
+            information: {
+                description: "A portion of the organization's name using some kind of phonetic matching algorithm",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/InsurancePlan-phonetic"
+            }
+        },
+        {
+            name: "status",
+            active: true,
+            information: {
+                description: "Is the Organization record active",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/InsurancePlan-status"
+            }
+        },
+        {
+            name: "owned-by",
+            active: true,
+            information: {
+                description: "An organization of which this organization forms a part",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/InsurancePlan-owned-by"
+            }
+        },
+        {
+            name: "address-country",
+            active: true,
+            information: {
+                description: "A country specified in an address",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/InsurancePlan-address-country"
+            }
+        },
+        {
+            name: "identifier",
+            active: true,
+            information: {
+                description: "Any identifier for the organization (not the accreditation issuer's identifier)",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/InsurancePlan-identifier"
+            }
+        },
+        {
+            name: "address",
+            active: true,
+            information: {
+                description: "A server defined search that may match any of the string fields in the Address, including line, city, district, state, country, postalCode, and/or text",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/InsurancePlan-address"
+            }
+        },
+        {
+            name: "name",
+            active: true,
+            information: {
+                description: "A portion of the organization's name or alias",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/InsurancePlan-name"
+            }
+        },
+        {
+            name: "address-state",
+            active: true,
+            information: {
+                description: "A state specified in an address",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/InsurancePlan-address-state"
+            }
+        },
+        {
+            name: "address-city",
+            active: true,
+            information: {
+                description: "A city specified in an address",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/InsurancePlan-address-city"
+            }
+        },
+        {
+            name: "administered-by",
+            active: true,
+            information: {
+                description: "Product administrator",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/InsurancePlan-administered-by"
+            }
+        }
+
+    ],
+    operations: [
+
+    ],
+    serverConfig: (),
+    authzConfig: ()
+};
+
+# ######################################################################################################################
+# MedicationKnowledge API Configs
+# ######################################################################################################################
+final r4:ResourceAPIConfig medicationknowledgeApiConfig = {
+    resourceType: "MedicationKnowledge",
+    profiles: [
+        "http://hl7.org/fhir/us/davinci-drug-formulary/StructureDefinition/usdf-FormularyDrug"
+    ],
+    defaultProfile: (),
+    searchParameters: [
+        {
+            name: "monograph",
+            active: true,
+            information: {
+                description: "Associated documentation about the medication",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/MedicationKnowledge-monograph"
+            }
+        },
+        {
+            name: "ingredient-code",
+            active: true,
+            information: {
+                description: "Medication(s) or substance(s) contained in the medication",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/MedicationKnowledge-ingredient-code"
+            }
+        },
+        {
+            name: "monograph-type",
+            active: true,
+            information: {
+                description: "The category of medication document",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/MedicationKnowledge-monograph-type"
+            }
+        },
+        {
+            name: "monitoring-program-type",
+            active: true,
+            information: {
+                description: "Type of program under which the medication is monitored",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/MedicationKnowledge-monitoring-program-type"
+            }
+        },
+        {
+            name: "doseform",
+            active: true,
+            information: {
+                description: "powder | tablets | capsule +",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/MedicationKnowledge-doseform"
+            }
+        },
+        {
+            name: "classification",
+            active: true,
+            information: {
+                description: "Specific category assigned to the medication",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/MedicationKnowledge-classification"
+            }
+        },
+        {
+            name: "ingredient",
+            active: true,
+            information: {
+                description: "Medication(s) or substance(s) contained in the medication",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/MedicationKnowledge-ingredient"
+            }
+        },
+        {
+            name: "source-cost",
+            active: true,
+            information: {
+                description: "The source or owner for the price information",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/MedicationKnowledge-source-cost"
+            }
+        },
+        {
+            name: "classification-type",
+            active: true,
+            information: {
+                description: "The type of category for the medication (for example, therapeutic classification, therapeutic sub-classification)",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/MedicationKnowledge-classification-type"
+            }
+        },
+        {
+            name: "manufacturer",
+            active: true,
+            information: {
+                description: "Manufacturer of the item",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/MedicationKnowledge-manufacturer"
+            }
+        },
+        {
+            name: "code",
+            active: true,
+            information: {
+                description: "Code that identifies this medication",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/MedicationKnowledge-code"
+            }
+        },
+        {
+            name: "status",
+            active: true,
+            information: {
+                description: "active | inactive | entered-in-error",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/MedicationKnowledge-status"
+            }
+        },
+        {
+            name: "monitoring-program-name",
+            active: true,
+            information: {
+                description: "Name of the reviewing program",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/SearchParameter/MedicationKnowledge-monitoring-program-name"
+            }
+        }
+
+    ],
+    operations: [
+
+    ],
+    serverConfig: (),
+    authzConfig: ()
+};
 # Subscription API Configs                                                                                             #
 # ###################################################################################################################### 
 
@@ -1119,6 +3511,81 @@ final r4:ResourceAPIConfig subscriptionApiConfig = {
         }
     ],
     operations: [],
+    serverConfig: (),
+    authzConfig: ()
+};
+
+# ######################################################################################################################
+# Communication Request API Configs                                                                                            #
+# ######################################################################################################################
+
+final r4:ResourceAPIConfig communicationRequestApiConfig = {
+    resourceType: "CommunicationRequest",
+    profiles: [
+        "http://hl7.org/fhir/us/davinci-pas/StructureDefinition/profile-communicationrequest"
+    ],
+    defaultProfile: (),
+    searchParameters: [
+    ],
+    operations: [
+
+    ],
+    serverConfig: (),
+    authzConfig: ()
+};
+
+# ######################################################################################################################
+# ValueSet API Configs                                                                                                 #
+# ######################################################################################################################
+
+final r4:ResourceAPIConfig valuesetApiConfig = {
+    resourceType: "ValueSet",
+    profiles: [
+        "http://hl7.org/fhir/StructureDefinition/ValueSet"
+    ],
+    defaultProfile: (),
+    searchParameters: [],
+    operations: [
+        {name: "expand", active: true, parameters: []},
+        {name: "validate-code", active: true, parameters: []}
+    ],
+    serverConfig: (),
+    authzConfig: ()
+};
+
+# ######################################################################################################################
+# CodeSystem API Configs                                                                                                #
+# ######################################################################################################################
+
+final r4:ResourceAPIConfig codesystemApiConfig = {
+    resourceType: "CodeSystem",
+    profiles: [
+        "http://hl7.org/fhir/StructureDefinition/CodeSystem"
+    ],
+    defaultProfile: (),
+    searchParameters: [],
+    operations: [
+        {name: "lookup", active: true, parameters: []},
+        {name: "subsumes", active: true, parameters: []}
+    ],
+    serverConfig: (),
+    authzConfig: ()
+};
+
+# ######################################################################################################################
+# ConceptMap API Configs                                                                                                #
+# ######################################################################################################################
+
+final r4:ResourceAPIConfig conceptmapApiConfig = {
+    resourceType: "ConceptMap",
+    profiles: [
+        "http://hl7.org/fhir/StructureDefinition/ConceptMap"
+    ],
+    defaultProfile: (),
+    searchParameters: [],
+    operations: [
+        {name: "translate", active: true, parameters: []}
+    ],
     serverConfig: (),
     authzConfig: ()
 };

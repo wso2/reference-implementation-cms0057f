@@ -16,6 +16,7 @@
 
 import ballerina/http;
 import ballerina/log;
+import ballerina/sql;
 import ballerina/time;
 import ballerina/url;
 import ballerina/uuid;
@@ -26,6 +27,7 @@ import ballerinax/health.fhir.r4.international401;
 import ballerinax/health.fhir.r4.parser;
 import ballerinax/health.fhir.r4.uscore501;
 import ballerinax/health.fhir.r4.validator;
+import ballerinax/health.clients.fhir as fhirClient;
 
 isolated function getQueryParamsMap(map<r4:RequestSearchParameter[] & readonly> requestSearchParameters) returns map<string[]> {
     //TODO: Should provide ability to get the query parameters from the context as it is from the http request. 
@@ -296,69 +298,481 @@ public isolated function generateSmartConfiguration() returns SmartConfiguration
     return smartConfig;
 }
 
-public isolated function claimSubmit(international401:Parameters payload) returns r4:FHIRError|r4:Bundle|error {
-    international401:Parameters|error 'parameters = parser:parseWithValidation(payload.toJson(), international401:Parameters).ensureType();
+# Function to invoke the X12 translation service and create an audit record for the transaction.
+# 
+# + url - The endpoint URL of the X12 translation service
+# + payload - The payload to be sent to the X12 translation service
+# + claimId - The ID of the claim being processed, used for audit record correlation
+# + fhirConnector - The FHIR connector used to create the audit record in the FHIR server
+# 
+# + return - An error if the X12 service call fails or if audit record creation fails, otherwise returns ()
+isolated function invokeX12ServiceAndCreateAuditRecord(string url, string payload, string claimId, fhirClient:FHIRConnector fhirConnector) returns error? {
+    
+    if x12ConnectionConfig.enable {
+        http:Client?|error x12Client = ();
+        lock {
+            x12Client = x12ConnectionClient;
+        }
+        if x12Client is () || x12Client is error {
+            return error("X12 connection client is not initialized");
+        }
+        
+        http:Response response = check x12Client->post(url, payload);
+        if response.statusCode == http:STATUS_OK {
+            string responsePayload = check response.getTextPayload();
 
-    if 'parameters is error {
-        return r4:createFHIRError('parameters.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+            // Create Audit Record
+            international401:AuditEvent auditEvent = {
+                id: claimId,
+                'source: {
+                    observer: {
+                        "display": "FHIR Service"
+                    }
+                }, 
+                agent: [], 
+                recorded: time:utcToString(time:utcNow()), 
+                'type: {
+                    system: "http://terminology.hl7.org/CodeSystem/audit-event-type",
+                    code: "x12",
+                    display: "X12 Request"
+                },
+                outcome: responsePayload
+            };
+            _ = check create(fhirConnector, AUDIT_EVENT, auditEvent.toJson());
+            log:printDebug("Audit event created for the converted X12 message.");
+        } else {
+            return error("X12 service call failed with status code: " + response.statusCode.toString());
+        }
+    }
+}
+
+# Extract the logical ID from a FHIR reference string (e.g. "Patient/123" → "123").
+#
+# + reference - FHIR reference string, may be null
+# + return - Logical ID or null if reference is null/empty
+isolated function extractRefId(string? reference) returns string? {
+    if reference is () || reference == "" {
+        return ();
+    }
+    string[] parts = re`/`.split(reference);
+    return parts[parts.length() - 1];
+}
+
+# Map a FHIR Claim priority coding to the PA request priority string.
+# "stat" → "Urgent", "deferred" → "Deferred", anything else → "Standard".
+#
+# + claimJson - Claim resource as JSON
+# + return - Priority string: "Urgent", "Standard", or "Deferred"
+isolated function mapClaimPriority(json claimJson) returns string {
+    json|error codings = claimJson.priority.coding;
+    if codings is json[] && codings.length() > 0 {
+        json|error code = codings[0].code;
+        if code is string {
+            string lower = code.toLowerAscii();
+            if lower == "stat" {
+                return "Urgent";
+            } else if lower == "deferred" {
+                return "Deferred";
+            }
+        } else {
+            log:printWarn("Claim priority coding code is not a string. Defaulting to Standard. Value: " + (<error>code).toString());
+        }
+    }
+    return "Standard";
+}
+
+# Detect whether a Claim represents an appeal by checking extensions whose URL
+# contains "appeal". The extension value is used when present (valueBoolean),
+# otherwise the presence of a matching URL is treated as an implicit true.
+#
+# Note: related.relationship.coding code "prior" is intentionally NOT used as
+# an appeal signal — "prior" only indicates a predecessor claim, not an appeal.
+#
+# + claimJson - Claim resource as JSON
+# + return - true if the claim is an appeal
+isolated function detectIsAppeal(json claimJson) returns boolean {
+    json|error extensions = claimJson.extension;
+    if extensions is json[] {
+        foreach json ext in extensions {
+            json|error urlJson = ext.url;
+            if urlJson is string && urlJson.toLowerAscii().includes("appeal") {
+                json|error vb = ext.valueBoolean;
+                return vb is boolean ? vb : true;
+            }
+        }
+    }
+    return false;
+}
+
+# Resolve practitioner ID and provider name from a Claim resource.
+# Resolution order:
+# 1. careTeam entries (PractitionerRole → practitioner + org, or Practitioner directly)
+# 2. claim.provider reference (PractitionerRole, Organization, or Practitioner)
+# 3. Fallback to claim.provider.display
+#
+# + fhirConnector - FHIR connector for fetching related resources
+# + claimJson - Claim resource as JSON
+# + return - Tuple of [practitioner_id, provider_name], either may be null
+isolated function resolveProviderInfo(fhirClient:FHIRConnector fhirConnector, international401:Claim claimJson) returns [string?, string?] {
+    string? practitionerId = ();
+    string? providerName = ();
+
+    // 1. Check careTeam entries
+    international401:ClaimCareTeam[]? careTeamJson = claimJson.careTeam;
+    if careTeamJson is international401:ClaimCareTeam[] {
+        foreach international401:ClaimCareTeam member in careTeamJson {
+            if practitionerId is string && providerName is string {
+                break;
+            }
+            string? providerRef = member.provider.reference;
+            if providerRef is (){
+                log:printWarn("CareTeam member is missing provider reference");
+                continue;
+            }
+            if providerRef.includes("PractitionerRole/") {
+                string? prId = extractRefId(providerRef);
+                if prId is () {
+                    log:printWarn("CareTeam member provider reference includes PractitionerRole but ID is empty");
+                    continue;
+                }
+                r4:DomainResource|r4:FHIRError prRes = getById(fhirConnector, PRACTITIONER_ROLE, prId);
+                if prRes is r4:FHIRError {
+                    log:printWarn("Failed to retrieve PractitionerRole resource with ID " + prId + ": " + prRes.toString());
+                    continue;
+                }
+                international401:PractitionerRole|error pr = prRes.cloneWithType(international401:PractitionerRole);
+                if pr is error {
+                    log:printWarn("Failed to convert PractitionerRole resource with ID " + prId + " to international401:PractitionerRole: " + pr.toString());
+                    continue;
+                }
+                if practitionerId is () {
+                    practitionerId = extractRefId(pr.practitioner?.reference);
+                }
+                if providerName is () && pr.organization is r4:Reference {
+                    string? orgId = extractRefId((<r4:Reference>pr.organization).reference);
+                    if orgId is () {
+                        log:printWarn("Organization reference in PractitionerRole with ID " + prId + " is empty");
+                        continue;
+                    }
+                    r4:DomainResource|r4:FHIRError orgRes = getById(fhirConnector, ORGANIZATION, orgId);
+                    if orgRes is r4:FHIRError {
+                        log:printWarn("Failed to retrieve Organization resource with ID " + orgId + ": " + orgRes.toString());
+                        continue;
+                    }
+                    international401:Organization|error org = orgRes.cloneWithType(international401:Organization);
+                    if org is error {
+                        log:printWarn("Failed to convert Organization resource with ID " + orgId + " to international401:Organization: " + org.toString());
+                        continue;
+                    }
+                    providerName = org.name;
+                }
+                break;
+            } else if providerRef.includes("Practitioner/") {
+                practitionerId = extractRefId(providerRef);
+                break;
+            }
+        }
+    }
+
+    // 2. Check claim.provider reference
+    string? providerRef = claimJson.provider.reference;
+    string? providerDisplay = claimJson.provider.display;
+
+    if providerRef is string {
+        if providerRef.includes("PractitionerRole") {
+            string? prId = extractRefId(providerRef);
+            if prId is () {
+                log:printWarn("Claim provider reference includes PractitionerRole but ID is empty");
+                return [practitionerId, providerName];
+            }
+            r4:DomainResource|r4:FHIRError prRes = getById(fhirConnector, PRACTITIONER_ROLE, prId);
+            if prRes is r4:FHIRError {
+                log:printWarn("Failed to retrieve PractitionerRole resource with ID " + prId + ": " + prRes.toString());
+                return [practitionerId, providerName];
+            }
+            international401:PractitionerRole|error pr = prRes.cloneWithType(international401:PractitionerRole);
+            if pr is error {
+                log:printWarn("Failed to convert PractitionerRole resource with ID " + prId + " to international401:PractitionerRole: " + pr.toString());
+                return [practitionerId, providerName];
+            }
+            if practitionerId is () {
+                practitionerId = extractRefId(pr.practitioner?.reference);
+            }
+            if providerName is () && pr.organization is r4:Reference {
+                string? orgId = extractRefId((<r4:Reference>pr.organization).reference);
+                if orgId is string {
+                    r4:DomainResource|r4:FHIRError orgRes = getById(fhirConnector, ORGANIZATION, orgId);
+                    if orgRes is r4:FHIRError {
+                        log:printWarn("Failed to retrieve Organization resource with ID " + orgId + ": " + orgRes.toString());
+                        return [practitionerId, providerName];
+                    }
+                    international401:Organization|error org = orgRes.cloneWithType(international401:Organization);
+                    if org is international401:Organization {
+                        providerName = org.name;
+                    }
+                }
+            }
+        } else if providerRef.includes("Organization") && providerName is () {
+            string? orgId = extractRefId(providerRef);
+            if orgId is string {
+                r4:DomainResource|r4:FHIRError orgRes = getById(fhirConnector, ORGANIZATION, orgId);
+                if orgRes is r4:FHIRError {
+                    log:printWarn("Failed to retrieve Organization resource with ID " + orgId + ": " + orgRes.toString());
+                    return [practitionerId, providerName];
+                }
+                international401:Organization|error org = orgRes.cloneWithType(international401:Organization);
+                if org is international401:Organization {
+                    providerName = org.name;
+                }
+            }
+        } else if providerRef.includes("Practitioner") && practitionerId is () {
+            practitionerId = extractRefId(providerRef);
+        }
+    }
+
+    // 3. Fallback: use display field
+    if providerName is () && providerDisplay is string {
+        providerName = providerDisplay;
+    }
+
+    return [practitionerId, providerName];
+}
+
+public isolated function claimSubmit(r4:Bundle|international401:Parameters payload) returns r4:FHIRError|r4:Bundle|error {
+    r4:Bundle submissionBundle;
+    if payload is r4:Bundle {
+        submissionBundle = payload;
     } else {
-        international401:ParametersParameter[]? 'parameter = 'parameters.'parameter;
-        if 'parameter is international401:ParametersParameter[] {
-            foreach var item in 'parameter {
-                if item.name == "resource" {
-                    r4:Resource? resourceResult = item.'resource;
-                    if resourceResult is r4:Resource {
-                        r4:Bundle cloneWithType = check resourceResult.cloneWithType(r4:Bundle);
-                        r4:BundleEntry[]? entry = cloneWithType.entry;
-                        if entry is r4:BundleEntry[] {
-                            if entry.length() == 0 || entry[0]?.'resource is () {
-                                return r4:createFHIRError("Bundle entry missing claim resource", r4:ERROR, r4:INVALID,
-                                    httpStatusCode = http:STATUS_BAD_REQUEST);
-                            }
-                            r4:BundleEntry bundleEntry = entry[0];
-                            anydata 'resource = bundleEntry?.'resource;
-                            international401:Claim claim = check parser:parse('resource.toJson(), international401:Claim).ensureType();
-                            claim.id = uuid:createType1AsString();
-
-                            r4:DomainResource newClaimResource = check create(fhirConnector, CLAIM, claim.toJson());
-                            international401:Claim newClaim = check newClaimResource.cloneWithType();
-
-                            davincipas:PASClaimResponse claimResponse = {
-                                id: uuid:createType1AsString(),
-                                request: {reference: "Claim/" + <string>newClaim.id},
-                                patient: newClaim.patient,
-                                insurer: <r4:Reference>newClaim.insurer,
-                                created: newClaim.created,
-                                'type: newClaim.'type,
-                                use: newClaim.use,
-                                requestor: claim.provider,
-                                outcome: "partial",
-                                disposition: "Prior authorization request is pending review.",
-                                status: "active"
-                            };
-
-                            r4:DomainResource newClaimResponseResource = check create(fhirConnector, CLAIM_RESPONSE, claimResponse.toJson());
-                            davincipas:PASClaimResponse newClaimResponse = check newClaimResponseResource.cloneWithType();
-
-                            r4:BundleEntry bundleEntryResponse = {
-                                'resource: newClaimResponse,
-                                fullUrl: "urn:uuid:" + <string>newClaimResponse.id
-                            };
-
-                            r4:Bundle responseBundle = {
-                                'type: r4:BUNDLE_TYPE_COLLECTION,
-                                entry: [bundleEntryResponse]
-                            };
-
-                            return responseBundle.clone();
-                        }
+        // international401:Parameters parameters = <international401:Parameters>payload;
+        // international401:ParametersParameter[]? 'parameter = parameters.'parameter;
+        // if 'parameter is international401:ParametersParameter[] {
+        //     r4:Bundle? foundBundle = ();
+        //     foreach var item in 'parameter {
+        //         if item.name == "resource" {
+        //             r4:Resource? resourceResult = item.'resource;
+        //             if resourceResult is r4:Bundle {
+        //                 foundBundle = resourceResult;
+        //             } else if resourceResult is r4:Resource {
+        //                 foundBundle = check resourceResult.cloneWithType(r4:Bundle);
+        //             }
+        //             break;
+        //         }
+        //     }
+        //     if foundBundle is r4:Bundle {
+        //         submissionBundle = foundBundle;
+        //     } else {
+        //         return r4:createFHIRError("Bundle not found in parameters", r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+        //     }
+        // } else {
+        //     return r4:createFHIRError("Invalid parameters", r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+        // }
+    }
+    submissionBundle = check payload.cloneWithType(r4:Bundle);
+    r4:BundleEntry[]? entries = submissionBundle.entry;
+    if entries is r4:BundleEntry[] && entries.length() > 0 {
+        international401:Claim? claim = ();
+        foreach var entry in entries {
+            anydata 'resource = entry?.'resource;
+            if 'resource is international401:Claim {
+                claim = 'resource;
+                break;
+            } else if 'resource is map<anydata> {
+                map<anydata> resourceMap = <map<anydata>>'resource;
+                anydata resourceType = resourceMap["resourceType"];
+                if resourceType is string && resourceType == "Claim" {
+                    international401:Claim|error c = 'resource.cloneWithType(international401:Claim);
+                    if c is international401:Claim {
+                        claim = c;
+                        break;
                     }
                 }
             }
         }
+
+        if claim is international401:Claim {
+            string claimId = uuid:createType1AsString();
+            claim.id = claimId;
+
+            r4:DomainResource newClaimResource = check create(fhirConnector, CLAIM, claim.toJson());
+            international401:Claim newClaim = check newClaimResource.cloneWithType();
+
+            if x12ConnectionConfig.enable {
+
+                FhirToX12ServicePayload x12Payload = {
+                    payload: submissionBundle.toJson(),
+                    x12Headers: x12Header
+                };
+
+                log:printInfo("Starting FHIR to X12 translation for the Bundle");
+                error? result = invokeX12ServiceAndCreateAuditRecord(FHIR_TO_X12_API_RESOURCE, x12Payload.toJsonString(), claimId, fhirConnector);
+                if result is error {
+                    return r4:createFHIRError(result.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_INTERNAL_SERVER_ERROR);
+                } else {
+                    log:printDebug("X12 translation and audit record creation successful");
+                }
+            }
+
+            davincipas:PASClaimResponse claimResponse = {
+                id: uuid:createType1AsString(),
+                request: {reference: "Claim/" + <string>newClaim.id},
+                patient: newClaim?.patient,
+                insurer: <r4:Reference>newClaim?.insurer,
+                created: newClaim?.created,
+                'type: newClaim?.'type,
+                use: newClaim?.use,
+                requestor: claim.provider,
+                outcome: "partial",
+                disposition: "Prior authorization request is pending review.",
+                status: "active"
+            };
+
+            r4:DomainResource newClaimResponseResource = check create(fhirConnector, CLAIM_RESPONSE, claimResponse.toJson());
+            davincipas:PASClaimResponse newClaimResponse = check newClaimResponseResource.cloneWithType();
+
+            r4:BundleEntry bundleEntryResponse = {
+                'resource: newClaimResponse,
+                fullUrl: "urn:uuid:" + <string>newClaimResponse.id
+            };
+
+            r4:Bundle responseBundle = {
+                'type: r4:BUNDLE_TYPE_COLLECTION,
+                entry: [bundleEntryResponse]
+            };
+
+            // Insert PA request record into the database
+            string responseId = <string>newClaimResponse.id;
+            json claimJson = claim.toJson();
+            string mappedPriority = mapClaimPriority(claimJson);
+            json|error patientRefJson = claimJson.patient.reference;
+            string patientId = patientRefJson is string ? (extractRefId(patientRefJson) ?: "") : "";
+            [string?, string?] providerInfo = resolveProviderInfo(fhirConnector, claim);
+            string? practitionerId = providerInfo[0];
+            string? providerName = providerInfo[1];
+            boolean isAppeal = detectIsAppeal(claimJson);
+            time:Utc now = time:utcNow();
+            time:Civil civil = time:utcToCivil(now);
+            int sec = <int>(civil.second ?: 0.0d);
+            string dateSubmitted = string `${civil.year}-${civil.month < 10 ? "0" : ""}${civil.month}-${civil.day < 10 ? "0" : ""}${civil.day} ${civil.hour < 10 ? "0" : ""}${civil.hour}:${civil.minute < 10 ? "0" : ""}${civil.minute}:${sec < 10 ? "0" : ""}${sec}`;
+
+            sql:ParameterizedQuery insertQuery = `INSERT INTO pa_requests
+                (request_id, response_id, priority, status, ai_summary, patient_id, practitioner_id, provider_name, is_appeal, date_submitted)
+                VALUES (${claimId}, ${responseId}, ${mappedPriority}, 'QUEUED', NULL, ${patientId}, ${practitionerId}, ${providerName}, ${isAppeal}, ${dateSubmitted})`;
+            sql:ExecutionResult|sql:Error dbResult = dbClient->execute(insertQuery);
+            if dbResult is sql:Error {
+                string errMsg = string `Failed to insert PA request into database: request_id=${claimId}, response_id=${responseId}: ${dbResult.message()}`;
+                log:printError(errMsg, dbResult);
+                r4:OperationOutcome|r4:FHIRError deleteResponseResult = deleteResource(fhirConnector, CLAIM_RESPONSE, responseId);
+                if deleteResponseResult is r4:FHIRError {
+                    log:printError("Compensating delete of ClaimResponse failed: response_id=" + responseId, deleteResponseResult);
+                }
+                r4:OperationOutcome|r4:FHIRError deleteClaimResult = deleteResource(fhirConnector, CLAIM, claimId);
+                if deleteClaimResult is r4:FHIRError {
+                    log:printError("Compensating delete of Claim failed: claim_id=" + claimId, deleteClaimResult);
+                }
+                return error(errMsg);
+            }
+            log:printDebug("PA request inserted into database: request_id=" + claimId + ", response_id=" + responseId);
+
+            return responseBundle.clone();
+        } else {
+            return r4:createFHIRError("Claim resource not found in bundle", r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+        }
+    }
+    return r4:createFHIRError("Bundle entries missing or empty", r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+}
+
+public isolated function submitAttachments(international401:Parameters payload) 
+    returns r4:FHIRError|davincipas:PASClaimSupportingInfo[]|error {
+
+    international401:Parameters|error 'parameters = 
+        parser:parseWithValidation(payload.toJson(), international401:Parameters).ensureType();
+
+    if 'parameters is error {
+        return r4:createFHIRError('parameters.message(), r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+    } else {
+        string trackingId = "";
+        international401:ParametersParameter[]? 'parameter = 'parameters.'parameter;
+        davincipas:PASClaimSupportingInfo[] supportingInfoList = [];
+        if 'parameter is international401:ParametersParameter[] {
+            foreach var item in 'parameter {
+                if item.name == "Attachment" {
+                    r4:ParametersParameter[]? parts = item.part;
+                    if parts is () {
+                        return r4:createFHIRError("Attachment parameter must have parts", r4:ERROR, r4:INVALID, 
+                            httpStatusCode = http:STATUS_BAD_REQUEST);
+                    }
+                    foreach r4:ParametersParameter part in parts {
+                        r4:Resource? resourceResult = part.'resource;
+                        if resourceResult is r4:Resource {
+                            // if resource type is DocumentReference, then create a DocumentReference 
+                            // resource in the FHIR server.
+                            if resourceResult.resourceType == "DocumentReference" {
+                                international401:DocumentReference documentReferenceResource = 
+                                    check parser:parse(resourceResult.toJson(), international401:DocumentReference)
+                                    .ensureType();
+                                documentReferenceResource.id = uuid:createType1AsString();
+                                // create document reference resource in the FHIR server
+                                r4:DomainResource _ = check create(fhirConnector, DOCUMENT_REFERENCE, 
+                                    documentReferenceResource.toJson());
+                                // create supporting info
+                                davincipas:PASClaimSupportingInfo supportingInfo = {
+                                    valueReference: {reference: "DocumentReference/" + 
+                                        <string>documentReferenceResource.id},
+                                    sequence: 1, // todo
+                                    category: {
+                                        coding: [
+                                            {
+                                                system: "http://terminology.hl7.org/CodeSystem/claiminformationcategory",
+                                                code: "info",
+                                                display: "Supporting Information"
+                                            }
+                                        ]
+                                    }
+                                };
+                                supportingInfoList.push(supportingInfo);
+
+                            } else if resourceResult.resourceType == "QuestionnaireResponse" {
+                                international401:QuestionnaireResponse questionnaireResponseResource = 
+                                    check parser:parse(resourceResult.toJson(), international401:QuestionnaireResponse)
+                                    .ensureType();
+
+                                davincipas:PASClaimSupportingInfo supportingInfo = {
+                                    valueReference: {reference: "QuestionnaireResponse/" + 
+                                        <string>questionnaireResponseResource.id},
+                                    sequence: 1,
+                                    category: {
+                                        coding: [
+                                            {
+                                                system: "http://terminology.hl7.org/CodeSystem/claiminformationcategory",
+                                                code: "info",
+                                                display: "Supporting Information"
+                                            }
+                                        ]
+                                    }
+                                };
+                                supportingInfoList.push(supportingInfo);
+                            }
+                        }
+                    }
+                }
+                if item.name == "TrackingId" {
+                    if item.valueString is string {
+                        trackingId = item.valueString ?: "";
+                    }
+                }
+            }
+        }
+        if trackingId == "" {
+            return r4:createFHIRError("TrackingId parameter is missing", r4:ERROR, r4:INVALID, 
+                httpStatusCode = http:STATUS_BAD_REQUEST);
+        }
+        if supportingInfoList.length() > 0 {
+            return supportingInfoList.clone();
+        }
     }
     return r4:createFHIRError("Something went wrong", r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
 }
+
 
 # Helper function to validate consent
 #
@@ -466,9 +880,12 @@ isolated function extractConsentFromParameters(international401:ParametersParame
 # Function to evaluate consent based on comprehensive guidelines
 #
 # + consent - The consent resource to evaluate
-# + memberMatchResult - The matched member identifier from the member matcher
+# + inputPatientId - The `id` of the input MemberPatient resource from the request. Per HRex spec,
+#                   Consent.patient SHALL be a local reference (e.g. "Patient/1") that resolves to
+#                   the MemberPatient parameter — NOT the matched patient ID in this payer's system.
+#                   Ref: https://hl7.org/fhir/us/davinci-hrex/STU1/OperationDefinition-member-match.html
 # + return - The result of the consent evaluation
-isolated function evaluateConsent(Consent consent, string memberMatchResult) returns ConsentEvaluationResult {
+isolated function evaluateConsent(Consent consent, string inputPatientId) returns ConsentEvaluationResult {
     ConsentEvaluationResult result = {
         isValid: false,
         patientId: (),
@@ -480,27 +897,52 @@ isolated function evaluateConsent(Consent consent, string memberMatchResult) ret
         requestingPayer: ()
     };
 
-    if memberMatchResult == "" {
-        log:printError("Member match result is empty");
+    if inputPatientId == "" {
+        log:printError("Input patient id is empty");
         result.reason = CONSENT_EVALUATION_FAILED;
         return result;
     }
 
+    // Status check — consent must be active
+    if consent.status != international401:CODE_STATUS_ACTIVE {
+        log:printError("Consent is not active. Status: " + consent.status);
+        result.reason = CONSENT_STATUS_INVALID;
+        return result;
+    }
+
+    // Scope check — HRex Consent requires scope = "patient-privacy" (Must Support fixed value)
+    // Ref: https://hl7.org/fhir/us/davinci-hrex/STU1.1/StructureDefinition-hrex-consent.html
+    r4:Coding[]? scopeCodings = consent.scope?.coding;
+    if scopeCodings is r4:Coding[] {
+        boolean validScope = scopeCodings.some(c => c.code == "patient-privacy");
+        if !validScope {
+            log:printError("Consent scope is not 'patient-privacy'");
+            result.reason = CONSENT_SCOPE_INVALID;
+            return result;
+        }
+    } else {
+        log:printError("Consent scope is missing");
+        result.reason = CONSENT_SCOPE_REQUIRED;
+        return result;
+    }
+
     // Step 1: Member Identity Validation
-    // Confirm the Consent.patient reference matches the uniquely identified member
+    // Consent.patient SHALL be a local reference to the input MemberPatient (e.g. "Patient/1").
+    // Compare its id segment against the input patient's id — never against the matched patient id.
     if consent.patient?.reference is string {
         string consentPatientRef = <string>consent.patient?.reference;
-        // Extract patient ID from reference (e.g., "Patient/123" -> "123")
+        // Extract patient ID from reference (e.g., "Patient/123" or "http://server/Patient/123" -> "123")
         string:RegExp slash = re `/`;
         string[] refParts = slash.split(consentPatientRef);
-        if refParts.length() == 2 {
-            string consentPatientId = refParts[1];
-            // Compare with the matched member identifier
-            if consentPatientId == memberMatchResult {
-                result.memberIdentity = memberMatchResult;
+        // use last segment to support both relative ("Patient/id") and absolute URLs
+        if refParts.length() >= 1 {
+            string consentPatientId = refParts[refParts.length() - 1];
+            // Compare with the input MemberPatient id
+            if consentPatientId == inputPatientId {
+                result.memberIdentity = inputPatientId;
                 log:printDebug("Member identity validation successful: " + consentPatientId);
             } else {
-                log:printError("Member identity mismatch. Consent patient: " + consentPatientId + ", Matched member: " + memberMatchResult);
+                log:printError("Member identity mismatch. Consent patient: " + consentPatientId + ", Input patient: " + inputPatientId);
                 result.reason = CONSENT_INVALID_MEMBER;
                 return result;
             }
@@ -516,15 +958,58 @@ isolated function evaluateConsent(Consent consent, string memberMatchResult) ret
     }
 
     // Step 2: Payer Identity Validation
-    // Confirm the Consent.organization is the Receiving Payer and Consent.performer is the Requesting Payer
-    if consent.organization is r4:Reference[] {
-        // Check if organization matches the receiving payer (this system)
-        // This is a simplified check - in production you'd validate against actual payer identifiers
-        result.requestingPayer = "receiving-payer"; // Placeholder
-        log:printDebug("Payer identity validation successful");
+    // Per HRex Consent profile (STU1.1), payer roles are expressed via provision.actor slices
+    // (Must Support, cardinality 2..*). Consent.organization is NOT part of HRex Consent.
+    //   - role code "performer" → requesting/source payer (authorized to disclose)
+    //   - role code "IRCP"      → receiving payer (authorized to receive data)
+    // Ref: https://hl7.org/fhir/us/davinci-hrex/STU1.1/StructureDefinition-hrex-consent.html
+    international401:ConsentProvisionActor[]? actors = consent.provision?.actor;
+    if actors is international401:ConsentProvisionActor[] && actors.length() >= 2 {
+        boolean hasPerformer = false;
+        boolean hasRecipient = false;
+        string requestingPayerRef = "";
+        foreach international401:ConsentProvisionActor actor in actors {
+            r4:Coding[]? codings = actor.role.coding;
+            if codings is r4:Coding[] {
+                foreach r4:Coding coding in codings {
+                    if coding.code == "performer" {
+                        hasPerformer = true;
+                        requestingPayerRef = actor.reference.reference ?: "";
+                    } else if coding.code == "IRCP" {
+                        hasRecipient = true;
+                    }
+                }
+            }
+        }
+        if hasPerformer && hasRecipient {
+            result.requestingPayer = requestingPayerRef;
+            log:printDebug("Payer identity validation successful — source: " + requestingPayerRef);
+        } else {
+            log:printError("Missing required provision.actor role(s). performer=" + hasPerformer.toString() + " IRCP=" + hasRecipient.toString());
+            result.reason = CONSENT_INVALID_PAYER;
+            return result;
+        }
     } else {
-        log:printError("Organization reference not found in consent");
+        log:printError("provision.actor missing or has fewer than 2 entries");
         result.reason = CONSENT_INVALID_PAYER;
+        return result;
+    }
+
+    // Provision rules validation — HRex Consent fixed values (Must Support)
+    // provision.type must be "permit" and provision.action must include "disclose"
+    // Ref: https://hl7.org/fhir/us/davinci-hrex/STU1.1/StructureDefinition-hrex-consent.html
+    if consent.provision?.'type != international401:CODE_TYPE_PERMIT {
+        log:printError("Consent provision type is not 'permit'. Got: " + (consent.provision?.'type ?: "missing").toString());
+        result.reason = CONSENT_PROVISION_TYPE_INVALID;
+        return result;
+    }
+    r4:CodeableConcept[]? actions = consent.provision?.action;
+    boolean hasDisclose = actions is r4:CodeableConcept[] &&
+        actions.some(a => (a.coding is r4:Coding[]) &&
+            (<r4:Coding[]>a.coding).some(c => c.code == "disclose"));
+    if !hasDisclose {
+        log:printError("Consent provision does not include a 'disclose' action");
+        result.reason = CONSENT_PROVISION_ACTION_INVALID;
         return result;
     }
 
@@ -535,15 +1020,31 @@ isolated function evaluateConsent(Consent consent, string memberMatchResult) ret
         result.consentStartDate = period.'start;
         result.consentEndDate = period.end;
 
-        // Check if consent is still valid
+        // Use proper UTC timestamp comparison instead of string lexicographic comparison.
+        // Normalize date-only values (FHIR dateTime may omit the time component).
         if period.end is r4:dateTime {
-            r4:dateTime now = time:utcToString(time:utcNow());
-            if period.end < now {
-                log:printError("Consent has expired. End date: " + <string>period.end + ", Current time: " + now);
+            string endStr = <string>period.end;
+            string endNormalized = endStr.includes("T") ? endStr : endStr + "T23:59:59Z";
+            time:Utc|error endUtc = time:utcFromString(endNormalized);
+            if endUtc is error || endUtc < time:utcNow() {
+                log:printError("Consent has expired. End date: " + endStr);
                 result.reason = CONSENT_EXPIRED;
                 return result;
             }
         }
+
+        // Also verify consent has already started
+        if period.'start is r4:dateTime {
+            string startStr = <string>period.'start;
+            string startNormalized = startStr.includes("T") ? startStr : startStr + "T00:00:00Z";
+            time:Utc|error startUtc = time:utcFromString(startNormalized);
+            if startUtc is time:Utc && startUtc > time:utcNow() {
+                log:printError("Consent not yet in effect. Start date: " + startStr);
+                result.reason = CONSENT_NOT_YET_EFFECTIVE;
+                return result;
+            }
+        }
+
         log:printDebug("Date validity validation successful");
     } else {
         // If no period specified, consider it invalid
@@ -554,29 +1055,40 @@ isolated function evaluateConsent(Consent consent, string memberMatchResult) ret
 
     // Step 4: Policy Compliance Validation
     // Determine if the Receiving Payer can technically comply with the data segmentation request
+    // Check both consent.policy[].uri and consent.policyRule.coding[] (HRex uses policyRule)
     if consent.policy is international401:ConsentPolicy[] {
         result.consentPolicy = extractConsentPolicy(<international401:ConsentPolicy[]>consent.policy);
-
-        // Check if the requested policy is supported
-        if result.consentPolicy is string {
-            string policy = <string>result.consentPolicy;
-            // This is a simplified check - in production you'd validate against actual system capabilities
-            if policy == "http://hl7.org/fhir/us/davinci-hrex/StructureDefinition-hrex-consent.html#regular" ||
-                policy == "http://hl7.org/fhir/us/davinci-hrex/StructureDefinition-hrex-consent.html#sensitive" {
-                // Policy is supported
-                log:printDebug("Policy compliance validation successful. Policy: " + policy);
-            } else {
-                log:printError("Requested policy not supported: " + policy);
-                result.reason = CONSENT_POLICY_NOT_SUPPORTED;
-                return result;
+    }
+    // Also check policyRule as a fallback (HRex consent uses policyRule with hrex-temp codes)
+    if result.consentPolicy is () && consent.policyRule is r4:CodeableConcept {
+        r4:CodeableConcept pRule = <r4:CodeableConcept>consent.policyRule;
+        if pRule.coding is r4:Coding[] {
+            foreach r4:Coding coding in <r4:Coding[]>pRule.coding {
+                if coding.code is string {
+                    string code = <string>coding.code;
+                    if code == "regular" || code == "sensitive" {
+                        result.consentPolicy = code;
+                        break;
+                    }
+                }
             }
+        }
+    }
+
+    if result.consentPolicy is string {
+        string policy = <string>result.consentPolicy;
+        // Accept both full HRex policy URIs and short hrex-temp CodeSystem codes
+        if policy == "http://hl7.org/fhir/us/davinci-hrex/StructureDefinition-hrex-consent.html#regular" ||
+            policy == "http://hl7.org/fhir/us/davinci-hrex/StructureDefinition-hrex-consent.html#sensitive" ||
+            policy == "regular" || policy == "sensitive" {
+            log:printDebug("Policy compliance validation successful. Policy: " + policy);
         } else {
-            log:printError("Consent policy not found in provision policies");
+            log:printError("Requested policy not supported: " + policy);
             result.reason = CONSENT_POLICY_NOT_SUPPORTED;
             return result;
         }
     } else {
-        log:printError("Provision policies not found in consent");
+        log:printError("Consent policy not found in policy[] or policyRule");
         result.reason = CONSENT_POLICY_NOT_SUPPORTED;
         return result;
     }
@@ -722,4 +1234,329 @@ isolated function checkForDuplicateConsent(Consent consent) returns r4:FHIRError
         }
     }
     return ();
+}
+
+ 
+isolated function updateCommunicationRequestAndClaim(international401:Parameters parameters,
+    davincipas:PASClaimSupportingInfo[] supportingInfo, r4:FHIRContext fhirContext) returns r4:OperationOutcome|error {
+
+    international401:ParametersParameter[]? 'parameter = 'parameters.'parameter;
+    string commReqId = "";
+    if 'parameter is international401:ParametersParameter[] {
+        foreach var item in 'parameter {
+            if item.name == "TrackingId" && item.valueString is string {
+                commReqId = item.valueString ?: "";
+                break;
+            }
+        }
+    }
+    if commReqId == "" {
+        log:printError("TrackingId parameter is missing");
+        fhirContext.setResponseStatusCode(400);
+        return createOpereationOutcome(r4:CODE_SEVERITY_ERROR, r4:ERROR, "TrackingId parameter is missing");
+    }
+
+    r4:DomainResource communicationRequestJson = check getById(fhirConnector, COMMUNICATION_REQUEST, commReqId);
+    davincipas:PASCommunicationRequest communicationRequest = check communicationRequestJson.cloneWithType();
+
+    if communicationRequest.status == "completed" {
+        log:printError(string `CommunicationRequest ${commReqId} is already completed`);
+        fhirContext.setResponseStatusCode(400);
+        return createOpereationOutcome(r4:CODE_SEVERITY_ERROR, r4:ERROR, 
+            string `CommunicationRequest ${commReqId} is already completed`);
+    }
+
+    // get claim id
+    string claimId = "";
+    r4:Reference[]? about = communicationRequest.about;
+    if about is r4:Reference[] && about.length() > 0 {
+        string? calimRef = about[0].reference;
+        if calimRef is string {
+            string:RegExp slash = re `/`;
+            string[] refParts = slash.split(calimRef);
+            if refParts.length() == 2 {
+                claimId = refParts[1];
+            }
+        }
+    }
+    if claimId == "" {
+        log:printError("Failed to find linked claim reference in CommunicationRequest");
+        fhirContext.setResponseStatusCode(400);
+        return createOpereationOutcome(r4:CODE_SEVERITY_ERROR, r4:ERROR, 
+            "Failed to find linked claim reference in CommunicationRequest");
+    }
+
+
+    r4:DomainResource claimResource = check getById(fhirConnector, CLAIM, claimId);
+    davincipas:PASClaim claim = check claimResource.cloneWithType();
+
+    davincipas:PASClaimSupportingInfo[] existingSupportingInfo = claim.supportingInfo ?: [];
+    // get last supporting info sequence number and increment for new supporting info.
+    // sort supporting info by sequence number and then add new supporting info to the end of the list.
+    int maxSequence = 0;
+    foreach davincipas:PASClaimSupportingInfo info in existingSupportingInfo {
+        if info.sequence is int {
+            if info.sequence > maxSequence {
+                maxSequence = info.sequence;
+            }
+        }
+    }
+    foreach davincipas:PASClaimSupportingInfo info in supportingInfo {
+        maxSequence += 1;
+        info.sequence = maxSequence;
+        existingSupportingInfo.push(info);
+    }
+    claim.supportingInfo = existingSupportingInfo;
+
+    _ = check update(fhirConnector, CLAIM, claimId, claim.toJson());
+    log:printDebug(string `Claim ${claimId} updated successfully`);
+
+    communicationRequest.status = "completed";
+    r4:DomainResource|r4:FHIRError updatedComReqJson =
+        check update(fhirConnector, COMMUNICATION_REQUEST, commReqId, communicationRequest.toJson());
+    if updatedComReqJson is r4:FHIRError {
+        log:printError("Failed to update CommunicationRequest: " + updatedComReqJson.message());
+        fhirContext.setResponseStatusCode(500);
+        return createOpereationOutcome(r4:CODE_SEVERITY_ERROR, r4:ERROR, 
+            "Failed to update CommunicationRequest");
+    }
+    log:printDebug(string `CommunicationRequest ${commReqId} updated to completed status successfully`);
+
+    // Check if all CommunicationRequests linked to this claim's ClaimResponse are now completed.
+    // If so, move the PA request back to PENDING_ON_PAYER.
+    r4:Bundle|r4:FHIRError crSearchResult = search(fhirConnector, CLAIM_RESPONSE, {"request": ["Claim/" + claimId]});
+    if crSearchResult is r4:Bundle {
+        r4:BundleEntry[]? crEntries = crSearchResult.entry;
+        if crEntries is r4:BundleEntry[] && crEntries.length() > 0 {
+            international401:ClaimResponse|error claimResponse = (crEntries[0]?.'resource).cloneWithType(international401:ClaimResponse);
+            if claimResponse is international401:ClaimResponse && claimResponse.communicationRequest is r4:Reference[] {
+                r4:Reference[] allCommRefs = <r4:Reference[]>claimResponse.communicationRequest;
+                boolean allCompleted = true;
+                foreach r4:Reference commRef in allCommRefs {
+                    string? refStr = commRef.reference;
+                    if refStr is string {
+                        string? otherCrId = extractRefId(refStr);
+                        if otherCrId is string && otherCrId != commReqId {
+                            // Fetch the other CommunicationRequest and check its status
+                            r4:DomainResource|r4:FHIRError otherCrRes = getById(fhirConnector, COMMUNICATION_REQUEST, otherCrId);
+                            if otherCrRes is r4:DomainResource {
+                                json otherCrJson = otherCrRes.toJson();
+                                json|error statusJson = otherCrJson.status;
+                                if !(statusJson is string && statusJson == "completed") {
+                                    allCompleted = false;
+                                    break;
+                                }
+                            } else {
+                                allCompleted = false;
+                                break;
+                            }
+                        }
+                        // commReqId was just set to "completed" above, so it counts as completed
+                    }
+                }
+                if allCompleted {
+                    sql:ParameterizedQuery updateStatusQuery = `UPDATE pa_requests SET status = 'PENDING_ON_PAYER' WHERE request_id = ${claimId}`;
+                    sql:ExecutionResult|sql:Error dbResult = dbClient->execute(updateStatusQuery);
+                    if dbResult is sql:Error {
+                        log:printError("Failed to update PA request status in database: " + dbResult.message());
+                    } else {
+                        log:printDebug("All CommunicationRequests completed; PA request status set to PENDING_ON_PAYER for request_id: " + claimId);
+                    }
+                }
+            }
+        }
+    } else {
+        log:printWarn("Could not find ClaimResponse for claim " + claimId + "; skipping pa_requests status update");
+    }
+
+    r4:OperationOutcome outcome = {
+        resourceType: "OperationOutcome",
+        issue: [
+            {
+                severity: r4:CODE_SEVERITY_INFORMATION,
+                code: r4:INFORMATIONAL,
+                diagnostics: "Submit attachment successful. CommunicationRequest status updated to " +
+                    " completed."
+            }
+        ]
+    };
+    fhirContext.setResponseStatusCode(200);
+    return outcome;
+}
+
+# Validates that the Prefer header is present and contains the required value.
+# Returns () when valid, or a 400 FHIRError when the header is absent or the value does not match.
+#
+# + httpReq       - the raw HTTP request from FHIRContext; may be nil
+# + requiredValue - the configured required token ("respond-async" | "respond-sync")
+# + return        - () if valid, r4:FHIRError otherwise
+isolated function validatePreferHeader(r4:HTTPRequest? httpReq, string requiredValue)
+        returns r4:FHIRError? {
+
+    string[]? preferValues = ();
+    if httpReq !is () {
+        preferValues = httpReq.headers["prefer"] ?: httpReq.headers["Prefer"];
+    }
+    if preferValues is () {
+        return r4:createFHIRError(
+                BULK_MATCH_MISSING_PREFER_HEADER,
+                r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+    }
+
+    // Parse comma-separated token list (e.g., "respond-async, handling=strict").
+    foreach string pv in preferValues {
+        foreach string token in re `,`.split(pv) {
+            if token.trim().toLowerAscii() == requiredValue.toLowerAscii() {
+                return ();
+            }
+        }
+    }
+
+    return r4:createFHIRError(
+            "The 'Prefer' header value must be '" + requiredValue + "'",
+            r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+}
+
+# Determines the type of the claim. Whether the claim is a standard claim or an expedited claim.
+# This function takes the related claim of the claim response and the claim response and checks
+# the claim.priority field. If the priority is "stat", then it is an expedited claim, otherwise it is a standard claim.
+# 
+# + claimResponse - The claim response resource to determine the type of
+# + claim - The claim of the claim response
+# 
+# + return - The type of the claim. "standard" for standard claims and "expedited" for expedited claims.
+isolated function determineClaimType(ClaimResponse claimResponse, international401:Claim claim) returns int {
+
+    if claim.priority?.coding is r4:Coding[] {
+        foreach r4:Coding coding in <r4:Coding[]>claim.priority?.coding {
+            if coding.code is string && coding.code == STAT {
+                log:printDebug(string `Claim type is: Expedited`);
+                return EXPEDITED;
+            }
+        }
+    }
+    log:printDebug(string `Claim type is: Standard`);
+    return STANDARD;
+}
+
+# Determines the status of the claim based on the claim response outcome and the item approvals.
+# Assumes that if the outcome is "complete", then the claim has finished processing and payer made the final decision. 
+# It will not be processed further. Only "completed" claims are considered.
+# 
+# The following strings are returned when the "outcome" is "complete",
+# 1. "approved" if all items are approved.
+# 2. "denied" if all items are denied. 
+# 3. "partially-approved" if a subset of items are approved. 
+# 
+# NOTE: If there are no items present in a completed claim, 
+# * If a "preAuthRef" is present in claim response, it is assumed that the claim is approved without needing to review items.
+# * If a "preAuthRef" is not present, it is assumed that the claim is rejected.
+# 
+# The approval/denial is decided based on the reviewActionCode of each item adjudication.
+# https://hl7.org/fhir/us/davinci-pas/STU2/StructureDefinition-extension-reviewAction.html
+# 
+# + claimResponse - The claim response resource to determine the status of
+# 
+# + return - returns 3 if approved, 5 if denied, 4 if partially approved. This should be fixed after the issue
+# https://github.com/wso2-enterprise/moesif-internal/issues/7
+isolated function determineClaimStatus(ClaimResponse claimResponse) returns int {
+ 
+    log:printDebug(string `Outcome of the claim response is: ${claimResponse.outcome}`);
+
+    int numberOfItems = 0;
+    int numberOfApprovedAdjudications = 0;
+
+    davincipas:PASClaimResponseItem[]? items = claimResponse.item;
+
+    if items is davincipas:PASClaimResponseItem[] {
+            
+        numberOfItems = items.length();
+        log:printDebug(string `Claim response has ${numberOfItems} items.`);
+
+        if numberOfItems == 0 {
+
+            // When a completed claim doesn't have items, if a "preAuthRef" is present, this can mean the whole 
+            // request is approved and no item review was required.
+            if claimResponse.preAuthRef is string {
+                log:printDebug(string `Number of items: ${numberOfItems}`);
+                log:printDebug(string `Number of approved adjudications: ${numberOfApprovedAdjudications}`);
+                log:printDebug(string `Aggregated status: Approved`);
+                return APPROVED;
+            }
+            // When there are no items present in a "completed" claim, this can mean the request is rejected.
+            log:printDebug(string `Number of items: ${numberOfItems}`);
+            log:printDebug(string `Number of approved adjudications: ${numberOfApprovedAdjudications}`);
+            log:printDebug(string `Aggregated status: Denied`);
+            return DENIED;
+        }
+
+        foreach davincipas:PASClaimResponseItem item in items {
+            davincipas:PASClaimResponseAdjudication[]? adjudications = item.adjudication;
+            
+            if adjudications is davincipas:PASClaimResponseAdjudication[] {
+                foreach davincipas:PASClaimResponseAdjudication adjudication in adjudications {
+                
+                    r4:Extension[]? adjudicationExtensions = adjudication.extension;
+                    if adjudicationExtensions is r4:Extension[] {
+                        
+                        foreach r4:Extension adjudicationExtension in adjudicationExtensions {
+                            if adjudicationExtension.url == REVIEW_ACTION_URL {
+                                
+                                r4:Extension[]? reviewActionExtensions = adjudicationExtension.extension;
+                                if reviewActionExtensions is r4:Extension[] {
+                                    
+                                    foreach r4:Extension reviewActionExtension in reviewActionExtensions {
+                                        if reviewActionExtension.url == REVIEW_ACTION_CODE_URL {
+                                            
+                                            r4:CodeableConceptExtension|error reviewActionCodeableConceptExtension = reviewActionExtension.cloneWithType();
+                                            if reviewActionCodeableConceptExtension is r4:CodeableConceptExtension {
+                                                r4:CodeableConcept reviewActionCodeableConcept = reviewActionCodeableConceptExtension.valueCodeableConcept;
+                                                r4:Coding[]? reviewActionCodings = reviewActionCodeableConcept.coding;
+                                                
+                                                if reviewActionCodings is r4:Coding[] {
+                                                    foreach r4:Coding reviewActionCoding in reviewActionCodings {
+                                                        r4:code? code = reviewActionCoding.code;
+                                                        if code is string && code == A1 {
+                                                                numberOfApprovedAdjudications += 1;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        log:printDebug(string `Number of items: ${numberOfItems}`);
+        log:printDebug(string `Number of approved adjudications: ${numberOfApprovedAdjudications}`);
+        if numberOfItems == numberOfApprovedAdjudications {
+            log:printDebug(string `Aggregated status: Approved`);
+            return APPROVED;
+        }
+        if numberOfApprovedAdjudications == 0 {
+            log:printDebug(string `Aggregated status: Denied`);
+            return DENIED;
+        }
+        if numberOfItems > numberOfApprovedAdjudications {
+            log:printDebug(string `Aggregated status: Partially Approved`);
+            return PARTIALLY_APPROVED;
+        }
+    }
+    // When a completed claim doesn't have items, if a "preAuthRef" is present, this can mean the whole 
+    // request is approved and no item review was required.
+    if claimResponse.preAuthRef is string {
+        log:printDebug(string `Number of items: ${numberOfItems}`);
+        log:printDebug(string `Number of approved adjudications: ${numberOfApprovedAdjudications}`);
+        log:printDebug(string `Aggregated status: Approved`);
+        return APPROVED;
+    }
+    log:printDebug(string `Number of items: ${numberOfItems}`);
+    log:printDebug(string `Number of approved adjudications: ${numberOfApprovedAdjudications}`);
+    // When there are no items present in a "completed" claim, this can mean the request is rejected.
+    log:printDebug(string `Aggregated status: Denied`);
+    return DENIED;
 }

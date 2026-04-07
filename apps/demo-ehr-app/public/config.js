@@ -16,27 +16,34 @@
 
 window.Config = {
   baseUrl:
-    "https://c32618cf-389d-44f1-93ee-b67a3468aae3-dev.e1-us-east-azure.choreoapis.dev/cms-0057f---unitedhealth/fhir-service/v1.0",
+    "https://c32618cf-389d-44f1-93ee-b67a3468aae3-dev.e1-us-east-azure.choreoapis.dev/cms-paas/fhir-service-fm/v1.0",
   demoBaseUrl: "https://unitedcare.com",
   demoHospitalUrl: "https://grace-hospital.com",
-  dtrAppUrl: "http://localhost:9000/launch-dtr",
-  fhirServerUrl: "http://localhost:9090/fhir/r4",
-  webhookServerUrl: "http://localhost:9099",
+  cdsRequestUrl: "https://c32618cf-389d-44f1-93ee-b67a3468aae3-dev.e1-us-east-azure.choreoapis.dev/cms-paas/cds-service/v1.0/cds-services",
+  fhirServerUrl: "http://fhir-server-1853775667:9090/fhir/r4",
+  dtrAppUrl: "https://localhost:10001",
+  webhookServerUrl: "/choreo-apis/cms-provider/pa-notification-service/v1",
 
   medication_request:
-    "/choreo-apis/cms-0057f---unitedhealth/fhir-service/v1/fhir/r4/MedicationRequest",
+    "/choreo-apis/cms-paas/fhir-service-fm/v1/MedicationRequest",
+  service_request:
+    "/choreo-apis/cms-paas/fhir-service-fm/v1/ServiceRequest",
   prescribe_medication:
-    "/choreo-apis/cms-0057f---unitedhealth/cds-service/v1/prescribe-medication",
+    "/choreo-apis/cms-paas/cds-service/v1/cds-services/prescribe-medication",
+  crd_mri_spine:
+    "/choreo-apis/cms-paas/cds-service/v1/cds-services/crd-mri-spine-order-sign",
   questionnaire_package:
-    "/choreo-apis/cms-0057f---unitedhealth/fhir-service/v1/fhir/r4/Questionnaire/questionnaire-package",
+    "/choreo-apis/cms-paas/fhir-service-fm/v1/Questionnaire/questionnaire-package",
   questionnaire_response:
-    "/choreo-apis/cms-0057f---unitedhealth/fhir-service/v1/fhir/r4/QuestionnaireResponse",
+    "/choreo-apis/cms-paas/fhir-service-fm/v1/QuestionnaireResponse",
   claim_submit:
-    "/choreo-apis/cms-0057f---unitedhealth/fhir-service/v1/Claim/$submit",
+    "/choreo-apis/cms-paas/fhir-service-fm/v1/Claim/$submit",
   practitioner_new:
-    "/choreo-apis/cms-0057f---unitedhealth/fhir-service/v1/fhir/r4/Practitioner",
+    "/choreo-apis/cms-paas/fhir-service-fm/v1/Practitioner",
   patient:
-    "/choreo-apis/cms-0057f---unitedhealth/fhir-service/v1/fhir/r4/Patient",
+    "/choreo-apis/cms-paas/fhir-service-fm/v1/Patient",
+  coverage:
+    "/choreo-apis/cms-paas/fhir-service-fm/v1/Coverage",
   claim:
     "/choreo-apis/cms-paas/fhir-service-fm/v1/Claim",
   bulkExportFetch:
@@ -47,13 +54,21 @@ window.Config = {
 
   // old urls
   radiology_order:
-    "/cmsdemosetups/cds-server/v1.0/cds-services/radiology-order",
+    "/choreo-apis/cms-paas/cds-service/v1/cds-services/radiology-order",
   book_imaging_center:
-    "/cmsdemosetups/cds-server/v1.0/cds-services/book-imaging-center",
-  practitioner: "/cmsdemosetups/medconnect-service/v1.0/fhir/r4/Practitioner",
-  slot: "/cmsdemosetups/medconnect-service/cerner-fhir-slot-api-745/v1.0/fhir/r4/Slot",
+    "/choreo-apis/cms-paas/cds-service/v1/cds-services/book-imaging-center",
+  practitioner: "/choreo-apis/cms-paas/fhir-service/v1/Practitioner",
+  slot: "/choreo-apis/cms-paas/fhir-service-fm/v1/Slot",
   location:
-    "/cmsdemosetups/medconnect-service/cerner-fhir-location-api-cbc/v1.0/fhir/r4/Location",
+    "/choreo-apis/cms-paas/fhir-service-fm/v1/Location",
   appointment:
-    "/cmsdemosetups/medconnect-service/cerner-fhir-appointment-api-2ae/v1.0/fhir/r4/Appointment",
+    "/choreo-apis/cms-paas/fhir-service-fm/v1/Appointment",
+  organization:
+    "/choreo-apis/cms-paas/fhir-service-fm/v1/Organization",
+  group:
+    "/choreo-apis/cms-paas/fhir-service-fm/v1/Group",
+  npi: "5432109876",
+  payers: [
+    { id: "united-health", name: "United Health" }
+  ],
 };

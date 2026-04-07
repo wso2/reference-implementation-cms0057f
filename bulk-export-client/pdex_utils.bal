@@ -260,19 +260,25 @@ public isolated function extractMatchedPatient(json responsePayload, string syst
 #
 # + exportId - The export ID
 # + exportSummary - The export summary JSON
+# + serverConfig - Bulk export server config with auth details
 # + context - Context map with payer details
 # + return - Error if failed
-public isolated function syncDataToFhirServer(string exportId, json exportSummary, map<string> context) returns error? {
+public isolated function syncDataToFhirServer(string exportId, json exportSummary, BulkExportServerConfig serverConfig, map<string> context) returns error? {
 
     // Parse export summary
     ExportSummary summary = check exportSummary.cloneWithType(ExportSummary);
+    log:printDebug("Starting sync for export.", exportId = exportId, fileCount = summary.output.length().toString());
 
     foreach OutputFile item in summary.output {
-        log:printInfo("Syncing file: " + item.url);
+        log:printDebug("Syncing file: " + item.url);
 
         // Download file stream
-        http:Client fileClient = check new (item.url);
+        BulkExportServerConfig fileServerConfig = check serverConfig.cloneWithType();
+        fileServerConfig.baseUrl = item.url;
+        log:printDebug("Creating file download client.", exportId = exportId, fileUrl = item.url, authEnabled = fileServerConfig.authEnabled.toString());
+        http:Client fileClient = check createHttpClient(fileServerConfig);
         http:Response response = check fileClient->get("");
+        log:printDebug("Received file download response.", exportId = exportId, fileUrl = item.url, statusCode = response.statusCode.toString());
 
         if response.statusCode != 200 {
             log:printError("Failed to download file: " + item.url);
@@ -283,18 +289,23 @@ public isolated function syncDataToFhirServer(string exportId, json exportSummar
         stream<byte[], io:Error?> byteStream = check response.getByteStream();
 
         // Helper to process stream
+        log:printDebug("Processing NDJSON stream.", exportId = exportId, fileUrl = item.url);
         check processNdjsonStream(byteStream, clientFhirClient, context);
+        log:printDebug("Completed NDJSON stream processing.", exportId = exportId, fileUrl = item.url);
     }
 
+    log:printDebug("Completed sync for export.", exportId = exportId);
     return null;
 }
 
 isolated function processNdjsonStream(stream<byte[], io:Error?> byteStream, http:Client fhirClient, map<string> context) returns error? {
     string tempFile = check file:createTemp(suffix = ".ndjson");
     error? result = ();
+    log:printDebug("Created temp file for NDJSON processing.", tempFile = tempFile);
 
     do {
         check io:fileWriteBlocksFromStream(tempFile, byteStream);
+        log:printDebug("Wrote byte stream to temp file.", tempFile = tempFile);
         stream<string, io:Error?> lineStream = check io:fileReadLinesAsStream(tempFile);
         check from string line in lineStream
             do {
@@ -304,6 +315,7 @@ isolated function processNdjsonStream(stream<byte[], io:Error?> byteStream, http
                 }
             };
     } on fail error e {
+        log:printError("Error while processing NDJSON stream.", e);
         result = e;
     }
 
@@ -311,6 +323,8 @@ isolated function processNdjsonStream(stream<byte[], io:Error?> byteStream, http
     file:Error? removeResult = file:remove(tempFile);
     if removeResult is file:Error {
         log:printError("Failed to remove temp file: " + tempFile, removeResult);
+    } else {
+        log:printDebug("Removed temp file.", tempFile = tempFile);
     }
 
     return result;
@@ -322,6 +336,7 @@ isolated function processAndInsertResource(json resourceJson, http:Client fhirCl
 
     // Skip Patient updates if needed or just sync
     if resourceType == "Patient" {
+        log:printDebug("Skipping Patient resource during sync.");
         return null;
     }
 
@@ -335,6 +350,7 @@ isolated function processAndInsertResource(json resourceJson, http:Client fhirCl
     string newId = prefix + id;
 
     resourceMap["id"] = newId;
+    log:printDebug("Prepared resource for sync.", resourceType = resourceType, newId = newId);
 
     // Flagging: "only the new data coming from old payer should be there with some kind of flagging"
     // Add a Tag to meta.
@@ -362,8 +378,10 @@ isolated function processAndInsertResource(json resourceJson, http:Client fhirCl
     if resp is http:ClientError {
         log:printError("Error syncing resource " + resourceType + "/" + newId, resp);
     } else if resp.statusCode == 201 || resp.statusCode == 200 {
+        log:printDebug("Resource synced successfully.", resourceType = resourceType, newId = newId, statusCode = resp.statusCode.toString());
         // Create Provenance resource
         check createProvenance(resourceType, newId, context, fhirClient);
+        log:printDebug("Provenance created for synced resource.", resourceType = resourceType, newId = newId);
     } else {
         log:printError("Failed to sync resource " + resourceType + "/" + newId + ". Status: " + resp.statusCode.toString());
     }

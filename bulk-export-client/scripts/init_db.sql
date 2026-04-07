@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS payer_data_exchange_requests (
     coverage_end_date DATE,
     consent_status VARCHAR(50) DEFAULT 'PENDING',
     bulk_data_sync_status VARCHAR(50) DEFAULT 'PENDING',
+    export_summary TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (payer_id) REFERENCES payers(id)
 );

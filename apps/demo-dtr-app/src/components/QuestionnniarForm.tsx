@@ -33,16 +33,29 @@ import { updateCdsResponse, resetCdsResponse } from "../redux/cdsResponseSlice";
 const getQuestionText = (text: { value: string } | string | undefined): string =>
   typeof text === "string" ? text : (text?.value ?? "");
 
+/**
+ * Extracts the Questionnaire ID from a full FHIR Questionnaire URL.
+ * E.g. "https://example.com/fhir/r4/Questionnaire/34" -> "34"
+ */
+const extractQuestionnaireId = (url: string): string => {
+  const parts = url.split("/");
+  return parts[parts.length - 1];
+};
+
 export default function QuestionnniarForm({
   coverageId,
   medicationRequestId,
+  serviceRequestId,
+  questionnaireUrl,
   patientId,
   isQuestionnaireResponseSubmited,
   setIsQuestionnaireResponseSubmited,
   practitionerId,
 }: {
-  coverageId: string;
-  medicationRequestId: string;
+  coverageId?: string;
+  medicationRequestId?: string;
+  serviceRequestId?: string;
+  questionnaireUrl?: string;
   patientId: string;
   isQuestionnaireResponseSubmited: boolean;
   setIsQuestionnaireResponseSubmited: React.Dispatch<
@@ -52,9 +65,17 @@ export default function QuestionnniarForm({
 }) {
   const dispatch = useDispatch();
   const [questions, setQuestions] = useState<
-    { linkId: string; text: { value: string } | string; type: string }[]
+    {
+      linkId: string;
+      text: { value: string } | string;
+      type: string;
+      extension?: any[];
+    }[]
   >([]);
-  const [questionnaireID, setQuestionnaireID] = useState<string | null>(null);
+  const [questionnaireID, setQuestionnaireID] = useState<string | null>(
+    questionnaireUrl ? extractQuestionnaireId(questionnaireUrl) : null
+  );
+  const [questionnaireResponseID, setQuestionnaireResponseID] = useState<string | null>(null);
   const [formData, setFormData] = useState<{
     [key: string]: string | number | boolean;
   }>({});
@@ -66,25 +87,56 @@ export default function QuestionnniarForm({
 
   const Config = window.Config;
 
-  const questionnairePackageRequestBody = {
-    resourceType: "Parameters",
-    id: "questionnaire-package-request",
-    parameter: [
-      {
+  /**
+   * Build the questionnaire-package request body dynamically based on
+   * which parameters are available in the launch context.
+   */
+  const buildRequestBody = () => {
+    const parameters: any[] = [];
+
+    // Always include the questionnaire URL when launching via DTR link
+    if (questionnaireUrl) {
+      parameters.push({
+        name: "questionnaire",
+        valueCanonical: questionnaireUrl,
+      });
+    }
+
+    // Include coverage if provided
+    if (coverageId) {
+      parameters.push({
         name: "coverage",
         resource: {
           resourceType: "Coverage",
           reference: "Coverage/" + coverageId,
         },
-      },
-      {
+      });
+    }
+
+    // Include order — prefer MedicationRequest, fall back to ServiceRequest
+    if (medicationRequestId) {
+      parameters.push({
         name: "order",
         resource: {
           resourceType: "MedicationRequest",
           reference: "MedicationRequest/" + medicationRequestId,
         },
-      },
-    ],
+      });
+    } else if (serviceRequestId) {
+      parameters.push({
+        name: "order",
+        resource: {
+          resourceType: "ServiceRequest",
+          reference: "ServiceRequest/" + serviceRequestId,
+        },
+      });
+    }
+
+    return {
+      resourceType: "Parameters",
+      id: "questionnaire-package-request",
+      parameter: parameters,
+    };
   };
 
   useEffect(() => {
@@ -92,10 +144,12 @@ export default function QuestionnniarForm({
     dispatch(resetCdsResponse());
     dispatch(updateRequestUrl(Config.questionnaire_package));
     dispatch(updateRequestMethod("POST"));
-    dispatch(updateRequest(questionnairePackageRequestBody));
+
+    const requestBody = buildRequestBody();
+    dispatch(updateRequest(requestBody));
 
     axios
-      .post(Config.questionnaire_package, questionnairePackageRequestBody, {
+      .post(Config.questionnaire_package, requestBody, {
         headers: {
           "Content-Type": "application/fhir+json",
         },
@@ -104,6 +158,18 @@ export default function QuestionnniarForm({
         if (response.status >= 200 && response.status < 300) {
           setAlertMessage("Questionnaire fetched successfully!");
           setAlertSeverity("success");
+
+          if (window !== window.parent) {
+            window.parent.postMessage({
+              type: "DTR_QUESTIONNAIRE_PACKAGE_LOG",
+              payload: {
+                method: "POST",
+                url: Config.questionnaire_package,
+                request: requestBody,
+                response: response.data
+              }
+            }, "*");
+          }
         } else {
           setAlertMessage("Failed to fetch questionnaire!");
           setAlertSeverity("error");
@@ -118,14 +184,98 @@ export default function QuestionnniarForm({
           questionnaireParam?.resource?.entry?.[0]?.resource ?? {};
         const rawItems: any[] = questionnaireResource.item ?? [];
         const items = rawItems.filter(
-          (item): item is { linkId: string; text: { value: string } | string; type: string } =>
+          (
+            item
+          ): item is {
+            linkId: string;
+            text: { value: string } | string;
+            type: string;
+            extension?: any[];
+          } =>
             typeof item.linkId === "string" && item.type !== undefined
         );
         if (items.length === 0) {
           console.warn("Questionnaire parsed successfully but contained no items.", questionnaireResource);
         }
+
+        // Pre-populate dummy values for questions that have a CQL initialExpression
+        // so that the UI clearly shows values as if CQL was executed.
+        const initialFormData: {
+          [key: string]: string | number | boolean;
+        } = {};
+
+        items.forEach((item) => {
+          const hasCqlInitialExpression = item.extension?.some(
+            (ext: any) =>
+              ext?.url ===
+              "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-initialExpression"
+          );
+
+          if (!hasCqlInitialExpression) {
+            return;
+          }
+
+          // Use sensible demo defaults tailored to the MRI Spine Prior Auth questionnaire.
+          // Fall back to type-based defaults for any other questionnaires.
+          switch (item.linkId) {
+            case "1": // Primary ICD-10 diagnosis code
+              initialFormData[item.linkId] = "M54.16"; // Radiculopathy, lumbar region
+              return;
+            case "2": // Clinical indication / reason for MRI
+              initialFormData[item.linkId] =
+                "Persistent low back pain with right leg radiculopathy.";
+              return;
+            case "3": // Symptom onset date
+              initialFormData[item.linkId] = "2026-01-15";
+              return;
+            case "4": // Duration of symptoms (in weeks)
+              initialFormData[item.linkId] = 8;
+              return;
+            case "5": // Has neurological deficits
+              initialFormData[item.linkId] = true;
+              return;
+            case "6": // Has conservative treatment
+              initialFormData[item.linkId] = true;
+              return;
+            case "7": // Conservative treatments list
+              initialFormData[item.linkId] =
+                "NSAIDs, physical therapy, and home exercise program for 8 weeks.";
+              return;
+            case "8": // Has red flag symptoms
+              initialFormData[item.linkId] = false;
+              return;
+            case "9": // Ordering provider NPI
+              initialFormData[item.linkId] = "1234567890";
+              return;
+            default:
+              break;
+          }
+
+          // Generic fallback for other questionnaires
+          switch (item.type) {
+            case "boolean":
+              initialFormData[item.linkId] = true;
+              break;
+            case "integer":
+              initialFormData[item.linkId] = 6;
+              break;
+            case "date":
+              initialFormData[item.linkId] = "2026-03-01";
+              break;
+            case "string":
+            default:
+              initialFormData[item.linkId] = "Auto-populated value";
+              break;
+          }
+        });
+
         setQuestions(items);
-        setQuestionnaireID(questionnaireResource.id ?? null);
+        setFormData((prev) => ({ ...initialFormData, ...prev }));
+
+        // Use the ID from the fetched resource if we didn't have it from the URL
+        if (!questionnaireID && questionnaireResource.id) {
+          setQuestionnaireID(questionnaireResource.id);
+        }
 
         dispatch(
           updateCdsResponse({
@@ -150,7 +300,12 @@ export default function QuestionnniarForm({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type } = e.target;
-    const parsedValue = type === "number" ? parseFloat(value) : value;
+    const parsedValue =
+      type === "number"
+        ? value === ""
+          ? ""
+          : parseFloat(value)
+        : value;
     setFormData({ ...formData, [name]: parsedValue });
   };
 
@@ -166,10 +321,6 @@ export default function QuestionnniarForm({
 
     if (!questionnaireID) {
       throw new Error("Questionnaire ID not found");
-    }
-
-    if (!practitionerId) {
-      throw new Error("Practitioner ID not found");
     }
 
     return {
@@ -190,7 +341,7 @@ export default function QuestionnniarForm({
         reference: "Patient/" + patientId,
       },
       author: {
-        reference: practitionerId,
+        reference: practitionerId || "Practitioner/456",
       },
       item: questions.map((question) => ({
         linkId: question.linkId,
@@ -240,6 +391,20 @@ export default function QuestionnniarForm({
         if (response.status >= 200 && response.status < 300) {
           setAlertMessage("Questionnaire response submitted successfully!");
           setAlertSeverity("success");
+          if (response.data && response.data.id) {
+            setQuestionnaireResponseID(response.data.id);
+          }
+          if (window !== window.parent) {
+            window.parent.postMessage({
+              type: "DTR_QUESTIONNAIRE_RESPONSE_LOG",
+              payload: {
+                method: "POST",
+                url: Config.questionnaire_response,
+                request: questionnaireResponse,
+                response: response.data
+              }
+            }, "*");
+          }
         } else {
           setAlertMessage("Failed to submit questionnaire response!");
           setAlertSeverity("error");
@@ -282,6 +447,13 @@ export default function QuestionnniarForm({
         return (
           <Select
             name={question.linkId}
+            value={
+              typeof formData[question.linkId] === "boolean"
+                ? formData[question.linkId]
+                  ? { value: "Yes", label: "Yes" }
+                  : { value: "No", label: "No" }
+                : null
+            }
             onChange={(selectedOption) =>
               handleBooleanChange({
                 target: {
@@ -297,22 +469,50 @@ export default function QuestionnniarForm({
           />
         );
       case "integer":
-        return (
-          <Form.Control
-            type="number"
-            name={question.linkId}
-            onChange={handleInputChange}
-          />
-        );
+        {
+          const rawValue = formData[question.linkId];
+          const valueForInput =
+            typeof rawValue === "number" || typeof rawValue === "string"
+              ? rawValue
+              : "";
+          return (
+            <Form.Control
+              type="number"
+              name={question.linkId}
+              value={valueForInput as string | number}
+              onChange={handleInputChange}
+            />
+          );
+        }
+      case "date":
+        {
+          const rawValue = formData[question.linkId];
+          const valueForInput =
+            typeof rawValue === "string" ? rawValue : "";
+          return (
+            <Form.Control
+              type="date"
+              name={question.linkId}
+              value={valueForInput}
+              onChange={handleInputChange}
+            />
+          );
+        }
       case "string":
       default:
-        return (
-          <Form.Control
-            type="text"
-            name={question.linkId}
-            onChange={handleInputChange}
-          />
-        );
+        {
+          const rawValue = formData[question.linkId];
+          const valueForInput =
+            typeof rawValue === "string" ? rawValue : "";
+          return (
+            <Form.Control
+              type="text"
+              name={question.linkId}
+              value={valueForInput}
+              onChange={handleInputChange}
+            />
+          );
+        }
     }
   };
 
@@ -351,9 +551,41 @@ export default function QuestionnniarForm({
           <Button
             variant="success"
             style={{ marginTop: "30px", marginRight: "20px", float: "right" }}
-            onClick={() =>
-              window.open(Config.ehr_baseUrl + "/dashboard/claim-submit")
-            }
+            onClick={() => {
+              console.log("DTR -> Claim Submit - IDs:", {
+                patientId,
+                serviceRequestId,
+                medicationRequestId,
+                coverageId,
+                qrId: questionnaireResponseID
+              });
+              const claimUrl = [
+                Config.ehr_baseUrl,
+                "/dashboard/claim-submit",
+                `?patientId=${patientId}`,
+                serviceRequestId ? `&serviceRequestId=${serviceRequestId}` : "",
+                medicationRequestId ? `&medicationRequestId=${medicationRequestId}` : "",
+                coverageId ? `&coverageId=${coverageId}` : "",
+                questionnaireResponseID ? `&qrId=${questionnaireResponseID}` : ""
+              ].join("");
+              console.log("Opening claim URL:", claimUrl);
+
+              if (window !== window.parent) {
+                console.log("Embedded mode detected, sending postMessage");
+                window.parent.postMessage({
+                  type: "DTR_CLAIM_SUBMIT",
+                  payload: {
+                    patientId,
+                    serviceRequestId,
+                    medicationRequestId,
+                    coverageId,
+                    qrId: questionnaireResponseID
+                  }
+                }, "*");
+              } else {
+                window.open(claimUrl);
+              }
+            }}
             disabled={!isQuestionnaireResponseSubmited}
           >
             Visit Claim Submission

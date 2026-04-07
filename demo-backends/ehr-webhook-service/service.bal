@@ -15,6 +15,8 @@
 // under the License.
 import ballerina/http;
 import ballerina/log;
+import ballerina/time;
+import ballerina/lang.runtime;
 
 type ClaimStatus record {|
     string status = "entered-in-error";
@@ -23,10 +25,38 @@ type ClaimStatus record {|
     string providerName = "";
     string medicationRef = "";
     string date = "";
+    time:Utc addedTime = time:utcNow();
 |};
 
 // In-memory store
 map<ClaimStatus> claimStatuses = {};
+map<json> claimNotificationBundles = {};
+
+function init() {
+    _ = start cleanupTask();
+}
+
+function cleanupTask() {
+    while true {
+        runtime:sleep(60);
+        time:Utc currentUtc = time:utcNow();
+        string[] keysToRemove = [];
+        foreach [string, ClaimStatus] [id, claimStatus] in claimStatuses.entries() {
+            time:Seconds elapsed = time:utcDiffSeconds(currentUtc, claimStatus.addedTime);
+            if elapsed > 3600d {
+                keysToRemove.push(id);
+            }
+        }
+        foreach string id in keysToRemove {
+            if claimStatuses.hasKey(id) {
+                _ = claimStatuses.remove(id);
+            }
+            if claimNotificationBundles.hasKey(id) {
+                _ = claimNotificationBundles.remove(id);
+            }
+        }
+    }
+}
 
 @http:ServiceConfig {
     cors: {
@@ -76,6 +106,7 @@ service / on new http:Listener(9099) {
                                                 } else {
                                                     claimStatuses[claimId] = {outcome: outcome, status: status};
                                                 }
+                                                claimNotificationBundles[claimId] = payload;
                                             }
                                         }
                                     }
@@ -123,6 +154,9 @@ service / on new http:Listener(9099) {
             }
             
             claimStatuses[id] = newStatus;
+            if claimNotificationBundles.hasKey(id) {
+                _ = claimNotificationBundles.remove(id);
+            }
             log:printInfo("Registered Claim ID: " + id);
             
             http:Response res = new;
@@ -157,6 +191,18 @@ service / on new http:Listener(9099) {
             http:Response res = new;
             res.statusCode = 404;
             res.setPayload({message: "ClaimResponse ID not found"});
+            return res;
+        }
+    }
+
+    // Endpoint to retrieve the notification bundle received from payer for a claim
+    resource function get claim\-notification/[string id]() returns json|http:Response {
+        if claimNotificationBundles.hasKey(id) {
+            return claimNotificationBundles.get(id);
+        } else {
+            http:Response res = new;
+            res.statusCode = 404;
+            res.setPayload({message: "Notification bundle not found for this claim"});
             return res;
         }
     }

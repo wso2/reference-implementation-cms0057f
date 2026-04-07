@@ -19,7 +19,7 @@ import { Box, Flex } from "@chakra-ui/react";
 import { useContext, useState } from "react";
 import { ExpandedContext } from "../utils/expanded_context";
 import { useSelector } from "react-redux";
-import { PATIENT_DETAILS } from "../constants/data";
+
 import Cookies from "js-cookie";
 import { useAuth } from "./AuthProvider";
 import { useDispatch } from "react-redux";
@@ -61,12 +61,7 @@ export default function NavBar() {
 
   const [showDropdown, setShowDropdown] = useState(false);
 
-  const selectedPatientId = useSelector(
-    (state: any) => state.patient.selectedPatientId
-  );
-  const currentPatient = PATIENT_DETAILS.find(
-    (patient) => patient.id === selectedPatientId
-  );
+
 
   return (
     <div
@@ -93,11 +88,7 @@ export default function NavBar() {
             display="flex"
             alignItems="center"
             style={{ marginLeft: 1 }}
-            onClick={() =>
-              currentPatient
-                ? (window.location.href = "/dashboard")
-                : (window.location.href = "/")
-            }
+            onClick={() => (window.location.href = "/")}
             cursor="pointer"
           >
             <Box
@@ -191,14 +182,6 @@ export default function NavBar() {
                         color="inherit"
                       >
                         Profile
-                      </Button>
-                      <Button
-                        onClick={() => {
-                          window.location.href = "/dashboard/prior-auth-list";
-                        }}
-                        color="inherit"
-                      >
-                        Prior Auths
                       </Button>
                       <Button
                         onClick={async () => {

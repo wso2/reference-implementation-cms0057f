@@ -1,0 +1,539 @@
+{
+  "resourceType" : "ValueSet",
+  "id" : "pas-loinc-attachment-codes",
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: ValueSet pas-loinc-attachment-codes</b></p><a name=\"pas-loinc-attachment-codes\"> </a><a name=\"hcpas-loinc-attachment-codes\"> </a><a name=\"pas-loinc-attachment-codes-en-US\"> </a><ul><li>Include these codes as defined in <a href=\"http://loinc.org\"><code>http://loinc.org</code></a><table class=\"none\"><tr><td style=\"white-space:nowrap\"><b>Code</b></td><td><b>Display</b></td></tr><tr><td><a href=\"https://loinc.org/11526-1/\">11526-1</a></td><td>Pathology study</td></tr><tr><td><a href=\"https://loinc.org/11488-4/\">11488-4</a></td><td>Consult note</td></tr><tr><td><a href=\"https://loinc.org/80792-5/\">80792-5</a></td><td>Pulmonary Diagnostic study note</td></tr><tr><td><a href=\"https://loinc.org/47420-5/\">47420-5</a></td><td>Functional status assessment note</td></tr><tr><td><a href=\"https://loinc.org/34117-2/\">34117-2</a></td><td>History and physical note</td></tr><tr><td><a href=\"https://loinc.org/74156-1/\">74156-1</a></td><td>Oncology Plan of care and summary note</td></tr><tr><td><a href=\"https://loinc.org/18776-5/\">18776-5</a></td><td>Plan of care note</td></tr><tr><td><a href=\"https://loinc.org/80785-9/\">80785-9</a></td><td>Radiation oncology Plan of care note</td></tr><tr><td><a href=\"https://loinc.org/11506-3/\">11506-3</a></td><td>Progress note</td></tr><tr><td><a href=\"https://loinc.org/11504-8/\">11504-8</a></td><td>Surgical operation note</td></tr><tr><td><a href=\"https://loinc.org/18842-5/\">18842-5</a></td><td>Discharge summary</td></tr><tr><td><a href=\"https://loinc.org/34133-9/\">34133-9</a></td><td>Summary of episode note</td></tr><tr><td><a href=\"https://loinc.org/18761-7/\">18761-7</a></td><td>Transfer summary note</td></tr><tr><td><a href=\"https://loinc.org/80565-5/\">80565-5</a></td><td>Medication administration record</td></tr><tr><td><a href=\"https://loinc.org/28570-0/\">28570-0</a></td><td>Procedure note</td></tr><tr><td><a href=\"https://loinc.org/57133-1/\">57133-1</a></td><td>Referral note</td></tr><tr><td><a href=\"https://loinc.org/52027-0/\">52027-0</a></td><td>Abortion consent Document</td></tr><tr><td><a href=\"https://loinc.org/52028-8/\">52028-8</a></td><td>Hysterectomy consent Document</td></tr><tr><td><a href=\"https://loinc.org/52029-6/\">52029-6</a></td><td>Sterilization consent Document</td></tr><tr><td><a href=\"https://loinc.org/53245-7/\">53245-7</a></td><td>Driver license</td></tr><tr><td><a href=\"https://loinc.org/57828-6/\">57828-6</a></td><td>Prescription list</td></tr><tr><td><a href=\"https://loinc.org/18682-5/\">18682-5</a></td><td>Ambulance records</td></tr><tr><td><a href=\"https://loinc.org/52063-5/\">52063-5</a></td><td>Prescription for durable medical equipment (DME)</td></tr><tr><td><a href=\"https://loinc.org/52062-7/\">52062-7</a></td><td>Transcutaneous electrical neural stimulation (TENS) attachment</td></tr><tr><td><a href=\"https://loinc.org/52073-4/\">52073-4</a></td><td>Vision services attachment</td></tr><tr><td><a href=\"https://loinc.org/52070-0/\">52070-0</a></td><td>Workers compensation attachment</td></tr><tr><td><a href=\"https://loinc.org/80405-4/\">80405-4</a></td><td>Provider Certification [Type]</td></tr><tr><td><a href=\"https://loinc.org/53242-4/\">53242-4</a></td><td>Charge ticket or encounter form</td></tr><tr><td><a href=\"https://loinc.org/52042-9/\">52042-9</a></td><td>Continuous positive airway pressure (CPAP) attachment</td></tr><tr><td><a href=\"https://loinc.org/52040-3/\">52040-3</a></td><td>Dental X-rays and other images (not DICOM)</td></tr><tr><td><a href=\"https://loinc.org/18748-4/\">18748-4</a></td><td>Diagnostic imaging study</td></tr><tr><td><a href=\"https://loinc.org/53243-2/\">53243-2</a></td><td>Advanced beneficiary notice</td></tr><tr><td><a href=\"https://loinc.org/53247-3/\">53247-3</a></td><td>Eligibility acknowledgement</td></tr><tr><td><a href=\"https://loinc.org/52071-8/\">52071-8</a></td><td>Employee assistance program attachment</td></tr><tr><td><a href=\"https://loinc.org/67796-3/\">67796-3</a></td><td>EMS patient care report - version 3 Document NEMSIS</td></tr><tr><td><a href=\"https://loinc.org/77601-3/\">77601-3</a></td><td>Enhanced note</td></tr><tr><td><a href=\"https://loinc.org/52043-7/\">52043-7</a></td><td>Enteral nutrition attachment</td></tr><tr><td><a href=\"https://loinc.org/11514-7/\">11514-7</a></td><td>Chiropractic Episode of care medical records</td></tr><tr><td><a href=\"https://loinc.org/11521-2/\">11521-2</a></td><td>Occupational therapy Episode of care medical records</td></tr><tr><td><a href=\"https://loinc.org/11515-4/\">11515-4</a></td><td>Physical therapy Episode of care medical records</td></tr><tr><td><a href=\"https://loinc.org/11516-2/\">11516-2</a></td><td>Physician Episode of care medical records</td></tr><tr><td><a href=\"https://loinc.org/11517-0/\">11517-0</a></td><td>Podiatry Episode of care medical records</td></tr><tr><td><a href=\"https://loinc.org/11518-8/\">11518-8</a></td><td>Psychology Episode of care medical records</td></tr><tr><td><a href=\"https://loinc.org/11519-6/\">11519-6</a></td><td>Social service Episode of care medical records</td></tr><tr><td><a href=\"https://loinc.org/11520-4/\">11520-4</a></td><td>Speech therapy Episode of care medical records</td></tr><tr><td><a href=\"https://loinc.org/52030-4/\">52030-4</a></td><td>Explanation of benefits</td></tr><tr><td><a href=\"https://loinc.org/52031-2/\">52031-2</a></td><td>Explanation of benefits to subscriber</td></tr><tr><td><a href=\"https://loinc.org/52044-5/\">52044-5</a></td><td>External infusion pump attachment</td></tr><tr><td><a href=\"https://loinc.org/103567-4/\">103567-4</a></td><td>FHIR previous cancer therapy medical record</td></tr><tr><td><a href=\"https://loinc.org/52064-3/\">52064-3</a></td><td>Worker's compensation first report of injury attachment</td></tr><tr><td><a href=\"https://loinc.org/52045-2/\">52045-2</a></td><td>Gait trainers attachment</td></tr><tr><td><a href=\"https://loinc.org/52033-8/\">52033-8</a></td><td>General correspondence attachment</td></tr><tr><td><a href=\"https://loinc.org/11485-0/\">11485-0</a></td><td>Anesthesia records</td></tr><tr><td><a href=\"https://loinc.org/52035-3/\">52035-3</a></td><td>Home health claims</td></tr><tr><td><a href=\"https://loinc.org/52036-1/\">52036-1</a></td><td>Home health prior authorization</td></tr><tr><td><a href=\"https://loinc.org/52046-0/\">52046-0</a></td><td>Hospital beds attachment</td></tr><tr><td><a href=\"https://loinc.org/52032-0/\">52032-0</a></td><td>Appeal denial letter</td></tr><tr><td><a href=\"https://loinc.org/52047-8/\">52047-8</a></td><td>Immunosuppressive drug attachment</td></tr><tr><td><a href=\"https://loinc.org/77600-5/\">77600-5</a></td><td>Interval note</td></tr><tr><td><a href=\"https://loinc.org/94093-2/\">94093-2</a></td><td>Itemized bill</td></tr><tr><td><a href=\"https://loinc.org/15508-5/\">15508-5</a></td><td>Labor and delivery records</td></tr><tr><td><a href=\"https://loinc.org/11502-2/\">11502-2</a></td><td>Laboratory report</td></tr><tr><td><a href=\"https://loinc.org/52048-6/\">52048-6</a></td><td>Lymphedema pump attachment</td></tr><tr><td><a href=\"https://loinc.org/52049-4/\">52049-4</a></td><td>Manual wheelchair attachment</td></tr><tr><td><a href=\"https://loinc.org/11503-0/\">11503-0</a></td><td>Medical records</td></tr><tr><td><a href=\"https://loinc.org/28011-5/\">28011-5</a></td><td>Emergency department Medical records</td></tr><tr><td><a href=\"https://loinc.org/94118-7/\">94118-7</a></td><td>Medical records in response to authorization denial</td></tr><tr><td><a href=\"https://loinc.org/52037-9/\">52037-9</a></td><td>Member ID card copy</td></tr><tr><td><a href=\"https://loinc.org/52065-0/\">52065-0</a></td><td>Automobile liability attachment</td></tr><tr><td><a href=\"https://loinc.org/52050-2/\">52050-2</a></td><td>Motorized wheelchair attachment</td></tr><tr><td><a href=\"https://loinc.org/76641-0/\">76641-0</a></td><td>Neurology study</td></tr><tr><td><a href=\"https://loinc.org/52072-6/\">52072-6</a></td><td>Non-emergency transportation attachment</td></tr><tr><td><a href=\"https://loinc.org/53246-5/\">53246-5</a></td><td>Non-medical services attachment</td></tr><tr><td><a href=\"https://loinc.org/52066-8/\">52066-8</a></td><td>Notice of Discharge Medicare Appeal Rights (NODMAR) form</td></tr><tr><td><a href=\"https://loinc.org/53244-0/\">53244-0</a></td><td>Notice of privacy practices receipt</td></tr><tr><td><a href=\"https://loinc.org/52051-0/\">52051-0</a></td><td>Orthotic/Prosthetic attachment</td></tr><tr><td><a href=\"https://loinc.org/52052-8/\">52052-8</a></td><td>Osteogenesis stimulator attachment</td></tr><tr><td><a href=\"https://loinc.org/52053-6/\">52053-6</a></td><td>Oxygen attachment</td></tr><tr><td><a href=\"https://loinc.org/52054-4/\">52054-4</a></td><td>Parenteral nutrition attachment</td></tr><tr><td><a href=\"https://loinc.org/52067-6/\">52067-6</a></td><td>Past filing limit justification</td></tr><tr><td><a href=\"https://loinc.org/52034-6/\">52034-6</a></td><td>Payer letter</td></tr><tr><td><a href=\"https://loinc.org/28629-4/\">28629-4</a></td><td>Perimetry study</td></tr><tr><td><a href=\"https://loinc.org/74030-8/\">74030-8</a></td><td>Periodontal service attachment</td></tr><tr><td><a href=\"https://loinc.org/28633-6/\">28633-6</a></td><td>Polysomnography (sleep) study</td></tr><tr><td><a href=\"https://loinc.org/52055-1/\">52055-1</a></td><td>Power operated vehicle attachment</td></tr><tr><td><a href=\"https://loinc.org/57073-9/\">57073-9</a></td><td>Prenatal records</td></tr><tr><td><a href=\"https://loinc.org/52041-1/\">52041-1</a></td><td>Blood glucose monitor attachment</td></tr><tr><td><a href=\"https://loinc.org/52068-4/\">52068-4</a></td><td>Property and casualty state mandated forms</td></tr><tr><td><a href=\"https://loinc.org/52075-9/\">52075-9</a></td><td>Purchase invoice</td></tr><tr><td><a href=\"https://loinc.org/18823-5/\">18823-5</a></td><td>Alcohol and/or substance abuse service attachment</td></tr><tr><td><a href=\"https://loinc.org/18824-3/\">18824-3</a></td><td>Cardiac service attachment</td></tr><tr><td><a href=\"https://loinc.org/18825-0/\">18825-0</a></td><td>Medical social services attachment</td></tr><tr><td><a href=\"https://loinc.org/18826-8/\">18826-8</a></td><td>Occupational therapy service attachment</td></tr><tr><td><a href=\"https://loinc.org/19002-5/\">19002-5</a></td><td>Physical therapy service attachment</td></tr><tr><td><a href=\"https://loinc.org/18594-2/\">18594-2</a></td><td>Psychiatric service attachment</td></tr><tr><td><a href=\"https://loinc.org/52184-9/\">52184-9</a></td><td>Pulmonary therapy service attachment</td></tr><tr><td><a href=\"https://loinc.org/19003-3/\">19003-3</a></td><td>Respiratory therapy service attachment</td></tr><tr><td><a href=\"https://loinc.org/29206-0/\">29206-0</a></td><td>Speech therapy service attachment</td></tr><tr><td><a href=\"https://loinc.org/52056-9/\">52056-9</a></td><td>Repair of durable medical equipment attachment</td></tr><tr><td><a href=\"https://loinc.org/52057-7/\">52057-7</a></td><td>Seat lift mechanism attachment</td></tr><tr><td><a href=\"https://loinc.org/52058-5/\">52058-5</a></td><td>Seating system attachment</td></tr><tr><td><a href=\"https://loinc.org/52039-5/\">52039-5</a></td><td>Skilled Nursing Facility (SNF) record</td></tr><tr><td><a href=\"https://loinc.org/101657-5/\">101657-5</a></td><td>Special investigation unit (SIU) medical record request Document</td></tr><tr><td><a href=\"https://loinc.org/52059-3/\">52059-3</a></td><td>Speech generating device attachment</td></tr><tr><td><a href=\"https://loinc.org/52060-1/\">52060-1</a></td><td>Standers/standing frame attachment</td></tr><tr><td><a href=\"https://loinc.org/52038-7/\">52038-7</a></td><td>Subscriber Information including retroactive and presumptive eligibility</td></tr><tr><td><a href=\"https://loinc.org/52061-9/\">52061-9</a></td><td>Support surface attachment</td></tr><tr><td><a href=\"https://loinc.org/52069-2/\">52069-2</a></td><td>Tax ID number - IRS form W9</td></tr><tr><td><a href=\"https://loinc.org/103595-5/\">103595-5</a></td><td>Certificate of Medical Necessity</td></tr><tr><td><a href=\"https://loinc.org/103596-3/\">103596-3</a></td><td>Durable medical equipment proof of delivery receipt</td></tr><tr><td><a href=\"https://loinc.org/103597-1/\">103597-1</a></td><td>Pain management form or template</td></tr><tr><td><a href=\"https://loinc.org/46212-7/\">46212-7</a></td><td>Pre operative photo</td></tr><tr><td><a href=\"https://loinc.org/52459-5/\">52459-5</a></td><td>CMS certification number (CCN) Provider</td></tr></table></li></ul></div>"
+  },
+  "extension" : [{
+    "url" : "http://hl7.org/fhir/StructureDefinition/structuredefinition-wg",
+    "valueCode" : "fm"
+  },
+  {
+    "url" : "http://hl7.org/fhir/StructureDefinition/structuredefinition-fmm",
+    "valueInteger" : 3,
+    "_valueInteger" : {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/StructureDefinition/structuredefinition-conformance-derivedFrom",
+        "valueCanonical" : "http://hl7.org/fhir/us/davinci-pas/ImplementationGuide/hl7.fhir.us.davinci-pas"
+      }]
+    }
+  },
+  {
+    "url" : "http://hl7.org/fhir/StructureDefinition/structuredefinition-standards-status",
+    "valueCode" : "trial-use",
+    "_valueCode" : {
+      "extension" : [{
+        "url" : "http://hl7.org/fhir/StructureDefinition/structuredefinition-conformance-derivedFrom",
+        "valueCanonical" : "http://hl7.org/fhir/us/davinci-pas/ImplementationGuide/hl7.fhir.us.davinci-pas"
+      }]
+    }
+  }],
+  "url" : "http://hl7.org/fhir/us/davinci-pas/ValueSet/pas-loinc-attachment-codes",
+  "identifier" : [{
+    "system" : "http://loinc.org",
+    "value" : "valid-hl7-attachment-requests"
+  },
+  {
+    "system" : "urn:ietf:rfc:3986",
+    "value" : "urn:oid:1.3.6.1.4.1.12009.10.2.6"
+  }],
+  "version" : "2.1.0",
+  "name" : "PASLOINCAttachmentCodesValueSet",
+  "title" : "PAS LOINC Attachment Codes Value Set",
+  "status" : "active",
+  "experimental" : false,
+  "date" : "2022-06-29",
+  "publisher" : "HL7 International / Financial Management",
+  "contact" : [{
+    "name" : "HL7 International / Financial Management",
+    "telecom" : [{
+      "system" : "url",
+      "value" : "http://hl7.org/Special/committees/fm"
+    },
+    {
+      "system" : "email",
+      "value" : "fmlists@lists.hl7.org"
+    }]
+  },
+  {
+    "name" : "Jean Duteau",
+    "telecom" : [{
+      "system" : "email",
+      "value" : "mailto:jean@duteaudesign.com"
+    }]
+  },
+  {
+    "name" : "HL7 International / Financial Management",
+    "telecom" : [{
+      "system" : "url",
+      "value" : "http://www.hl7.org/Special/committees/fm"
+    }]
+  }],
+  "description" : "This value set includes LOINC terms that can be sent by a payer as part of an HL7 attachment request for additional information. It has been curated by the HL7 Payer/Provider Information Exchange (PIE) Work Group.  More information about using LOINC in HIPAA attachments and the source of this value set can be found at [LOINC Attahments](https://loinc.org/attachments/).",
+  "jurisdiction" : [{
+    "coding" : [{
+      "system" : "urn:iso:std:iso:3166",
+      "code" : "US",
+      "display" : "United States of America"
+    }]
+  }],
+  "copyright" : "This material contains content from LOINC (http://loinc.org). LOINC is copyright © 1995-2020, Regenstrief Institute, Inc. and the Logical Observation Identifiers Names and Codes (LOINC) Committee and is available at no cost under the license at http://loinc.org/license. LOINC® is a registered United States trademark of Regenstrief Institute, Inc.",
+  "compose" : {
+    "include" : [{
+      "system" : "http://loinc.org",
+      "concept" : [{
+        "code" : "11526-1",
+        "display" : "Pathology study"
+      },
+      {
+        "code" : "11488-4",
+        "display" : "Consult note"
+      },
+      {
+        "code" : "80792-5",
+        "display" : "Pulmonary Diagnostic study note"
+      },
+      {
+        "code" : "47420-5",
+        "display" : "Functional status assessment note"
+      },
+      {
+        "code" : "34117-2",
+        "display" : "History and physical note"
+      },
+      {
+        "code" : "74156-1",
+        "display" : "Oncology Plan of care and summary note"
+      },
+      {
+        "code" : "18776-5",
+        "display" : "Plan of care note"
+      },
+      {
+        "code" : "80785-9",
+        "display" : "Radiation oncology Plan of care note"
+      },
+      {
+        "code" : "11506-3",
+        "display" : "Progress note"
+      },
+      {
+        "code" : "11504-8",
+        "display" : "Surgical operation note"
+      },
+      {
+        "code" : "18842-5",
+        "display" : "Discharge summary"
+      },
+      {
+        "code" : "34133-9",
+        "display" : "Summary of episode note"
+      },
+      {
+        "code" : "18761-7",
+        "display" : "Transfer summary note"
+      },
+      {
+        "code" : "80565-5",
+        "display" : "Medication administration record"
+      },
+      {
+        "code" : "28570-0",
+        "display" : "Procedure note"
+      },
+      {
+        "code" : "57133-1",
+        "display" : "Referral note"
+      },
+      {
+        "code" : "52027-0",
+        "display" : "Abortion consent Document"
+      },
+      {
+        "code" : "52028-8",
+        "display" : "Hysterectomy consent Document"
+      },
+      {
+        "code" : "52029-6",
+        "display" : "Sterilization consent Document"
+      },
+      {
+        "code" : "53245-7",
+        "display" : "Driver license"
+      },
+      {
+        "code" : "57828-6",
+        "display" : "Prescription list"
+      },
+      {
+        "code" : "18682-5",
+        "display" : "Ambulance records"
+      },
+      {
+        "code" : "52063-5",
+        "display" : "Prescription for durable medical equipment (DME)"
+      },
+      {
+        "code" : "52062-7",
+        "display" : "Transcutaneous electrical neural stimulation (TENS) attachment"
+      },
+      {
+        "code" : "52073-4",
+        "display" : "Vision services attachment"
+      },
+      {
+        "code" : "52070-0",
+        "display" : "Workers compensation attachment"
+      },
+      {
+        "code" : "80405-4",
+        "display" : "Provider Certification [Type]"
+      },
+      {
+        "code" : "53242-4",
+        "display" : "Charge ticket or encounter form"
+      },
+      {
+        "code" : "52042-9",
+        "display" : "Continuous positive airway pressure (CPAP) attachment"
+      },
+      {
+        "code" : "52040-3",
+        "display" : "Dental X-rays and other images (not DICOM)"
+      },
+      {
+        "code" : "18748-4",
+        "display" : "Diagnostic imaging study"
+      },
+      {
+        "code" : "53243-2",
+        "display" : "Advanced beneficiary notice"
+      },
+      {
+        "code" : "53247-3",
+        "display" : "Eligibility acknowledgement"
+      },
+      {
+        "code" : "52071-8",
+        "display" : "Employee assistance program attachment"
+      },
+      {
+        "code" : "67796-3",
+        "display" : "EMS patient care report - version 3 Document NEMSIS"
+      },
+      {
+        "code" : "77601-3",
+        "display" : "Enhanced note"
+      },
+      {
+        "code" : "52043-7",
+        "display" : "Enteral nutrition attachment"
+      },
+      {
+        "code" : "11514-7",
+        "display" : "Chiropractic Episode of care medical records"
+      },
+      {
+        "code" : "11521-2",
+        "display" : "Occupational therapy Episode of care medical records"
+      },
+      {
+        "code" : "11515-4",
+        "display" : "Physical therapy Episode of care medical records"
+      },
+      {
+        "code" : "11516-2",
+        "display" : "Physician Episode of care medical records"
+      },
+      {
+        "code" : "11517-0",
+        "display" : "Podiatry Episode of care medical records"
+      },
+      {
+        "code" : "11518-8",
+        "display" : "Psychology Episode of care medical records"
+      },
+      {
+        "code" : "11519-6",
+        "display" : "Social service Episode of care medical records"
+      },
+      {
+        "code" : "11520-4",
+        "display" : "Speech therapy Episode of care medical records"
+      },
+      {
+        "code" : "52030-4",
+        "display" : "Explanation of benefits"
+      },
+      {
+        "code" : "52031-2",
+        "display" : "Explanation of benefits to subscriber"
+      },
+      {
+        "code" : "52044-5",
+        "display" : "External infusion pump attachment"
+      },
+      {
+        "code" : "103567-4",
+        "display" : "FHIR previous cancer therapy medical record"
+      },
+      {
+        "code" : "52064-3",
+        "display" : "Worker's compensation first report of injury attachment"
+      },
+      {
+        "code" : "52045-2",
+        "display" : "Gait trainers attachment"
+      },
+      {
+        "code" : "52033-8",
+        "display" : "General correspondence attachment"
+      },
+      {
+        "code" : "11485-0",
+        "display" : "Anesthesia records"
+      },
+      {
+        "code" : "52035-3",
+        "display" : "Home health claims"
+      },
+      {
+        "code" : "52036-1",
+        "display" : "Home health prior authorization"
+      },
+      {
+        "code" : "52046-0",
+        "display" : "Hospital beds attachment"
+      },
+      {
+        "code" : "52032-0",
+        "display" : "Appeal denial letter"
+      },
+      {
+        "code" : "52047-8",
+        "display" : "Immunosuppressive drug attachment"
+      },
+      {
+        "code" : "77600-5",
+        "display" : "Interval note"
+      },
+      {
+        "code" : "94093-2",
+        "display" : "Itemized bill"
+      },
+      {
+        "code" : "15508-5",
+        "display" : "Labor and delivery records"
+      },
+      {
+        "code" : "11502-2",
+        "display" : "Laboratory report"
+      },
+      {
+        "code" : "52048-6",
+        "display" : "Lymphedema pump attachment"
+      },
+      {
+        "code" : "52049-4",
+        "display" : "Manual wheelchair attachment"
+      },
+      {
+        "code" : "11503-0",
+        "display" : "Medical records"
+      },
+      {
+        "code" : "28011-5",
+        "display" : "Emergency department Medical records"
+      },
+      {
+        "code" : "94118-7",
+        "display" : "Medical records in response to authorization denial"
+      },
+      {
+        "code" : "52037-9",
+        "display" : "Member ID card copy"
+      },
+      {
+        "code" : "52065-0",
+        "display" : "Automobile liability attachment"
+      },
+      {
+        "code" : "52050-2",
+        "display" : "Motorized wheelchair attachment"
+      },
+      {
+        "code" : "76641-0",
+        "display" : "Neurology study"
+      },
+      {
+        "code" : "52072-6",
+        "display" : "Non-emergency transportation attachment"
+      },
+      {
+        "code" : "53246-5",
+        "display" : "Non-medical services attachment"
+      },
+      {
+        "code" : "52066-8",
+        "display" : "Notice of Discharge Medicare Appeal Rights (NODMAR) form"
+      },
+      {
+        "code" : "53244-0",
+        "display" : "Notice of privacy practices receipt"
+      },
+      {
+        "code" : "52051-0",
+        "display" : "Orthotic/Prosthetic attachment"
+      },
+      {
+        "code" : "52052-8",
+        "display" : "Osteogenesis stimulator attachment"
+      },
+      {
+        "code" : "52053-6",
+        "display" : "Oxygen attachment"
+      },
+      {
+        "code" : "52054-4",
+        "display" : "Parenteral nutrition attachment"
+      },
+      {
+        "code" : "52067-6",
+        "display" : "Past filing limit justification"
+      },
+      {
+        "code" : "52034-6",
+        "display" : "Payer letter"
+      },
+      {
+        "code" : "28629-4",
+        "display" : "Perimetry study"
+      },
+      {
+        "code" : "74030-8",
+        "display" : "Periodontal service attachment"
+      },
+      {
+        "code" : "28633-6",
+        "display" : "Polysomnography (sleep) study"
+      },
+      {
+        "code" : "52055-1",
+        "display" : "Power operated vehicle attachment"
+      },
+      {
+        "code" : "57073-9",
+        "display" : "Prenatal records"
+      },
+      {
+        "code" : "52041-1",
+        "display" : "Blood glucose monitor attachment"
+      },
+      {
+        "code" : "52068-4",
+        "display" : "Property and casualty state mandated forms"
+      },
+      {
+        "code" : "52075-9",
+        "display" : "Purchase invoice"
+      },
+      {
+        "code" : "18823-5",
+        "display" : "Alcohol and/or substance abuse service attachment"
+      },
+      {
+        "code" : "18824-3",
+        "display" : "Cardiac service attachment"
+      },
+      {
+        "code" : "18825-0",
+        "display" : "Medical social services attachment"
+      },
+      {
+        "code" : "18826-8",
+        "display" : "Occupational therapy service attachment"
+      },
+      {
+        "code" : "19002-5",
+        "display" : "Physical therapy service attachment"
+      },
+      {
+        "code" : "18594-2",
+        "display" : "Psychiatric service attachment"
+      },
+      {
+        "code" : "52184-9",
+        "display" : "Pulmonary therapy service attachment"
+      },
+      {
+        "code" : "19003-3",
+        "display" : "Respiratory therapy service attachment"
+      },
+      {
+        "code" : "29206-0",
+        "display" : "Speech therapy service attachment"
+      },
+      {
+        "code" : "52056-9",
+        "display" : "Repair of durable medical equipment attachment"
+      },
+      {
+        "code" : "52057-7",
+        "display" : "Seat lift mechanism attachment"
+      },
+      {
+        "code" : "52058-5",
+        "display" : "Seating system attachment"
+      },
+      {
+        "code" : "52039-5",
+        "display" : "Skilled Nursing Facility (SNF) record"
+      },
+      {
+        "code" : "101657-5",
+        "display" : "Special investigation unit (SIU) medical record request Document"
+      },
+      {
+        "code" : "52059-3",
+        "display" : "Speech generating device attachment"
+      },
+      {
+        "code" : "52060-1",
+        "display" : "Standers/standing frame attachment"
+      },
+      {
+        "code" : "52038-7",
+        "display" : "Subscriber Information including retroactive and presumptive eligibility"
+      },
+      {
+        "code" : "52061-9",
+        "display" : "Support surface attachment"
+      },
+      {
+        "code" : "52069-2",
+        "display" : "Tax ID number - IRS form W9"
+      },
+      {
+        "code" : "103595-5",
+        "display" : "Certificate of Medical Necessity"
+      },
+      {
+        "code" : "103596-3",
+        "display" : "Durable medical equipment proof of delivery receipt"
+      },
+      {
+        "code" : "103597-1",
+        "display" : "Pain management form or template"
+      },
+      {
+        "code" : "46212-7",
+        "display" : "Pre operative photo"
+      },
+      {
+        "code" : "52459-5",
+        "display" : "CMS certification number (CCN) Provider"
+      }]
+    }]
+  }
+}

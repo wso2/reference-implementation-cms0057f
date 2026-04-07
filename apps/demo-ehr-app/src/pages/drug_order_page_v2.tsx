@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import "../assets/styles/main.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "react-datepicker/dist/react-datepicker.css";
@@ -43,12 +43,10 @@ import { useAuth } from "../components/AuthProvider";
 import { Navigate } from "react-router-dom";
 import { Alert, Box, Snackbar, Step, StepLabel, Stepper } from "@mui/material";
 import PatientInfo from "../components/PatientInfo";
+import { CdsHookCardsSection } from "../components/cds_hook_card";
 import {
-  CHIP_COLOR_CRITICAL,
-  CHIP_COLOR_INFO,
-  CHIP_COLOR_WARNING,
-} from "../constants/color";
-import {
+  appendRequestLog,
+  clearRequestLogs,
   resetCurrentRequest,
   updateCurrentRequest,
   updateCurrentRequestMethod,
@@ -60,6 +58,7 @@ import {
   StepStatus,
   updateActiveStep,
   updateSingleStep,
+  updateStepsArray,
 } from "../redux/commonStoargeSlice";
 import {
   CDS_HOOK,
@@ -103,6 +102,15 @@ const PrescribeForm = ({
   useEffect(() => {
     dispatch(resetMedicationFormData());
     dispatch(updateIsProcess(true));
+    dispatch(
+      updateStepsArray([
+        { name: "Medication request", status: StepStatus.NOT_STARTED },
+        { name: "Check Payer Requirements", status: StepStatus.NOT_STARTED },
+        { name: "Questionnaire package", status: StepStatus.NOT_STARTED },
+        { name: "Questionnaire Response", status: StepStatus.NOT_STARTED },
+        { name: "Claim Submit", status: StepStatus.NOT_STARTED },
+      ])
+    );
   }, [dispatch]);
 
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
@@ -119,7 +127,7 @@ const PrescribeForm = ({
         frequency: number;
         frequencyUnit: string;
         period: number;
-        startDate: Date;
+        startDate: string | null;
       };
     }) => state.medicationFormData
   );
@@ -156,7 +164,7 @@ const PrescribeForm = ({
   };
 
   const handleDateSelectChange = (date: Date | null) => {
-    dispatch(updateMedicationFormData({ startDate: date as Date | null }));
+    dispatch(updateMedicationFormData({ startDate: date ? date.toISOString() : null }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -190,8 +198,20 @@ const PrescribeForm = ({
     localStorage.setItem(CDS_REQUEST, JSON.stringify(payload));
 
     axios
-      .post<CdsResponse>(Config.prescribe_medication, payload)
+      .post<CdsResponse>(Config.prescribe_medication, payload, {
+        headers: {
+          "Content-Type": "application/fhir+json",
+        },
+      })
       .then<CdsResponse>((res) => {
+        dispatch(
+          appendRequestLog({
+            method: HTTP_METHODS.POST,
+            url: Config.demoBaseUrl + Config.prescribe_medication,
+            request: payload,
+            response: res.data,
+          })
+        );
         if (res.status >= 200 && res.status < 300) {
           setAlertMessage("Payer requirements retrieved successfully!");
           setAlertSeverity("success");
@@ -284,6 +304,7 @@ const PrescribeForm = ({
       return;
     }
     dispatch(updateActiveStep(0));
+    dispatch(clearRequestLogs());
     dispatch(
       updateSingleStep({
         stepName: "Medication request",
@@ -302,7 +323,7 @@ const PrescribeForm = ({
       medicationFormData.frequency,
       medicationFormData.frequencyUnit,
       medicationFormData.period,
-      medicationFormData.startDate.toISOString().split("T")[0]
+      medicationFormData.startDate ? medicationFormData.startDate.split("T")[0] : ""
     );
     const Config = window.Config;
 
@@ -329,6 +350,14 @@ const PrescribeForm = ({
         },
       })
       .then<CdsResponse>(async (res) => {
+        dispatch(
+          appendRequestLog({
+            method: HTTP_METHODS.POST,
+            url: Config.demoHospitalUrl + Config.medication_request,
+            request: payload,
+            response: res.data,
+          })
+        );
         if (res.status >= 200 && res.status < 300) {
           setAlertMessage("Medication order created successfully!");
           setAlertSeverity("success");
@@ -477,8 +506,8 @@ const PrescribeForm = ({
                 <br />
                 <DatePicker
                   selected={
-                    medicationFormData.startDate instanceof Date
-                      ? medicationFormData.startDate
+                    medicationFormData.startDate
+                      ? new Date(medicationFormData.startDate)
                       : null
                   }
                   onChange={handleDateSelectChange}
@@ -539,52 +568,34 @@ const PrescribeForm = ({
 };
 
 const PayerRequirementsCard = ({ cdsCards }: { cdsCards: CdsCard[] }) => {
-  return (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-        gap: "20px",
-        maxWidth: "400px",
-      }}
-    >
-      {cdsCards.map((card, index) => (
-        <RequirementCard key={index} requirementsResponsCard={card} />
-      ))}
-    </div>
-  );
-};
-
-const RequirementCard = ({
-  requirementsResponsCard,
-}: {
-  requirementsResponsCard: CdsCard;
-}) => {
   const dispatch = useDispatch();
 
-  const requestBody = {
-    resourceType: "Parameters",
-    id: "questionnaire-package-request",
-    parameter: [
-      {
-        name: "coverage",
-        resource: {
-          resourceType: "Coverage",
-          reference: "Coverage/367",
+  const requestBody = useMemo(
+    () => ({
+      resourceType: "Parameters",
+      id: "questionnaire-package-request",
+      parameter: [
+        {
+          name: "coverage",
+          resource: {
+            resourceType: "Coverage",
+            reference: "Coverage/367",
+          },
         },
-      },
-      {
-        name: "order",
-        resource: {
-          resourceType: "MedicationRequest",
-          reference: "MedicationRequest/111112",
+        {
+          name: "order",
+          resource: {
+            resourceType: "MedicationRequest",
+            reference: "MedicationRequest/111112",
+          },
         },
-      },
-    ],
-  };
-  const Config = window.Config;
+      ],
+    }),
+    []
+  );
 
-  const loadQuestionnaires = () => {
+  const loadQuestionnaires = useCallback(() => {
+    const Config = window.Config;
     localStorage.setItem(TIMESTAMP, new Date().toISOString());
     dispatch(updateActiveStep(2));
     dispatch(
@@ -594,19 +605,13 @@ const RequirementCard = ({
       })
     );
 
-    localStorage.setItem(
-      QUESTIONNAIRE_PACKAGE_REQUEST_METHOD,
-      HTTP_METHODS.POST
-    );
+    localStorage.setItem(QUESTIONNAIRE_PACKAGE_REQUEST_METHOD, HTTP_METHODS.POST);
     localStorage.setItem(
       QUESTIONNAIRE_PACKAGE_URL,
       Config.demoBaseUrl + Config.questionnaire_package
     );
+    localStorage.setItem(QUESTIONNAIRE_PACKAGE_REQUEST, JSON.stringify(requestBody));
 
-    localStorage.setItem(
-      QUESTIONNAIRE_PACKAGE_REQUEST,
-      JSON.stringify(requestBody)
-    );
     axios
       .post(Config.questionnaire_package, requestBody, {
         headers: {
@@ -614,17 +619,17 @@ const RequirementCard = ({
         },
       })
       .then(async (response) => {
-        if (response.status >= 200 && response.status < 300) {
-          console.log("Questionnaire fetched successfully!");
-        } else {
-          console.log("Failed to fetch questionnaire!");
-        }
+        dispatch(
+          appendRequestLog({
+            method: HTTP_METHODS.POST,
+            url: Config.demoBaseUrl + Config.questionnaire_package,
+            request: requestBody,
+            response: response.data,
+          })
+        );
 
         const questionnaire = response.data;
-        localStorage.setItem(
-          QUESTIONNAIRE_PACKAGE_RESPONSE,
-          JSON.stringify(questionnaire)
-        );
+        localStorage.setItem(QUESTIONNAIRE_PACKAGE_RESPONSE, JSON.stringify(questionnaire));
         dispatch(
           updateSingleStep({
             stepName: "Questionnaire package",
@@ -650,144 +655,14 @@ const RequirementCard = ({
       .catch((error) => {
         console.error("Error fetching questionnaire:", error);
       });
-  };
+  }, [dispatch, requestBody]);
 
   return (
-    <div>
-      <Card
-        style={{
-          marginTop: "30px",
-          paddingLeft: "20px",
-          paddingRight: "20px",
-          paddingTop: "20px",
-        }}
-      >
-        <Card.Body>
-          <div>
-            <h4 style={{ marginBottom: "20px" }}>
-              {requirementsResponsCard.summary}
-            </h4>
-            <div
-              style={{
-                padding: "5px 10px",
-                marginTop: "10px",
-                backgroundColor:
-                  requirementsResponsCard.indicator === "warning"
-                    ? CHIP_COLOR_WARNING
-                    : requirementsResponsCard.indicator === "critical"
-                      ? CHIP_COLOR_CRITICAL
-                      : CHIP_COLOR_INFO,
-                color: "black",
-                borderRadius: "30px",
-                fontSize: "12px",
-                textAlign: "center",
-                fontWeight: "bold",
-                width: "100px",
-              }}
-            >
-              {requirementsResponsCard.indicator}
-            </div>
-          </div>
-          <br />
-          <Card.Text>
-            <p style={{ textAlign: "justify" }}>
-              {requirementsResponsCard.detail}
-            </p>
-
-            <div
-              style={{
-                marginBottom: "10px",
-                marginTop: "30px",
-              }}
-            >
-              <h5>Suggestions</h5>
-              <ul>
-                {requirementsResponsCard.suggestions &&
-                  requirementsResponsCard.suggestions.map(
-                    (suggestion, index) => {
-                      // Check for Task resource in suggestion actions
-                      const taskAction = suggestion.actions?.find(
-                        (action) =>
-                          (action.resource as any)?.resourceType === "Task"
-                      );
-
-                      if (taskAction) {
-                        const task = taskAction.resource as any;
-                        const questionnaireUrl = task.input?.find(
-                          (i: any) => i.type?.text === "questionnaire"
-                        )?.valueCanonical;
-                        const medicationRequestId = task.basedOn?.[0]?.reference?.split(
-                          "/"
-                        )[1];
-                        const patientId = localStorage.getItem(
-                          SELECTED_PATIENT_ID
-                        );
-                        const coverageId = task.input?.find(
-                          (i: any) => i.type?.text === "coverage"
-                        )?.valueReference?.reference?.split("/")[1];
-                        const dtrUrl = `${window.Config.dtrAppUrl}?questionnaire=${questionnaireUrl}&medicationRequestId=${medicationRequestId}&patientId=${patientId}&coverageId=${coverageId}`;
-
-                        return (
-                          <div key={index} style={{ marginBottom: "10px" }}>
-                            <li>{suggestion.label}</li>
-                            <Button
-                              variant="primary"
-                              size="sm"
-                              style={{ marginTop: "5px" }}
-                              onClick={() => {
-                                loadQuestionnaires();
-                                window.open(
-                                  dtrUrl,
-                                  "_blank",
-                                  "noopener,noreferrer"
-                                );
-                              }}
-                            >
-                              Launch DTR
-                            </Button>
-                          </div>
-                        );
-                      }
-
-                      return <li key={index}>{suggestion.label}</li>;
-                    }
-                  )}
-              </ul>
-            </div>
-            {requirementsResponsCard.links &&
-              requirementsResponsCard.links.length > 0 && (
-                <>
-                  <br />
-                  {requirementsResponsCard.links.map((link, index) => (
-                    <div
-                      key={index}
-                      style={{
-                        display: "flex",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <Button
-                        variant="secondary"
-                        onClick={() => {
-                          console.log(link.url);
-                          loadQuestionnaires();
-                          window.open(
-                            link.url,
-                            "_blank",
-                            "noopener,noreferrer"
-                          );
-                        }}
-                      >
-                        {link.label}
-                      </Button>
-                    </div>
-                  ))}
-                </>
-              )}
-          </Card.Text>
-        </Card.Body>
-      </Card>
-    </div>
+    <CdsHookCardsSection
+      cards={cdsCards}
+      flow="medication"
+      beforeNavigate={loadQuestionnaires}
+    />
   );
 };
 
@@ -797,7 +672,7 @@ export default function DrugOrderPageV2() {
 
   return isAuthenticated ? (
     <div style={{ marginLeft: 50, marginBottom: 50 }}>
-      <div className="page-heading">Order Drugs</div>
+      <div className="page-heading">Prescribe Medications</div>
       <PatientInfo />
       <PrescribeForm setCdsCards={setCdsCards} />
       <PayerRequirementsCard cdsCards={cdsCards} />

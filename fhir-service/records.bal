@@ -16,7 +16,207 @@
 
 import ballerina/time;
 import ballerinax/health.fhir.r4;
+import ballerinax/health.fhir.r4.davincipdex220;
 import ballerinax/health.fhir.r4.international401;
+
+// ============================================================================
+// Bulk Member Match Types
+// ============================================================================
+
+# Pairs an original input MemberPatient with its outcome reference for building
+# the result Group resources. Per spec:
+# - MatchedMembers: memberRef = the receiving-payer Patient reference (e.g. "Patient/1001")
+# - NonMatched / ConsentConstrained: memberRef = () (entity will reference the contained patient)
+# + originalPatient - Input member patient from the request bundle; may be () if parse failed
+# + memberRef - Outcome Patient reference for matched members; () for non-match paths
+# + displayOnly - Fallback label when entity has no resolvable patient reference
+public type MemberOutcomeEntry record {|
+    international401:Patient? originalPatient;
+    r4:Reference? memberRef;
+    string displayOnly?;
+|};
+
+// ============================================================================
+// Bulk Member Match Async Job Types
+// ============================================================================
+
+# Status enum for async bulk member match jobs
+public enum BulkMatchStatus {
+    BULK_MATCH_PENDING = "pending",
+    BULK_MATCH_PROCESSING = "processing",
+    BULK_MATCH_COMPLETED = "completed",
+    BULK_MATCH_FAILED = "failed"
+}
+
+# Internal record tracking an async bulk member match job
+#
+# + jobId - Unique job identifier
+# + status - Current job status
+# + createdAt - Job creation timestamp
+# + completedAt - Job completion timestamp (null if not yet done)
+# + result - The Parameters result resource (null if not completed)
+# + errorMessage - Error description if the job failed
+public type BulkMemberMatchJob record {|
+    string jobId;
+    BulkMatchStatus status;
+    time:Utc createdAt;
+    time:Utc? completedAt;
+    (davincipdex220:PDexMultiMemberMatchResponseParameters & readonly)? result;
+    string? errorMessage;
+|};
+
+// ============================================================================
+// Provider Access v2 Types
+// ============================================================================
+
+# Provider-member-match outcome bucket.
+public enum ProviderMemberMatchOutcome {
+    PROVIDER_MATCHED = "matched",
+    PROVIDER_NO_MATCH = "no-match",
+    PROVIDER_CONSENT_CONSTRAINED = "consent-constrained"
+}
+
+# Internal lifecycle state for provider access groups.
+public enum ProviderAccessGroupLifecycleStatus {
+    PROVIDER_GROUP_ACTIVE = "active",
+    PROVIDER_GROUP_EXPIRED = "expired"
+}
+
+# Member and provider treatment relationship data used for classification.
+# + memberPatientId - Logical id of the member Patient
+# + providerIdentifier - Provider identifier context (e.g. NPI)
+# + relationshipCode - Relationship or role code from attribution logic
+# + lastEncounterDate - Optional last qualifying encounter or service date
+public type TreatmentRelationshipEntry record {|
+    string memberPatientId;
+    string providerIdentifier;
+    string relationshipCode;
+    string lastEncounterDate?;
+|};
+
+# Member opt-out details with scope metadata.
+# + memberPatientId - Logical id of the member Patient
+# + scope - Opt-out scope code (e.g. global, provider-specific)
+# + reason - Optional reason text or code
+public type MemberOptOutEntry record {|
+    string memberPatientId;
+    string scope;
+    string reason?;
+|};
+
+# A classified no-match outcome with reason code/details.
+# + memberPatientId - Logical id of the member Patient
+# + reasonCode - Machine-readable no-match reason
+# + details - Optional human-readable diagnostics
+public type ProviderNoMatchReason record {|
+    string memberPatientId;
+    string reasonCode;
+    string details?;
+|};
+
+# Expiry metadata for short-lived matched member groups.
+# + expiresAt - UTC instant when the matched group expires
+# + ttlDays - TTL in days used when computing expiry
+public type MatchedGroupExpiryMetadata record {|
+    time:Utc expiresAt;
+    int ttlDays;
+|};
+
+# One provider-member-match decision entry.
+# + memberPatientId - Logical id of the member Patient
+# + providerIdentifier - Requesting provider identifier for this decision
+# + outcome - Matched, no-match, or consent-constrained bucket
+# + reason - Short reason code or diagnostics for the outcome
+# + memberRef - Patient reference when matched; () otherwise
+public type ProviderMatchDecision record {|
+    string memberPatientId;
+    string providerIdentifier;
+    ProviderMemberMatchOutcome outcome;
+    string reason;
+    r4:Reference? memberRef;
+|};
+
+# Status enum for async provider-member-match jobs
+public enum ProviderMemberMatchStatus {
+    PROVIDER_MEMBER_MATCH_PENDING = "pending",
+    PROVIDER_MEMBER_MATCH_PROCESSING = "processing",
+    PROVIDER_MEMBER_MATCH_COMPLETED = "completed",
+    PROVIDER_MEMBER_MATCH_FAILED = "failed"
+}
+
+# Internal record tracking an async provider-member-match job.
+# + jobId - Unique async job identifier
+# + providerIdentifier - Requesting provider identifier that owns this job
+# + status - Current job lifecycle status
+# + createdAt - Time the job was accepted
+# + completedAt - Time the job finished; () while running
+# + result - JSON summary payload when completed; () until then
+# + errorMessage - Failure message when status is failed
+public type ProviderMemberMatchJob record {|
+    string jobId;
+    string providerIdentifier;
+    ProviderMemberMatchStatus status;
+    time:Utc createdAt;
+    time:Utc? completedAt;
+    readonly & map<json>? result;
+    string? errorMessage;
+|};
+
+// ============================================================================
+// Da Vinci Data Export Async Job Types
+// ============================================================================
+
+# Status enum for async Da Vinci data export jobs
+public enum DaVinciExportStatus {
+    DAVINCI_EXPORT_PENDING = "pending",
+    DAVINCI_EXPORT_PROCESSING = "processing",
+    DAVINCI_EXPORT_COMPLETED = "completed",
+    DAVINCI_EXPORT_FAILED = "failed"
+}
+
+# One entry in the Bulk Data manifest output or error array
+#
+# + 'type - FHIR resource type contained in the file
+# + url - Absolute URL to the NDJSON file
+# + count - Number of resources in the file (optional)
+public type BulkDataOutputFile record {|
+    string 'type;
+    string url;
+    int count?;
+|};
+
+# Export manifest returned when a Da Vinci data export job completes.
+# Follows the FHIR Bulk Data Access IG completed-status response format.
+#
+# + transactionTime - Server time when the export query ran
+# + request - Full URL of the original kick-off request
+# + requiresAccessToken - Whether downloading files requires a bearer token
+# + output - NDJSON file download links, grouped by resource type
+# + error - OperationOutcome NDJSON files describing any export errors (omitted if none)
+public type DaVinciExportResult record {|
+    string transactionTime;
+    string request;
+    boolean requiresAccessToken;
+    BulkDataOutputFile[] output;
+    BulkDataOutputFile[] 'error?;
+|};
+
+# Internal record tracking an async Da Vinci data export job
+#
+# + jobId - Unique job identifier
+# + status - Current job status
+# + createdAt - Job creation timestamp
+# + completedAt - Job completion timestamp (null if not yet done)
+# + result - Export result when completed (null otherwise)
+# + errorMessage - Error description if the job failed
+public type DaVinciExportJob record {|
+    string jobId;
+    DaVinciExportStatus status;
+    time:Utc createdAt;
+    time:Utc? completedAt;
+    (DaVinciExportResult & readonly)? result;
+    string? errorMessage;
+|};
 
 // ============================================================================
 // Re-exported FHIR Base Types from r4
@@ -48,6 +248,9 @@ public enum ResourceType {
     CARE_PLAN = "CarePlan",
     CLAIM = "Claim",
     CLAIM_RESPONSE = "ClaimResponse",
+    CODE_SYSTEM = "CodeSystem",
+    COMMUNICATION_REQUEST = "CommunicationRequest",
+    CONCEPT_MAP = "ConceptMap",
     CONDITION = "Condition",
     COVERAGE = "Coverage",
     DEVICE = "Device",
@@ -56,16 +259,28 @@ public enum ResourceType {
     ENCOUNTER = "Encounter",
     GOAL = "Goal",
     IMMUNIZATION = "Immunization",
+    INSURANCE_PLAN = "InsurancePlan",
+    LIBRARY = "Library",
+    LOCATION = "Location",
     MEDICATION_REQUEST = "MedicationRequest",
+    MEDICATION_KNOWLEDGE = "MedicationKnowledge",
     OBSERVATION = "Observation",
     ORGANIZATION = "Organization",
     PATIENT = "Patient",
     PRACTITIONER = "Practitioner",
+    PRACTITIONER_ROLE = "PractitionerRole",
     PROCEDURE = "Procedure",
+    PROVENANCE = "Provenance",
     QUESTIONNAIRE = "Questionnaire",
     QUESTIONNAIRE_PACKAGE = "QuestionnairePackage",
     QUESTIONNAIRE_RESPONSE = "QuestionnaireResponse",
-    EXPLANATION_OF_BENEFIT = "ExplanationOfBenefit"
+    SCHEDULE = "Schedule",
+    SLOT = "Slot",
+    EXPLANATION_OF_BENEFIT = "ExplanationOfBenefit",
+    GROUP = "Group",
+    SERVICE_REQUEST = "ServiceRequest",
+    VALUE_SET = "ValueSet",
+    AUDIT_EVENT = "AuditEvent"
 }
 
 # Holds information for OAuth2 authentication.
@@ -509,3 +724,54 @@ public type SubscriptionStatusParameter record {
     string? valueCanonical?;
     SubscriptionStatusParameter[]? part?;
 };
+
+# X12 connection config, to connect to X12 serverice for translating X12 <--> FHIR.
+# 
+# + enable - whether to enable the X12 connection
+# + url - Base URL of the X12 service
+# + tokenUrl - token endpoint URL
+# + clientId - client ID
+# + clientSecret - client secret
+# + authEnabled - whether authentication is enabled for the X12 connection
+public type X12ConnectionConfig record {|
+    boolean enable = false;
+    string url;
+    string tokenUrl?;
+    string clientId?;
+    string clientSecret?;
+    boolean authEnabled = false;
+|};
+
+# Payload for FHIR to X12 service
+# + payload - The FHIR resource payload to be sent to the X12 service
+# + x12Headers - The headers to be included in the request to the X12 service
+public type FhirToX12ServicePayload record {|
+    json payload;
+    json x12Headers;
+|};
+
+public enum ClaimPriority {
+    NORMAL = "normal",
+    STAT = "stat",
+    DEFERRED = "deferred"
+}
+
+//todo: Remove integer mappings and use string mappings after this issue is fixed: https://github.com/wso2-enterprise/moesif-internal/issues/7
+// Claim type
+final int STANDARD = 1;
+final int EXPEDITED = 2;
+
+// Claim statuses
+final int APPROVED = 3;
+final int PARTIALLY_APPROVED = 4;
+final int DENIED = 5;
+
+public enum X12ReviewActionCodes {
+    A1 = "A1", // Approved
+    A2 = "A2", // Partially Approved
+    A3 = "A3" // Denied
+}
+
+public enum ClaimResponseOutcome {
+    COMPLETED = "complete"
+}

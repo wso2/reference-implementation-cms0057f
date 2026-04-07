@@ -12,7 +12,6 @@
 
 # Package Files #
 *.jar
-!fhir-service/resources/analytics/docker/fhir.service.jar
 *.war
 *.nar
 *.ear

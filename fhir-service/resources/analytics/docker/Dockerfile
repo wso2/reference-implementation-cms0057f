@@ -5,17 +5,21 @@ RUN groupadd -g 10001 choreo && \
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-        openjdk-21-jdk \
-        wget \
-        gnupg \
-        curl \
-        ca-certificates \
-        git \
+        ca-certificates gnupg curl git wget openjdk-21-jdk \
     && wget https://dist.ballerina.io/downloads/2201.12.11/ballerina-2201.12.11-swan-lake-linux-x64.deb \
     && dpkg -i ballerina-2201.12.11-swan-lake-linux-x64.deb \
     && rm ballerina-2201.12.11-swan-lake-linux-x64.deb \
-    && sh -c 'curl https://packages.fluentbit.io/fluentbit.key | gpg --dearmor > /usr/share/keyrings/fluentbit-keyring.gpg' \
-    && curl https://raw.githubusercontent.com/fluent/fluent-bit/master/install.sh | sh \
+    && mkdir -p /usr/share/keyrings \
+    && tmpkey="$(mktemp)" \
+    && curl -fsSL -o "$tmpkey" https://packages.fluentbit.io/fluentbit.key \
+    && gpg --dearmor --batch --yes -o /usr/share/keyrings/fluentbit-keyring.gpg "$tmpkey" \
+    && rm -f "$tmpkey" \
+    && echo "deb [signed-by=/usr/share/keyrings/fluentbit-keyring.gpg] https://packages.fluentbit.io/ubuntu/noble noble main" \
+       | tee /etc/apt/sources.list.d/fluent-bit.list > /dev/null \
+    && printf 'Package: fluent-bit\nPin: origin "packages.fluentbit.io"\nPin-Priority: 1001\n' \
+       > /etc/apt/preferences.d/fluent-bit.pref \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends fluent-bit \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 

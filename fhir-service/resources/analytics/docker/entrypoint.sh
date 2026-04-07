@@ -1,8 +1,15 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
-# Start the Ballerina service
-exec java -jar /home/ballerina/fhir.service.jar &
+java -jar /home/ballerina/fhir.service.jar &
+java_pid=$!
 
-# Start Fluent Bit server
-/opt/fluent-bit/bin/fluent-bit -c /etc/fluent-bit/fluent-bit.conf
+/opt/fluent-bit/bin/fluent-bit -c /etc/fluent-bit/fluent-bit.conf &
+fluent_pid=$!
+
+trap 'kill -TERM $java_pid $fluent_pid 2>/dev/null || true' TERM INT
+wait -n $java_pid $fluent_pid
+code=$?
+kill -TERM $java_pid $fluent_pid 2>/dev/null || true
+wait || true
+exit $code

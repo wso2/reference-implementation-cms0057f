@@ -3047,6 +3047,111 @@ paths:
       security:
       - default: []
       x-auth-type: Application & Application User
+  /_export/bulk-match-status/{jobId}:
+    get:
+      operationId: getBulkMatchJobStatus
+      summary: Poll the status of an async bulk member match job
+      tags:
+      - GET
+      - Export
+      parameters:
+      - name: jobId
+        in: path
+        description: Bulk match job identifier returned in Content-Location header
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Job completed - PDexMultiMemberMatchResponseParameters returned
+          content:
+            application/fhir+json:
+              schema:
+                type: object
+        '202':
+          description: Job still in progress
+          headers:
+            Retry-After:
+              description: Suggested seconds before retrying
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobPollResponse'
+        '404':
+          description: Job not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobNotFoundResponse'
+        '500':
+          description: InternalServerError
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobServerErrorResponse'
+      security:
+      - default: []
+      x-auth-type: Application & Application User
+  /_export/davinci-export-status/{jobId}:
+    get:
+      operationId: getDaVinciExportJobStatus
+      summary: Poll the status of an async DaVinci data export job
+      tags:
+      - GET
+      - Export
+      parameters:
+      - name: jobId
+        in: path
+        description: Export job identifier returned in Content-Location header
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Export completed - manifest with download URLs returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  transactionTime:
+                    type: string
+                  request:
+                    type: string
+                  requiresAccessToken:
+                    type: boolean
+                  output:
+                    type: array
+                    items:
+                      type: object
+        '202':
+          description: Export still in progress
+          headers:
+            Retry-After:
+              description: Suggested seconds before retrying
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobPollResponse'
+        '404':
+          description: Job not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobNotFoundResponse'
+        '500':
+          description: InternalServerError
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobServerErrorResponse'
+      security:
+      - default: []
+      x-auth-type: Application & Application User
   /Group:
     get:
       tags:
@@ -3276,6 +3381,174 @@ paths:
           description: Provider identifier does not own this job
         '404':
           description: Job not found
+      security:
+      - default: []
+      x-auth-type: Application & Application User
+  /Group/$bulk-member-match:
+    post:
+      operationId: postBulkMemberMatch
+      summary: Submit a bulk member match request
+      tags:
+      - POST
+      - Group
+      - Operation
+      parameters:
+      - name: Prefer
+        in: header
+        description: "Async or sync preference. Use 'respond-async' or 'respond-sync'."
+        required: true
+        schema:
+          type: string
+          enum:
+          - respond-async
+          - respond-sync
+      requestBody:
+        required: true
+        content:
+          application/fhir+json:
+            schema:
+              type: object
+              description: PDexMultiMemberMatchRequestParameters (FHIR Parameters resource)
+      responses:
+        '202':
+          description: Accepted (async mode) - job submitted, poll Content-Location for result
+          headers:
+            Content-Location:
+              description: URL to poll bulk match job status
+              schema:
+                type: string
+        '200':
+          description: OK (sync mode) - PDexMultiMemberMatchResponseParameters returned immediately
+          content:
+            application/fhir+json:
+              schema:
+                type: object
+        '400':
+          description: BadRequest
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/FHIRError'
+        '500':
+          description: InternalServerError
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/FHIRError'
+      security:
+      - default: []
+      x-auth-type: Application & Application User
+  /Group/{id}/$davinci-data-export:
+    post:
+      operationId: postDaVinciDataExport
+      summary: Trigger payer-to-payer data export for a matched group
+      tags:
+      - POST
+      - Group
+      - Operation
+      parameters:
+      - name: id
+        in: path
+        description: Logical identifier of the matched Group (from $bulk-member-match result)
+        required: true
+        schema:
+          type: string
+      - name: Prefer
+        in: header
+        description: "Must be 'respond-async' per Da Vinci PDex IG §pdex-304"
+        required: true
+        schema:
+          type: string
+          enum:
+          - respond-async
+      - name: exportType
+        in: query
+        description: "Export type: 'hl7.fhir.us.davinci-pdex#payertopayer', 'provider-delta', 'provider-download', or 'provider-snapshot'"
+        required: false
+        schema:
+          type: string
+      - name: _since
+        in: query
+        description: Only include resources updated after this instant
+        required: false
+        schema:
+          type: string
+      - name: _until
+        in: query
+        description: Only include resources updated before this instant
+        required: false
+        schema:
+          type: string
+      - name: _type
+        in: query
+        description: Comma-separated list of FHIR resource types to export
+        required: false
+        schema:
+          type: string
+      - name: _typeFilter
+        in: query
+        description: FHIR search query to further restrict exported resources
+        required: false
+        schema:
+          type: string
+      - name: patient
+        in: query
+        description: "Comma-separated Patient references (e.g. 'Patient/123') to restrict the export to specific patients"
+        required: false
+        schema:
+          type: string
+      requestBody:
+        description: Optional FHIR Parameters resource supplying export parameters (alternative to query params per Da Vinci PDex IG)
+        required: false
+        content:
+          application/fhir+json:
+            schema:
+              type: object
+              properties:
+                resourceType:
+                  type: string
+                  enum:
+                  - Parameters
+                parameter:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      valueString:
+                        type: string
+                      valueReference:
+                        type: object
+                        properties:
+                          reference:
+                            type: string
+      responses:
+        '202':
+          description: Accepted - data export job started, poll Content-Location for status
+          headers:
+            Content-Location:
+              description: URL to poll DaVinci export job status
+              schema:
+                type: string
+        '400':
+          description: BadRequest
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/FHIRError'
+        '403':
+          description: Forbidden - consent context denies the requested export
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/FHIRError'
+        '500':
+          description: InternalServerError
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/FHIRError'
       security:
       - default: []
       x-auth-type: Application & Application User
@@ -9070,6 +9343,39 @@ components:
               diagnostics:
                 type: string
                 example: Unable to retrieve SMART configuration
+    JobPollResponse:
+      type: object
+      required:
+      - status
+      - jobId
+      properties:
+        status:
+          type: string
+        jobId:
+          type: string
+    JobNotFoundResponse:
+      type: object
+      required:
+      - error
+      - jobId
+      properties:
+        error:
+          type: string
+        jobId:
+          type: string
+    JobServerErrorResponse:
+      type: object
+      required:
+      - status
+      - error
+      - jobId
+      properties:
+        status:
+          type: string
+        error:
+          type: string
+        jobId:
+          type: string
     Bundle_Entry:
       allOf:
       - $ref: '#/components/schemas/BackboneElement'

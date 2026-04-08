@@ -1,14 +1,16 @@
 FROM --platform=linux/amd64 ubuntu:24.04
 
+ARG BALLERINA_VERSION=2201.12.11
+
 RUN groupadd -g 10001 choreo && \
     useradd -u 10001 -g choreo -s /usr/sbin/nologin -M choreo
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         ca-certificates gnupg curl git wget openjdk-21-jdk \
-    && wget https://dist.ballerina.io/downloads/2201.12.11/ballerina-2201.12.11-swan-lake-linux-x64.deb \
-    && dpkg -i ballerina-2201.12.11-swan-lake-linux-x64.deb \
-    && rm ballerina-2201.12.11-swan-lake-linux-x64.deb \
+    && wget https://dist.ballerina.io/downloads/${BALLERINA_VERSION}/ballerina-${BALLERINA_VERSION}-swan-lake-linux-x64.deb \                                                     
+    && dpkg -i ballerina-${BALLERINA_VERSION}-swan-lake-linux-x64.deb \                                                                                                           
+    && rm ballerina-${BALLERINA_VERSION}-swan-lake-linux-x64.deb \
     && mkdir -p /usr/share/keyrings \
     && tmpkey="$(mktemp)" \
     && curl -fsSL -o "$tmpkey" https://packages.fluentbit.io/fluentbit.key \

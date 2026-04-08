@@ -22,6 +22,51 @@ public listener http:Listener bulkExportListener = new (8091);
 
 isolated service /pdex on bulkExportListener {
 
+    // Resource function to retrieve all payers.
+    //
+    // @param 'limit - The number of records to retrieve (default 10).
+    // @param page - The page number to retrieve (default 1).
+    // @param search - Optional search term to filter payers by name.
+    // @return The list of payers with pagination details.
+    isolated resource function get payers(int 'limit = 10, int page = 1, string? search = ()) returns PayerListResponse|error {
+        log:printDebug("Fetching payers.", pageLimit = 'limit.toString(), page = page.toString());
+        int|error totalCount = getTotalPayerCount();
+        if totalCount is error {
+            log:printError("Error occurred while fetching total payer count", totalCount);
+            return totalCount;
+        }
+
+        Payer[]|error payers = queryPayers('limit, page, search);
+        if payers is error {
+            log:printError("Error occurred while fetching payers", payers);
+            return payers;
+        }
+
+        return {
+            data: payers,
+            pagination: {
+                page: page, 
+                'limit: 'limit, 
+                totalCount: totalCount, 
+                totalPages: (totalCount + 'limit - 1) / 'limit
+            }
+        };
+    }
+
+    // Resource function to retrieve a specific payer by ID.
+    //
+    // @param payerId - The ID of the payer to retrieve.
+    // @return The payer details.
+    isolated resource function get payers/[string payerId]() returns Payer|error {
+        log:printDebug("Fetching payer by ID.", payerId = payerId);
+        Payer|error payer = getPayerByDbId(payerId);
+        if payer is error {
+            log:printError("Error occurred while fetching payer", payer);
+            return error("Payer not found");
+        }
+        return payer;
+    }
+
     // Resource function to capture payer data exchange request.
     //
     // @param payload - The payload containing the payer data exchange request.

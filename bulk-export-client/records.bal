@@ -181,6 +181,37 @@ public type PayerConfig record {|
     boolean authEnabled = false;
 |};
 
+# Payer record.
+#
+# + id - Payer ID
+# + name - Payer Name
+# + email - Contact email
+# + address - Mailing address
+# + state - State of operation
+public type Payer record {|
+    string id?;
+    string name;
+    string email;
+    string? address;
+    string state?;
+|};
+
+public type PayerListResponse record {
+    Payer[] data;
+    PaginationMeta pagination;
+};
+
+public type PaginationMeta record {
+    # Current page number
+    int page;
+    # Items per page
+    int 'limit;
+    # Total number of items
+    int totalCount;
+    # Total number of pages
+    int totalPages;
+};
+
 # Client FHIR server configuration.
 #
 # + baseUrl - Base URL of the server

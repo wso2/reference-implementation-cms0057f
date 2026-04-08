@@ -148,22 +148,29 @@ public isolated function updatePayerDataExchangeRequestSummary(string requestId,
     }
 }
 
-public isolated function queryPayers(int 'limit = 10, int offset = 0) returns Payer[]|error {
-    stream<Payer, sql:Error?> dataStream = dbClient->query(
-        `SELECT id, name, email, address, state, fhir_server_url, app_client_id, app_client_secret, smart_config_url, scopes,
-                created_at AS createdAt, updated_at AS updatedAt
-         FROM payers
-         ORDER BY created_at DESC LIMIT ${'limit} OFFSET ${offset}`,
-        Payer
-    );
+public isolated function queryPayers(int 'limit = 10, int page = 0, string? search = ()) returns Payer[]|error {
+    stream<Payer, sql:Error?> dataStream;
+    
+    if search is string && search.trim().length() > 0 {
+        string searchPattern = "%" + search + "%";
+        dataStream = dbClient->query(
+            `SELECT id, name, email, address, state
+            FROM payers 
+            WHERE name LIKE ${searchPattern}
+            ORDER BY created_at DESC LIMIT ${'limit} OFFSET ${(page - 1) * 'limit}`,
+            Payer
+        );
+    } else {
+        dataStream = dbClient->query(
+            `SELECT id, name, email, address, state
+            FROM payers 
+            ORDER BY created_at DESC LIMIT ${'limit} OFFSET ${(page - 1) * 'limit}`,
+            Payer
+        );
+    }
 
     Payer[] payers = check from Payer payer in dataStream
         select payer;
-
-    foreach Payer payer in payers {
-        payer.app_client_id = "****";
-        payer.app_client_secret = "****";
-    }
 
     return payers;
 }
@@ -175,13 +182,10 @@ public isolated function getTotalPayerCount() returns int|error {
 
 public isolated function getPayerByDbId(string payerId) returns Payer|error {
     Payer result = check dbClient->queryRow(
-        `SELECT id, name, email, address, state, fhir_server_url, app_client_id, app_client_secret, smart_config_url, scopes,
-                created_at AS createdAt, updated_at AS updatedAt
+        `SELECT id, name, email, address, state
          FROM payers WHERE id = ${payerId}`,
         Payer
     );
-    result.app_client_id = "****";
-    result.app_client_secret = "****";
     return result;
 }
 

@@ -188,27 +188,29 @@ public type PayerConfig record {|
 # + email - Contact email
 # + address - Mailing address
 # + state - State of operation
-# + fhir_server_url - FHIR server base URL
-# + app_client_id - OAuth client ID for FHIR server (masked in responses)
-# + app_client_secret - OAuth client secret for FHIR server (masked in responses)
-# + smart_config_url - SMART on FHIR configuration URL
-# + scopes - Optional scopes for OAuth token request
-# + createdAt - Creation timestamp
-# + updatedAt - Last update timestamp
 public type Payer record {|
     string id?;
     string name;
     string email;
     string? address;
     string state?;
-    string fhir_server_url;
-    string app_client_id;
-    string app_client_secret;
-    string smart_config_url;
-    string? scopes;
-    string createdAt?;
-    string updatedAt?;
 |};
+
+public type PayerListResponse record {
+    Payer[] data;
+    PaginationMeta pagination;
+};
+
+public type PaginationMeta record {
+    # Current page number
+    int page;
+    # Items per page
+    int 'limit;
+    # Total number of items
+    int totalCount;
+    # Total number of pages
+    int totalPages;
+};
 
 # Client FHIR server configuration.
 #

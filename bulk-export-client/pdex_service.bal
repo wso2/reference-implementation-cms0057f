@@ -27,40 +27,28 @@ isolated service /pdex on bulkExportListener {
     // @param 'limit - The number of records to retrieve (default 10).
     // @param offset - The number of records to skip (default 0).
     // @return The list of payers with pagination details.
-    isolated resource function get payers(int 'limit = 10, int offset = 0) returns json|error {
-        log:printDebug("Fetching payers.", pageLimit = 'limit.toString(), offset = offset.toString());
+    isolated resource function get payers(int 'limit = 10, int page = 1, string? search = ()) returns PayerListResponse|error {
+        log:printDebug("Fetching payers.", pageLimit = 'limit.toString(), page = page.toString());
         int|error totalCount = getTotalPayerCount();
         if totalCount is error {
             log:printError("Error occurred while fetching total payer count", totalCount);
             return totalCount;
         }
 
-        Payer[]|error payers = queryPayers('limit, offset);
+        Payer[]|error payers = queryPayers('limit, page, search);
         if payers is error {
             log:printError("Error occurred while fetching payers", payers);
             return payers;
         }
 
-        string baseUrl = clientServiceConfig.baseUrl + "/pdex/payers";
-        string? next = ();
-        string? previous = ();
-
-        if (offset + 'limit) < totalCount {
-            next = string `${baseUrl}?limit=${'limit}&offset=${offset + 'limit}`;
-        }
-
-        if offset > 0 {
-            int prevOffset = (offset - 'limit) > 0 ? (offset - 'limit) : 0;
-            previous = string `${baseUrl}?limit=${'limit}&offset=${prevOffset}`;
-        }
-
-        log:printDebug("Returning payers page.", resultCount = payers.length().toString(), totalCount = totalCount.toString());
-
         return {
-            count: totalCount,
-            next: next,
-            previous: previous,
-            results: payers
+            data: payers,
+            pagination: {
+                page: page, 
+                'limit: 'limit, 
+                totalCount: totalCount, 
+                totalPages: (totalCount + 'limit - 1) / 'limit
+            }
         };
     }
 
@@ -68,14 +56,14 @@ isolated service /pdex on bulkExportListener {
     //
     // @param payerId - The ID of the payer to retrieve.
     // @return The payer details.
-    isolated resource function get payers/[string payerId]() returns json|error {
+    isolated resource function get payers/[string payerId]() returns Payer|error {
         log:printDebug("Fetching payer by ID.", payerId = payerId);
         Payer|error payer = getPayerByDbId(payerId);
         if payer is error {
             log:printError("Error occurred while fetching payer", payer);
             return error("Payer not found");
         }
-        return payer.toJson();
+        return payer;
     }
 
     // Resource function to capture payer data exchange request.

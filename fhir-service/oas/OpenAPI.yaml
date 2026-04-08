@@ -3075,18 +3075,22 @@ paths:
               description: Suggested seconds before retrying
               schema:
                 type: integer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobPollResponse'
         '404':
           description: Job not found
           content:
-            application/fhir+json:
+            application/json:
               schema:
-                $ref: '#/components/schemas/FHIRError'
+                $ref: '#/components/schemas/JobNotFoundResponse'
         '500':
           description: InternalServerError
           content:
-            application/fhir+json:
+            application/json:
               schema:
-                $ref: '#/components/schemas/FHIRError'
+                $ref: '#/components/schemas/JobServerErrorResponse'
       security:
       - default: []
       x-auth-type: Application & Application User
@@ -3129,18 +3133,22 @@ paths:
               description: Suggested seconds before retrying
               schema:
                 type: integer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobPollResponse'
         '404':
           description: Job not found
           content:
-            application/fhir+json:
+            application/json:
               schema:
-                $ref: '#/components/schemas/FHIRError'
+                $ref: '#/components/schemas/JobNotFoundResponse'
         '500':
           description: InternalServerError
           content:
-            application/fhir+json:
+            application/json:
               schema:
-                $ref: '#/components/schemas/FHIRError'
+                $ref: '#/components/schemas/JobServerErrorResponse'
       security:
       - default: []
       x-auth-type: Application & Application User
@@ -9329,6 +9337,39 @@ components:
               diagnostics:
                 type: string
                 example: Unable to retrieve SMART configuration
+    JobPollResponse:
+      type: object
+      required:
+      - status
+      - jobId
+      properties:
+        status:
+          type: string
+        jobId:
+          type: string
+    JobNotFoundResponse:
+      type: object
+      required:
+      - error
+      - jobId
+      properties:
+        error:
+          type: string
+        jobId:
+          type: string
+    JobServerErrorResponse:
+      type: object
+      required:
+      - status
+      - error
+      - jobId
+      properties:
+        status:
+          type: string
+        error:
+          type: string
+        jobId:
+          type: string
     Bundle_Entry:
       allOf:
       - $ref: '#/components/schemas/BackboneElement'

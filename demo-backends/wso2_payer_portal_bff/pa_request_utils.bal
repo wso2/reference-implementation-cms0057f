@@ -40,7 +40,7 @@ const string CLAIM_RESPONSE = "/ClaimResponse";
 # + urgency - Filter by urgency levels
 # + status - Filter by processing status
 # + return - Tuple containing PA requests array and total count, or error
-function queryPARequests(
+isolated function queryPARequests(
     int page,
     int pageSize,
     string? search,
@@ -129,7 +129,7 @@ function queryPARequests(
 # Get PA request analytics from the pa_requests database table
 #
 # + return - PARequestAnalytics or error
-function getPARequestAnalytics() returns PARequestAnalytics|error {
+isolated function getPARequestAnalytics() returns PARequestAnalytics|error {
     record {| int urgentCount; int standardCount; int reAuthorizationCount; int appealCount; |} result = check dbClient->queryRow(
         `SELECT
             COUNT(IF(priority = 'Urgent', 1, NULL)) AS urgentCount,
@@ -154,7 +154,7 @@ function getPARequestAnalytics() returns PARequestAnalytics|error {
 #
 # + responseId - The ClaimResponse ID (if available) to get processing status and notes
 # + return - PARequestDetail or error
-public function getPARequestDetail(string responseId) returns PARequestDetail|error {
+public isolated function getPARequestDetail(string responseId) returns PARequestDetail|error {
     // 1. Fetch pre-computed fields from DB using response_id
     PARequestDBRow dbRow = check dbClient->queryRow(
         `SELECT request_id, response_id, priority, patient_id, practitioner_id, provider_name, date_submitted
@@ -279,7 +279,7 @@ public function getPARequestDetail(string responseId) returns PARequestDetail|er
 # + valueSetUrl - Canonical URL of the ValueSet to validate against
 # + valuesetID - The ID of the ValueSet (used in the API path)
 # + return - Display string from the ValueSet, or () if not found / lookup fails
-function lookupValueSetDisplay(string code, string valueSetUrl, string valuesetID) returns string? {
+isolated function lookupValueSetDisplay(string code, string valueSetUrl, string valuesetID) returns string? {
     string path = string `/ValueSet/${valuesetID}/$validate-code?url=${valueSetUrl}&code=${code}&system=http://loinc.org`;
     json|http:ClientError result = fhirHttpClient->get(path);
     if result is map<json> {
@@ -308,7 +308,7 @@ function lookupValueSetDisplay(string code, string valueSetUrl, string valuesetI
 #
 # + commReqJson - FHIR CommunicationRequest resource as JSON
 # + return - CommunicationRequestItem or error
-function parseCommunicationRequest(json commReqJson) returns CommunicationRequestItem|error {
+isolated function parseCommunicationRequest(json commReqJson) returns CommunicationRequestItem|error {
     international401:CommunicationRequest commReq = <international401:CommunicationRequest> check parser:parse(commReqJson);
 
     string id = commReq.id ?: "";
@@ -370,7 +370,7 @@ function parseCommunicationRequest(json commReqJson) returns CommunicationReques
 # + claimResId - The ClaimResponse resource ID
 # + limited - Whether to fetch a limited set of elements
 # + return - ClaimResponse JSON or null if not found
-function getClaimResponse(string claimResId, boolean limited=true) returns international401:ClaimResponse|error{
+isolated function getClaimResponse(string claimResId, boolean limited=true) returns international401:ClaimResponse|error{
     string claimResponsePath = string `${CLAIM_RESPONSE}/${claimResId}`;
     if limited {
         claimResponsePath += "?_elements=outcome,disposition,processNote";
@@ -389,7 +389,7 @@ function getClaimResponse(string claimResId, boolean limited=true) returns inter
 #
 # + patientId - Patient ID
 # + return - PatientInformation or error
-function getPatientIPSSummary(string patientId) returns PatientInformation|error {
+isolated function getPatientIPSSummary(string patientId) returns PatientInformation|error {
     // Get patient summary using IPS $summary operation
     json|error ipsSummary = fhirHttpClient->get(string `/Patient/${patientId}/$summary`);
     if ipsSummary is error{
@@ -410,7 +410,7 @@ function getPatientIPSSummary(string patientId) returns PatientInformation|error
 #
 # + patient - Patient resource
 # + return - PatientInformation or error
-function parsePatientResource(international401:Patient patient) returns PatientInformation|error {
+isolated function parsePatientResource(international401:Patient patient) returns PatientInformation|error {
     string patientId = patient.id ?: "unknown";
 
     // Extract name - work with anydata
@@ -466,7 +466,7 @@ function parsePatientResource(international401:Patient patient) returns PatientI
 # + ipsBundle - Strongly-typed IPS Bundle data
 # + patientId - Patient ID
 # + return - PatientInformation or error
-function parseIPSBundle(r4:Bundle ipsBundle, string patientId) returns PatientInformation|error {
+isolated function parseIPSBundle(r4:Bundle ipsBundle, string patientId) returns PatientInformation|error {
 
     international401:Patient? patientResource = ();
     international401:AllergyIntolerance[] allergyResources = [];
@@ -514,7 +514,7 @@ function parseIPSBundle(r4:Bundle ipsBundle, string patientId) returns PatientIn
 #
 # + allergyResource - AllergyIntolerance resource
 # + return - AllergyIntolerance or null
-function parseAllergy(international401:AllergyIntolerance allergyResource) returns AllergyIntolerance? {
+isolated function parseAllergy(international401:AllergyIntolerance allergyResource) returns AllergyIntolerance? {
     r4:CodeableConcept? code = allergyResource.code;
     string substance = "Unknown";
     if code is r4:CodeableConcept {
@@ -531,7 +531,7 @@ function parseAllergy(international401:AllergyIntolerance allergyResource) retur
 #
 # + medResource - MedicationStatement resource
 # + return - MedicationStatement or null
-function parseMedicationStatement(international401:MedicationStatement medResource) returns MedicationStatement? {
+isolated function parseMedicationStatement(international401:MedicationStatement medResource) returns MedicationStatement? {
     if medResource.status != "active" {
         return ();
     }
@@ -550,7 +550,7 @@ function parseMedicationStatement(international401:MedicationStatement medResour
 #
 # + birthDate - Birth date in YYYY-MM-DD format
 # + return - Age in years or null
-function calculateAge(string birthDate) returns int? {
+isolated function calculateAge(string birthDate) returns int? {
     time:Utc currentTimeUtc = time:utcNow();
     time:Civil civilTime = time:utcToCivil(currentTimeUtc);
     int year = civilTime.year;
@@ -567,7 +567,7 @@ function calculateAge(string birthDate) returns int? {
 #
 # + providerRef - Reference to provider from Claim resource
 # + return - ProviderInformation or error
-function getProviderInformation(r4:Reference providerRef) returns ProviderInformation|error {
+isolated function getProviderInformation(r4:Reference providerRef) returns ProviderInformation|error {
     // Extract provider from careTeam
     string? practitionerId = providerRef.reference;
     // If PractitionerRole is in reference, fetch practitioner info or organization info based on reference type
@@ -595,7 +595,7 @@ function getProviderInformation(r4:Reference providerRef) returns ProviderInform
 #
 # + practitionerId - Practitioner ID
 # + return - ProviderInformation or error
-function getPractitionerInfo(string practitionerId) returns ProviderInformation|error {
+isolated function getPractitionerInfo(string practitionerId) returns ProviderInformation|error {
     json practitionerRoleRes = check fhirHttpClient->get(string `/PractitionerRole/${practitionerId}`);
     international401:PractitionerRole practitionerRole = <international401:PractitionerRole> check parser:parse(practitionerRoleRes);
 
@@ -696,7 +696,7 @@ function getPractitionerInfo(string practitionerId) returns ProviderInformation|
 #
 # + organizationId - Organization ID
 # + return - Facility or error
-function extractFacilityInfo(string organizationId) returns Facility|error {
+isolated function extractFacilityInfo(string organizationId) returns Facility|error {
     json organizationJson = check fhirHttpClient->get(string `${ORGANIZATION}/${organizationId}`);
     international401:Organization org = check organizationJson.cloneWithType(international401:Organization);
 
@@ -733,7 +733,7 @@ function extractFacilityInfo(string organizationId) returns Facility|error {
 #
 # + organizationId - Organization ID
 # + return - ProviderInformation or error
-function getOrganizationInfo(string organizationId) returns ProviderInformation|error {
+isolated function getOrganizationInfo(string organizationId) returns ProviderInformation|error {
     json organizationJson = check fhirHttpClient->get(string `${ORGANIZATION}/${organizationId}`);
     international401:Organization org = check organizationJson.cloneWithType(international401:Organization);
     
@@ -784,7 +784,7 @@ function getOrganizationInfo(string organizationId) returns ProviderInformation|
 #
 # + supportingInfo - Array of PASClaimSupportingInfo from PAS Claim resource
 # + return - Tuple containing [admissionDate, dischargeDate, clinicalJustification, questionnaires, attachments] or error
-function extractSupportingInformation(international401:ClaimSupportingInfo[]? supportingInfo) returns [string?, string?, string?, json[]?, json[]?]|error {
+isolated function extractSupportingInformation(international401:ClaimSupportingInfo[]? supportingInfo) returns [string?, string?, string?, json[]?, json[]?]|error {
     string? admissionDate = ();
     string? dischargeDate = ();
     string? clinicalJustification = ();
@@ -863,7 +863,7 @@ function extractSupportingInformation(international401:ClaimSupportingInfo[]? su
 # + pasClaimItems - Array of PASClaimItem from PAS Claim resource
 # + claimResponse - ClaimResponse resource (optional) to extract adjudication data
 # + return - Array of ClaimItems or error
-function parseClaimItems(international401:ClaimItem[] pasClaimItems, international401:ClaimResponse? claimResponse = ()) returns ClaimItem[]|error {
+isolated function parseClaimItems(international401:ClaimItem[] pasClaimItems, international401:ClaimResponse? claimResponse = ()) returns ClaimItem[]|error {
     ClaimItem[] items = [];
     
     foreach international401:ClaimItem pasItem in pasClaimItems {
@@ -952,7 +952,7 @@ function parseClaimItems(international401:ClaimItem[] pasClaimItems, internation
 #
 # + items - Array of claim items
 # + return - Service type string
-function extractServiceType(ClaimItem[] items) returns string {
+isolated function extractServiceType(ClaimItem[] items) returns string {
     if items.length() > 0 {
         return items[0].description ?: "Medical Service";
     }
@@ -963,7 +963,7 @@ function extractServiceType(ClaimItem[] items) returns string {
 #
 # + insuranceArray - Array of PASClaimInsurance from PAS Claim resource
 # + return - Array of CoverageInformation or null
-function extractCoverageInfo(international401:ClaimInsurance[]? insuranceArray) returns CoverageInformation[]? {
+isolated function extractCoverageInfo(international401:ClaimInsurance[]? insuranceArray) returns CoverageInformation[]? {
     if insuranceArray is () || insuranceArray.length() == 0 {
         return ();
     }
@@ -1014,7 +1014,7 @@ function extractCoverageInfo(international401:ClaimInsurance[]? insuranceArray) 
 # + items - Claim items
 # + claimResponse - ClaimResponse or null
 # + return - ClaimTotals
-function calculateClaimTotals(ClaimItem[] items, international401:ClaimResponse? claimResponse) returns ClaimTotals|error {
+isolated function calculateClaimTotals(ClaimItem[] items, international401:ClaimResponse? claimResponse) returns ClaimTotals|error {
     json? submitted = ();
     json? benefit = ();
     
@@ -1062,7 +1062,7 @@ function calculateClaimTotals(ClaimItem[] items, international401:ClaimResponse?
 #
 # + claimResponse - ClaimResponse or null
 # + return - Array of process notes or null
-function extractProcessNotes(international401:ClaimResponse? claimResponse) returns ProcessNote[]? {
+isolated function extractProcessNotes(international401:ClaimResponse? claimResponse) returns ProcessNote[]? {
     if claimResponse is () {
         return ();
     }
@@ -1087,7 +1087,7 @@ function extractProcessNotes(international401:ClaimResponse? claimResponse) retu
 #
 # + questionnaire - questionnaire JSON to analyze
 # + return - AIAnalysis
-public function generateAIAnalysis(json questionnaire) returns AIAnalysis {
+public isolated function generateAIAnalysis(json questionnaire) returns AIAnalysis {
     // Dummy implementation - returns random/sample data
     string[] recommendations = ["approved", "denied", "approved", "approved"];
     int[] confidenceScores = [87, 65, 92, 78];
@@ -1125,7 +1125,7 @@ public function generateAIAnalysis(json questionnaire) returns AIAnalysis {
 # + responseId - PA response (ClaimResponse) ID to submit adjudication for
 # + adjudication - Adjudication submission data
 # + return - AdjudicationResponse or error
-public function submitPARequestAdjudication(string responseId, AdjudicationSubmission adjudication) returns AdjudicationResponse|error {
+public isolated function submitPARequestAdjudication(string responseId, AdjudicationSubmission adjudication) returns AdjudicationResponse|error {
     
     // 1. Fetch Existing ClaimResponse 
     international401:ClaimResponse claimResponse = check getClaimResponse(responseId, limited = false);
@@ -1269,7 +1269,7 @@ public function submitPARequestAdjudication(string responseId, AdjudicationSubmi
 # + responseId - PA response (ClaimResponse) ID to submit additional information for
 # + additionalInformation - Additional information submission data
 # + return - AdditionalInfoResponse or error
-public function submitPARequestAdditionalInfo(string responseId, AdditionalInformation additionalInformation) 
+public isolated function submitPARequestAdditionalInfo(string responseId, AdditionalInformation additionalInformation) 
     returns AdditionalInfoResponse|error {
     // Fetch existing ClaimResponse
     international401:ClaimResponse claimResponse = check getClaimResponse(responseId, limited = false);

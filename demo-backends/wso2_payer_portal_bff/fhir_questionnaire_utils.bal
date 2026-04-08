@@ -30,7 +30,7 @@ const string QUESTIONNAIRE = "/Questionnaire";
 # + search - Search by questionnaire title or description
 # + status - Filter by questionnaire status
 # + return - Tuple containing questionnaires array and total count, or error
-function queryFHIRQuestionnaires(
+isolated function queryFHIRQuestionnaires(
     int page, 
     int pageSize,
     string? search,
@@ -82,7 +82,7 @@ function queryFHIRQuestionnaires(
 #
 # + fhirResource - FHIR Questionnaire resource as JSON
 # + return - QuestionnaireListItem or error
-function parseQuestionnaireListItem(json fhirResource) returns QuestionnaireListItem|error {
+isolated function parseQuestionnaireListItem(json fhirResource) returns QuestionnaireListItem|error {
     string id = let var idVal = fhirResource.id in idVal is string ? idVal : "";
     string title = let var titleVal = fhirResource.title in titleVal is string ? titleVal : "";
     string? description = let var descVal = fhirResource.description in descVal is string ? descVal : ();
@@ -122,7 +122,7 @@ function parseQuestionnaireListItem(json fhirResource) returns QuestionnaireList
 #
 # + questionnaireId - Unique questionnaire identifier
 # + return - FHIR Questionnaire resource as JSON or error
-function getFHIRQuestionnaireById(string questionnaireId) returns json|error {
+isolated function getFHIRQuestionnaireById(string questionnaireId) returns json|error {
     string path = string `${QUESTIONNAIRE}/${questionnaireId}`;
     json result = check fhirHttpClient->get(path, headers = {"Content-Type": "application/fhir+json"});
     return result;
@@ -132,7 +132,7 @@ function getFHIRQuestionnaireById(string questionnaireId) returns json|error {
 #
 # + questionnaire - FHIR Questionnaire resource as JSON
 # + return - Created questionnaire resource as JSON or error
-function createFHIRQuestionnaire(json questionnaire) returns json|error {
+isolated function createFHIRQuestionnaire(json questionnaire) returns json|error {
     http:Response response = check fhirHttpClient->post(QUESTIONNAIRE, questionnaire, headers = {"Content-Type": "application/fhir+json"});
     json result = check response.getJsonPayload();
     return result;
@@ -143,7 +143,7 @@ function createFHIRQuestionnaire(json questionnaire) returns json|error {
 # + questionnaireId - Unique questionnaire identifier
 # + questionnaire - Updated FHIR Questionnaire resource as JSON
 # + return - Updated questionnaire resource as JSON or error
-function updateFHIRQuestionnaire(string questionnaireId, json questionnaire) returns json|error {
+isolated function updateFHIRQuestionnaire(string questionnaireId, json questionnaire) returns json|error {
     string path = string `${QUESTIONNAIRE}/${questionnaireId}`;
     http:Response response = check fhirHttpClient->put(path, questionnaire, headers = {"Content-Type": "application/fhir+json"});
     json result = check response.getJsonPayload();
@@ -154,7 +154,7 @@ function updateFHIRQuestionnaire(string questionnaireId, json questionnaire) ret
 #
 # + questionnaireId - Unique questionnaire identifier
 # + return - Error if operation fails, () if successful
-function deleteFHIRQuestionnaire(string questionnaireId) returns error? {
+isolated function deleteFHIRQuestionnaire(string questionnaireId) returns error? {
     string path = string `${QUESTIONNAIRE}/${questionnaireId}`;
     http:Response response = check fhirHttpClient->delete(path, headers = {"Content-Type": "application/fhir+json"});
     // Check if delete was successful (HTTP 204 or 200)

@@ -3537,6 +3537,12 @@ paths:
             application/fhir+json:
               schema:
                 $ref: '#/components/schemas/FHIRError'
+        '403':
+          description: Forbidden - consent context denies the requested export
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/FHIRError'
         '500':
           description: InternalServerError
           content:

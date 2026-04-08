@@ -25,7 +25,8 @@ isolated service /pdex on bulkExportListener {
     // Resource function to retrieve all payers.
     //
     // @param 'limit - The number of records to retrieve (default 10).
-    // @param offset - The number of records to skip (default 0).
+    // @param page - The page number to retrieve (default 1).
+    // @param search - Optional search term to filter payers by name.
     // @return The list of payers with pagination details.
     isolated resource function get payers(int 'limit = 10, int page = 1, string? search = ()) returns PayerListResponse|error {
         log:printDebug("Fetching payers.", pageLimit = 'limit.toString(), page = page.toString());

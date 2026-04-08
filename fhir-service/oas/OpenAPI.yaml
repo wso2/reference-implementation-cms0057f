@@ -3431,11 +3431,11 @@ paths:
       - default: []
       x-auth-type: Application & Application User
   /Group/{id}/$davinci-data-export:
-    get:
-      operationId: getDaVinciDataExport
+    post:
+      operationId: postDaVinciDataExport
       summary: Trigger payer-to-payer data export for a matched group
       tags:
-      - GET
+      - POST
       - Group
       - Operation
       parameters:
@@ -3445,10 +3445,18 @@ paths:
         required: true
         schema:
           type: string
+      - name: Prefer
+        in: header
+        description: "Must be 'respond-async' per Da Vinci PDex IG §pdex-304"
+        required: true
+        schema:
+          type: string
+          enum:
+          - respond-async
       - name: exportType
         in: query
-        description: "Export type (must be 'hl7.fhir.us.davinci-pdex#payertopayer')"
-        required: true
+        description: "Export type: 'hl7.fhir.us.davinci-pdex#payertopayer', 'provider-delta', 'provider-download', or 'provider-snapshot'"
+        required: false
         schema:
           type: string
       - name: _since
@@ -3469,6 +3477,44 @@ paths:
         required: false
         schema:
           type: string
+      - name: _typeFilter
+        in: query
+        description: FHIR search query to further restrict exported resources
+        required: false
+        schema:
+          type: string
+      - name: patient
+        in: query
+        description: "Comma-separated Patient references (e.g. 'Patient/123') to restrict the export to specific patients"
+        required: false
+        schema:
+          type: string
+      requestBody:
+        description: Optional FHIR Parameters resource supplying export parameters (alternative to query params per Da Vinci PDex IG)
+        required: false
+        content:
+          application/fhir+json:
+            schema:
+              type: object
+              properties:
+                resourceType:
+                  type: string
+                  enum:
+                  - Parameters
+                parameter:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      valueString:
+                        type: string
+                      valueReference:
+                        type: object
+                        properties:
+                          reference:
+                            type: string
       responses:
         '202':
           description: Accepted - data export job started, poll Content-Location for status

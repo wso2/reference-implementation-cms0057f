@@ -243,7 +243,7 @@ export default function PayerDataExchangeDetail() {
               Consent Status
             </Typography>
             <Chip
-              label={data.consent}
+              label={data.consent.charAt(0).toUpperCase() + data.consent.slice(1).toLowerCase()}
               color={
                 data.consent.toUpperCase() === 'APPROVED' ? 'success' :
                 data.consent.toUpperCase() === 'DENIED' ? 'error' :
@@ -397,7 +397,12 @@ export default function PayerDataExchangeDetail() {
                     Transaction Time
                   </Typography>
                   <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                    {new Date(data.exportSummary.transactionTime).toLocaleString()}
+                    {(() => {
+                      const d = new Date(data.exportSummary.transactionTime);
+                      const datePart = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                      const timePart = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+                      return `${datePart} ${timePart}`;
+                    })()}
                   </Typography>
                 </Box>
               </Box>

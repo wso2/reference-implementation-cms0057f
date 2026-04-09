@@ -176,8 +176,8 @@ public isolated function getPARequestDetail(string responseId) returns PARequest
     // 4. Get IPS summary using patient_id from DB (no need to parse Claim.patient.reference)
     PatientInformation patientInfo = check getPatientIPSSummary(patientId);
 
-    // 5. Extract provider information from Claim
-    ProviderInformation providerInfo = check getProviderInformation(pasClaim.provider);
+    // 5. Extract provider information from Claim (falls back to careTeam for practitioner when provider is an Organization)
+    ProviderInformation providerInfo = check getProviderInformation(pasClaim.provider, pasClaim.careTeam);
 
     // 6. Parse claim items with adjudication data from ClaimResponse
     ClaimItem[] items = check parseClaimItems(<international401:ClaimItem[]>pasClaim.item, claimResponse);
@@ -566,9 +566,9 @@ isolated function calculateAge(string birthDate) returns int? {
 # Get Provider Information from Claim
 #
 # + providerRef - Reference to provider from Claim resource
+# + careTeam - Optional careTeam entries from Claim; used to find a practitioner when provider is an Organization
 # + return - ProviderInformation or error
-isolated function getProviderInformation(r4:Reference providerRef) returns ProviderInformation|error {
-    // Extract provider from careTeam
+isolated function getProviderInformation(r4:Reference providerRef, international401:ClaimCareTeam[]? careTeam = ()) returns ProviderInformation|error {
     string? practitionerId = providerRef.reference;
     // If PractitionerRole is in reference, fetch practitioner info or organization info based on reference type
     if practitionerId == () {
@@ -582,6 +582,19 @@ isolated function getProviderInformation(r4:Reference providerRef) returns Provi
     practitionerId = parts[parts.length() - 1];
 
     if resourceType == "Organization" {
+        // When the claim provider is an Organization, check careTeam for a direct Practitioner reference
+        if careTeam is international401:ClaimCareTeam[] {
+            string? practRefStr = findPractitionerInCareTeam(careTeam);
+            if practRefStr is string {
+                string[] practParts = (re `/`).split(practRefStr);
+                string practId = practParts[practParts.length() - 1];
+                ProviderInformation|error practInfo = getPractitionerInfo(practId);
+                if practInfo is ProviderInformation {
+                    return practInfo;
+                }
+                log:printWarn("Failed to fetch practitioner from careTeam, falling back to organization info: " + practInfo.message());
+            }
+        }
         return getOrganizationInfo(<string>practitionerId);
     } else if resourceType == "PractitionerRole" {
         return getPractitionerInfo(<string>practitionerId);
@@ -589,6 +602,21 @@ isolated function getProviderInformation(r4:Reference providerRef) returns Provi
         log:printError("Unknown provider reference type: " + resourceType);
         return error("Unknown provider reference type: " + resourceType);
     }
+}
+
+# Find a Practitioner reference in careTeam entries
+#
+# + careTeam - Array of ClaimCareTeam entries
+# + return - The first Reference pointing to a Practitioner resource, or ()
+isolated function findPractitionerInCareTeam(international401:ClaimCareTeam[] careTeam) returns string? {
+    foreach international401:ClaimCareTeam member in careTeam {
+        r4:Reference memberRef = member.provider;
+        string? refStr = memberRef.reference;
+        if refStr is string && refStr.startsWith("Practitioner") {
+            return refStr;
+        }
+    }
+    return ();
 }
 
 # Get Practitioner Information

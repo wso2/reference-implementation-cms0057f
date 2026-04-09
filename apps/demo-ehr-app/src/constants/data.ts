@@ -1549,32 +1549,30 @@ export const CREATE_PAS_CLAIM_BUNDLE = (
         },
       ],
     },
-    careTeam: [
-      {
-        sequence: 1,
-        extension: [
-          {
-            url: "http://hl7.org/fhir/StructureDefinition/data-absent-reason",
-            valueCode: "not-applicable",
-          },
-        ],
-        role: {
-          coding: [
+    ...(practitionerId
+      ? {
+          careTeam: [
             {
-              system: "http://terminology.hl7.org/CodeSystem/claimcareteamrole",
-              code: "primary",
-              display: "Primary Provider",
+              sequence: 1,
+              role: {
+                coding: [
+                  {
+                    system: "http://terminology.hl7.org/CodeSystem/claimcareteamrole",
+                    code: "primary",
+                    display: "Primary Provider",
+                  },
+                ],
+              },
+              provider: {
+                reference: `Practitioner/${practitionerId}`,
+                ...(practitioner && {
+                  display: `${practitioner.name?.[0]?.prefix?.[0] ?? ""} ${practitioner.name?.[0]?.given?.[0] ?? ""} ${practitioner.name?.[0]?.family ?? ""}`.trim(),
+                }),
+              },
             },
           ],
-        },
-        provider: {
-          reference: `Practitioner/${practitionerId}`,
-          display: practitioner
-            ? `${practitioner.name?.[0]?.prefix?.[0] ?? ""} ${practitioner.name?.[0]?.given?.[0] ?? ""} ${practitioner.name?.[0]?.family ?? ""}`.trim()
-            : undefined,
-        },
-      },
-    ],
+        }
+      : {}),
     supportingInfo: [
       {
         sequence: 1,

@@ -42,6 +42,7 @@ function LabTest() {
   const selectedPatientId = useSelector(
     (state: any) => state.patient.selectedPatientId
   );
+  const loggedUserId = useSelector((state: { loggedUser: { id: string } }) => state.loggedUser.id);
 
   const vertical = "bottom";
   const horizontal = "right";
@@ -56,12 +57,13 @@ function LabTest() {
   const questionnaireResponseId = queryParams.get("questionnaireResponseId");
 
   const [patientId] = useState(urlPatientId);
-  const [practionerId] = useState("PT567498");
+  const practionerId = loggedUserId || "456";
 
-  const [patientResource, setPatientResource] = useState<any>(null);
-  const [serviceRequestResource, setServiceRequestResource] = useState<any>(null);
   const [questionnaireResponseResource, setQuestionnaireResponseResource] = useState<any>(null);
   const [coverageResource, setCoverageResource] = useState<any>(null);
+  const [practitionerResource, setPractitionerResource] = useState<any>(null);
+  const [serviceRequestResource, setServiceRequestResource] = useState<any>(null);
+  const [patientResource, setPatientResource] = useState<any>(null);
 
   const [loading, setLoading] = useState(false);
   const [selectedTestType, setSelectedTestType] = useState("");
@@ -146,7 +148,9 @@ function LabTest() {
       questionnaireResponseResource,
       coverageResource,
       providerOrg,
-      payerOrg
+      payerOrg,
+      practionerId,
+      practitionerResource
     );
 
     try {
@@ -175,6 +179,12 @@ function LabTest() {
     const fetchResources = async () => {
       const Config = (window as any).Config;
       try {
+        // Fetch Practitioner
+        if (practionerId) {
+          const practRes = await axios.get(`${Config.practitioner}/${practionerId}`);
+          setPractitionerResource(practRes.data);
+        }
+
         // Fetch Patient
         const patRes = await axios.get(`${Config.patient}/${patientId}`);
         setPatientResource(patRes.data);
@@ -220,7 +230,7 @@ function LabTest() {
 
     fetchResources();
     dispatch(updateCdsHook("order-sign"));
-  }, [selectedPatientId, description, dispatch, patientId, serviceRequestId, questionnaireResponseId]);
+  }, [selectedPatientId, description, dispatch, patientId, serviceRequestId, questionnaireResponseId, practionerId]);
 
   return isAuthenticated ? (
     <>

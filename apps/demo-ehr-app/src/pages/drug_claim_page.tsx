@@ -256,7 +256,8 @@ const ClaimForm = () => {
       resources.qr,
       resources.coverage,
       resources.providerOrg,
-      resources.payerOrg
+      resources.payerOrg,
+      loggedUser?.id || "456"
     );
 
     try {

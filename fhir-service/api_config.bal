@@ -3589,3 +3589,339 @@ final r4:ResourceAPIConfig conceptmapApiConfig = {
     serverConfig: (),
     authzConfig: ()
 };
+
+# ######################################################################################################################
+# Condition API Configs                                                                                                 #
+# ######################################################################################################################
+
+final r4:ResourceAPIConfig conditionApiConfig = {
+    resourceType: "Condition",
+    profiles: [
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-condition-problems-health-concerns",
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-condition-encounter-diagnosis"
+    ],
+    defaultProfile: (),
+    searchParameters: [
+
+        {
+            name: "patient",
+            active: true,
+            information: {
+                description: "Who has the condition?",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/us/core/SearchParameter/us-core-condition-patient"
+            }
+        },
+        {
+            name: "category",
+            active: true,
+            information: {
+                description: "The category of the condition",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/us/core/SearchParameter/us-core-condition-category"
+            }
+        },
+        {
+            name: "clinical-status",
+            active: true,
+            information: {
+                description: "The clinical status of the condition",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/us/core/SearchParameter/us-core-condition-clinical-status"
+            }
+        },
+        {
+            name: "code",
+            active: true,
+            information: {
+                description: "Code for the condition",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/us/core/SearchParameter/us-core-condition-code"
+            }
+        },
+        {
+            name: "encounter",
+            active: true,
+            information: {
+                description: "Encounter when condition first asserted",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/us/core/SearchParameter/us-core-condition-encounter"
+            }
+        },
+        {
+            name: "onset-date",
+            active: true,
+            information: {
+                description: "Date-related searches may have comparators",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/us/core/SearchParameter/us-core-condition-onset-date"
+            }
+        },
+        {
+            name: "abatement-date",
+            active: true,
+            information: {
+                description: "Date-related searches may have comparators",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/us/core/SearchParameter/us-core-condition-abatement-date"
+            }
+        },
+        {
+            name: "recorded-date",
+            active: true,
+            information: {
+                description: "Date record was first recorded",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/us/core/SearchParameter/us-core-condition-recorded-date"
+            }
+        },
+        {
+            name: "asserted-date",
+            active: true,
+            information: {
+                description: "Date the condition was first asserted (US Core extension)",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/us/core/SearchParameter/us-core-condition-asserted-date"
+            }
+        }
+    ],
+    operations: [],
+    serverConfig: (),
+    authzConfig: ()
+};
+
+# ######################################################################################################################
+# CarePlan API Configs                                                                                                  #
+# ######################################################################################################################
+
+final r4:ResourceAPIConfig carePlanApiConfig = {
+    resourceType: "CarePlan",
+    profiles: [
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-careplan"
+    ],
+    defaultProfile: (),
+    searchParameters: [
+        {
+            name: "patient",
+            active: true,
+            information: {
+                description: "Who the care plan is for",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/us/core/SearchParameter/us-core-careplan-patient"
+            }
+        },
+        {
+            name: "category",
+            active: true,
+            information: {
+                description: "Type of plan",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/us/core/SearchParameter/us-core-careplan-category"
+            }
+        },
+        {
+            name: "date",
+            active: true,
+            information: {
+                description: "Time period plan covers",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/us/core/SearchParameter/us-core-careplan-date"
+            }
+        },
+        {
+            name: "status",
+            active: true,
+            information: {
+                description: "draft | active | on-hold | revoked | completed | entered-in-error | unknown",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/us/core/SearchParameter/us-core-careplan-status"
+            }
+        }
+    ],
+    operations: [],
+    serverConfig: (),
+    authzConfig: ()
+};
+
+# ######################################################################################################################
+# CareTeam API Configs                                                                                                  #
+# ######################################################################################################################
+
+final r4:ResourceAPIConfig careTeamApiConfig = {
+    resourceType: "CareTeam",
+    profiles: [
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-careteam"
+    ],
+    defaultProfile: (),
+    searchParameters: [
+        {
+            name: "patient",
+            active: true,
+            information: {
+                description: "Who care team is for",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/us/core/SearchParameter/us-core-careteam-patient"
+            }
+        },
+        {
+            name: "role",
+            active: true,
+            information: {
+                description: "Type of involvement",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/us/core/SearchParameter/us-core-careteam-role"
+            }
+        },
+        {
+            name: "status",
+            active: true,
+            information: {
+                description: "proposed | active | suspended | inactive | entered-in-error",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/us/core/SearchParameter/us-core-careteam-status"
+            }
+        }
+    ],
+    operations: [],
+    serverConfig: (),
+    authzConfig: ()
+};
+
+# ######################################################################################################################
+# Medication API Configs                                                                                                #
+# ######################################################################################################################
+
+final r4:ResourceAPIConfig medicationApiConfig = {
+    resourceType: "Medication",
+    profiles: [
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-medication"
+    ],
+    defaultProfile: (),
+    searchParameters: [],
+    operations: [],
+    serverConfig: (),
+    authzConfig: ()
+};
+
+# ######################################################################################################################
+# MedicationDispense API Configs                                                                                        #
+# ######################################################################################################################
+
+final r4:ResourceAPIConfig medicationDispenseApiConfig = {
+    resourceType: "MedicationDispense",
+    profiles: [
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-medicationdispense"
+    ],
+    defaultProfile: (),
+    searchParameters: [
+        {
+            name: "patient",
+            active: true,
+            information: {
+                description: "The identity of a patient to list dispenses for",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/us/core/SearchParameter/us-core-medicationdispense-patient"
+            }
+        },
+        {
+            name: "status",
+            active: true,
+            information: {
+                description: "preparation | in-progress | cancelled | on-hold | completed | entered-in-error | stopped | declined | unknown",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/us/core/SearchParameter/us-core-medicationdispense-status"
+            }
+        },
+        {
+            name: "type",
+            active: true,
+            information: {
+                description: "Returns dispenses of a specific type",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/us/core/SearchParameter/us-core-medicationdispense-type"
+            }
+        }
+    ],
+    operations: [],
+    serverConfig: (),
+    authzConfig: ()
+};
+
+# ######################################################################################################################
+# RelatedPerson API Configs                                                                                             #
+# ######################################################################################################################
+
+final r4:ResourceAPIConfig relatedPersonApiConfig = {
+    resourceType: "RelatedPerson",
+    profiles: [
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-relatedperson"
+    ],
+    defaultProfile: (),
+    searchParameters: [
+        {
+            name: "_id",
+            active: true,
+            information: {
+                description: "Logical id of this artifact",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/us/core/SearchParameter/us-core-relatedperson-id"
+            }
+        },
+        {
+            name: "name",
+            active: true,
+            information: {
+                description: "A server defined search that may match any of the string fields in HumanName",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/us/core/SearchParameter/us-core-relatedperson-name"
+            }
+        },
+        {
+            name: "patient",
+            active: true,
+            information: {
+                description: "The patient this related person is related to",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/us/core/SearchParameter/us-core-relatedperson-patient"
+            }
+        }
+    ],
+    operations: [],
+    serverConfig: (),
+    authzConfig: ()
+};
+
+# ######################################################################################################################
+# Specimen API Configs                                                                                                  #
+# ######################################################################################################################
+
+final r4:ResourceAPIConfig specimenApiConfig = {
+    resourceType: "Specimen",
+    profiles: [
+        "http://hl7.org/fhir/us/core/StructureDefinition/us-core-specimen"
+    ],
+    defaultProfile: (),
+    searchParameters: [
+        {
+            name: "_id",
+            active: true,
+            information: {
+                description: "Logical id of this artifact",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/us/core/SearchParameter/us-core-specimen-id"
+            }
+        },
+        {
+            name: "patient",
+            active: true,
+            information: {
+                description: "The patient the specimen comes from",
+                builtin: false,
+                documentation: "http://hl7.org/fhir/us/core/SearchParameter/us-core-specimen-patient"
+            }
+        }
+    ],
+    operations: [],
+    serverConfig: (),
+    authzConfig: ()
+};

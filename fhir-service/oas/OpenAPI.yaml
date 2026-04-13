@@ -9346,13 +9346,6 @@ paths:
       - GET
       - RelatedPerson
       parameters:
-      - name: _id
-        in: query
-        description: Logical id of this artifact
-        required: false
-        schema:
-          type: string
-        x-wso2-oh-fhirType: token
       - name: name
         in: query
         description: A server defined search that may match any of the string fields in the HumanName
@@ -9425,13 +9418,6 @@ paths:
       - GET
       - Specimen
       parameters:
-      - name: _id
-        in: query
-        description: Logical id of this artifact
-        required: false
-        schema:
-          type: string
-        x-wso2-oh-fhirType: token
       - name: patient
         in: query
         description: The patient the specimen comes from
@@ -11572,6 +11558,7 @@ components:
       explode: true
       schema:
         type: string
+      x-wso2-oh-fhirType: token
     _sourceParam:
       name: _source
       in: query

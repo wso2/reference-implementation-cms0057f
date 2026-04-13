@@ -49,9 +49,9 @@ configurable string bulkMemberMatchMode = "respond-async";
 configurable string[] & readonly allowedExportResourceTypes = [
     "AllergyIntolerance", "CarePlan", "CareTeam", "Condition", "Consent",
     "Coverage", "Device", "DiagnosticReport", "DocumentReference", "Encounter",
-    "ExplanationOfBenefit", "Goal", "Immunization", "MedicationDispense",
+    "ExplanationOfBenefit", "Goal", "Immunization", "Medication", "MedicationDispense",
     "MedicationRequest", "Observation", "Patient", "Practitioner", "PractitionerRole",
-    "Procedure", "Provenance", "RelatedPerson", "ServiceRequest"
+    "Procedure", "Provenance", "RelatedPerson", "ServiceRequest", "Specimen"
 ];
 
 // This is used to connect to file service

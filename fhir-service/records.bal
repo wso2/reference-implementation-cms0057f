@@ -280,6 +280,11 @@ public enum ResourceType {
     GROUP = "Group",
     SERVICE_REQUEST = "ServiceRequest",
     VALUE_SET = "ValueSet",
+    CARE_TEAM = "CareTeam",
+    MEDICATION = "Medication",
+    MEDICATION_DISPENSE = "MedicationDispense",
+    RELATED_PERSON = "RelatedPerson",
+    SPECIMEN = "Specimen",
     AUDIT_EVENT = "AuditEvent"
 }
 

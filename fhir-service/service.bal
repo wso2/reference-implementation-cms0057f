@@ -49,9 +49,9 @@ configurable string bulkMemberMatchMode = "respond-async";
 configurable string[] & readonly allowedExportResourceTypes = [
     "AllergyIntolerance", "CarePlan", "CareTeam", "Condition", "Consent",
     "Coverage", "Device", "DiagnosticReport", "DocumentReference", "Encounter",
-    "ExplanationOfBenefit", "Goal", "Immunization", "MedicationDispense",
+    "ExplanationOfBenefit", "Goal", "Immunization", "Medication", "MedicationDispense",
     "MedicationRequest", "Observation", "Patient", "Practitioner", "PractitionerRole",
-    "Procedure", "Provenance", "RelatedPerson", "ServiceRequest"
+    "Procedure", "Provenance", "RelatedPerson", "ServiceRequest", "Specimen"
 ];
 
 // This is used to connect to file service
@@ -3220,5 +3220,327 @@ service /fhir/r4/ConceptMap on new fhirr4:Listener(config = conceptmapApiConfig)
     isolated resource function post [string id]/\$translate(r4:FHIRContext fhirContext, international401:Parameters parameters) returns r4:FHIRError|http:Response|error {
         map<string[]> queryParams = getQueryParamsMap(fhirContext.getRequestSearchParameters());
         return invokeOperation(CONCEPT_MAP, "$translate", fhirClient:POST, id = id, queryParameters = queryParams);
+    }
+}
+
+// ######################################################################################################################
+// # Condition API                                                                                                       #
+// ######################################################################################################################
+
+public type Condition uscore501:USCoreConditionProblemsHealthConcernsProfile|uscore501:USCoreConditionEncounterDiagnosisProfile;
+
+service /fhir/r4/Condition on new fhirr4:Listener(config = conditionApiConfig) {
+
+    isolated resource function get [string id](r4:FHIRContext fhirContext) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return getById(fhirConnector, CONDITION, id);
+    }
+
+    isolated resource function get [string id]/_history/[string vid](r4:FHIRContext fhirContext) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    isolated resource function get .(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+        map<string[]> queryParamsMap = getQueryParamsMap(fhirContext.getRequestSearchParameters());
+        return search(fhirConnector, CONDITION, queryParamsMap, fhirContext);
+    }
+
+    isolated resource function post .(r4:FHIRContext fhirContext, Condition condition) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return create(fhirConnector, CONDITION, condition.toJson(), fhirContext);
+    }
+
+    isolated resource function put [string id](r4:FHIRContext fhirContext, Condition condition) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    isolated resource function patch [string id](r4:FHIRContext fhirContext, json patch) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    isolated resource function delete [string id](r4:FHIRContext fhirContext) returns r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    isolated resource function get [string id]/_history(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    isolated resource function get _history(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+}
+
+// ######################################################################################################################
+// # CarePlan API                                                                                                        #
+// ######################################################################################################################
+
+public type CarePlan uscore501:USCoreCarePlanProfile;
+
+service /fhir/r4/CarePlan on new fhirr4:Listener(config = carePlanApiConfig) {
+
+    isolated resource function get [string id](r4:FHIRContext fhirContext) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return getById(fhirConnector, CARE_PLAN, id);
+    }
+
+    isolated resource function get [string id]/_history/[string vid](r4:FHIRContext fhirContext) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    isolated resource function get .(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+        map<string[]> queryParamsMap = getQueryParamsMap(fhirContext.getRequestSearchParameters());
+        return search(fhirConnector, CARE_PLAN, queryParamsMap, fhirContext);
+    }
+
+    isolated resource function post .(r4:FHIRContext fhirContext, CarePlan carePlan) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return create(fhirConnector, CARE_PLAN, carePlan.toJson(), fhirContext);
+    }
+
+    isolated resource function put [string id](r4:FHIRContext fhirContext, CarePlan carePlan) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    isolated resource function patch [string id](r4:FHIRContext fhirContext, json patch) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    isolated resource function delete [string id](r4:FHIRContext fhirContext) returns r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    isolated resource function get [string id]/_history(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    isolated resource function get _history(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+}
+
+// ######################################################################################################################
+// # CareTeam API                                                                                                        #
+// ######################################################################################################################
+
+public type CareTeam uscore501:USCoreCareTeam;
+
+service /fhir/r4/CareTeam on new fhirr4:Listener(config = careTeamApiConfig) {
+
+    isolated resource function get [string id](r4:FHIRContext fhirContext) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return getById(fhirConnector, CARE_TEAM, id);
+    }
+
+    isolated resource function get [string id]/_history/[string vid](r4:FHIRContext fhirContext) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    isolated resource function get .(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+        map<string[]> queryParamsMap = getQueryParamsMap(fhirContext.getRequestSearchParameters());
+        return search(fhirConnector, CARE_TEAM, queryParamsMap, fhirContext);
+    }
+
+    isolated resource function post .(r4:FHIRContext fhirContext, CareTeam careTeam) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return create(fhirConnector, CARE_TEAM, careTeam.toJson(), fhirContext);
+    }
+
+    isolated resource function put [string id](r4:FHIRContext fhirContext, CareTeam careTeam) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    isolated resource function patch [string id](r4:FHIRContext fhirContext, json patch) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    isolated resource function delete [string id](r4:FHIRContext fhirContext) returns r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    isolated resource function get [string id]/_history(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    isolated resource function get _history(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+}
+
+// ######################################################################################################################
+// # Medication API                                                                                                      #
+// ######################################################################################################################
+
+public type Medication uscore501:USCoreMedicationProfile;
+
+service /fhir/r4/Medication on new fhirr4:Listener(config = medicationApiConfig) {
+
+    isolated resource function get [string id](r4:FHIRContext fhirContext) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return getById(fhirConnector, MEDICATION, id);
+    }
+
+    isolated resource function get [string id]/_history/[string vid](r4:FHIRContext fhirContext) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    isolated resource function get .(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+        map<string[]> queryParamsMap = getQueryParamsMap(fhirContext.getRequestSearchParameters());
+        return search(fhirConnector, MEDICATION, queryParamsMap, fhirContext);
+    }
+
+    isolated resource function post .(r4:FHIRContext fhirContext, Medication medication) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return create(fhirConnector, MEDICATION, medication.toJson(), fhirContext);
+    }
+
+    isolated resource function put [string id](r4:FHIRContext fhirContext, Medication medication) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    isolated resource function patch [string id](r4:FHIRContext fhirContext, json patch) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    isolated resource function delete [string id](r4:FHIRContext fhirContext) returns r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    isolated resource function get [string id]/_history(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    isolated resource function get _history(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+}
+
+// ######################################################################################################################
+// # MedicationDispense API                                                                                              #
+// ######################################################################################################################
+
+public type MedicationDispense international401:MedicationDispense;
+
+service /fhir/r4/MedicationDispense on new fhirr4:Listener(config = medicationDispenseApiConfig) {
+
+    isolated resource function get [string id](r4:FHIRContext fhirContext) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return getById(fhirConnector, MEDICATION_DISPENSE, id);
+    }
+
+    isolated resource function get [string id]/_history/[string vid](r4:FHIRContext fhirContext) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    isolated resource function get .(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+        map<string[]> queryParamsMap = getQueryParamsMap(fhirContext.getRequestSearchParameters());
+        return search(fhirConnector, MEDICATION_DISPENSE, queryParamsMap, fhirContext);
+    }
+
+    isolated resource function post .(r4:FHIRContext fhirContext, MedicationDispense medicationDispense) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return create(fhirConnector, MEDICATION_DISPENSE, medicationDispense.toJson(), fhirContext);
+    }
+
+    isolated resource function put [string id](r4:FHIRContext fhirContext, MedicationDispense medicationDispense) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    isolated resource function patch [string id](r4:FHIRContext fhirContext, json patch) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    isolated resource function delete [string id](r4:FHIRContext fhirContext) returns r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    isolated resource function get [string id]/_history(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    isolated resource function get _history(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+}
+
+// ######################################################################################################################
+// # RelatedPerson API                                                                                                   #
+// ######################################################################################################################
+
+public type RelatedPerson uscore501:USCoreRelatedPersonProfile;
+
+service /fhir/r4/RelatedPerson on new fhirr4:Listener(config = relatedPersonApiConfig) {
+
+    isolated resource function get [string id](r4:FHIRContext fhirContext) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return getById(fhirConnector, RELATED_PERSON, id);
+    }
+
+    isolated resource function get [string id]/_history/[string vid](r4:FHIRContext fhirContext) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    isolated resource function get .(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+        map<string[]> queryParamsMap = getQueryParamsMap(fhirContext.getRequestSearchParameters());
+        return search(fhirConnector, RELATED_PERSON, queryParamsMap, fhirContext);
+    }
+
+    isolated resource function post .(r4:FHIRContext fhirContext, RelatedPerson relatedPerson) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return create(fhirConnector, RELATED_PERSON, relatedPerson.toJson(), fhirContext);
+    }
+
+    isolated resource function put [string id](r4:FHIRContext fhirContext, RelatedPerson relatedPerson) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    isolated resource function patch [string id](r4:FHIRContext fhirContext, json patch) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    isolated resource function delete [string id](r4:FHIRContext fhirContext) returns r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    isolated resource function get [string id]/_history(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    isolated resource function get _history(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+}
+
+// ######################################################################################################################
+// # Specimen API                                                                                                        #
+// ######################################################################################################################
+
+public type Specimen international401:Specimen;
+
+service /fhir/r4/Specimen on new fhirr4:Listener(config = specimenApiConfig) {
+
+    isolated resource function get [string id](r4:FHIRContext fhirContext) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return getById(fhirConnector, SPECIMEN, id);
+    }
+
+    isolated resource function get [string id]/_history/[string vid](r4:FHIRContext fhirContext) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    isolated resource function get .(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+        map<string[]> queryParamsMap = getQueryParamsMap(fhirContext.getRequestSearchParameters());
+        return search(fhirConnector, SPECIMEN, queryParamsMap, fhirContext);
+    }
+
+    isolated resource function post .(r4:FHIRContext fhirContext, Specimen specimen) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return create(fhirConnector, SPECIMEN, specimen.toJson(), fhirContext);
+    }
+
+    isolated resource function put [string id](r4:FHIRContext fhirContext, Specimen specimen) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    isolated resource function patch [string id](r4:FHIRContext fhirContext, json patch) returns r4:DomainResource|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    isolated resource function delete [string id](r4:FHIRContext fhirContext) returns r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    isolated resource function get [string id]/_history(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
+    }
+
+    isolated resource function get _history(r4:FHIRContext fhirContext) returns r4:Bundle|r4:OperationOutcome|r4:FHIRError {
+        return r4:createFHIRError("Not implemented", r4:ERROR, r4:INFORMATIONAL, httpStatusCode = http:STATUS_NOT_IMPLEMENTED);
     }
 }

@@ -8917,6 +8917,566 @@ paths:
       security:
       - default: []
       x-auth-type: Application & Application User
+  /Condition:
+    get:
+      tags:
+      - GET
+      - Condition
+      parameters:
+      - name: patient
+        in: query
+        description: Who has the condition?
+        required: false
+        schema:
+          type: string
+        x-wso2-oh-fhirType: reference
+      - name: category
+        in: query
+        description: The category of the condition
+        required: false
+        schema:
+          type: string
+        x-wso2-oh-fhirType: token
+      - name: clinical-status
+        in: query
+        description: The clinical status of the condition
+        required: false
+        schema:
+          type: string
+        x-wso2-oh-fhirType: token
+      - name: code
+        in: query
+        description: Code for the condition
+        required: false
+        schema:
+          type: string
+        x-wso2-oh-fhirType: token
+      - name: encounter
+        in: query
+        description: Encounter created as part of
+        required: false
+        schema:
+          type: string
+        x-wso2-oh-fhirType: reference
+      - name: onset-date
+        in: query
+        description: Date related onsets (dateTime and Period)
+        required: false
+        schema:
+          type: string
+        x-wso2-oh-fhirType: date
+      - name: abatement-date
+        in: query
+        description: Date-related abatements (dateTime and period)
+        required: false
+        schema:
+          type: string
+        x-wso2-oh-fhirType: date
+      - name: recorded-date
+        in: query
+        description: Date record was first recorded
+        required: false
+        schema:
+          type: string
+        x-wso2-oh-fhirType: date
+      - $ref: '#/components/parameters/_lastUpdatedParam'
+      - $ref: '#/components/parameters/_securityParam'
+      - $ref: '#/components/parameters/_tagParam'
+      - $ref: '#/components/parameters/_idParam'
+      - $ref: '#/components/parameters/_sourceParam'
+      - $ref: '#/components/parameters/_profileParam'
+      responses:
+        '200':
+          description: search Condition operation successful
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/Bundle'
+      security:
+      - default: []
+      x-auth-type: Application & Application User
+    post:
+      summary: Create a new Condition
+      tags:
+      - POST
+      - Condition
+      requestBody:
+        required: true
+        content:
+          application/fhir+json:
+            schema:
+              $ref: '#/components/schemas/Condition'
+      responses:
+        '201':
+          description: Successfully created Condition
+  /Condition/{id}:
+    get:
+      tags:
+      - GET
+      - Condition
+      parameters:
+      - name: id
+        in: path
+        description: logical identifier
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: read Condition operation successful
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/Condition'
+      security:
+      - default: []
+      x-auth-type: Application & Application User
+  /CarePlan:
+    get:
+      tags:
+      - GET
+      - CarePlan
+      parameters:
+      - name: patient
+        in: query
+        description: Who the care plan is for
+        required: false
+        schema:
+          type: string
+        x-wso2-oh-fhirType: reference
+      - name: category
+        in: query
+        description: Type of plan
+        required: false
+        schema:
+          type: string
+        x-wso2-oh-fhirType: token
+      - name: date
+        in: query
+        description: Time period plan covers
+        required: false
+        schema:
+          type: string
+        x-wso2-oh-fhirType: date
+      - name: status
+        in: query
+        description: draft | active | on-hold | revoked | completed | entered-in-error | unknown
+        required: false
+        schema:
+          type: string
+        x-wso2-oh-fhirType: token
+      - $ref: '#/components/parameters/_lastUpdatedParam'
+      - $ref: '#/components/parameters/_securityParam'
+      - $ref: '#/components/parameters/_tagParam'
+      - $ref: '#/components/parameters/_idParam'
+      - $ref: '#/components/parameters/_sourceParam'
+      - $ref: '#/components/parameters/_profileParam'
+      responses:
+        '200':
+          description: search CarePlan operation successful
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/Bundle'
+      security:
+      - default: []
+      x-auth-type: Application & Application User
+    post:
+      summary: Create a new CarePlan
+      tags:
+      - POST
+      - CarePlan
+      requestBody:
+        required: true
+        content:
+          application/fhir+json:
+            schema:
+              $ref: '#/components/schemas/CarePlan'
+      responses:
+        '201':
+          description: Successfully created CarePlan
+  /CarePlan/{id}:
+    get:
+      tags:
+      - GET
+      - CarePlan
+      parameters:
+      - name: id
+        in: path
+        description: logical identifier
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: read CarePlan operation successful
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/CarePlan'
+      security:
+      - default: []
+      x-auth-type: Application & Application User
+  /CareTeam:
+    get:
+      tags:
+      - GET
+      - CareTeam
+      parameters:
+      - name: patient
+        in: query
+        description: Who care team is for
+        required: false
+        schema:
+          type: string
+        x-wso2-oh-fhirType: reference
+      - name: role
+        in: query
+        description: Type of involvement
+        required: false
+        schema:
+          type: string
+        x-wso2-oh-fhirType: token
+      - name: status
+        in: query
+        description: proposed | active | suspended | inactive | entered-in-error
+        required: false
+        schema:
+          type: string
+        x-wso2-oh-fhirType: token
+      - $ref: '#/components/parameters/_lastUpdatedParam'
+      - $ref: '#/components/parameters/_securityParam'
+      - $ref: '#/components/parameters/_tagParam'
+      - $ref: '#/components/parameters/_idParam'
+      - $ref: '#/components/parameters/_sourceParam'
+      - $ref: '#/components/parameters/_profileParam'
+      responses:
+        '200':
+          description: search CareTeam operation successful
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/Bundle'
+      security:
+      - default: []
+      x-auth-type: Application & Application User
+    post:
+      summary: Create a new CareTeam
+      tags:
+      - POST
+      - CareTeam
+      requestBody:
+        required: true
+        content:
+          application/fhir+json:
+            schema:
+              $ref: '#/components/schemas/CareTeam'
+      responses:
+        '201':
+          description: Successfully created CareTeam
+  /CareTeam/{id}:
+    get:
+      tags:
+      - GET
+      - CareTeam
+      parameters:
+      - name: id
+        in: path
+        description: logical identifier
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: read CareTeam operation successful
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/CareTeam'
+      security:
+      - default: []
+      x-auth-type: Application & Application User
+  /Medication:
+    get:
+      tags:
+      - GET
+      - Medication
+      parameters:
+      - name: code
+        in: query
+        description: Returns medications for a specific code
+        required: false
+        schema:
+          type: string
+        x-wso2-oh-fhirType: token
+      - $ref: '#/components/parameters/_lastUpdatedParam'
+      - $ref: '#/components/parameters/_securityParam'
+      - $ref: '#/components/parameters/_tagParam'
+      - $ref: '#/components/parameters/_idParam'
+      - $ref: '#/components/parameters/_sourceParam'
+      - $ref: '#/components/parameters/_profileParam'
+      responses:
+        '200':
+          description: search Medication operation successful
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/Bundle'
+      security:
+      - default: []
+      x-auth-type: Application & Application User
+    post:
+      summary: Create a new Medication
+      tags:
+      - POST
+      - Medication
+      requestBody:
+        required: true
+        content:
+          application/fhir+json:
+            schema:
+              $ref: '#/components/schemas/Medication'
+      responses:
+        '201':
+          description: Successfully created Medication
+  /Medication/{id}:
+    get:
+      tags:
+      - GET
+      - Medication
+      parameters:
+      - name: id
+        in: path
+        description: logical identifier
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: read Medication operation successful
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/Medication'
+      security:
+      - default: []
+      x-auth-type: Application & Application User
+  /MedicationDispense:
+    get:
+      tags:
+      - GET
+      - MedicationDispense
+      parameters:
+      - name: patient
+        in: query
+        description: The identity of a patient to list dispenses for
+        required: false
+        schema:
+          type: string
+        x-wso2-oh-fhirType: reference
+      - name: status
+        in: query
+        description: Returns dispenses with a specified dispense status
+        required: false
+        schema:
+          type: string
+        x-wso2-oh-fhirType: token
+      - name: type
+        in: query
+        description: Returns dispenses of a specific type
+        required: false
+        schema:
+          type: string
+        x-wso2-oh-fhirType: token
+      - $ref: '#/components/parameters/_lastUpdatedParam'
+      - $ref: '#/components/parameters/_securityParam'
+      - $ref: '#/components/parameters/_tagParam'
+      - $ref: '#/components/parameters/_idParam'
+      - $ref: '#/components/parameters/_sourceParam'
+      - $ref: '#/components/parameters/_profileParam'
+      responses:
+        '200':
+          description: search MedicationDispense operation successful
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/Bundle'
+      security:
+      - default: []
+      x-auth-type: Application & Application User
+    post:
+      summary: Create a new MedicationDispense
+      tags:
+      - POST
+      - MedicationDispense
+      requestBody:
+        required: true
+        content:
+          application/fhir+json:
+            schema:
+              $ref: '#/components/schemas/MedicationDispense'
+      responses:
+        '201':
+          description: Successfully created MedicationDispense
+  /MedicationDispense/{id}:
+    get:
+      tags:
+      - GET
+      - MedicationDispense
+      parameters:
+      - name: id
+        in: path
+        description: logical identifier
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: read MedicationDispense operation successful
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/MedicationDispense'
+      security:
+      - default: []
+      x-auth-type: Application & Application User
+  /RelatedPerson:
+    get:
+      tags:
+      - GET
+      - RelatedPerson
+      parameters:
+      - name: name
+        in: query
+        description: A server defined search that may match any of the string fields in the HumanName
+        required: false
+        schema:
+          type: string
+        x-wso2-oh-fhirType: string
+      - name: patient
+        in: query
+        description: The patient this related person is related to
+        required: false
+        schema:
+          type: string
+        x-wso2-oh-fhirType: reference
+      - $ref: '#/components/parameters/_lastUpdatedParam'
+      - $ref: '#/components/parameters/_securityParam'
+      - $ref: '#/components/parameters/_tagParam'
+      - $ref: '#/components/parameters/_idParam'
+      - $ref: '#/components/parameters/_sourceParam'
+      - $ref: '#/components/parameters/_profileParam'
+      responses:
+        '200':
+          description: search RelatedPerson operation successful
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/Bundle'
+      security:
+      - default: []
+      x-auth-type: Application & Application User
+    post:
+      summary: Create a new RelatedPerson
+      tags:
+      - POST
+      - RelatedPerson
+      requestBody:
+        required: true
+        content:
+          application/fhir+json:
+            schema:
+              $ref: '#/components/schemas/RelatedPerson'
+      responses:
+        '201':
+          description: Successfully created RelatedPerson
+  /RelatedPerson/{id}:
+    get:
+      tags:
+      - GET
+      - RelatedPerson
+      parameters:
+      - name: id
+        in: path
+        description: logical identifier
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: read RelatedPerson operation successful
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/RelatedPerson'
+      security:
+      - default: []
+      x-auth-type: Application & Application User
+  /Specimen:
+    get:
+      tags:
+      - GET
+      - Specimen
+      parameters:
+      - name: patient
+        in: query
+        description: The patient the specimen comes from
+        required: false
+        schema:
+          type: string
+        x-wso2-oh-fhirType: reference
+      - $ref: '#/components/parameters/_lastUpdatedParam'
+      - $ref: '#/components/parameters/_securityParam'
+      - $ref: '#/components/parameters/_tagParam'
+      - $ref: '#/components/parameters/_idParam'
+      - $ref: '#/components/parameters/_sourceParam'
+      - $ref: '#/components/parameters/_profileParam'
+      responses:
+        '200':
+          description: search Specimen operation successful
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/Bundle'
+      security:
+      - default: []
+      x-auth-type: Application & Application User
+    post:
+      summary: Create a new Specimen
+      tags:
+      - POST
+      - Specimen
+      requestBody:
+        required: true
+        content:
+          application/fhir+json:
+            schema:
+              $ref: '#/components/schemas/Specimen'
+      responses:
+        '201':
+          description: Successfully created Specimen
+  /Specimen/{id}:
+    get:
+      tags:
+      - GET
+      - Specimen
+      parameters:
+      - name: id
+        in: path
+        description: logical identifier
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: read Specimen operation successful
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/Specimen'
+      security:
+      - default: []
+      x-auth-type: Application & Application User
 components:
   schemas:
     Resource:
@@ -10776,6 +11336,16 @@ components:
       - $ref: '#/components/schemas/DomainResource'
       - type: object
         properties: {}
+    MedicationDispense:
+      allOf:
+      - $ref: '#/components/schemas/DomainResource'
+      - type: object
+        properties: {}
+    Specimen:
+      allOf:
+      - $ref: '#/components/schemas/DomainResource'
+      - type: object
+        properties: {}
     DiagnosticReport:
       allOf:
       - $ref: '#/components/schemas/DomainResource'
@@ -10988,6 +11558,7 @@ components:
       explode: true
       schema:
         type: string
+      x-wso2-oh-fhirType: token
     _sourceParam:
       name: _source
       in: query

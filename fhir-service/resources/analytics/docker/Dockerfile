@@ -1,3 +1,7 @@
+# Dockerfile for building the FHIR service with analytics  
+# Update this version number for reflect fhir-service changes  
+# Version: 1.0.0 
+
 FROM --platform=linux/amd64 ubuntu:24.04
 
 ARG BALLERINA_VERSION=2201.12.11

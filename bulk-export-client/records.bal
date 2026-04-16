@@ -74,7 +74,7 @@ public type BulkExportClientConfig record {|
 public type OutputFile record {|
     string 'type;
     string url;
-    int count;
+    int count?;
 |};
 
 # record to hold summary of exports.
@@ -132,6 +132,7 @@ public type PayerDataExchangeRequest record {|
     string consent?;
     string createdDate?;
     string exportSummary?;
+    string bulkExportJobId?;
 |};
 
 # Record to hold payer data exchange request result with total count.

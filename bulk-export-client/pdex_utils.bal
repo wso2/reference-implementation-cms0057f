@@ -310,7 +310,7 @@ isolated function processNdjsonStream(stream<byte[], io:Error?> byteStream, http
         check from string line in lineStream
             do {
                 json|error resourceJson = line.fromJsonString();
-                if resourceJson is json {
+                if resourceJson is json && resourceJson != null {
                     check processAndInsertResource(resourceJson, fhirClient, context);
                 }
             };
@@ -373,17 +373,32 @@ isolated function processAndInsertResource(json resourceJson, http:Client fhirCl
     meta["tag"] = tag;
     resourceMap["meta"] = meta;
 
-    // Insert (POST for new resource creation)
-    http:Response|http:ClientError resp = fhirClient->post("/" + resourceType, resourceMap, headers = {"Content-Type": "application/fhir+json"});
+    // POST to new payer FHIR server (standard FHIR create — server assigns its own ID).
+    // We read the actual server-assigned ID back from the response body so that the
+    // Provenance target reference uses the real stored ID (avoids FK_REFERENCES_TARGET violation).
+    http:Response|http:ClientError resp = fhirClient->post("/" + resourceType, resourceMap,
+        headers = {"Content-Type": "application/fhir+json"});
     if resp is http:ClientError {
-        log:printError("Error syncing resource " + resourceType + "/" + newId, resp);
+        log:printError("Error syncing resource " + resourceType, resp);
     } else if resp.statusCode == 201 || resp.statusCode == 200 {
-        log:printDebug("Resource synced successfully.", resourceType = resourceType, newId = newId, statusCode = resp.statusCode.toString());
-        // Create Provenance resource
-        check createProvenance(resourceType, newId, context, fhirClient);
-        log:printDebug("Provenance created for synced resource.", resourceType = resourceType, newId = newId);
+        // Extract the server-assigned ID from the response body; fall back to our computed id.
+        string savedId = newId;
+        json|error respBody = resp.getJsonPayload();
+        if respBody is json {
+            map<json>|error respMap = respBody.ensureType();
+            if respMap is map<json> && respMap.hasKey("id") {
+                string|error actualId = respMap.get("id").ensureType(string);
+                if actualId is string {
+                    savedId = actualId;
+                }
+            }
+        }
+        log:printDebug("Resource synced successfully.", resourceType = resourceType,
+            savedId = savedId, statusCode = resp.statusCode.toString());
+        check createProvenance(resourceType, savedId, context, fhirClient);
+        log:printDebug("Provenance created for synced resource.", resourceType = resourceType, savedId = savedId);
     } else {
-        log:printError("Failed to sync resource " + resourceType + "/" + newId + ". Status: " + resp.statusCode.toString());
+        log:printError("Failed to sync resource " + resourceType + ". Status: " + resp.statusCode.toString());
     }
 
     return null;

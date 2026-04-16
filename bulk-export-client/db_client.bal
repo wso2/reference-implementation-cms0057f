@@ -60,19 +60,20 @@ public isolated function getPayerDataExchangeRequests(int 'limit = 10, int offse
         return error("An internal error occurred while fetching the data.");
     }
 
-    sql:ParameterizedQuery query = `SELECT 
-                                        r.request_id AS requestId, 
-                                        r.payer_id AS payerId, 
-                                        r.member_id AS memberId, 
-                                        p.name AS oldPayerName, 
-                                        p.state AS oldPayerState, 
-                                        r.old_coverage_id AS oldCoverageId, 
-                                        r.coverage_start_date AS coverageStartDate, 
-                                        r.coverage_end_date AS coverageEndDate,
-                                        r.bulk_data_sync_status AS bulkDataSyncStatus, 
-                                        r.consent_status AS consent, 
-                                        r.created_at AS createdDate, 
-                                        r.export_summary AS exportSummary
+    sql:ParameterizedQuery query = `SELECT
+                                        r.request_id AS requestId,
+                                        r.payer_id AS payerId,
+                                        r.member_id AS memberId,
+                                        p.name AS oldPayerName,
+                                        p.state AS oldPayerState,
+                                        r.old_coverage_id AS oldCoverageId,
+                                        CAST(r.coverage_start_date AS CHAR) AS coverageStartDate,
+                                        CAST(r.coverage_end_date AS CHAR) AS coverageEndDate,
+                                        r.bulk_data_sync_status AS bulkDataSyncStatus,
+                                        r.consent_status AS consent,
+                                        DATE_FORMAT(r.created_at, '%Y-%m-%dT%TZ') AS createdDate,
+                                        r.export_summary AS exportSummary,
+                                        r.bulk_export_job_id AS bulkExportJobId
                                     FROM payer_data_exchange_requests r
                                     LEFT JOIN payers p ON r.payer_id = p.id
                                     ORDER BY CASE WHEN r.bulk_data_sync_status = 'PENDING' THEN 1 ELSE 2 END, r.created_at DESC
@@ -106,19 +107,20 @@ public isolated function updatePayerDataExchangeRequestStatus(string requestId, 
 }
 
 public isolated function getPayerDataExchangeRequest(string requestId) returns PayerDataExchangeRequest|error {
-    sql:ParameterizedQuery query = `SELECT 
-                                        r.request_id AS requestId, 
-                                        r.payer_id AS payerId, 
-                                        r.member_id AS memberId, 
-                                        p.name AS oldPayerName, 
-                                        p.state AS oldPayerState, 
-                                        r.old_coverage_id AS oldCoverageId, 
-                                        r.coverage_start_date AS coverageStartDate, 
-                                        r.coverage_end_date AS coverageEndDate, 
-                                        r.bulk_data_sync_status AS bulkDataSyncStatus, 
-                                        r.consent_status AS consent, 
-                                        r.created_at AS createdDate, 
-                                        r.export_summary AS exportSummary
+    sql:ParameterizedQuery query = `SELECT
+                                        r.request_id AS requestId,
+                                        r.payer_id AS payerId,
+                                        r.member_id AS memberId,
+                                        p.name AS oldPayerName,
+                                        p.state AS oldPayerState,
+                                        r.old_coverage_id AS oldCoverageId,
+                                        CAST(r.coverage_start_date AS CHAR) AS coverageStartDate,
+                                        CAST(r.coverage_end_date AS CHAR) AS coverageEndDate,
+                                        r.bulk_data_sync_status AS bulkDataSyncStatus,
+                                        r.consent_status AS consent,
+                                        DATE_FORMAT(r.created_at, '%Y-%m-%dT%TZ') AS createdDate,
+                                        r.export_summary AS exportSummary,
+                                        r.bulk_export_job_id AS bulkExportJobId
                                     FROM payer_data_exchange_requests r
                                     LEFT JOIN payers p ON r.payer_id = p.id
                                     WHERE r.request_id = ${requestId}`;
@@ -241,6 +243,8 @@ public isolated function getPayerConfig(string payerId) returns PayerConfig|erro
         }
     }
 
+    boolean authEnabled = result.clientId.trim().length() > 0 && result.clientSecret.trim().length() > 0;
+
     PayerConfig config = {
         payerId: result.payerId,
         payerName: result.payerName,
@@ -250,7 +254,109 @@ public isolated function getPayerConfig(string payerId) returns PayerConfig|erro
         clientSecret: result.clientSecret,
         scopes: scopes,
         fileServerUrl: (),
-        authEnabled: true
+        authEnabled: authEnabled
     };
     return config;
+}
+
+// ============================================================================
+// Bulk Export Job DB Functions
+// ============================================================================
+
+public isolated function insertBulkExportJob(BulkExportJob job) returns string|error {
+    sql:ParameterizedQuery query = `INSERT INTO bulk_export_jobs (job_id, payer_id, status)
+                                    VALUES (${job.jobId}, ${job.payerId}, ${job.status})`;
+    sql:ExecutionResult|sql:Error result = dbClient->execute(query);
+    if result is sql:ExecutionResult {
+        if result.affectedRowCount > 0 {
+            return job.jobId;
+        }
+        return error("Failed to insert bulk export job.");
+    } else {
+        log:printError("Database error during bulk export job insert", 'error = result);
+        return error("An internal error occurred while creating the bulk export job.");
+    }
+}
+
+public isolated function getBulkExportJob(string jobId) returns BulkExportJob|error {
+    sql:ParameterizedQuery query = `SELECT
+                                        job_id AS jobId,
+                                        payer_id AS payerId,
+                                        status,
+                                        created_at AS createdAt,
+                                        completed_at AS completedAt
+                                    FROM bulk_export_jobs
+                                    WHERE job_id = ${jobId}`;
+    BulkExportJob|sql:Error result = dbClient->queryRow(query);
+    if result is sql:Error {
+        log:printError("Database error fetching bulk export job", 'error = result);
+        return error("An internal error occurred while fetching the bulk export job.");
+    }
+    return result;
+}
+
+public isolated function updateBulkExportJobStatus(string jobId, string status) returns string|error {
+    sql:ParameterizedQuery query;
+    if status == "COMPLETED" || status == "FAILED" {
+        query = `UPDATE bulk_export_jobs SET status = ${status}, completed_at = CURRENT_TIMESTAMP WHERE job_id = ${jobId}`;
+    } else {
+        query = `UPDATE bulk_export_jobs SET status = ${status} WHERE job_id = ${jobId}`;
+    }
+    sql:ExecutionResult|sql:Error result = dbClient->execute(query);
+    if result is sql:ExecutionResult {
+        if result.affectedRowCount > 0 {
+            return "Bulk export job status updated successfully";
+        }
+        return error("Failed to update bulk export job status. Job ID not found.");
+    } else {
+        log:printError("Database error during bulk export job status update", 'error = result);
+        return error("An internal error occurred while updating the bulk export job status.");
+    }
+}
+
+public isolated function linkRequestsToBulkJob(string[] requestIds, string jobId) returns string|error {
+    foreach string requestId in requestIds {
+        sql:ParameterizedQuery query = `UPDATE payer_data_exchange_requests
+                                        SET bulk_export_job_id = ${jobId}
+                                        WHERE request_id = ${requestId}`;
+        sql:ExecutionResult|sql:Error result = dbClient->execute(query);
+        if result is sql:Error {
+            log:printError("Database error linking request to bulk job", 'error = result, requestId = requestId);
+            return error("An internal error occurred while linking request " + requestId + " to bulk export job.");
+        }
+        if result.affectedRowCount == 0 {
+            log:printError("No rows updated when linking request to bulk job; requestId not found", requestId = requestId, jobId = jobId);
+            return error("Request not found: " + requestId);
+        }
+    }
+    return "Requests linked to bulk export job successfully";
+}
+
+public isolated function getRequestsByBulkJobId(string jobId) returns PayerDataExchangeRequest[]|error {
+    sql:ParameterizedQuery query = `SELECT
+                                        r.request_id AS requestId,
+                                        r.payer_id AS payerId,
+                                        r.member_id AS memberId,
+                                        p.name AS oldPayerName,
+                                        p.state AS oldPayerState,
+                                        r.old_coverage_id AS oldCoverageId,
+                                        CAST(r.coverage_start_date AS CHAR) AS coverageStartDate,
+                                        CAST(r.coverage_end_date AS CHAR) AS coverageEndDate,
+                                        r.bulk_data_sync_status AS bulkDataSyncStatus,
+                                        r.consent_status AS consent,
+                                        r.created_at AS createdDate,
+                                        r.export_summary AS exportSummary,
+                                        r.bulk_export_job_id AS bulkExportJobId
+                                    FROM payer_data_exchange_requests r
+                                    LEFT JOIN payers p ON r.payer_id = p.id
+                                    WHERE r.bulk_export_job_id = ${jobId}
+                                    ORDER BY r.created_at DESC`;
+    stream<PayerDataExchangeRequest, sql:Error?> resultStream = dbClient->query(query);
+    PayerDataExchangeRequest[]|error requests = from PayerDataExchangeRequest request in resultStream
+        select request;
+    if requests is error {
+        log:printError("Database error fetching requests by bulk job ID", 'error = requests);
+        return error("An internal error occurred while fetching requests for the bulk export job.");
+    }
+    return requests;
 }

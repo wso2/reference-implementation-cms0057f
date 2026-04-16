@@ -1,3 +1,7 @@
+# Dockerfile for building the FHIR service with analytics  
+# Update this version number for reflect fhir-service changes  
+# Version: 1.0.0 
+
 FROM --platform=linux/amd64 ubuntu:24.04
 
 ARG BALLERINA_VERSION=2201.12.11
@@ -24,8 +28,6 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends fluent-bit \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
-
-# The OpenAPI spec changed in the latest version of the FHIR service.
 
 RUN git clone --depth 1 --branch main https://github.com/wso2/reference-implementation-cms0057f.git && \
     cd reference-implementation-cms0057f/fhir-service && \

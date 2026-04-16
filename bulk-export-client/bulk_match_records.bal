@@ -12,6 +12,7 @@
 // under the License.
 
 # Request payload for POST /pdex/trigger-bulk-data-exchange.
+# + requestIds - Array of requestIds to trigger bulk data exchange for. These should correspond to existing PayerDataExchangeRequest records in the database.
 public type TriggerBulkDataExchangeRequest record {|
     string[] requestIds;
 |};

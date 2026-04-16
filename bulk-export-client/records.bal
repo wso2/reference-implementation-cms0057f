@@ -119,6 +119,7 @@ public type MatchedPatient record {|
 # + consent - Consent status (optional)  
 # + createdDate - Date of creation
 # + exportSummary - Export summary payload (optional)
+# + bulkExportJobId - Bulk export job ID (optional)
 public type PayerDataExchangeRequest record {|
     string requestId?;
     string payerId;

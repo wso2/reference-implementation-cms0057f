@@ -79,7 +79,7 @@ public class BulkMatchPollingTask {
                     jobId = self.jobId, polls = self.pollCount);
                 updateJobStatus(self.jobId, "FAILED");
                 markAllFailed(self.requestIds, "polling-timeout");
-                safeUnschedule(self.scheduledJobId, "BulkMatchPollingTask-timeout");
+                safeUnschedule(self.getScheduledJobId(), "BulkMatchPollingTask-timeout");
                 return;
             }
 
@@ -100,7 +100,7 @@ public class BulkMatchPollingTask {
             }
 
             // Unschedule Stage 1 — terminal response (200 or error)
-            safeUnschedule(self.scheduledJobId, "BulkMatchPollingTask");
+            safeUnschedule(self.getScheduledJobId(), "BulkMatchPollingTask");
 
             if statusCode != 200 {
                 log:printError("Bulk match polling unexpected status.",
@@ -229,13 +229,19 @@ public class BulkMatchPollingTask {
             log:printError("BulkMatchPollingTask error. Marking all FAILED.", e, jobId = self.jobId);
             updateJobStatus(self.jobId, "FAILED");
             markAllFailed(self.requestIds, "task-on-fail");
-            safeUnschedule(self.scheduledJobId, "BulkMatchPollingTask-on-fail");
+            safeUnschedule(self.getScheduledJobId(), "BulkMatchPollingTask-on-fail");
         }
     }
 
     public isolated function setId(task:JobId scheduledId) {
         lock {
             self.scheduledJobId = scheduledId;
+        }
+    }
+
+    public isolated function getScheduledJobId() returns task:JobId {
+        lock {
+            return self.scheduledJobId;
         }
     }
 }
@@ -286,7 +292,7 @@ public class DaVinciExportPollingTask {
                     jobId = self.jobId, polls = self.pollCount);
                 updateJobStatus(self.jobId, "FAILED");
                 markAllFailed(self.matchedRequestIds, "davinci-polling-timeout");
-                safeUnschedule(self.scheduledJobId, "DaVinciExportPollingTask-timeout");
+                safeUnschedule(self.getScheduledJobId(), "DaVinciExportPollingTask-timeout");
                 return;
             }
 
@@ -307,7 +313,7 @@ public class DaVinciExportPollingTask {
             }
 
             // Unschedule Stage 2 — terminal response
-            safeUnschedule(self.scheduledJobId, "DaVinciExportPollingTask");
+            safeUnschedule(self.getScheduledJobId(), "DaVinciExportPollingTask");
 
             if statusCode != 200 {
                 log:printError("DaVinci export polling unexpected status.",
@@ -358,13 +364,19 @@ public class DaVinciExportPollingTask {
             log:printError("DaVinciExportPollingTask error. Marking matched FAILED.", e, jobId = self.jobId);
             updateJobStatus(self.jobId, "FAILED");
             markAllFailed(self.matchedRequestIds, "davinci-task-on-fail");
-            safeUnschedule(self.scheduledJobId, "DaVinciExportPollingTask-on-fail");
+            safeUnschedule(self.getScheduledJobId(), "DaVinciExportPollingTask-on-fail");
         }
     }
 
     public isolated function setId(task:JobId scheduledId) {
         lock {
             self.scheduledJobId = scheduledId;
+        }
+    }
+
+    public isolated function getScheduledJobId() returns task:JobId {
+        lock {
+            return self.scheduledJobId;
         }
     }
 }

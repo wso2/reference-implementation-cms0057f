@@ -322,7 +322,7 @@ isolated service /pdex on bulkExportListener {
     // @return batchId and status, or error.
     isolated resource function post 'trigger\-bulk\-data\-exchange(
         @http:Payload TriggerBulkDataExchangeRequest payload
-    ) returns http:Response|http:BadRequest|http:Conflict|error {
+    ) returns http:Response|http:BadRequest|http:Conflict|http:InternalServerError|error {
 
         string[] requestIds = payload.requestIds;
         if requestIds.length() == 0 {
@@ -332,7 +332,12 @@ isolated service /pdex on bulkExportListener {
         // 1. Load and validate all requests
         PayerDataExchangeRequest[] requests = [];
         foreach string reqId in requestIds {
-            PayerDataExchangeRequest req = check getPayerDataExchangeRequest(reqId);
+            PayerDataExchangeRequest|error reqResult = getPayerDataExchangeRequest(reqId);
+            if reqResult is error {
+                log:printError("Error occurred while retrieving payer data exchange request", reqResult, requestId = reqId);
+                return <http:InternalServerError>{body: {message: "Unable to retrieve request", requestId: reqId}};
+            }
+            PayerDataExchangeRequest req = reqResult;
             if !(req.consent ?: "").equalsIgnoreCaseAscii("APPROVED") {
                 return <http:BadRequest>{body: {
                     message: "Consent not approved for requestId: " + reqId,
@@ -460,7 +465,7 @@ isolated service /pdex on bulkExportListener {
         PayerDataExchangeRequest[]|error requests = getRequestsByBulkJobId(jobId);
         if requests is error {
             log:printError("Error fetching requests for bulk job", requests, jobId = jobId);
-            return requests;
+            return error("Internal server error while retrieving requests for bulk job");
         }
         return {job: job, requests: requests};
     }

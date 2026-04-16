@@ -283,6 +283,10 @@ public isolated function linkRequestsToBulkJob(string[] requestIds, string jobId
             log:printError("Database error linking request to bulk job", 'error = result, requestId = requestId);
             return error("An internal error occurred while linking request " + requestId + " to bulk export job.");
         }
+        if result.affectedRowCount == 0 {
+            log:printError("No rows updated when linking request to bulk job; requestId not found", requestId = requestId, jobId = jobId);
+            return error("Request not found: " + requestId);
+        }
     }
     return "Requests linked to bulk export job successfully";
 }

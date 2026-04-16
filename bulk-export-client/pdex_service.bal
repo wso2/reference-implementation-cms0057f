@@ -167,7 +167,9 @@ isolated service /pdex on bulkExportListener {
             return error("Error creating HTTP client: " + httpClient.message());
         }
 
-        international401:Parameters memberMatchParams = check createMemberMatchParams(request, httpClient);
+        // MemberPatient must be fetched from the LOCAL FHIR server (our own record of the member),
+        // not from the old payer's server.
+        international401:Parameters memberMatchParams = check createMemberMatchParams(request, clientFhirClient);
         log:printDebug("Created member match parameters.", requestId = requestId);
 
         // Call $member-match
@@ -185,7 +187,10 @@ isolated service /pdex on bulkExportListener {
         }
 
         if matchResponse.statusCode < 200 || matchResponse.statusCode >= 300 {
-            log:printError("Member match failed with status: " + matchResponse.statusCode.toString());
+            string|error errBody = matchResponse.getTextPayload();
+            log:printError("Member match failed.",
+                statusCode = matchResponse.statusCode.toString(),
+                body = errBody is string ? errBody : "(no body)");
             error memberMatchError = error("Member match failed");
             string|error dbResult = updatePayerDataExchangeRequestStatus(requestId, "FAILED");
             if dbResult is error {

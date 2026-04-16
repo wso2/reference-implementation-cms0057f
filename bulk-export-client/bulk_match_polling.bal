@@ -116,7 +116,7 @@ public class BulkMatchPollingTask {
                 jobId = self.jobId, payload = payload.toJsonString());
             BulkMatchResponseResult result = check extractBulkMatchResult(
                 payload, self.memberIdToRequestIdMap);
-            log:printInfo("Bulk match result extracted.",
+            log:printDebug("Bulk match result extracted.",
                 jobId = self.jobId,
                 matchedGroupId = result.matchedGroupId,
                 matchedCount = result.matchedRequestIds.length(),

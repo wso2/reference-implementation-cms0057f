@@ -25,6 +25,8 @@ RUN apt-get update \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+# The OpenAPI spec changed in the latest version of the FHIR service.
+
 RUN git clone --depth 1 --branch main https://github.com/wso2/reference-implementation-cms0057f.git && \
     cd reference-implementation-cms0057f/fhir-service && \
     bal build && \

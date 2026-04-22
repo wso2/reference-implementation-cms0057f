@@ -1172,7 +1172,7 @@ public isolated function submitPARequestAdjudication(string responseId, Adjudica
         
         // Create adjudication array for this item
         international401:ClaimResponseItemAdjudication[] adjudicationArray = [];
-        
+
         // Add the main adjudication category
         international401:ClaimResponseItemAdjudication mainAdj = {
             category: {
@@ -1185,10 +1185,35 @@ public isolated function submitPARequestAdjudication(string responseId, Adjudica
                 ]
             }
         };
+
+        // Attach DaVinci PAS reviewAction extension to the primary adjudication entry
+        if itemAdj.reviewActionCode is string {
+            string reviewCode = itemAdj.reviewActionCode == "approved" ? "A1" : "A3";
+            string reviewDisplay = itemAdj.reviewActionCode == "approved" ? "Certified in total" : "Not Certified";
+            mainAdj["extension"] = [
+                {
+                    url: "http://hl7.org/fhir/us/davinci-pas/StructureDefinition/extension-reviewAction",
+                    extension: [
+                        {
+                            url: "http://hl7.org/fhir/us/davinci-pas/StructureDefinition/extension-reviewActionCode",
+                            valueCodeableConcept: {
+                                coding: [
+                                    {
+                                        system: "https://codesystem.x12.org/005010/306",
+                                        code: reviewCode,
+                                        display: reviewDisplay
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ];
+        }
         adjudicationArray.push(mainAdj);
-        
-        // Add benefit amount if approved
-        if itemAdj.approvedAmount is decimal {
+
+        // Add benefit amount only for approved items; denied items carry no approved amount
+        if itemAdj.reviewActionCode != "denied" && itemAdj.approvedAmount is decimal {
             international401:ClaimResponseItemAdjudication benefitAdj = {
                 category: {
                     coding: [
@@ -1206,7 +1231,7 @@ public isolated function submitPARequestAdjudication(string responseId, Adjudica
             };
             adjudicationArray.push(benefitAdj);
         }
-        
+
         // Create the item response
         international401:ClaimResponseItem item = {
             itemSequence: itemAdj.sequence,
@@ -1215,9 +1240,9 @@ public isolated function submitPARequestAdjudication(string responseId, Adjudica
         
         items.push(item);
     }
-    
+
     pasClaimResponse.item = items;
-    
+
     // Build process notes
     international401:ClaimResponseProcessNote[] processNotes = [];
     int noteNumber = 1;
@@ -1232,7 +1257,7 @@ public isolated function submitPARequestAdjudication(string responseId, Adjudica
         processNotes.push(reviewerNote);
         noteNumber += 1;
     }
-    
+
     // Add item-specific notes and link them to corresponding items
     foreach ItemAdjudicationSubmission itemAdj in adjudication.itemAdjudications {
         if itemAdj.itemNotes is string {
@@ -1264,7 +1289,7 @@ public isolated function submitPARequestAdjudication(string responseId, Adjudica
     json|http:ClientError updateResponse = fhirHttpClient->put(string`${CLAIM_RESPONSE}/${responseId}`, pasClaimResponse, 
                                             headers = {"Content-Type": "application/fhir+json"}
                                         );
-    
+
     if updateResponse is http:ClientError {
         log:printError("Failed to update ClaimResponse: " + updateResponse.message());
         sql:ParameterizedQuery errorStatusQuery = `UPDATE pa_requests SET status = 'ERROR' WHERE response_id = ${responseId}`;

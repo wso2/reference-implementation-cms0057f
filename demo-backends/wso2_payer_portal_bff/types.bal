@@ -477,15 +477,17 @@ public type AdjudicationSubmission record {
 
 # Item Adjudication Submission
 #
-# + sequence - field description  
-# + adjudicationCode - field description  
-# + approvedAmount - field description  
+# + sequence - field description
+# + adjudicationCode - field description
+# + approvedAmount - field description
 # + itemNotes - field description
+# + reviewActionCode - DaVinci PAS review action: "approved" (A1 - Certified in total) or "denied" (A3 - Not Certified)
 public type ItemAdjudicationSubmission record {
     int sequence;
     string adjudicationCode; // "copay", "deductible", "benefit", etc.
     decimal? approvedAmount;
     string? itemNotes;
+    string? reviewActionCode; // "approved" or "denied"
 };
 
 # Adjudication Response

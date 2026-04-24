@@ -475,6 +475,8 @@ public type AdjudicationSubmission record {
     string? reviewerNotes;
 };
 
+public type ReviewActionCode "approved"|"denied";
+
 # Item Adjudication Submission
 #
 # + sequence - field description
@@ -487,7 +489,7 @@ public type ItemAdjudicationSubmission record {
     string adjudicationCode; // "copay", "deductible", "benefit", etc.
     decimal? approvedAmount;
     string? itemNotes;
-    string? reviewActionCode; // "approved" or "denied"
+    ReviewActionCode? reviewActionCode; // "approved" or "denied"
 };
 
 # Adjudication Response

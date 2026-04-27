@@ -7,3 +7,13 @@ distribution = "2201.12.10"
 [build-options]
 observabilityIncluded = true
 
+[[dependency]]
+org = "ballerinax"
+name = "health.fhir.r4.davincipdex220"
+version = "1.0.1"
+
+[[dependency]]
+org = "ballerinax"
+name = "health.fhir.r4.davincihrex100"
+version = "3.0.0"
+

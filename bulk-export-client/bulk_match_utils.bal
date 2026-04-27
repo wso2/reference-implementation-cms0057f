@@ -3,6 +3,10 @@
 
 import ballerina/http;
 import ballerina/log;
+import ballerinax/health.fhir.r4;
+import ballerinax/health.fhir.r4.davincihrex100 as hrex100;
+import ballerinax/health.fhir.r4.davincipdex220;
+import ballerinax/health.fhir.r4.international401;
 
 # Build Parameters JSON for POST /Group/$bulk-member-match.
 # Fetches each member's Patient from the local FHIR server and wraps it in a MemberBundle.
@@ -15,135 +19,127 @@ public isolated function buildBulkMemberMatchParams(
     http:Client fhirClient
 ) returns BulkMatchParamsResult|error {
 
-    json[] memberBundles = [];
+    davincipdex220:PDexMultiMemberMatchRequestParametersParameter[] memberBundles = [];
     map<string> memberIdToRequestIdMap = {};
 
     foreach PayerDataExchangeRequest request in requests {
         string memberId = request.memberId;
         string requestId = request.requestId ?: "";
 
-        // 1. Fetch Patient from local FHIR server
+        // 1. Fetch Patient from local FHIR server and parse into typed record
         json|error patientResult = fhirClient->get("/Patient/" + memberId);
         if patientResult is error {
             log:printError("Failed to fetch patient for bulk match", patientResult, memberId = memberId);
             return error("Failed to fetch patient details for member: " + memberId);
         }
-        map<json> patientMap = check patientResult.ensureType();
+        hrex100:HRexPatientDemographics fullPatient = check patientResult.cloneWithType(hrex100:HRexPatientDemographics);
 
-        // 2. Build MemberPatient JSON — keep only required demographic fields
-        map<json> memberPatient = {
-            "resourceType": "Patient",
-            "id": memberId
+        // 2. Build MemberPatient — demographic fields defined by HRex patient-demographics profile
+        hrex100:HRexPatientDemographics memberPatient = {
+            id: memberId,
+            identifier: fullPatient.identifier,
+            name: fullPatient.name,
+            address: fullPatient.address,
+            telecom: fullPatient.telecom,
+            gender: fullPatient.gender,
+            birthDate: fullPatient.birthDate
         };
-        foreach string 'field in ["identifier", "name", "address", "telecom", "gender", "birthDate"] {
-            if patientMap.hasKey('field) {
-                memberPatient['field] = patientMap.get('field);
-            }
-        }
 
         // 3. Build part[] array for the MemberBundle
-        json[] parts = [
-            {"name": "MemberPatient", "resource": memberPatient}
+        international401:ParametersParameter[] parts = [
+            {name: "MemberPatient", 'resource: memberPatient}
         ];
 
         // 4. CoverageToMatch (only if oldCoverageId is provided)
         if request.oldCoverageId != () {
-            json coverageToMatch = {
-                "resourceType": "Coverage",
-                "id": request.oldCoverageId ?: "",
-                "status": "active",
-                "subscriberId": memberId,
-                "beneficiary": {"reference": "Patient/" + memberId},
-                "payor": [{"display": request.oldPayerName}]
+            hrex100:HRexCoverage coverageToMatch = {
+                id: request.oldCoverageId ?: "",
+                status: "active",
+                subscriberId: memberId,
+                beneficiary: {reference: "Patient/" + memberId},
+                payor: [{display: request.oldPayerName}]
             };
-            parts.push({"name": "CoverageToMatch", "resource": coverageToMatch});
+            parts.push({name: "CoverageToMatch", 'resource: coverageToMatch});
         }
 
         // 5. CoverageToLink (always present — links to new payer)
-        json coverageToLink = {
-            "resourceType": "Coverage",
-            "status": "active",
-            "subscriberId": memberId,
-            "beneficiary": {"reference": "Patient/" + memberId},
-            "payor": [{"display": clientServiceConfig.newPayerName}]
+        hrex100:HRexCoverage coverageToLink = {
+            status: "active",
+            subscriberId: memberId,
+            beneficiary: {reference: "Patient/" + memberId},
+            payor: [{display: clientServiceConfig.newPayerName}]
         };
-        parts.push({"name": "CoverageToLink", "resource": coverageToLink});
+        parts.push({name: "CoverageToLink", 'resource: coverageToLink});
 
         // 6. Consent (if consent field is set on the request)
         if request.consent != () {
-            json consent = {
-                "resourceType": "Consent",
-                "status": "active",
-                "scope": {
-                    "coding": [{"system": "http://terminology.hl7.org/CodeSystem/consentscope", "code": "patient-privacy"}]
-                },
-                "category": [
-                    {"coding": [{"system": "http://terminology.hl7.org/CodeSystem/v3-ActCode", "code": "IDSCL"}]}
-                ],
-                "patient": {"reference": "Patient/" + memberId},
-                "performer": [{"reference": "Patient/" + memberId}],
-                "sourceReference": {"reference": "http://example.org/DocumentReference/someconsent"},
-                "policy": [{"uri": "http://hl7.org/fhir/us/davinci-hrex/StructureDefinition-hrex-consent.html#regular"}],
-                "provision": {
-                    "type": "permit",
-                    "period": {
-                        "start": request.coverageStartDate,
-                        "end": request.coverageEndDate
+            hrex100:HRexConsent consent = {
+                status: "active",
+                patient: {reference: "Patient/" + memberId},
+                performer: [{reference: "Patient/" + memberId}],
+                scope: {coding: [{}]},
+                category: [{
+                    coding: [{
+                        system: "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+                        code: "IDSCL"
+                    }]
+                }],
+                sourceReference: {reference: "http://example.org/DocumentReference/someconsent"},
+                policy: [{uri: "http://hl7.org/fhir/us/davinci-hrex/StructureDefinition-hrex-consent.html#regular"}],
+                provision: {
+                    'type: "permit",
+                    period: {
+                        'start: request.coverageStartDate,
+                        'end: request.coverageEndDate
                     },
-                    "actor": [
+                    actor: [
                         {
-                            "role": {
-                                "coding": [{"system": "http://terminology.hl7.org/CodeSystem/provenance-participant-type", "code": "performer"}]
-                            },
-                            "reference": {
-                                "identifier": {"system": "http://hl7.org/fhir/sid/us-npi", "value": request.payerId},
-                                "display": request.oldPayerName
+                            role: {coding: [{
+                                system: "http://terminology.hl7.org/CodeSystem/provenance-participant-type",
+                                code: "performer"
+                            }]},
+                            reference: {
+                                identifier: {system: "http://hl7.org/fhir/sid/us-npi", value: request.payerId},
+                                display: request.oldPayerName
                             }
                         },
                         {
-                            "role": {
-                                "coding": [{"system": "http://terminology.hl7.org/CodeSystem/v3-ParticipationType", "code": "IRCP"}]
-                            },
-                            "reference": {
-                                "identifier": {"system": "http://hl7.org/fhir/sid/us-npi", "value": clientServiceConfig.newPayerNpi},
-                                "display": clientServiceConfig.newPayerName
+                            role: {coding: [{
+                                system: "http://terminology.hl7.org/CodeSystem/v3-ParticipationType",
+                                code: "IRCP"
+                            }]},
+                            reference: {
+                                identifier: {system: "http://hl7.org/fhir/sid/us-npi", value: clientServiceConfig.newPayerNpi},
+                                display: clientServiceConfig.newPayerName
                             }
                         }
                     ],
-                    "action": [
-                        {"coding": [{"system": "http://terminology.hl7.org/CodeSystem/consentaction", "code": "disclose"}]}
-                    ]
+                    action: [{coding: [{}]}]
                 }
             };
-            parts.push({"name": "Consent", "resource": consent});
+            parts.push({name: "Consent", 'resource: consent});
         }
 
         // 7. Wrap in MemberBundle
-        memberBundles.push({"name": "MemberBundle", "part": parts});
+        memberBundles.push({name: "MemberBundle", part: parts});
 
         // 8. Track correlation — index by memberId AND by every patient identifier value.
         //    The old payer echoes back our submitted identifier values on the contained patients
         //    in the response Group, so we need those values as lookup keys too.
         memberIdToRequestIdMap[memberId] = requestId;
-        json patientIdentifiers = patientMap["identifier"];
-        if patientIdentifiers is json[] {
-            foreach json idEntry in patientIdentifiers {
-                if idEntry is map<json> {
-                    json idValue = idEntry["value"];
-                    if idValue is string && idValue != "" {
-                        memberIdToRequestIdMap[idValue] = requestId;
-                    }
-                }
+        foreach r4:Identifier identifier in (fullPatient.identifier ?: []) {
+            string? idValue = identifier.value;
+            if idValue is string && idValue != "" {
+                memberIdToRequestIdMap[idValue] = requestId;
             }
         }
     }
 
-    json params = {
-        "resourceType": "Parameters",
-        "parameter": memberBundles
+    davincipdex220:PDexMultiMemberMatchRequestParameters params = {
+        'parameter: memberBundles
     };
 
-    return {params, memberIdToRequestIdMap};
+    return {params: params.toJson(), memberIdToRequestIdMap};
 }
 
 # Parse the 200 response from $bulk-member-match polling.
@@ -157,133 +153,89 @@ public isolated function extractBulkMatchResult(
     map<string> memberIdToRequestIdMap
 ) returns BulkMatchResponseResult|error {
 
-    map<json> payloadMap = check responsePayload.ensureType();
-    json resourceTypeVal = payloadMap["resourceType"];
-    if resourceTypeVal !is string || resourceTypeVal != "Parameters" {
-        return error("Expected Parameters resource in bulk match response");
-    }
-
-    json parameterVal = payloadMap["parameter"];
-    if parameterVal !is json[] {
-        return error("Expected parameter array in bulk match response");
-    }
+    davincipdex220:PDexMultiMemberMatchResponseParameters response =
+        check responsePayload.cloneWithType(davincipdex220:PDexMultiMemberMatchResponseParameters);
 
     string matchedGroupId = "";
     string[] matchedRequestIds = [];
     string[] nonMatchedRequestIds = [];
     string[] consentConstrainedRequestIds = [];
 
-    foreach json param in <json[]>parameterVal {
-        map<json> paramMap = check param.ensureType();
-        json nameVal = paramMap["name"];
-        if nameVal !is string {
+    foreach davincipdex220:PDexMultiMemberMatchResponseParametersParameter param in response.'parameter {
+        r4:Resource? groupResource = param.'resource;
+        if groupResource is () {
             continue;
         }
-        string paramName = nameVal;
 
-        if paramName == "MatchedMembers" || paramName == "NonMatchedMembers" || paramName == "ConsentConstrainedMembers" {
-            json resourceVal = paramMap["resource"];
-            if resourceVal !is map<json> {
+        international401:Group|error groupResult = groupResource.cloneWithType(international401:Group);
+        if groupResult is error {
+            log:printWarn("Failed to parse Group in bulk match response", groupResult, paramName = param.name);
+            continue;
+        }
+        international401:Group grp = groupResult;
+
+        if param.name == "MatchedMembers" {
+            matchedGroupId = grp.id ?: "";
+        }
+
+        // Build a lookup: contained patient id -> identifier values
+        map<string[]> containedIdToIdentifiers = {};
+        foreach r4:Resource containedResource in (grp.contained ?: []) {
+            international401:Patient|error ptResult = containedResource.cloneWithType(international401:Patient);
+            if ptResult is error {
                 continue;
             }
-            map<json> groupMap = check resourceVal.ensureType();
-
-            // Extract Group id (only for MatchedMembers)
-            if paramName == "MatchedMembers" {
-                json groupId = groupMap["id"];
-                if groupId is string {
-                    matchedGroupId = groupId;
-                }
-            }
-
-            // Extract contained patients to correlate back to requestIds
-            json[] contained = [];
-            json containedVal = groupMap["contained"];
-            if containedVal is json[] {
-                contained = containedVal;
-            }
-
-            // Build a lookup: contained patient id -> identifier values
-            map<string[]> containedIdToIdentifiers = {};
-            foreach json containedResource in contained {
-                map<json> containedMap = check containedResource.ensureType();
-                json containedId = containedMap["id"];
-                if containedId !is string {
-                    continue;
-                }
-                json[] identifiers = [];
-                json identifierVal = containedMap["identifier"];
-                if identifierVal is json[] {
-                    identifiers = identifierVal;
-                }
-                string[] values = [];
-                foreach json identifier in identifiers {
-                    map<json> identifierMap = check identifier.ensureType();
-                    json idValue = identifierMap["value"];
-                    if idValue is string {
-                        values.push(idValue);
-                    }
-                }
-                containedIdToIdentifiers[containedId] = values;
-            }
-
-            // Walk member[] entries and correlate via contained patient identifiers
-            json memberVal = groupMap["member"];
-            if memberVal !is json[] {
+            string containedId = ptResult.id ?: "";
+            if containedId == "" {
                 continue;
             }
+            string[] values = [];
+            foreach r4:Identifier identifier in (ptResult.identifier ?: []) {
+                string? idValue = identifier.value;
+                if idValue is string && idValue != "" {
+                    values.push(idValue);
+                }
+            }
+            containedIdToIdentifiers[containedId] = values;
+        }
 
-            foreach json member in <json[]>memberVal {
-                map<json> memberMap = check member.ensureType();
-
-                // The match-parameters extension is on member[].entity.extension, not member[].extension
-                string containedRef = "";
-                json entityVal = memberMap["entity"];
-                if entityVal is map<json> {
-                    map<json> entityMap = check entityVal.ensureType();
-                    json extensionVal = entityMap["extension"];
-                    if extensionVal is json[] {
-                        foreach json ext in extensionVal {
-                            map<json> extMap = check ext.ensureType();
-                            json urlVal = extMap["url"];
-                            if urlVal is string && urlVal.includes("match-parameters") {
-                                json valueRefVal = extMap["valueReference"];
-                                if valueRefVal is map<json> {
-                                    map<json> valueRefMap = check valueRefVal.ensureType();
-                                    json refVal = valueRefMap["reference"];
-                                    if refVal is string {
-                                        // reference is "#containedId" e.g. "#1"
-                                        containedRef = refVal.startsWith("#") ? refVal.substring(1) : refVal;
-                                    }
-                                }
-                            }
+        // Walk member[] entries and correlate via contained patient identifiers
+        foreach international401:GroupMember member in (grp.member ?: []) {
+            // The match-parameters extension is on member.entity.extension
+            string containedRef = "";
+            foreach r4:Extension ext in (member.entity.extension ?: []) {
+                if ext is r4:ReferenceExtension {
+                    if ext.url.includes("match-parameters") {
+                        string? refVal = ext.valueReference.reference;
+                        if refVal is string {
+                            containedRef = refVal.startsWith("#") ? refVal.substring(1) : refVal;
                         }
-                    }
-                }
-
-                // Find requestId by matching identifier values of the contained patient
-                string[] identifierValues = containedIdToIdentifiers[containedRef] ?: [];
-                string requestId = "";
-                foreach string idValue in identifierValues {
-                    if memberIdToRequestIdMap.hasKey(idValue) {
-                        requestId = memberIdToRequestIdMap.get(idValue);
                         break;
                     }
                 }
+            }
 
-                if requestId == "" {
-                    log:printWarn("Could not correlate bulk match member to a requestId",
-                        containedRef = containedRef);
-                    continue;
+            string[] identifierValues = containedIdToIdentifiers[containedRef] ?: [];
+            string requestId = "";
+            foreach string idValue in identifierValues {
+                if memberIdToRequestIdMap.hasKey(idValue) {
+                    requestId = memberIdToRequestIdMap.get(idValue);
+                    break;
                 }
+            }
 
-                if paramName == "MatchedMembers" {
-                    matchedRequestIds.push(requestId);
-                } else if paramName == "NonMatchedMembers" {
-                    nonMatchedRequestIds.push(requestId);
-                } else {
-                    consentConstrainedRequestIds.push(requestId);
-                }
+            if requestId == "" {
+                log:printWarn("Could not correlate bulk match member to a requestId",
+                    containedRef = containedRef);
+                continue;
+            }
+
+            if param.name == "MatchedMembers" {
+                matchedRequestIds.push(requestId);
+            } else if param.name == "NonMatchedMembers" {
+                nonMatchedRequestIds.push(requestId);
+            } else {
+                consentConstrainedRequestIds.push(requestId);
             }
         }
     }

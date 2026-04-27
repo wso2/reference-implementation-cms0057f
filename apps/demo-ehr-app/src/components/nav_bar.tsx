@@ -20,10 +20,11 @@ import { useContext, useState } from "react";
 import { ExpandedContext } from "../utils/expanded_context";
 import { useSelector } from "react-redux";
 
-import Cookies from "js-cookie";
+
 import { useAuth } from "./AuthProvider";
 import { useDispatch } from "react-redux";
 import { updateLoggedUser } from "../redux/loggedUserSlice";
+import auth from "../utils/auth";
 
 import { useEffect } from "react";
 import { clearLocalStorageFully } from "../utils/clearLocalStorage";
@@ -33,21 +34,9 @@ export default function NavBar() {
 
   useEffect(() => {
     const fetchUserInfo = async () => {
-      const loggedUser = await fetch("/auth/userinfo")
-        .then((response) => response.json())
-        .then((data) => {
-          console.log("Logged User Info: ", data);
-          return data;
-        });
-
-      if (loggedUser) {
-        dispatch(
-          updateLoggedUser({
-            username: loggedUser.username,
-            first_name: loggedUser.first_name,
-            last_name: loggedUser.last_name,
-          })
-        );
+      const user = await auth.getBasicUserInfo();
+      if (user) {
+        dispatch(updateLoggedUser({ username: user.name }));
       }
     };
 
@@ -140,10 +129,7 @@ export default function NavBar() {
                   fontSize="22px"
                   fontWeight={400}
                 >
-                  {"Dr. " +
-                    loggedUser?.first_name +
-                    " " +
-                    loggedUser?.last_name}
+                  {"Dr. " + loggedUser?.username}
                 </Box>
                 <Box position="relative">
                   <Box
@@ -194,9 +180,7 @@ export default function NavBar() {
                       <Button
                         onClick={async () => {
                           clearLocalStorageFully();
-                          window.location.href = `/auth/logout?session_hint=${Cookies.get(
-                            "session_hint"
-                          )}`;
+                          auth.signOut();
                         }}
                         color="inherit"
                       >

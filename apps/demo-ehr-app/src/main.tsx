@@ -15,6 +15,7 @@
 // under the License.
 
 import ReactDOM from "react-dom/client";
+import axios from "axios";
 import { ExpandedContextProvider } from "./utils/expanded_context.tsx";
 import PractionerDashBoard from "./pages/practitioner_dashboard.tsx";
 import AppointmentBookPage from "./pages/appointment_book_page.tsx";
@@ -49,6 +50,39 @@ import { PatientHistoryPage } from "./pages/patient_history.tsx";
 import PriorAuthList from "./pages/prior_auth_list.tsx";
 import PriorAuthView from "./pages/prior_auth_view.tsx";
 import ProviderDataAccess from "./pages/provider_data_access.tsx";
+import { SPAUtils } from "@asgardeo/auth-spa";
+import auth from "./utils/auth.ts";
+
+try {
+  await auth.initialize({
+    signInRedirectURL: window.Config.baseUrl,
+    signOutRedirectURL: window.Config.baseUrl,
+    clientID: window.Config.asgardeoClientId,
+    baseUrl: window.Config.asgardeoBaseUrl,
+    scope: window.Config.scope
+  });
+
+
+  if (SPAUtils.hasAuthSearchParamsInURL()) {
+    await auth.signIn({ callOnlyOnRedirect: true });
+  } else {
+    await auth.trySignInSilently().catch(() => {});
+  }
+} catch (e) {
+  console.error("Asgardeo initialization failed:", e);
+}
+
+axios.interceptors.request.use(async (config) => {
+  try {
+    const token = await auth.getAccessToken();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  } catch {
+    // Not authenticated; send request without token
+  }
+  return config;
+});
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <Provider store={store}>

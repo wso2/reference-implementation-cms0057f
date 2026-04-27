@@ -22,6 +22,7 @@
     "@nextui-org/react": "^2.3.3",
     "@nextui-org/system": "^2.1.1",
     "@nextui-org/theme": "^2.2.1",
+    "@asgardeo/auth-spa": "^3.0.0",
     "@reduxjs/toolkit": "^2.2.3",
     "@types/react-datepicker": "^6.2.0",
     "@types/react-syntax-highlighter": "^15.5.11",

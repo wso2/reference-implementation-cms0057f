@@ -291,6 +291,19 @@ public isolated function linkRequestsToBulkJob(string[] requestIds, string jobId
     return "Requests linked to bulk export job successfully";
 }
 
+public isolated function unlinkRequestsFromBulkJob(string[] requestIds) returns error? {
+    foreach string requestId in requestIds {
+        sql:ParameterizedQuery query = `UPDATE payer_data_exchange_requests
+                                        SET bulk_export_job_id = NULL
+                                        WHERE request_id = ${requestId}`;
+        sql:ExecutionResult|sql:Error result = dbClient->execute(query);
+        if result is sql:Error {
+            log:printError("Database error unlinking request from bulk job", 'error = result, requestId = requestId);
+            return error("An internal error occurred while unlinking request " + requestId + " from bulk export job.");
+        }
+    }
+}
+
 public isolated function getRequestsByBulkJobId(string jobId) returns PayerDataExchangeRequest[]|error {
     sql:ParameterizedQuery query = `SELECT
                                         r.request_id AS requestId,

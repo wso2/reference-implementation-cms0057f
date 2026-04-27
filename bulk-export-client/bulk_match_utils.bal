@@ -77,7 +77,7 @@ public isolated function buildBulkMemberMatchParams(
                 status: "active",
                 patient: {reference: "Patient/" + memberId},
                 performer: [{reference: "Patient/" + memberId}],
-                scope: {coding: [{}]},
+                scope: {coding: [{system: "http://terminology.hl7.org/CodeSystem/consentscope", code: "patient-privacy"}]},
                 category: [{
                     coding: [{
                         system: "http://terminology.hl7.org/CodeSystem/v3-ActCode",
@@ -114,7 +114,7 @@ public isolated function buildBulkMemberMatchParams(
                             }
                         }
                     ],
-                    action: [{coding: [{}]}]
+                    action: [{coding: [{system: "http://terminology.hl7.org/CodeSystem/consentaction", code: "disclose"}]}]
                 }
             };
             parts.push({name: "Consent", 'resource: consent});

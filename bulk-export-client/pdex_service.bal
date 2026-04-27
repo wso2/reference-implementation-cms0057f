@@ -300,12 +300,24 @@ isolated service /pdex on bulkExportListener {
         if req is error {
             return <http:NotFound>{body: {message: "Request not found", requestId: requestId}};
         }
-        if req.bulkDataSyncStatus != "IN_PROGRESS" {
+        string[] resettableStatuses = ["IN_PROGRESS", "BULK_MATCH_SUBMITTED", "EXPORT_IN_PROGRESS", "SYNCING"];
+        if resettableStatuses.indexOf(req.bulkDataSyncStatus ?: "") == () {
             return <http:BadRequest>{body: {
-                message: "Only IN_PROGRESS requests can be reset",
+                message: "Only in-flight requests can be reset (IN_PROGRESS, BULK_MATCH_SUBMITTED, EXPORT_IN_PROGRESS, SYNCING)",
                 requestId: requestId,
                 currentStatus: req.bulkDataSyncStatus
             }};
+        }
+        // Neutralize any associated background job so polling tasks short-circuit on next tick
+        string? jobId = req.bulkExportJobId;
+        if jobId is string {
+            string|error cancelResult = updateBulkExportJobStatus(jobId, "FAILED");
+            if cancelResult is error {
+                log:printError("Failed to mark bulk job FAILED during reset; proceeding with request reset",
+                    cancelResult, requestId = requestId, jobId = jobId);
+            } else {
+                log:printInfo("Marked bulk job FAILED as part of request reset.", requestId = requestId, jobId = jobId);
+            }
         }
         string|error result = updatePayerDataExchangeRequestStatus(requestId, "PENDING");
         if result is error {
@@ -322,7 +334,7 @@ isolated service /pdex on bulkExportListener {
     // @return batchId and status, or error.
     isolated resource function post 'trigger\-bulk\-data\-exchange(
         @http:Payload TriggerBulkDataExchangeRequest payload
-    ) returns http:Response|http:BadRequest|http:Conflict|http:InternalServerError|error {
+    ) returns http:Response|http:BadRequest|http:Conflict|http:InternalServerError|http:BadGateway|error {
 
         string[] requestIds = payload.requestIds;
         if requestIds.length() == 0 {
@@ -398,19 +410,46 @@ isolated service /pdex on bulkExportListener {
                 + matchResponse.statusCode.toString());
         }
 
-        // 7. Get polling URL from Content-Location header
-        string pollingUrl = check matchResponse.getHeader("content-location");
-
-        // 8. Persist the bulk export job and link requests to it
+        // 7. Persist the bulk export job and link requests to it
         string jobId = uuid:createType1AsString();
         BulkExportJob newJob = {
             jobId: jobId,
             payerId: payerId,
             status: "INITIATED"
         };
-        _ = check insertBulkExportJob(newJob);
-        _ = check linkRequestsToBulkJob(requestIds, jobId);
-        _ = check updateBulkExportJobStatus(jobId, "BULK_MATCH_POLLING");
+        string|error insertResult = insertBulkExportJob(newJob);
+        if insertResult is error {
+            log:printError("Failed to persist bulk export job", insertResult, jobId = jobId);
+            return <http:InternalServerError>{body: {message: "Failed to create bulk export job"}};
+        }
+        string|error linkResult = linkRequestsToBulkJob(requestIds, jobId);
+        if linkResult is error {
+            log:printError("Failed to link requests to bulk job; compensating", linkResult, jobId = jobId);
+            _ = check updateBulkExportJobStatus(jobId, "FAILED");
+            _ = check unlinkRequestsFromBulkJob(requestIds);
+            return <http:InternalServerError>{body: {message: "Failed to link requests to bulk export job"}};
+        }
+        string|error statusResult = updateBulkExportJobStatus(jobId, "BULK_MATCH_POLLING");
+        if statusResult is error {
+            log:printError("Failed to update bulk job status; compensating", statusResult, jobId = jobId);
+            _ = check updateBulkExportJobStatus(jobId, "FAILED");
+            _ = check unlinkRequestsFromBulkJob(requestIds);
+            return <http:InternalServerError>{body: {message: "Failed to update bulk export job status"}};
+        }
+
+        // 8. Validate Content-Location header (required by bulk-data protocol)
+        string|http:HeaderNotFoundError contentLocation = matchResponse.getHeader("content-location");
+        if contentLocation is http:HeaderNotFoundError || contentLocation == "" {
+            log:printError("Upstream did not return Content-Location header; marking job FAILED.", jobId = jobId);
+            _ = check updateBulkExportJobStatus(jobId, "FAILED");
+            foreach string reqId in requestIds {
+                _ = check updatePayerDataExchangeRequestStatus(reqId, "FAILED");
+            }
+            return <http:BadGateway>{body: {
+                message: "Upstream server did not return a Content-Location header as required by the bulk data protocol"
+            }};
+        }
+        string pollingUrl = contentLocation;
 
         log:printInfo("$bulk-member-match accepted.",
             jobId = jobId, pollingUrl = pollingUrl,

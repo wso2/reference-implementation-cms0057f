@@ -74,6 +74,15 @@ public class BulkMatchPollingTask {
                 maxPolls = BULK_MATCH_MAX_POLLS,
                 pollingUrl = self.pollingUrl);
 
+            // Short-circuit if the job was externally cancelled (e.g., by the reset endpoint)
+            BulkExportJob|error currentJob = getBulkExportJob(self.jobId);
+            if currentJob is BulkExportJob && currentJob.status == "FAILED" {
+                log:printInfo("BulkMatchPollingTask: job cancelled externally; unscheduling.",
+                    jobId = self.jobId);
+                safeUnschedule(self.getScheduledJobId(), "BulkMatchPollingTask-cancelled");
+                return;
+            }
+
             if self.pollCount > BULK_MATCH_MAX_POLLS {
                 log:printError("BulkMatchPollingTask timed out — max polls exceeded.",
                     jobId = self.jobId, polls = self.pollCount);
@@ -85,8 +94,18 @@ public class BulkMatchPollingTask {
 
             BulkExportServerConfig pollingConfig = check self.serverConfig.cloneWithType();
             pollingConfig.baseUrl = self.pollingUrl;
-            http:Client pollingClient = check createHttpClient(pollingConfig);
-            http:Response resp = check pollingClient->/;
+            http:Client|error pollingClientResult = createHttpClient(pollingConfig);
+            if pollingClientResult is error {
+                log:printWarn("BulkMatchPollingTask: transient error creating HTTP client; will retry.",
+                    pollingClientResult, jobId = self.jobId, pollCount = self.pollCount);
+                return;
+            }
+            http:Response|http:ClientError resp = pollingClientResult->/;
+            if resp is http:ClientError {
+                log:printWarn("BulkMatchPollingTask: transient HTTP error during poll; will retry.",
+                    resp, jobId = self.jobId, pollCount = self.pollCount);
+                return;
+            }
 
             int statusCode = resp.statusCode;
             log:printDebug("BulkMatchPollingTask poll response.",
@@ -287,6 +306,15 @@ public class DaVinciExportPollingTask {
                 maxPolls = DAVINCI_EXPORT_MAX_POLLS,
                 pollingUrl = self.pollingUrl);
 
+            // Short-circuit if the job was externally cancelled (e.g., by the reset endpoint)
+            BulkExportJob|error currentDavinciJob = getBulkExportJob(self.jobId);
+            if currentDavinciJob is BulkExportJob && currentDavinciJob.status == "FAILED" {
+                log:printInfo("DaVinciExportPollingTask: job cancelled externally; unscheduling.",
+                    jobId = self.jobId);
+                safeUnschedule(self.getScheduledJobId(), "DaVinciExportPollingTask-cancelled");
+                return;
+            }
+
             if self.pollCount > DAVINCI_EXPORT_MAX_POLLS {
                 log:printError("DaVinciExportPollingTask timed out — max polls exceeded.",
                     jobId = self.jobId, polls = self.pollCount);
@@ -298,8 +326,18 @@ public class DaVinciExportPollingTask {
 
             BulkExportServerConfig pollingConfig = check self.serverConfig.cloneWithType();
             pollingConfig.baseUrl = self.pollingUrl;
-            http:Client pollingClient = check createHttpClient(pollingConfig);
-            http:Response resp = check pollingClient->/;
+            http:Client|error pollingClientResult = createHttpClient(pollingConfig);
+            if pollingClientResult is error {
+                log:printWarn("DaVinciExportPollingTask: transient error creating HTTP client; will retry.",
+                    pollingClientResult, jobId = self.jobId, pollCount = self.pollCount);
+                return;
+            }
+            http:Response|http:ClientError resp = pollingClientResult->/;
+            if resp is http:ClientError {
+                log:printWarn("DaVinciExportPollingTask: transient HTTP error during poll; will retry.",
+                    resp, jobId = self.jobId, pollCount = self.pollCount);
+                return;
+            }
 
             int statusCode = resp.statusCode;
             log:printDebug("DaVinciExportPollingTask poll response.",

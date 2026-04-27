@@ -240,7 +240,7 @@ public isolated function sendFileFromFSToFTP(TargetServerConfig config, string s
     });
     stream<io:Block, io:Error?> fileStream
         = check io:fileReadBlocksAsStream(sourcePath, 1024);
-    check fileClient->putBytesAsStream(string `${config.directory ?: ""}/${fileName}`, fileStream);
+    check fileClient->put(string `${config.directory ?: ""}/${fileName}`, fileStream);
     check fileStream.close();
 }
 

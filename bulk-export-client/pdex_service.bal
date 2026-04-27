@@ -458,7 +458,7 @@ isolated service /pdex on bulkExportListener {
             jobId = jobId, payload = paramsResult.params.toJsonString());
 
         // 9. Schedule Stage 1 background polling task
-        _ = check scheduleBulkMatchJob(
+        error? scheduleErr = scheduleBulkMatchJob(
             new BulkMatchPollingTask(
                 jobId,
                 pollingUrl,
@@ -470,10 +470,25 @@ isolated service /pdex on bulkExportListener {
             ),
             clientServiceConfig.defaultIntervalInSec
         );
+        if scheduleErr is error {
+            log:printError("Failed to schedule bulk match job; compensating", scheduleErr, jobId = jobId);
+            _ = check updateBulkExportJobStatus(jobId, "FAILED");
+            _ = check unlinkRequestsFromBulkJob(requestIds);
+            return <http:InternalServerError>{body: {message: "Failed to schedule bulk match polling"}};
+        }
 
         // 10. Update all requests to BULK_MATCH_SUBMITTED
         foreach string reqId in requestIds {
-            _ = check updatePayerDataExchangeRequestStatus(reqId, "BULK_MATCH_SUBMITTED");
+            string|error submitResult = updatePayerDataExchangeRequestStatus(reqId, "BULK_MATCH_SUBMITTED");
+            if submitResult is error {
+                log:printError("Failed to mark request BULK_MATCH_SUBMITTED; compensating",
+                    submitResult, requestId = reqId, jobId = jobId);
+                _ = check updateBulkExportJobStatus(jobId, "FAILED");
+                foreach string failReqId in requestIds {
+                    _ = check updatePayerDataExchangeRequestStatus(failReqId, "FAILED");
+                }
+                return <http:InternalServerError>{body: {message: "Failed to update request status after scheduling"}};
+            }
         }
 
         log:printInfo("Bulk member match initiated.", jobId = jobId, requestCount = requestIds.length());

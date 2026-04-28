@@ -14,8 +14,11 @@
 // specific language governing permissions and limitations
 // under the License.
 
+import ballerina/log;
 import ballerina/time;
 import ballerina/lang.regexp;
+import ballerina/http;
+import ballerina/jwt;
 
 isolated function AddDurationToDate(string date, string durationDays) returns string|error {
     // Parse the duration days
@@ -83,4 +86,40 @@ isolated function AddDurationToDate(string date, string durationDays) returns st
     }
     
     return formattedDate;
+}
+
+# Decodes the payload of a JWT and extracts actor fields.
+# Returns sentinel "unknown" values if the token is absent or malformed.
+#
+# + jwtAssertion - Raw JWT string from the X-JWT-Assertion header
+# + return - Extracted actor information
+isolated function extractActorFromJWT(string jwtAssertion) returns ActorInfo {
+    ActorInfo unknown = {userId: "unknown", userName: "unknown", role: "unknown"};
+    if jwtAssertion.length() == 0 {
+        return unknown;
+    }
+    do {
+        [jwt:Header, jwt:Payload] [_, payload] = check jwt:decode(jwtAssertion);
+        return {
+            userId: (payload["id"] ?: "unknown").toString(),
+            userName: (payload["username"] ?: "unknown").toString(),
+            role: (payload["role"] ?: "unknown").toString()
+        };
+    } on fail {
+        log:printError("Failed to decode JWT for actor extraction.");
+        return unknown;
+    }
+}
+
+# Extracts the actor from the X-JWT-Assertion header of an HTTP request.
+#
+# + req - Incoming HTTP request
+# + return - Extracted actor information
+isolated function getActorFromRequest(http:Request req) returns ActorInfo {
+    string|http:HeaderNotFoundError jwtHeader = req.getHeader("X-JWT-Assertion");
+    if jwtHeader is http:HeaderNotFoundError {
+        log:printError("X-JWT-Assertion header not found in request.");
+        return {userId: "unknown", userName: "unknown", role: "unknown"};
+    }
+    return extractActorFromJWT(jwtHeader);
 }

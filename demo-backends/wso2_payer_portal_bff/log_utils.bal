@@ -189,14 +189,9 @@ isolated function getAuditLogs(TimeFilter? timeFilter, string? keyword) returns 
                 continue; // malformed line (e.g. partial write) – skip
             }
 
-            // Keyword match against the message field of the parsed log entry
+            // Keyword match against the full JSON string (covers message, eventType, actor, details, etc.)
             if normalizedKeyword is string {
-                map<json>|error logMap = parsed.ensureType();
-                if logMap is error {
-                    continue;
-                }
-                string messageStr = (logMap["message"] ?: "").toString().toLowerAscii();
-                if !messageStr.includes(normalizedKeyword) {
+                if !trimmed.toLowerAscii().includes(normalizedKeyword) {
                     continue;
                 }
             }

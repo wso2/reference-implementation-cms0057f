@@ -1152,9 +1152,12 @@ public isolated function generateAIAnalysis(json questionnaire) returns AIAnalys
 #
 # + responseId - PA response (ClaimResponse) ID to submit adjudication for
 # + adjudication - Adjudication submission data
+# + req - HTTP request object to extract headers for authentication/authorization
 # + return - AdjudicationResponse or error
-public isolated function submitPARequestAdjudication(string responseId, AdjudicationSubmission adjudication) returns AdjudicationResponse|error {
+public isolated function submitPARequestAdjudication(string responseId, AdjudicationSubmission adjudication, http:Request req) returns AdjudicationResponse|error {
     
+    string|http:HeaderNotFoundError jwtHeader = req.getHeader("X-JWT-Assertion");
+
     // 1. Fetch Existing ClaimResponse 
     international401:ClaimResponse claimResponse = check getClaimResponse(responseId, limited = false);
 
@@ -1258,12 +1261,15 @@ public isolated function submitPARequestAdjudication(string responseId, Adjudica
     if processNotes.length() > 0 {
         pasClaimResponse.processNote = processNotes;
     }
+    
+    map<string> headers = {"Content-Type": "application/fhir+json"};
+    if jwtHeader is string {
+        headers["X-JWT-Assertion"] = jwtHeader;
+    }
 
     // 3. Post the updated ClaimResponse back to the FHIR server
     // json claimResponseJson = pasClaimResponse.toJson();
-    json|http:ClientError updateResponse = fhirHttpClient->put(string`${CLAIM_RESPONSE}/${responseId}`, pasClaimResponse, 
-                                            headers = {"Content-Type": "application/fhir+json"}
-                                        );
+    json|http:ClientError updateResponse = fhirHttpClient->put(string`${CLAIM_RESPONSE}/${responseId}`, pasClaimResponse, headers = headers);
     
     if updateResponse is http:ClientError {
         log:printError("Failed to update ClaimResponse: " + updateResponse.message());
@@ -1296,9 +1302,13 @@ public isolated function submitPARequestAdjudication(string responseId, Adjudica
 #
 # + responseId - PA response (ClaimResponse) ID to submit additional information for
 # + additionalInformation - Additional information submission data
+# + req - HTTP request object to extract headers for authentication/authorization
 # + return - AdditionalInfoResponse or error
-public isolated function submitPARequestAdditionalInfo(string responseId, AdditionalInformation additionalInformation) 
+public isolated function submitPARequestAdditionalInfo(string responseId, AdditionalInformation additionalInformation, http:Request req) 
     returns AdditionalInfoResponse|error {
+
+    string|http:HeaderNotFoundError jwtHeader = req.getHeader("X-JWT-Assertion");
+
     // Fetch existing ClaimResponse
     international401:ClaimResponse claimResponse = check getClaimResponse(responseId, limited = false);
     
@@ -1380,7 +1390,11 @@ public isolated function submitPARequestAdditionalInfo(string responseId, Additi
     claimResponse.communicationRequest = commRefs;
 
     json claimResponseJson = claimResponse.toJson();
-    json|http:ClientError updateResponse = fhirHttpClient->put(CLAIM_RESPONSE + "/" + responseId, claimResponseJson, headers = {"Content-Type": "application/fhir+json"});
+    map<string> headers = {"Content-Type": "application/fhir+json"};
+    if jwtHeader is string {
+        headers["X-JWT-Assertion"] = jwtHeader;
+    }
+    json|http:ClientError updateResponse = fhirHttpClient->put(CLAIM_RESPONSE + "/" + responseId, claimResponseJson, headers = headers);
     if updateResponse is http:ClientError {
         log:printError("Failed to update ClaimResponse with CommunicationRequest: " + updateResponse.message());
         return error("Failed to update ClaimResponse with CommunicationRequest: " + updateResponse.message());

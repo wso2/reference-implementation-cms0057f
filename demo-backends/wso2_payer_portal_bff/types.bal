@@ -549,3 +549,96 @@ public type LogsResponse record {|
     string? timeFilter;
     string? keyword;
 |};
+
+# Actor information extracted from the backend JWT assertion.
+#
+# + userId - Subject identifier from the JWT (user_id claim)
+# + userName - Human-readable username from the JWT (user_name claim)
+# + role - Role of the actor from the JWT (role claim)
+public type ActorInfo record {|
+    string userId;
+    string userName;
+    string role;
+|};
+
+// ============================================================
+// Structured Audit Log Types
+// ============================================================
+
+# Audit log event type — identifies the category of the audited operation
+public type AuditEventType "PA_ADJUDICATION"|"PA_ADDITIONAL_INFO"|"QUESTIONNAIRE"|"PAYER"|"LIBRARY"|"VALUE_SET"|"PDEX_EXCHANGE";
+
+# Audit log action — the write operation performed
+public type AuditAction "CREATE"|"UPDATE"|"DELETE"|"SUBMIT";
+
+# Audit log outcome
+public type AuditOutcome "SUCCESS"|"FAILURE";
+
+# Audit details for PA adjudication events (eventType = PA_ADJUDICATION)
+#
+# + claimId - PA request / claim ID
+# + decision - Adjudication decision: "complete", "error", or "queued"
+# + adjudicationAmount - Sum of approved amounts across all items (nil if denied / not applicable)
+# + comments - Reviewer notes / justification
+# + itemAdjudications - Per-line-item adjudication breakdown
+public type PAAdjudicationDetails record {|
+    string claimId;
+    string decision;
+    decimal? adjudicationAmount;
+    string? comments;
+    ItemAdjudicationSubmission[] itemAdjudications;
+|};
+
+# Audit details for PA additional information request events (eventType = PA_ADDITIONAL_INFO)
+#
+# + claimId - PA request ID
+# + priority - Request priority (routine / urgent / asap / stat)
+# + informationCodes - LOINC / PAS codes for the information requested
+# + reasonCode - Human-readable reason text extracted from the FHIR CodeableConcept
+# + communicationRequestId - ID of the FHIR CommunicationRequest resource created
+public type PAAdditionalInfoDetails record {|
+    string claimId;
+    string priority;
+    string[] informationCodes;
+    string? reasonCode;
+    string? communicationRequestId;
+|};
+
+# Audit details for questionnaire lifecycle events (eventType = QUESTIONNAIRE)
+#
+# + questionnaireId - FHIR Questionnaire resource ID
+# + title - Questionnaire title
+# + status - Publication status: draft / active / retired
+# + newVersionId - meta.versionId of the resource after create or update
+# + previousVersionId - meta.versionId before an update (not captured on create / delete)
+public type QuestionnaireAuditDetails record {|
+    string questionnaireId;
+    string? title;
+    string? status;
+    string? newVersionId;
+    string? previousVersionId;
+|};
+
+# Audit details for PDex exchange events (eventType = PDEX_EXCHANGE)
+#
+# + exchangeId - Unique PDex exchange transaction ID (request_id)
+# + status - Exchange status: "initiated" / "completed" / "failed"
+# + payerId - Payer involved in the exchange
+# + patientId - Patient / member involved (no email — PII safe)
+public type PdexExchangeDetails record {|
+    string exchangeId;
+    string status;
+    string? payerId;
+    string? patientId;
+|};
+
+# Minimal projection of a PDex exchange record fetched from the database
+# 
+# + requestId - Unique PDex exchange transaction ID
+# + payerId - Payer involved in the exchange (nullable)
+# + memberId - Patient / member involved
+type PdexExchangeRecord record {|
+    string requestId;
+    string? payerId;
+    string? memberId;
+|};

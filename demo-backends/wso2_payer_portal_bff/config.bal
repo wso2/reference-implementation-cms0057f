@@ -15,4 +15,5 @@
 // under the License.
 
 configurable string base = ?;
+configurable string pdexBaseUrl = ?;
 configurable DatabaseConfig databaseConfig = ?;

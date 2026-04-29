@@ -148,6 +148,47 @@ public isolated function updatePayerDataExchangeRequestSummary(string requestId,
     }
 }
 
+public isolated function queryPayers(int 'limit = 10, int page = 0, string? search = ()) returns Payer[]|error {
+    stream<Payer, sql:Error?> dataStream;
+    
+    if search is string && search.trim().length() > 0 {
+        string searchPattern = "%" + search + "%";
+        dataStream = dbClient->query(
+            `SELECT id, name, email, address, state
+            FROM payers 
+            WHERE name LIKE ${searchPattern}
+            ORDER BY created_at DESC LIMIT ${'limit} OFFSET ${(page - 1) * 'limit}`,
+            Payer
+        );
+    } else {
+        dataStream = dbClient->query(
+            `SELECT id, name, email, address, state
+            FROM payers 
+            ORDER BY created_at DESC LIMIT ${'limit} OFFSET ${(page - 1) * 'limit}`,
+            Payer
+        );
+    }
+
+    Payer[] payers = check from Payer payer in dataStream
+        select payer;
+
+    return payers;
+}
+
+public isolated function getTotalPayerCount() returns int|error {
+    record {| int count; |} result = check dbClient->queryRow(`SELECT COUNT(*) AS count FROM payers`);
+    return result.count;
+}
+
+public isolated function getPayerByDbId(string payerId) returns Payer|error {
+    Payer result = check dbClient->queryRow(
+        `SELECT id, name, email, address, state
+         FROM payers WHERE id = ${payerId}`,
+        Payer
+    );
+    return result;
+}
+
 public isolated function getPayerConfig(string payerId) returns PayerConfig|error {
     sql:ParameterizedQuery query = `SELECT id AS payerId, name AS payerName, fhir_server_url AS baseUrl, smart_config_url AS smartConfigUrl,
                                     app_client_id AS clientId, app_client_secret AS clientSecret, scopes AS scopesStr

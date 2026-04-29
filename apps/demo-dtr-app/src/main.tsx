@@ -14,7 +14,6 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
 import 'bootstrap/dist/css/bootstrap.min.css'; // Import Bootstrap styles globally
@@ -22,7 +21,5 @@ import 'react-datepicker/dist/react-datepicker.css'; // Import React Datepicker 
 import App from './App.tsx';
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
+  <App />,
 );

@@ -34,7 +34,11 @@ import { updateCdsResponse, resetCdsResponse } from "../redux/cdsResponseSlice";
 import { useAuth } from "../components/AuthProvider";
 import PatientInfo from "../components/PatientInfo";
 import { FREQUENCY_UNITS } from "../constants/data";
-import { updateIsProcess } from "../redux/currentStateSlice";
+import {
+  appendRequestLog,
+  clearRequestLogs,
+  updateIsProcess,
+} from "../redux/currentStateSlice";
 import { HTTP_METHODS } from "../constants/enum";
 
 const useQuery = () => {
@@ -46,14 +50,24 @@ const getQuestionText = (text: { value: string } | string | undefined): string =
 
 const QuestionnniarForm = ({
   questionnaireId,
+  medicationRequestId,
+  patientId,
+  coverageId,
   isQuestionnaireResponseSubmited,
   setIsQuestionnaireResponseSubmited,
+  submittedQrId,
+  setSubmittedQrId,
 }: {
   questionnaireId: string;
+  medicationRequestId: string;
+  patientId: string;
+  coverageId: string;
   isQuestionnaireResponseSubmited: boolean;
   setIsQuestionnaireResponseSubmited: React.Dispatch<
     React.SetStateAction<boolean>
   >;
+  submittedQrId: string | null;
+  setSubmittedQrId: (id: string) => void;
 }) => {
   const dispatch = useDispatch();
   const [questions, setQuestions] = useState<
@@ -77,14 +91,14 @@ const QuestionnniarForm = ({
         name: "coverage",
         resource: {
           resourceType: "Coverage",
-          reference: "Coverage/367",
+          reference: `Coverage/${coverageId}`,
         },
       },
       {
         name: "order",
         resource: {
           resourceType: "MedicationRequest",
-          reference: "MedicationRequest/111112",
+          reference: `MedicationRequest/${medicationRequestId}`,
         },
       },
     ],
@@ -94,6 +108,7 @@ const QuestionnniarForm = ({
     dispatch(resetCdsRequest());
     dispatch(resetCdsResponse());
     dispatch(updateIsProcess(true));
+    dispatch(clearRequestLogs());
     // Fetch the questionnaire data from the API
     const Config = window.Config;
     dispatch(
@@ -119,6 +134,14 @@ const QuestionnniarForm = ({
         setOpenSnackbar(true);
 
         const questionnaire = response.data;
+        dispatch(
+          appendRequestLog({
+            method: HTTP_METHODS.POST,
+            url: Config.demoBaseUrl + Config.questionnaire_package,
+            request: requestBody,
+            response: questionnaire,
+          })
+        );
         const questionnaireParam = questionnaire.parameter?.find(
           (p: any) => p.name === "PackageBundle"
         );
@@ -153,7 +176,7 @@ const QuestionnniarForm = ({
           })
         );
       });
-  }, []);
+  }, [medicationRequestId]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type } = e.target;
@@ -173,7 +196,7 @@ const QuestionnniarForm = ({
       questionnaire: "Questionnaire/" + questionnaireId,
       status: "completed",
       subject: {
-        reference: "Patient/101",
+        reference: `Patient/${patientId}`,
       },
       author: {
         reference: "PractitionerRole/456",
@@ -201,22 +224,7 @@ const QuestionnniarForm = ({
     };
   };
 
-  const submitQuestionnaireResponse = (questionnaireResponse: {
-    resourceType: string;
-    questionnaire: string;
-    status: string;
-    subject: { reference: string };
-    author: { reference: string };
-    item: {
-      linkId: string;
-      text: string;
-      answer: {
-        valueBoolean?: boolean;
-        valueNumber?: number;
-        valueString?: string;
-      }[];
-    }[];
-  }) => {
+  const submitQuestionnaireResponse = (questionnaireResponse: any) => {
     const Config = window.Config;
     dispatch(resetCdsRequest());
     dispatch(resetCdsResponse());
@@ -225,6 +233,8 @@ const QuestionnniarForm = ({
       updateRequestUrl(Config.demoBaseUrl + Config.questionnaire_response)
     );
     dispatch(updateRequestMethod(HTTP_METHODS.POST));
+    // Note: clearRequestLogs is NOT called here because we want to see both
+    // questionnaire-package and questionnaire-response if they happen in the same session.
 
     // Submit the questionnaire response to the API
 
@@ -238,6 +248,17 @@ const QuestionnniarForm = ({
         if (response.status >= 200 && response.status < 300) {
           setAlertMessage("Questionnaire response submitted successfully!");
           setAlertSeverity("success");
+          if (response.data?.id) {
+            setSubmittedQrId(response.data.id);
+          }
+          dispatch(
+            appendRequestLog({
+              method: HTTP_METHODS.POST,
+              url: Config.demoBaseUrl + Config.questionnaire_response,
+              request: questionnaireResponse,
+              response: response.data,
+            })
+          );
         } else {
           setAlertMessage("Failed to submit questionnaire response!");
           setAlertSeverity("error");
@@ -351,9 +372,15 @@ const QuestionnniarForm = ({
           <Button
             variant="success"
             style={{ marginTop: "30px", marginRight: "20px", float: "right" }}
-            onClick={() =>
-              window.open("/dashboard/drug-order-v2/claim-submit", "_blank")
-            }
+            onClick={() => {
+              const url = [
+                "/dashboard/drug-order-v2/claim-submit",
+                `?patientId=${patientId}`,
+                `&medicationRequestId=${medicationRequestId}`,
+                `&qrId=${submittedQrId || ""}`
+              ].join("");
+              window.open(url, "_blank");
+            }}
             disabled={!isQuestionnaireResponseSubmited}
           >
             Visit Claim Submission
@@ -383,7 +410,7 @@ const PrescribedForm = () => {
         frequency: string;
         frequencyUnit: string;
         period: number;
-        startDate: Date;
+        startDate: string | null;
       };
     }) => state.medicationFormData
   );
@@ -451,7 +478,7 @@ const PrescribedForm = () => {
               <Form.Label>Starting Date</Form.Label>
               <br />
               <DatePicker
-                selected={medicationFormData.startDate}
+                selected={medicationFormData.startDate ? new Date(medicationFormData.startDate) : null}
                 dateFormat="yyyy/MM/dd"
                 className="form-control"
                 wrapperClassName="date-picker-full-width"
@@ -469,9 +496,14 @@ export default function DrugPiorAuthPage() {
   const { isAuthenticated } = useAuth();
   const query = useQuery();
   const questionnaireId = query.get("questionnaireId");
+  const medicationRequestId = query.get("medicationRequestId") || "111112";
+  const patientId = query.get("patientId") || "101";
+  const coverageId = query.get("coverageId") || "367";
+
   console.log("questionnaireId", questionnaireId);
   const [isQuestionnaireResponseSubmited, setIsQuestionnaireResponseSubmited] =
     useState(false);
+  const [submittedQrId, setSubmittedQrId] = useState<string | null>(null);
 
   return isAuthenticated ? (
     <div style={{ marginLeft: 50, marginBottom: 50 }}>
@@ -482,8 +514,13 @@ export default function DrugPiorAuthPage() {
       <PrescribedForm />
       <QuestionnniarForm
         questionnaireId={questionnaireId || ""}
+        medicationRequestId={medicationRequestId}
+        patientId={patientId}
+        coverageId={coverageId}
         isQuestionnaireResponseSubmited={isQuestionnaireResponseSubmited}
         setIsQuestionnaireResponseSubmited={setIsQuestionnaireResponseSubmited}
+        submittedQrId={submittedQrId}
+        setSubmittedQrId={setSubmittedQrId}
       />
       <style>{`
         .card {

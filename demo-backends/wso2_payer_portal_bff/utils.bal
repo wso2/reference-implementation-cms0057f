@@ -14,10 +14,13 @@
 // specific language governing permissions and limitations
 // under the License.
 
+import ballerina/log;
 import ballerina/time;
 import ballerina/lang.regexp;
+import ballerina/http;
+import ballerina/jwt;
 
-function AddDurationToDate(string date, string durationDays) returns string|error {
+isolated function AddDurationToDate(string date, string durationDays) returns string|error {
     // Parse the duration days
     int days = check int:fromString(durationDays);
     
@@ -25,11 +28,17 @@ function AddDurationToDate(string date, string durationDays) returns string|erro
     // Handle formats: YYYY, YYYY-MM, YYYY-MM-DD, or YYYY-MM-DDThh:mm:ss+zz:zz
     string dateOnly;
     boolean hasTime = date.includes("T");
+    boolean hasSpace = date.includes(" ");
     
     if hasTime {
         // Extract date part before 'T'
         regexp:RegExp tPattern = re `T`;
         string[] parts = tPattern.split(date);
+        dateOnly = parts[0];
+    } else if hasSpace {
+        // Extract date part before space
+        regexp:RegExp spacePattern = re `\s`;
+        string[] parts = spacePattern.split(date);
         dateOnly = parts[0];
     } else {
         dateOnly = date;
@@ -77,4 +86,40 @@ function AddDurationToDate(string date, string durationDays) returns string|erro
     }
     
     return formattedDate;
+}
+
+# Decodes the payload of a JWT and extracts actor fields.
+# Returns sentinel "unknown" values if the token is absent or malformed.
+#
+# + jwtAssertion - Raw JWT string from the X-JWT-Assertion header
+# + return - Extracted actor information
+isolated function extractActorFromJWT(string jwtAssertion) returns ActorInfo {
+    ActorInfo unknown = {userId: "unknown", userName: "unknown", role: "unknown"};
+    if jwtAssertion.length() == 0 {
+        return unknown;
+    }
+    do {
+        [jwt:Header, jwt:Payload] [_, payload] = check jwt:decode(jwtAssertion);
+        return {
+            userId: (payload["id"] ?: "unknown").toString(),
+            userName: (payload["username"] ?: "unknown").toString(),
+            role: (payload["role"] ?: "unknown").toString()
+        };
+    } on fail {
+        log:printError("Failed to decode JWT for actor extraction.");
+        return unknown;
+    }
+}
+
+# Extracts the actor from the X-JWT-Assertion header of an HTTP request.
+#
+# + req - Incoming HTTP request
+# + return - Extracted actor information
+isolated function getActorFromRequest(http:Request req) returns ActorInfo {
+    string|http:HeaderNotFoundError jwtHeader = req.getHeader("X-JWT-Assertion");
+    if jwtHeader is http:HeaderNotFoundError {
+        log:printError("X-JWT-Assertion header not found in request.");
+        return {userId: "unknown", userName: "unknown", role: "unknown"};
+    }
+    return extractActorFromJWT(jwtHeader);
 }

@@ -22,7 +22,7 @@ interface MedicationFormDataState {
   frequency: number;
   frequencyUnit: string;
   period: number;
-  startDate: Date | null;
+  startDate: string | null;
 }
 
 const initialState: MedicationFormDataState = {
@@ -31,7 +31,7 @@ const initialState: MedicationFormDataState = {
   frequency: 0,
   frequencyUnit: "",
   period: 0,
-  startDate: new Date() as Date | null,
+  startDate: new Date().toISOString(),
 };
 
 const medicationFormDataSlice = createSlice({

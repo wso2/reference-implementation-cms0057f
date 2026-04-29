@@ -137,3 +137,36 @@ pre[class*="language-"] {
 .token.inserted {
   color: green;
 }
+
+/* Developer console JSON: global prism rules above use 0.75em which is too small */
+.dev-console-json code[class*="language-"],
+.dev-console-json pre[class*="language-"] {
+  font-size: 13px !important;
+  line-height: 1.55 !important;
+}
+
+.dev-console-json--light code[class*="language-"],
+.dev-console-json--light pre[class*="language-"] {
+  font-weight: 550 !important;
+  color: #0f172a !important;
+}
+
+/* Stronger token contrast on light background (Prism tokens) */
+.dev-console-json--light .token.property {
+  color: #b45309 !important;
+}
+.dev-console-json--light .token.string {
+  color: #047857 !important;
+}
+.dev-console-json--light .token.number {
+  color: #1d4ed8 !important;
+}
+.dev-console-json--light .token.boolean {
+  color: #7c3aed !important;
+}
+.dev-console-json--light .token.punctuation {
+  color: #334155 !important;
+}
+.dev-console-json--light .token.operator {
+  color: #0f766e !important;
+}

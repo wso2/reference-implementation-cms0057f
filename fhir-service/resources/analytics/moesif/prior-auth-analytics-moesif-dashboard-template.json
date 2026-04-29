@@ -1,0 +1,726 @@
+{
+  "dashboards": [
+    {
+      "_id": "69cbe95ca3f5b1073f38bac7",
+      "name": "Prior Authorisation Analytics",
+      "dashboard_ids": [],
+      "workspace_ids": [
+        [
+          "69cbe99ba3f5b1073f38bacc",
+          "69cbeb0eee3b09043803997f",
+          "69cbfeaa11ca7518d132b498"
+        ],
+        [
+          "69cc0919a3f5b1073f38c2f9",
+          "69cc0d77ee3b09043803a1f5",
+          "69cc0eb7a3f5b1073f38c460"
+        ],
+        [
+          "69cc0f90ee3b09043803a2fd",
+          "69cc106a11ca7518d132b9a8",
+          "69cc10d1ee3b09043803a3d7"
+        ]
+      ],
+      "parent": null,
+      "sort_order": 1
+    }
+  ],
+  "workspaces": [
+    {
+      "_id": "69cbe99ba3f5b1073f38bacc",
+      "type": "events",
+      "name": "Total Submitted PA Requests",
+      "args": "",
+      "es_query": {
+        "post_filter": {
+          "bool": {
+            "must": [
+              {
+                "terms": {
+                  "request.route.raw": [
+                    "/fhir/r4/Claim/$submit"
+                  ]
+                }
+              },
+              {
+                "terms": {
+                  "response.status": [
+                    "201"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        "size": 0,
+        "aggs": {
+          "seg": {
+            "filter": {
+              "bool": {
+                "must": [
+                  {
+                    "terms": {
+                      "request.route.raw": [
+                        "/fhir/r4/Claim/$submit"
+                      ]
+                    }
+                  },
+                  {
+                    "terms": {
+                      "response.status": [
+                        "201"
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            "aggs": {
+              "weight|sum": {
+                "sum": {
+                  "field": "weight",
+                  "missing": 1
+                }
+              }
+            }
+          }
+        }
+      },
+      "dateRange": {
+        "from": "-7d",
+        "to": "now"
+      },
+      "view": "segment",
+      "funnel_query": {},
+      "urlQuery": "?evtcf[filtersGroups][0][filters][0][id]=f0&evtcf[filtersGroups][0][filters][0][field]=request.route.raw&evtcf[filtersGroups][0][filters][0][name]=&evtcf[filtersGroups][0][filters][0][op]=contains&evtcf[filtersGroups][0][filters][0][value][0]=%2Ffhir%2Fr4%2FClaim%2F%24submit&evtcf[filtersGroups][0][filters][1][id]=d1e903df&evtcf[filtersGroups][0][filters][1][field]=response.status&evtcf[filtersGroups][0][filters][1][name]=&evtcf[filtersGroups][0][filters][1][op]=eq&evtcf[filtersGroups][0][filters][1][value][0]=201&seg[metrics][0][metricName]=sum%28events%29&seg[metrics][0][customName]=Total%20request%20count"
+    },
+    {
+      "_id": "69cbeb0eee3b09043803997f",
+      "type": "events",
+      "name": "Completed claim requests by priority",
+      "args": "",
+      "es_query": {
+        "post_filter": {
+          "bool": {
+            "must": [
+              {
+                "terms": {
+                  "request.route.raw": [
+                    "/fhir/r4/ClaimResponse/:id"
+                  ]
+                }
+              },
+              {
+                "terms": {
+                  "response.status": [
+                    "200"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        "size": 0,
+        "aggs": {
+          "seg": {
+            "filter": {
+              "bool": {
+                "must": [
+                  {
+                    "terms": {
+                      "request.route.raw": [
+                        "/fhir/r4/ClaimResponse/:id"
+                      ]
+                    }
+                  },
+                  {
+                    "terms": {
+                      "response.status": [
+                        "200"
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            "aggs": {
+              "segment__Standard": {
+                "filter": {
+                  "terms": {
+                    "metadata.cms-prior-auth.claimType": [
+                      "1"
+                    ]
+                  }
+                },
+                "aggs": {
+                  "weight|sum": {
+                    "sum": {
+                      "field": "weight",
+                      "missing": 1
+                    }
+                  }
+                }
+              },
+              "segment__Expedited": {
+                "filter": {
+                  "terms": {
+                    "metadata.cms-prior-auth.claimType": [
+                      "2"
+                    ]
+                  }
+                },
+                "aggs": {
+                  "weight|sum": {
+                    "sum": {
+                      "field": "weight",
+                      "missing": 1
+                    }
+                  }
+                }
+              },
+              "weight|sum": {
+                "sum": {
+                  "field": "weight",
+                  "missing": 1
+                }
+              }
+            }
+          }
+        }
+      },
+      "dateRange": {
+        "from": "-7d",
+        "to": "now"
+      },
+      "view": "segment",
+      "funnel_query": {},
+      "urlQuery": "?evtcf[filtersGroups][0][filters][0][id]=f0&evtcf[filtersGroups][0][filters][0][field]=request.route.raw&evtcf[filtersGroups][0][filters][0][name]=&evtcf[filtersGroups][0][filters][0][op]=contains&evtcf[filtersGroups][0][filters][0][value][0]=%2Ffhir%2Fr4%2FClaimResponse%2F%3Aid&evtcf[filtersGroups][0][filters][1][id]=96eea23e&evtcf[filtersGroups][0][filters][1][field]=response.status&evtcf[filtersGroups][0][filters][1][name]=&evtcf[filtersGroups][0][filters][1][op]=eq&evtcf[filtersGroups][0][filters][1][value][0]=200&seg[metrics][0][id]=a96c36aa&seg[metrics][0][metricName]=sum%28events%29&seg[metrics][0][customName]=Completed%20claims&seg[chartType]=bar&seg[segments][0][name]=Standard&seg[segments][0][filters][0][id]=f0&seg[segments][0][filters][0][field]=metadata.cms-prior-auth.claimType&seg[segments][0][filters][0][name]=&seg[segments][0][filters][0][op]=eq&seg[segments][0][filters][0][value][0]=1&seg[segments][1][name]=Expedited&seg[segments][1][filters][0][id]=9cbfda3b&seg[segments][1][filters][0][field]=metadata.cms-prior-auth.claimType&seg[segments][1][filters][0][name]=&seg[segments][1][filters][0][op]=eq&seg[segments][1][filters][0][value][0]=2"
+    },
+    {
+      "_id": "69cbfeaa11ca7518d132b498",
+      "type": "events",
+      "name": "% of approved standard claims",
+      "args": "",
+      "es_query": {
+        "post_filter": {
+          "bool": {
+            "must": [
+              {
+                "terms": {
+                  "request.route.raw": [
+                    "/fhir/r4/ClaimResponse/:id"
+                  ]
+                }
+              },
+              {
+                "terms": {
+                  "response.status": [
+                    "200"
+                  ]
+                }
+              },
+              {
+                "terms": {
+                  "metadata.cms-prior-auth.claimType": [
+                    "1"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        "size": 0,
+        "aggs": {
+          "seg": {
+            "filter": {
+              "bool": {
+                "must": [
+                  {
+                    "terms": {
+                      "request.route.raw": [
+                        "/fhir/r4/ClaimResponse/:id"
+                      ]
+                    }
+                  },
+                  {
+                    "terms": {
+                      "response.status": [
+                        "200"
+                      ]
+                    }
+                  },
+                  {
+                    "terms": {
+                      "metadata.cms-prior-auth.claimType": [
+                        "1"
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            "aggs": {
+              "scripted__39339694|sum": {
+                "sum": {
+                  "script": {
+                    "field_script": "if [metadata.cms-prior-auth.claimStatus] == 3\nthen \n1\nelse\n0\nend"
+                  }
+                }
+              },
+              "scripted__-778308756|sum": {
+                "sum": {
+                  "script": {
+                    "field_script": "if [metadata.cms-prior-auth.claimStatus] == 5\nthen \n1\nelse\n0\nend"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "dateRange": {
+        "from": "-7d",
+        "to": "now"
+      },
+      "view": "segment",
+      "funnel_query": {},
+      "urlQuery": "?evtcf[filtersGroups][0][filters][0][id]=f0&evtcf[filtersGroups][0][filters][0][field]=request.route.raw&evtcf[filtersGroups][0][filters][0][name]=&evtcf[filtersGroups][0][filters][0][op]=contains&evtcf[filtersGroups][0][filters][0][value][0]=%2Ffhir%2Fr4%2FClaimResponse%2F%3Aid&evtcf[filtersGroups][0][filters][1][id]=8194b3eb&evtcf[filtersGroups][0][filters][1][field]=response.status&evtcf[filtersGroups][0][filters][1][name]=&evtcf[filtersGroups][0][filters][1][op]=eq&evtcf[filtersGroups][0][filters][1][value][0]=200&evtcf[filtersGroups][0][filters][2][id]=fa5d59ef&evtcf[filtersGroups][0][filters][2][field]=metadata.cms-prior-auth.claimType&evtcf[filtersGroups][0][filters][2][name]=&evtcf[filtersGroups][0][filters][2][op]=eq&evtcf[filtersGroups][0][filters][2][value][0]=1&seg[metrics][0][i]=82d459e6&seg[metrics][0][script]=if%20%5Bmetadata.cms-prior-auth.claimStatus%5D%20%3D%3D%203%0Athen%20%0A1%0Aelse%0A0%0Aend&seg[metrics][0][func]=sum&seg[metrics][0][customName]=Approved&seg[metrics][0][hidden]=true&seg[metrics][1][i]=d0e3c8f6&seg[metrics][1][script]=if%20%5Bmetadata.cms-prior-auth.claimStatus%5D%20%3D%3D%205%0Athen%20%0A1%0Aelse%0A0%0Aend&seg[metrics][1][func]=sum&seg[metrics][1][customName]=Denied&seg[metrics][1][hidden]=true&seg[metrics][2][i]=05482858&seg[metrics][2][formula][expr]=a%2F%28b%2Ba%29%2A100&seg[metrics][2][customName]=Percentage&seg[chartType]=bar"
+    },
+    {
+      "_id": "69cc0919a3f5b1073f38c2f9",
+      "type": "events",
+      "name": "% of approved expedited claims",
+      "args": "",
+      "es_query": {
+        "post_filter": {
+          "bool": {
+            "must": [
+              {
+                "terms": {
+                  "request.route.raw": [
+                    "/fhir/r4/ClaimResponse/:id"
+                  ]
+                }
+              },
+              {
+                "terms": {
+                  "response.status": [
+                    "200"
+                  ]
+                }
+              },
+              {
+                "terms": {
+                  "metadata.cms-prior-auth.claimType": [
+                    "2"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        "size": 0,
+        "aggs": {
+          "seg": {
+            "filter": {
+              "bool": {
+                "must": [
+                  {
+                    "terms": {
+                      "request.route.raw": [
+                        "/fhir/r4/ClaimResponse/:id"
+                      ]
+                    }
+                  },
+                  {
+                    "terms": {
+                      "response.status": [
+                        "200"
+                      ]
+                    }
+                  },
+                  {
+                    "terms": {
+                      "metadata.cms-prior-auth.claimType": [
+                        "2"
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            "aggs": {
+              "scripted__39339694|sum": {
+                "sum": {
+                  "script": {
+                    "field_script": "if [metadata.cms-prior-auth.claimStatus] == 3\nthen \n1\nelse\n0\nend"
+                  }
+                }
+              },
+              "scripted__-778308756|sum": {
+                "sum": {
+                  "script": {
+                    "field_script": "if [metadata.cms-prior-auth.claimStatus] == 5\nthen \n1\nelse\n0\nend"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "dateRange": {
+        "from": "-7d",
+        "to": "now"
+      },
+      "view": "segment",
+      "funnel_query": {},
+      "urlQuery": "?evtcf[filtersGroups][0][filters][0][id]=f0&evtcf[filtersGroups][0][filters][0][field]=request.route.raw&evtcf[filtersGroups][0][filters][0][name]=&evtcf[filtersGroups][0][filters][0][op]=contains&evtcf[filtersGroups][0][filters][0][value][0]=%2Ffhir%2Fr4%2FClaimResponse%2F%3Aid&evtcf[filtersGroups][0][filters][1][id]=754c3dcc&evtcf[filtersGroups][0][filters][1][field]=response.status&evtcf[filtersGroups][0][filters][1][name]=&evtcf[filtersGroups][0][filters][1][op]=eq&evtcf[filtersGroups][0][filters][1][value][0]=200&evtcf[filtersGroups][0][filters][2][id]=daa41b61&evtcf[filtersGroups][0][filters][2][field]=metadata.cms-prior-auth.claimType&evtcf[filtersGroups][0][filters][2][name]=&evtcf[filtersGroups][0][filters][2][op]=eq&evtcf[filtersGroups][0][filters][2][value][0]=2&seg[metrics][0][script]=if%20%5Bmetadata.cms-prior-auth.claimStatus%5D%20%3D%3D%203%0Athen%20%0A1%0Aelse%0A0%0Aend&seg[metrics][0][func]=sum&seg[metrics][0][customName]=Approved&seg[metrics][0][hidden]=true&seg[metrics][1][i]=f0a4cf61&seg[metrics][1][script]=if%20%5Bmetadata.cms-prior-auth.claimStatus%5D%20%3D%3D%205%0Athen%20%0A1%0Aelse%0A0%0Aend&seg[metrics][1][func]=sum&seg[metrics][1][customName]=Denied&seg[metrics][1][hidden]=true&seg[metrics][2][i]=27643390&seg[metrics][2][formula][expr]=a%2F%28a%2Bb%29%2A100"
+    },
+    {
+      "_id": "69cc0d77ee3b09043803a1f5",
+      "type": "events",
+      "name": "% of denied standard claims",
+      "args": "",
+      "es_query": {
+        "post_filter": {
+          "bool": {
+            "must": [
+              {
+                "terms": {
+                  "request.route.raw": [
+                    "/fhir/r4/ClaimResponse/:id"
+                  ]
+                }
+              },
+              {
+                "terms": {
+                  "response.status": [
+                    "200"
+                  ]
+                }
+              },
+              {
+                "terms": {
+                  "metadata.cms-prior-auth.claimType": [
+                    "1"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        "size": 0,
+        "aggs": {
+          "seg": {
+            "filter": {
+              "bool": {
+                "must": [
+                  {
+                    "terms": {
+                      "request.route.raw": [
+                        "/fhir/r4/ClaimResponse/:id"
+                      ]
+                    }
+                  },
+                  {
+                    "terms": {
+                      "response.status": [
+                        "200"
+                      ]
+                    }
+                  },
+                  {
+                    "terms": {
+                      "metadata.cms-prior-auth.claimType": [
+                        "1"
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            "aggs": {
+              "scripted__39339694|sum": {
+                "sum": {
+                  "script": {
+                    "field_script": "if [metadata.cms-prior-auth.claimStatus] == 3\nthen \n1\nelse\n0\nend"
+                  }
+                }
+              },
+              "scripted__-778308756|sum": {
+                "sum": {
+                  "script": {
+                    "field_script": "if [metadata.cms-prior-auth.claimStatus] == 5\nthen \n1\nelse\n0\nend"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "dateRange": {
+        "from": "-7d",
+        "to": "now"
+      },
+      "view": "segment",
+      "funnel_query": {},
+      "urlQuery": "?evtcf[filtersGroups][0][filters][0][id]=f0&evtcf[filtersGroups][0][filters][0][field]=request.route.raw&evtcf[filtersGroups][0][filters][0][name]=&evtcf[filtersGroups][0][filters][0][op]=contains&evtcf[filtersGroups][0][filters][0][value][0]=%2Ffhir%2Fr4%2FClaimResponse%2F%3Aid&evtcf[filtersGroups][0][filters][1][id]=d45d4289&evtcf[filtersGroups][0][filters][1][field]=response.status&evtcf[filtersGroups][0][filters][1][name]=&evtcf[filtersGroups][0][filters][1][op]=eq&evtcf[filtersGroups][0][filters][1][value][0]=200&evtcf[filtersGroups][0][filters][2][id]=29214db1&evtcf[filtersGroups][0][filters][2][field]=metadata.cms-prior-auth.claimType&evtcf[filtersGroups][0][filters][2][name]=&evtcf[filtersGroups][0][filters][2][op]=eq&evtcf[filtersGroups][0][filters][2][value][0]=1&seg[metrics][0][id]=f7660136&seg[metrics][0][script]=if%20%5Bmetadata.cms-prior-auth.claimStatus%5D%20%3D%3D%203%0Athen%20%0A1%0Aelse%0A0%0Aend&seg[metrics][0][func]=sum&seg[metrics][0][customName]=Approved&seg[metrics][0][hidden]=true&seg[metrics][1][i]=98d37f9c&seg[metrics][1][script]=if%20%5Bmetadata.cms-prior-auth.claimStatus%5D%20%3D%3D%205%0Athen%20%0A1%0Aelse%0A0%0Aend&seg[metrics][1][func]=sum&seg[metrics][1][customName]=Denied&seg[metrics][1][hidden]=true&seg[metrics][2][i]=a5107e93&seg[metrics][2][formula][expr]=b%2F%28a%2Bb%29%2A100"
+    },
+    {
+      "_id": "69cc0eb7a3f5b1073f38c460",
+      "type": "events",
+      "name": "% of denied expedited claims",
+      "args": "",
+      "es_query": {
+        "post_filter": {
+          "bool": {
+            "must": [
+              {
+                "terms": {
+                  "request.route.raw": [
+                    "/fhir/r4/ClaimResponse/:id"
+                  ]
+                }
+              },
+              {
+                "terms": {
+                  "response.status": [
+                    "200"
+                  ]
+                }
+              },
+              {
+                "terms": {
+                  "metadata.cms-prior-auth.claimType": [
+                    "2"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        "size": 0,
+        "aggs": {
+          "seg": {
+            "filter": {
+              "bool": {
+                "must": [
+                  {
+                    "terms": {
+                      "request.route.raw": [
+                        "/fhir/r4/ClaimResponse/:id"
+                      ]
+                    }
+                  },
+                  {
+                    "terms": {
+                      "response.status": [
+                        "200"
+                      ]
+                    }
+                  },
+                  {
+                    "terms": {
+                      "metadata.cms-prior-auth.claimType": [
+                        "2"
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            "aggs": {
+              "scripted__39339694|sum": {
+                "sum": {
+                  "script": {
+                    "field_script": "if [metadata.cms-prior-auth.claimStatus] == 3\nthen \n1\nelse\n0\nend"
+                  }
+                }
+              },
+              "scripted__-778308756|sum": {
+                "sum": {
+                  "script": {
+                    "field_script": "if [metadata.cms-prior-auth.claimStatus] == 5\nthen \n1\nelse\n0\nend"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "dateRange": {
+        "from": "-7d",
+        "to": "now"
+      },
+      "view": "segment",
+      "funnel_query": {},
+      "urlQuery": "?evtcf[filtersGroups][0][filters][0][id]=f0&evtcf[filtersGroups][0][filters][0][field]=request.route.raw&evtcf[filtersGroups][0][filters][0][name]=&evtcf[filtersGroups][0][filters][0][op]=contains&evtcf[filtersGroups][0][filters][0][value][0]=%2Ffhir%2Fr4%2FClaimResponse%2F%3Aid&evtcf[filtersGroups][0][filters][1][id]=ecbf665c&evtcf[filtersGroups][0][filters][1][field]=response.status&evtcf[filtersGroups][0][filters][1][name]=&evtcf[filtersGroups][0][filters][1][op]=eq&evtcf[filtersGroups][0][filters][1][value][0]=200&evtcf[filtersGroups][0][filters][2][id]=eb4d68ca&evtcf[filtersGroups][0][filters][2][field]=metadata.cms-prior-auth.claimType&evtcf[filtersGroups][0][filters][2][name]=&evtcf[filtersGroups][0][filters][2][op]=eq&evtcf[filtersGroups][0][filters][2][value][0]=2&seg[metrics][0][id]=b1442dfc&seg[metrics][0][script]=if%20%5Bmetadata.cms-prior-auth.claimStatus%5D%20%3D%3D%203%0Athen%20%0A1%0Aelse%0A0%0Aend&seg[metrics][0][func]=sum&seg[metrics][0][customName]=Approved&seg[metrics][0][hidden]=true&seg[metrics][1][i]=a4786078&seg[metrics][1][script]=if%20%5Bmetadata.cms-prior-auth.claimStatus%5D%20%3D%3D%205%0Athen%20%0A1%0Aelse%0A0%0Aend&seg[metrics][1][func]=sum&seg[metrics][1][customName]=Denied&seg[metrics][1][hidden]=true&seg[metrics][2][i]=f3bcf2bb&seg[metrics][2][formula][expr]=b%2F%28a%2Bb%29%2A100&seg[metrics][2][customName]=Percentage"
+    },
+    {
+      "_id": "69cc0f90ee3b09043803a2fd",
+      "type": "events",
+      "name": "Avg decision time in hours (standard)",
+      "args": "",
+      "es_query": {
+        "post_filter": {
+          "bool": {
+            "must": [
+              {
+                "terms": {
+                  "request.route.raw": [
+                    "/fhir/r4/ClaimResponse/:id"
+                  ]
+                }
+              },
+              {
+                "terms": {
+                  "response.status": [
+                    "200"
+                  ]
+                }
+              },
+              {
+                "terms": {
+                  "metadata.cms-prior-auth.claimType": [
+                    "1"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        "size": 0,
+        "aggs": {
+          "seg": {
+            "filter": {
+              "bool": {
+                "must": [
+                  {
+                    "terms": {
+                      "request.route.raw": [
+                        "/fhir/r4/ClaimResponse/:id"
+                      ]
+                    }
+                  },
+                  {
+                    "terms": {
+                      "response.status": [
+                        "200"
+                      ]
+                    }
+                  },
+                  {
+                    "terms": {
+                      "metadata.cms-prior-auth.claimType": [
+                        "1"
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            "aggs": {
+              "metadata__cms-prior-auth__timeToDecide|weighted_sum": {
+                "sum": {
+                  "script": {
+                    "field_script": "[metadata.cms-prior-auth.timeToDecide]*[weight|1]"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "dateRange": {
+        "from": "-7d",
+        "to": "now"
+      },
+      "view": "segment",
+      "funnel_query": {},
+      "urlQuery": "?evtcf[filtersGroups][0][filters][0][id]=f0&evtcf[filtersGroups][0][filters][0][field]=request.route.raw&evtcf[filtersGroups][0][filters][0][name]=&evtcf[filtersGroups][0][filters][0][op]=contains&evtcf[filtersGroups][0][filters][0][value][0]=%2Ffhir%2Fr4%2FClaimResponse%2F%3Aid&evtcf[filtersGroups][0][filters][1][id]=0bca7084&evtcf[filtersGroups][0][filters][1][field]=response.status&evtcf[filtersGroups][0][filters][1][name]=&evtcf[filtersGroups][0][filters][1][op]=eq&evtcf[filtersGroups][0][filters][1][value][0]=200&evtcf[filtersGroups][0][filters][2][id]=ab5040ef&evtcf[filtersGroups][0][filters][2][field]=metadata.cms-prior-auth.claimType&evtcf[filtersGroups][0][filters][2][name]=&evtcf[filtersGroups][0][filters][2][op]=eq&evtcf[filtersGroups][0][filters][2][value][0]=1&seg[metrics][0][id]=2e0be166&seg[metrics][0][field]=metadata.cms-prior-auth.timeToDecide&seg[metrics][0][func]=weighted_sum&seg[metrics][0][customName]=."
+    },
+    {
+      "_id": "69cc106a11ca7518d132b9a8",
+      "type": "events",
+      "name": "Avg decision time in hours (expedited)",
+      "args": "",
+      "es_query": {
+        "post_filter": {
+          "bool": {
+            "must": [
+              {
+                "terms": {
+                  "request.route.raw": [
+                    "/fhir/r4/ClaimResponse/:id"
+                  ]
+                }
+              },
+              {
+                "terms": {
+                  "response.status": [
+                    "200"
+                  ]
+                }
+              },
+              {
+                "terms": {
+                  "metadata.cms-prior-auth.claimType": [
+                    "2"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        "size": 0,
+        "aggs": {
+          "seg": {
+            "filter": {
+              "bool": {
+                "must": [
+                  {
+                    "terms": {
+                      "request.route.raw": [
+                        "/fhir/r4/ClaimResponse/:id"
+                      ]
+                    }
+                  },
+                  {
+                    "terms": {
+                      "response.status": [
+                        "200"
+                      ]
+                    }
+                  },
+                  {
+                    "terms": {
+                      "metadata.cms-prior-auth.claimType": [
+                        "2"
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            "aggs": {
+              "metadata__cms-prior-auth__timeToDecide|weighted_sum": {
+                "sum": {
+                  "script": {
+                    "field_script": "[metadata.cms-prior-auth.timeToDecide]*[weight|1]"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "dateRange": {
+        "from": "-7d",
+        "to": "now"
+      },
+      "view": "segment",
+      "funnel_query": {},
+      "urlQuery": "?evtcf[filtersGroups][0][filters][0][id]=f0&evtcf[filtersGroups][0][filters][0][field]=request.route.raw&evtcf[filtersGroups][0][filters][0][name]=&evtcf[filtersGroups][0][filters][0][op]=contains&evtcf[filtersGroups][0][filters][0][value][0]=%2Ffhir%2Fr4%2FClaimResponse%2F%3Aid&evtcf[filtersGroups][0][filters][1][id]=5a13f7ba&evtcf[filtersGroups][0][filters][1][field]=response.status&evtcf[filtersGroups][0][filters][1][name]=&evtcf[filtersGroups][0][filters][1][op]=eq&evtcf[filtersGroups][0][filters][1][value][0]=200&evtcf[filtersGroups][0][filters][2][id]=ddb61e66&evtcf[filtersGroups][0][filters][2][field]=metadata.cms-prior-auth.claimType&evtcf[filtersGroups][0][filters][2][name]=&evtcf[filtersGroups][0][filters][2][op]=eq&evtcf[filtersGroups][0][filters][2][value][0]=2&seg[metrics][0][id]=39f98cc0&seg[metrics][0][field]=metadata.cms-prior-auth.timeToDecide&seg[metrics][0][func]=weighted_sum&seg[metrics][0][customName]=."
+    }
+  ]
+}

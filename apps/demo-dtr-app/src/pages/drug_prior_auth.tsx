@@ -29,11 +29,14 @@ export default function DrugPiorAuthPage() {
   const { isAuthenticated } = useAuth();
   const query = useQuery();
 
-  const coverageId = query.get("coverageId") || sessionStorage.getItem("coverageId");
-  const medicationRequestId = query.get("medicationRequestId") || sessionStorage.getItem("medicationRequestId");
+  const coverageId = query.get("coverageId") || sessionStorage.getItem("coverageId") || undefined;
+  const medicationRequestId = query.get("medicationRequestId") || sessionStorage.getItem("medicationRequestId") || undefined;
+  const serviceRequestId = query.get("serviceRequestId") || sessionStorage.getItem("serviceRequestId") || undefined;
+  const questionnaireUrl = query.get("questionnaire") || sessionStorage.getItem("questionnaire") || undefined;
   const patientId = query.get("patientId") || sessionStorage.getItem("patientId");
 
-  if (!coverageId || !medicationRequestId || !patientId) {
+  // Only redirect to /fetching if we have neither questionnaire URL nor medication request info
+  if (!patientId || (!questionnaireUrl && !medicationRequestId && !coverageId)) {
     return (<Navigate to="/fetching" replace />);
   }
 
@@ -44,16 +47,20 @@ export default function DrugPiorAuthPage() {
   return isAuthenticated ? (
     <div style={{ padding: "30px" }}>
       <div className="page-heading" style={{ fontSize: "24px", fontWeight: "bold", marginBottom: "20px" }}>
-        Send a Prior-Authorizing Request for Drugs
+        Send a Prior-Authorizing Request
       </div>
       <DetailsDiv patientId={patientId} />
-      <PrescribedForm
-        medicationRequestId={medicationRequestId}
-        setPractitionerIdCallback={setPractitionerId}
-      />
+      {medicationRequestId && (
+        <PrescribedForm
+          medicationRequestId={medicationRequestId}
+          setPractitionerIdCallback={setPractitionerId}
+        />
+      )}
       <QuestionnniarForm
         coverageId={coverageId}
         medicationRequestId={medicationRequestId}
+        serviceRequestId={serviceRequestId}
+        questionnaireUrl={questionnaireUrl}
         patientId={patientId}
         isQuestionnaireResponseSubmited={isQuestionnaireResponseSubmited}
         setIsQuestionnaireResponseSubmited={setIsQuestionnaireResponseSubmited}

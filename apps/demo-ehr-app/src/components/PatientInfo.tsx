@@ -17,7 +17,7 @@
 import React from "react";
 import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
-import CachedIcon from "@mui/icons-material/Cached";
+import { Cached as CachedIcon } from "@mui/icons-material";
 import {
   SELECTED_PATIENT_ID,
   SELECTED_PATIENT_NAME,

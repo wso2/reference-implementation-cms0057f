@@ -1,0 +1,257 @@
+openapi: 3.0.1
+info:
+  title: Rule Engine API
+  description: |
+    CRD/Prior Authorization rule engine that evaluates FHIR R4 Bundles and returns
+    CDS Hooks card responses for coverage requirement discovery workflows.
+  version: 1.0.0
+servers:
+  - url: /
+paths:
+  /crd-mri-spine-order-sign:
+    post:
+      summary: Evaluate CRD hook for MRI spine order sign
+      description: |
+        Processes a FHIR R4 Bundle submitted at the order-sign hook for MRI spine
+        orders and returns CDS Hooks card responses indicating prior authorization
+        requirements.
+      operationId: crdMriSpineOrderSign
+      tags:
+        - CRD
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Bundle"
+      responses:
+        "200":
+          description: CDS Hooks card response with prior authorization decision
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CDSResponse"
+        "400":
+          description: Invalid FHIR Bundle payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - default: []
+      x-auth-type: Application & Application User
+
+  /radiology-order:
+    post:
+      summary: Evaluate prior authorization for a radiology order
+      description: |
+        Processes a FHIR R4 Bundle for a radiology order and returns CDS Hooks
+        card responses indicating prior authorization requirements.
+      operationId: radiologyOrder
+      tags:
+        - Prior Authorization
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Bundle"
+      responses:
+        "200":
+          description: CDS Hooks card response with prior authorization decision
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CDSResponse"
+        "400":
+          description: Invalid FHIR Bundle payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - default: []
+      x-auth-type: Application & Application User
+
+  /radiology:
+    post:
+      summary: Evaluate prior authorization for radiology
+      description: |
+        Processes a FHIR R4 Bundle for a radiology service and returns CDS Hooks
+        card responses indicating prior authorization requirements.
+      operationId: radiology
+      tags:
+        - Prior Authorization
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Bundle"
+      responses:
+        "200":
+          description: CDS Hooks card response with prior authorization decision
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CDSResponse"
+        "400":
+          description: Invalid FHIR Bundle payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - default: []
+      x-auth-type: Application & Application User
+
+  /prescribe-medication:
+    post:
+      summary: Evaluate prior authorization for medication prescription
+      description: |
+        Processes a FHIR R4 Bundle for a medication prescription and returns CDS
+        Hooks card responses indicating prior authorization requirements.
+      operationId: prescribeMedication
+      tags:
+        - Prior Authorization
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Bundle"
+      responses:
+        "200":
+          description: CDS Hooks card response with prior authorization decision
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CDSResponse"
+        "400":
+          description: Invalid FHIR Bundle payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - default: []
+      x-auth-type: Application & Application User
+
+components:
+  schemas:
+    Bundle:
+      type: object
+      description: FHIR R4 Bundle resource
+      properties:
+        resourceType:
+          type: string
+          example: Bundle
+        type:
+          type: string
+          example: collection
+        entry:
+          type: array
+          items:
+            type: object
+            properties:
+              resource:
+                type: object
+
+    CDSResponse:
+      type: object
+      description: CDS Hooks response containing card array
+      properties:
+        cards:
+          type: array
+          items:
+            $ref: "#/components/schemas/CDSCard"
+
+    CDSCard:
+      type: object
+      description: A CDS Hooks card
+      properties:
+        summary:
+          type: string
+          description: One-sentence summary of the card
+        detail:
+          type: string
+          description: Optional detailed explanation of the card
+        indicator:
+          type: string
+          enum:
+            - info
+            - warning
+            - critical
+          description: Urgency/importance of the card
+        source:
+          type: object
+          description: Source of the guidance
+          properties:
+            label:
+              type: string
+            url:
+              type: string
+            icon:
+              type: string
+        suggestions:
+          type: array
+          items:
+            type: object
+            properties:
+              label:
+                type: string
+              actions:
+                type: array
+                items:
+                  type: object
+        links:
+          type: array
+          items:
+            type: object
+            properties:
+              label:
+                type: string
+              url:
+                type: string
+              type:
+                type: string
+
+    ErrorResponse:
+      type: object
+      description: Error response
+      properties:
+        message:
+          type: string
+          description: Error message
+
+  securitySchemes:
+    default:
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: https://test.com
+          scopes: {}

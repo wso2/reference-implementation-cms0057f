@@ -22,6 +22,51 @@ public listener http:Listener bulkExportListener = new (8091);
 
 isolated service /pdex on bulkExportListener {
 
+    // Resource function to retrieve all payers.
+    //
+    // @param 'limit - The number of records to retrieve (default 10).
+    // @param page - The page number to retrieve (default 1).
+    // @param search - Optional search term to filter payers by name.
+    // @return The list of payers with pagination details.
+    isolated resource function get payers(int 'limit = 10, int page = 1, string? search = ()) returns PayerListResponse|error {
+        log:printDebug("Fetching payers.", pageLimit = 'limit.toString(), page = page.toString());
+        int|error totalCount = getTotalPayerCount();
+        if totalCount is error {
+            log:printError("Error occurred while fetching total payer count", totalCount);
+            return totalCount;
+        }
+
+        Payer[]|error payers = queryPayers('limit, page, search);
+        if payers is error {
+            log:printError("Error occurred while fetching payers", payers);
+            return payers;
+        }
+
+        return {
+            data: payers,
+            pagination: {
+                page: page, 
+                'limit: 'limit, 
+                totalCount: totalCount, 
+                totalPages: (totalCount + 'limit - 1) / 'limit
+            }
+        };
+    }
+
+    // Resource function to retrieve a specific payer by ID.
+    //
+    // @param payerId - The ID of the payer to retrieve.
+    // @return The payer details.
+    isolated resource function get payers/[string payerId]() returns Payer|error {
+        log:printDebug("Fetching payer by ID.", payerId = payerId);
+        Payer|error payer = getPayerByDbId(payerId);
+        if payer is error {
+            log:printError("Error occurred while fetching payer", payer);
+            return error("Payer not found");
+        }
+        return payer;
+    }
+
     // Resource function to capture payer data exchange request.
     //
     // @param payload - The payload containing the payer data exchange request.
@@ -123,7 +168,12 @@ isolated service /pdex on bulkExportListener {
         log:printDebug("Loaded payer data exchange request.", requestId = requestId, payerId = request.payerId, consent = request.consent ?: "");
 
         if !(request.consent ?: "").equalsIgnoreCaseAscii("APPROVED") {
-            return error("Consent not approved for data exchange.");
+            error consentError = error("Consent not approved for data exchange.");
+            string|error dbResult = updatePayerDataExchangeRequestStatus(requestId, "FAILED");
+            if dbResult is error {
+                log:printError("Failed to update request status after consent rejection", dbResult, requestId = requestId);
+            }
+            return consentError;
         }
 
         if request.bulkDataSyncStatus == "IN_PROGRESS" || request.bulkDataSyncStatus == "COMPLETED" {
@@ -151,7 +201,15 @@ isolated service /pdex on bulkExportListener {
             authEnabled: true
         };
 
-        http:Client httpClient = check createHttpClient(serverConfig);
+        http:Client|error httpClient = createHttpClient(serverConfig);
+        if httpClient is error {
+            log:printError("Error creating HTTP client for member match", httpClient);
+            string|error dbResult = updatePayerDataExchangeRequestStatus(requestId, "FAILED");
+            if dbResult is error {
+                log:printError("Failed to update request status after HTTP client creation error", dbResult, requestId = requestId);
+            }
+            return error("Error creating HTTP client: " + httpClient.message());
+        }
 
         international401:Parameters memberMatchParams = check createMemberMatchParams(request, httpClient);
         log:printDebug("Created member match parameters.", requestId = requestId);
@@ -162,12 +220,22 @@ isolated service /pdex on bulkExportListener {
 
         if matchResponse is http:ClientError {
             log:printError("Error calling $member-match", matchResponse);
-            return error("Error calling $member-match: " + matchResponse.message());
+            error memberMatchError = error("Error calling $member-match: " + matchResponse.message());
+            string|error dbResult = updatePayerDataExchangeRequestStatus(requestId, "FAILED");
+            if dbResult is error {
+                log:printError("Failed to update request status after $member-match client error", dbResult, requestId = requestId);
+            }
+            return memberMatchError;
         }
 
         if matchResponse.statusCode < 200 || matchResponse.statusCode >= 300 {
             log:printError("Member match failed with status: " + matchResponse.statusCode.toString());
-            return error("Member match failed");
+            error memberMatchError = error("Member match failed");
+            string|error dbResult = updatePayerDataExchangeRequestStatus(requestId, "FAILED");
+            if dbResult is error {
+                log:printError("Failed to update request status after $member-match failure", dbResult, requestId = requestId);
+            }
+            return memberMatchError;
         }
 
         log:printDebug("Member match succeeded.", requestId = requestId, statusCode = matchResponse.statusCode.toString());

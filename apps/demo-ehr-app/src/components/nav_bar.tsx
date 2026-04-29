@@ -170,14 +170,6 @@ export default function NavBar() {
                         Profile
                       </Button>
                       <Button
-                        onClick={() => {
-                          window.location.href = "/dashboard/prior-auth-list";
-                        }}
-                        color="inherit"
-                      >
-                        Prior Auths
-                      </Button>
-                      <Button
                         onClick={async () => {
                           clearLocalStorageFully();
                           auth.signOut();

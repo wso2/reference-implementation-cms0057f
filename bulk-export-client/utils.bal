@@ -1,4 +1,3 @@
-import ballerina/file;
 // Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com).
 // WSO2 LLC. licenses this file to you under the Apache License,
 // Version 2.0 (the "License"); you may not use this file except
@@ -12,6 +11,7 @@ import ballerina/file;
 // specific language governing permissions and limitations
 // under the License.
 import ballerina/ftp;
+import ballerina/file;
 import ballerina/http;
 import ballerina/io;
 import ballerina/log;
@@ -72,79 +72,15 @@ public isolated function createHttpClient(BulkExportServerConfig|ClientFhirServe
             clientSecret: clientSecret,
             scopes: scopes
         };
-        return check new (baseUrl, auth = config);
+        http:Client|error httpClient = trap new (baseUrl, auth = config);
+        if httpClient is error {
+            log:printError("Error creating HTTP client with OAuth2 authentication", httpClient);
+            return error("Invalid OAuth2 configuration: " + httpClient.message());
+        }
+        return httpClient;
     } else {
         return check new (baseUrl);
     }
-}
-
-# Fetch target payer config dynamically.
-#
-# + payerId - Payer ID to retrieve configuration for.
-# + return - PayerConfig instance or error
-public isolated function getTargetPayerConfig(string payerId) returns PayerConfig|error {
-    string bffUrl = clientServiceConfig.bffUrl;
-    http:Client bffClient = check new (bffUrl);
-
-    // Call <BFF_URL>/payers/<payer_id>
-    http:Response|error bffResponse = bffClient->get("/payers/" + payerId);
-    if bffResponse is error {
-        log:printError("Error fetching payer config from BFF", 'error = bffResponse);
-        return error("Failed to retrieve payer config from BFF.");
-    }
-
-    if bffResponse.statusCode != 200 {
-        return error("BFF returned non-200 status code: " + bffResponse.statusCode.toString());
-    }
-
-    json payload = check bffResponse.getJsonPayload();
-    map<json> payloadMap = <map<json>>payload;
-
-    string payerName = <string>payloadMap["name"];
-    string fhirServerUrl = <string>payloadMap["fhir_server_url"];
-    string clientId = <string>payloadMap["app_client_id"];
-    string clientSecret = <string>payloadMap["app_client_secret"];
-    string smartConfigUrl = <string>payloadMap["smart_config_url"];
-
-    string[] scopes = [];
-    if payloadMap["scopes"] != null {
-        // Handle scopes appropriately if needed. Assuming comma separated if present.
-        string scopesStr = <string>payloadMap["scopes"];
-        if scopesStr != "" {
-            scopes = re `,`.split(scopesStr);
-        }
-    }
-
-    string defaultTokenUrl = fhirServerUrl + "/token";
-    http:Client|error smartConfigClient = new (smartConfigUrl);
-    if smartConfigClient is error {
-        log:printWarn("Failed to create HTTP client for SMART configuration", 'error = smartConfigClient);
-    } else {
-        http:Response|error smartConfigResponse = smartConfigClient->get("/.well-known/smart-configuration");
-        if smartConfigResponse is http:Response {
-            var smartPayload = smartConfigResponse.getJsonPayload();
-            if smartPayload is json {
-                map<json> smartPayloadMap = <map<json>>smartPayload;
-                string tokenUrl = <string>smartPayloadMap["token_endpoint"];
-                if tokenUrl != "" {
-                    defaultTokenUrl = tokenUrl;
-                }
-            }
-        }
-    }
-
-    PayerConfig config = {
-        payerId: payerId,
-        payerName: payerName,
-        baseUrl: fhirServerUrl,
-        tokenUrl: defaultTokenUrl,
-        clientId: clientId,
-        clientSecret: clientSecret,
-        scopes: scopes,
-        fileServerUrl: (),
-        authEnabled: true
-    };
-    return config;
 }
 
 # Schedule Ballerina task .

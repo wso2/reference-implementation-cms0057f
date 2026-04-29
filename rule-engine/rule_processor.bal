@@ -135,13 +135,13 @@ public isolated function decidePriorAuth(r4:Bundle bundle, string hookId) return
     }
 
     // 5) Default policy: outpatient MRI spine typically requires prior auth.
-    reasons.push("Outpatient MRI spine is prior-auth-managed by default policy.");
+    reasons.push("Outpatient MRI spine scan requires prior authorization.");
 
     MedicalNecessityStatus medicalNecessity = evaluateMedicalNecessity(sr, conditions, observations, bundle, missingDocs);
 
     return {
         priorAuthRequired: true,
-        summary: "Prior auth required for MRI spine.",
+        summary: "Prior auth required.",
         reasons: reasons,
         medicalNecessity: medicalNecessity,
         missingDocumentation: missingDocs,
@@ -202,7 +202,7 @@ isolated function prepareTheLinks(string hookId) returns PriorAuthLink[]? {
 
         return [
             {
-                label: "Questionnaire url",
+                label: "Questionnaire",
                 url: questionnaireResourceUrl
             }
         ];

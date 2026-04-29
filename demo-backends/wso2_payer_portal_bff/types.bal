@@ -17,6 +17,14 @@
 import ballerina/constraint;
 import ballerinax/health.fhir.r4;
 
+# ValueSet URL for PAS LOINC attachment/document request codes
+const string PAS_ATTACHMENT_CODES_VALUESET_URL = "http://hl7.org/fhir/us/davinci-pas/ValueSet/pas-loinc-attachment-codes";
+const string PAS_ATTACHMENT_CODE_ID = "pas-loinc-attachment-codes";
+
+# ValueSet URL for act reason codes (used in CommunicationRequest.reasonCode)
+const string PAS_ACT_REASON_VALUESET_URL = "http://terminology.hl7.org/ValueSet/v3-ActReason";
+const string PAS_ACT_REASON_CODE_ID = "v3-ActReason";
+
 # Database configuration.
 #
 # + host - Database host
@@ -128,6 +136,15 @@ public type PARequestListItem record {
     string dateSubmitted; // PAS Claim.created
 };
 
+type PARequestDBRow record {|
+    string request_id;
+    string? response_id;
+    string priority; // MySQL ENUM is returned as CHAR; cast to PARequestUrgency at the call site
+    string patient_id;
+    string? practitioner_id;
+    string? provider_name;
+    string? date_submitted;
+|};
 
 # This is the analytics data related to PAS Claims from postgresql database
 #
@@ -153,26 +170,53 @@ type QuestionnaireResponseItem record {
     AIAnalysis analysis;
 };
 
+# A single additional information item with its code and human-readable display
+#
+# + code - Code from the PAS documentation ValueSet (stored as payload.contentString)
+# + display - Human-readable display name resolved from the FHIR ValueSet
+public type AdditionalInfoItem record {
+    string code;
+    string? display;
+};
+
+# Communication Request Item - Summarised view of a FHIR CommunicationRequest
+#
+# + id - CommunicationRequest resource ID
+# + status - Current status of the communication request
+# + priority - Urgency of the communication request
+# + requestedItems - Information items with codes and display names resolved from ValueSet
+# + reasonCode - Human-readable reason for the request
+# + requestedDate - Date/time the request was made
+public type CommunicationRequestItem record {
+    string id;
+    CommunicationRequestStatus status;
+    PARequestPriority priority;
+    AdditionalInfoItem[] requestedItems;
+    string? reasonCode;
+    string? requestedDate;
+};
+
 # PA Request Detail - Complete information for a specific PA request
 #
-# + id - field description  
+# + id - field description
 # + responseId - field description
-# + status - field description  
-# + use - field description  
-# + created - field description  
-# + targetDate - field description  
+# + status - field description
+# + use - field description
+# + created - field description
+# + targetDate - field description
 # + admissionDate - field description
 # + dischargeDate - field description
 # + questionnaires - field description
 # + attachments - field description
-# + priority - field description  
-# + summary - field description  
-# + patient - field description  
-# + provider - field description  
-# + items - field description  
-# + coverage - field description  
-# + total - field description  
+# + priority - field description
+# + summary - field description
+# + patient - field description
+# + provider - field description
+# + items - field description
+# + coverage - field description
+# + total - field description
 # + processNotes - field description
+# + communicationRequests - field description
 public type PARequestDetail record {
     string id;
     string responseId;
@@ -192,6 +236,7 @@ public type PARequestDetail record {
     CoverageInformation[]? coverage;
     ClaimTotals total;
     ProcessNote[]? processNotes;
+    CommunicationRequestItem[]? communicationRequests;
 };
 
 # Request Summary
@@ -488,3 +533,112 @@ public type AdditionalInfoResponse record {
     string status;
     string message;
 };
+
+# Time window options for log filtering
+public type TimeFilter "PAST_10_MIN"|"PAST_30_MIN"|"PAST_1_HOUR"|"PAST_2_HOURS"|"PAST_12_HOURS"|"PAST_24_HOURS";
+
+# Response for the GET /logs endpoint
+#
+# + logs - Matching log entries as raw JSON objects
+# + totalCount - Total number of matching entries
+# + timeFilter - Applied time filter (null if none)
+# + keyword - Applied keyword filter (null if none)
+public type LogsResponse record {|
+    json[] logs;
+    int totalCount;
+    string? timeFilter;
+    string? keyword;
+|};
+
+# Actor information extracted from the backend JWT assertion.
+#
+# + userId - Subject identifier from the JWT (user_id claim)
+# + userName - Human-readable username from the JWT (user_name claim)
+# + role - Role of the actor from the JWT (role claim)
+public type ActorInfo record {|
+    string userId;
+    string userName;
+    string role;
+|};
+
+// ============================================================
+// Structured Audit Log Types
+// ============================================================
+
+# Audit log event type — identifies the category of the audited operation
+public type AuditEventType "PA_ADJUDICATION"|"PA_ADDITIONAL_INFO"|"QUESTIONNAIRE"|"PAYER"|"LIBRARY"|"VALUE_SET"|"PDEX_EXCHANGE";
+
+# Audit log action — the write operation performed
+public type AuditAction "CREATE"|"UPDATE"|"DELETE"|"SUBMIT";
+
+# Audit log outcome
+public type AuditOutcome "SUCCESS"|"FAILURE";
+
+# Audit details for PA adjudication events (eventType = PA_ADJUDICATION)
+#
+# + claimId - PA request / claim ID
+# + decision - Adjudication decision: "complete", "error", or "queued"
+# + adjudicationAmount - Sum of approved amounts across all items (nil if denied / not applicable)
+# + comments - Reviewer notes / justification
+# + itemAdjudications - Per-line-item adjudication breakdown
+public type PAAdjudicationDetails record {|
+    string claimId;
+    string decision;
+    decimal? adjudicationAmount;
+    string? comments;
+    ItemAdjudicationSubmission[] itemAdjudications;
+|};
+
+# Audit details for PA additional information request events (eventType = PA_ADDITIONAL_INFO)
+#
+# + claimId - PA request ID
+# + priority - Request priority (routine / urgent / asap / stat)
+# + informationCodes - LOINC / PAS codes for the information requested
+# + reasonCode - Human-readable reason text extracted from the FHIR CodeableConcept
+# + communicationRequestId - ID of the FHIR CommunicationRequest resource created
+public type PAAdditionalInfoDetails record {|
+    string claimId;
+    string priority;
+    string[] informationCodes;
+    string? reasonCode;
+    string? communicationRequestId;
+|};
+
+# Audit details for questionnaire lifecycle events (eventType = QUESTIONNAIRE)
+#
+# + questionnaireId - FHIR Questionnaire resource ID
+# + title - Questionnaire title
+# + status - Publication status: draft / active / retired
+# + newVersionId - meta.versionId of the resource after create or update
+# + previousVersionId - meta.versionId before an update (not captured on create / delete)
+public type QuestionnaireAuditDetails record {|
+    string questionnaireId;
+    string? title;
+    string? status;
+    string? newVersionId;
+    string? previousVersionId;
+|};
+
+# Audit details for PDex exchange events (eventType = PDEX_EXCHANGE)
+#
+# + exchangeId - Unique PDex exchange transaction ID (request_id)
+# + status - Exchange status: "initiated" / "completed" / "failed"
+# + payerId - Payer involved in the exchange
+# + patientId - Patient / member involved (no email — PII safe)
+public type PdexExchangeDetails record {|
+    string exchangeId;
+    string status;
+    string? payerId;
+    string? patientId;
+|};
+
+# Minimal projection of a PDex exchange record fetched from the database
+# 
+# + requestId - Unique PDex exchange transaction ID
+# + payerId - Payer involved in the exchange (nullable)
+# + memberId - Patient / member involved
+type PdexExchangeRecord record {|
+    string requestId;
+    string? payerId;
+    string? memberId;
+|};

@@ -1,6 +1,22 @@
 ## These are sample configurations for the FHIR service.
 ## Update the values as per your environment setup.
 exportServiceUrl = "http://localhost:8090/bulk/export"
+serverBaseUrl = "http://localhost:8080"
+
+## Operation mode for $bulk-member-match. Options: "respond-async" | "respond-sync".
+## The Prefer header must contain this value on every request.
+bulkMemberMatchMode = "respond-async"
+
+## Resource types permitted for $export and $davinci-data-export operations.
+## Based on DaVinci PDex payer-to-payer spec: US Core clinical resources + PDex claims/encounter types.
+## Remove types you do not support or wish to restrict.
+allowedExportResourceTypes = [
+    "AllergyIntolerance", "CarePlan", "CareTeam", "Condition", "Consent",
+    "Coverage", "Device", "DiagnosticReport", "DocumentReference", "Encounter",
+    "ExplanationOfBenefit", "Goal", "Immunization", "MedicationDispense",
+    "MedicationRequest", "Observation", "Patient", "Practitioner", "PractitionerRole",
+    "Procedure", "Provenance", "RelatedPerson", "ServiceRequest"
+]
 
 ## Initial sample data is dynamically retrieved from this GitHub repository.
 sampleDataGithubUrl = "http://localhost:9091/data"
@@ -31,3 +47,64 @@ format = ["json"]
 
 [configRest]
 mode = "server"
+
+[ballerinax.health.fhir.r4.parser]
+validateAgainstProfile=false
+
+[x12ConnectionConfig]
+enable = false
+url = ""
+authEnabled = false
+
+[paDatabaseConfig]
+host = "<host>"
+port = 3306
+user = "<user>"
+password = "<password>"
+database = "<database_name>"
+
+
+
+
+## Member matching configuration: scoring thresholds and field weights/algorithms.
+[memberMatchConfig.gradeThresholds]
+certain = 0.95
+probable = 0.80
+possible = 0.50
+
+## Member matching scoring weights and algorithms per field.
+## Algorithms: "exact" | "levenshtein" | "soundex" | "jarowinkler"
+## levenshteinThreshold: similarity cutoff for levenshtein (default 0.80)
+## jaroWinklerThreshold: similarity cutoff for jarowinkler (default 0.85)
+## jaroWinklerPrefixScale: prefix scaling factor p (default 0.1, max 0.25)
+[memberMatchConfig.fields.identifier]
+weight = 0.30
+algorithm = "exact"
+
+[memberMatchConfig.fields.family]
+weight = 0.20
+algorithm = "jarowinkler"
+jaroWinklerThreshold = 0.88
+jaroWinklerPrefixScale = 0.1
+
+[memberMatchConfig.fields.given]
+weight = 0.15
+algorithm = "jarowinkler"
+jaroWinklerThreshold = 0.88
+jaroWinklerPrefixScale = 0.1
+
+[memberMatchConfig.fields.birthDate]
+weight = 0.20
+algorithm = "exact"
+
+[memberMatchConfig.fields.gender]
+weight = 0.05
+algorithm = "exact"
+
+[memberMatchConfig.fields.phone]
+weight = 0.05
+algorithm = "exact"
+
+[memberMatchConfig.fields.postalCode]
+weight = 0.05
+algorithm = "exact"

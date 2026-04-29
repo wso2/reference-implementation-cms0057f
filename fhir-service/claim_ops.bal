@@ -110,7 +110,7 @@ public isolated function updateClaimResponse(
     }
 
     // Extract organization ID from extension
-    string organizationId = check extractOrganizationIdFromResource(<json>getResponse.'resource);
+    string organizationId = check extractOrganizationIdFromResource(fhirConnector, <json>getResponse.'resource);
 
     // Update the ClaimResponse
     fhirClient:FHIRResponse|fhirClient:FHIRError updateResponse = fhirConnector->update(payload, returnPreference = "representation");
@@ -137,7 +137,7 @@ public isolated function getClaimResponse(fhirClient:FHIRConnector fhirConnector
     }
 
     // Convert FHIR resource to internal ClaimRecord format
-    return toClaimRecord(<json>response.'resource);
+    return toClaimRecord(fhirConnector, <json>response.'resource);
 }
 
 # Get Claim by ID from FHIR Server
@@ -215,11 +215,13 @@ isolated function addOrganizationExtension(json payload, string organizationId, 
     return payloadMap.toJson();
 }
 
-# Extract organization ID from ClaimResponse extension
+# Extract organization ID from ClaimResponse extension or Claim provider reference
 #
-# + fhirResource - FHIR resource
+# + fhirConnector - FHIR Connector instance
+# + fhirResource - FHIR resource (Claim or ClaimResponse)
 # + return - Organization ID
-isolated function extractOrganizationIdFromResource(json fhirResource) returns string|error {
+isolated function extractOrganizationIdFromResource(fhirClient:FHIRConnector fhirConnector, json fhirResource) returns string|error {
+    // First, check if there's an organization identifier extension already
     json|error extensions = fhirResource.extension;
     if extensions is json[] {
         foreach json ext in extensions {
@@ -233,7 +235,58 @@ isolated function extractOrganizationIdFromResource(json fhirResource) returns s
         }
     }
 
-    // Fallback: try to get from requestor reference identifier (the provider)
+    json claim = fhirResource;
+    // If it's a ClaimResponse, get the Claim first
+    json|error resourceType = fhirResource.resourceType;
+    if resourceType is string && resourceType == "ClaimResponse" {
+        json|error request = fhirResource.request;
+        if request is json {
+            json|error reference = request.reference;
+            if reference is string {
+                // Parse "Claim/xxx" format
+                string[] parts = re `/`.split(reference);
+                string claimId = parts[parts.length() - 1];
+
+                fhirClient:FHIRResponse|fhirClient:FHIRError claimResponse = fhirConnector->getById("Claim", claimId);
+                if claimResponse is fhirClient:FHIRResponse {
+                    claim = <json>claimResponse.'resource;
+                }
+            }
+        }
+    }
+
+    // Now extract provider reference from Claim
+    json|error provider = claim.provider;
+    if provider is json {
+        json|error providerRef = provider.reference;
+        if providerRef is string {
+            // Parse "Organization/xxx" format
+            string[] parts = re `/`.split(providerRef);
+            string orgId = parts[parts.length() - 1];
+
+            // Fetch the Organization resource
+            fhirClient:FHIRResponse|fhirClient:FHIRError orgResponse = fhirConnector->getById("Organization", orgId);
+            if orgResponse is fhirClient:FHIRResponse {
+                json orgResource = <json>orgResponse.'resource;
+                json|error identifiers = orgResource.identifier;
+                if identifiers is json[] {
+                    foreach json ident in identifiers {
+                        json|error system = ident.system;
+                        if system is string && system == "http://hl7.org/fhir/sid/us-npi" {
+                            json|error value = ident.value;
+                            if value is string {
+                                return value;
+                            }
+                        }
+                    }
+                }
+            } else {
+                log:printWarn(string `Failed to fetch Organization ${orgId}: ${orgResponse.message()}`);
+            }
+        }
+    }
+
+    // Fallback: try to get from requestor reference identifier (the provider) if available on the resource itself
     json|error requestor = fhirResource.requestor;
     if requestor is json {
         json|error identifier = requestor.identifier;
@@ -250,11 +303,12 @@ isolated function extractOrganizationIdFromResource(json fhirResource) returns s
 
 # Convert FHIR resource to internal ClaimRecord format
 #
+# + fhirConnector - FHIR Connector instance
 # + fhirResource - FHIR resource
 # + return - ClaimRecord
-isolated function toClaimRecord(json fhirResource) returns ClaimRecord|error {
+isolated function toClaimRecord(fhirClient:FHIRConnector fhirConnector, json fhirResource) returns ClaimRecord|error {
     string claimResponseId = check fhirResource.id.ensureType();
-    string organizationId = check extractOrganizationIdFromResource(fhirResource);
+    string organizationId = check extractOrganizationIdFromResource(fhirConnector, fhirResource);
 
     // Extract claim reference
     string claimId = "";

@@ -33,10 +33,8 @@ import { useEffect } from "react";
 import {
   StepStatus,
   Steps,
-  updateSingleStep,
   updateStepsArray,
 } from "../redux/commonStoargeSlice";
-import axios from "axios";
 import {
   CDS_HOOK,
   CDS_REQUEST,
@@ -47,6 +45,7 @@ import {
   CLAIM_REQUEST_METHOD,
   CLAIM_REQUEST_URL,
   CLAIM_RESPONSE,
+  CLAIM_PAYER_NOTIFICATION,
   MEDICATION_REQUEST,
   MEDICATION_REQUEST_METHOD,
   MEDICATION_REQUEST_URL,
@@ -59,98 +58,32 @@ import {
   QUESTIONNAIRE_RESPONSE_METHOD,
   QUESTIONNAIRE_RESPONSE_REQUEST,
   QUESTIONNAIRE_RESPONSE_URL,
-  SELECTED_PATIENT_ID,
   STEPS,
-  TIMESTAMP,
 } from "../constants/localStorageVariables";
-import { HTTP_METHODS } from "../constants/enum";
 
-export default function HorizontalNonLinearStepper() {
+type DevConsolePanelTheme = "dark" | "light";
+
+export default function HorizontalNonLinearStepper({
+  panelTheme = "light",
+}: {
+  panelTheme?: DevConsolePanelTheme;
+}) {
   const dispatch = useDispatch();
 
   useEffect(() => {
     const stepsString = localStorage.getItem(STEPS);
     if (stepsString) {
-      updateStepsArray(JSON.parse(stepsString));
+      const parsed = JSON.parse(stepsString);
+      if (parsed.length === 5) {
+        parsed.push({ name: "Payer notification", status: StepStatus.NOT_STARTED });
+      }
+      dispatch(updateStepsArray(parsed));
     }
-  }, []);
+  }, [dispatch]);
 
   const stepsArray: Steps[] = useSelector(
     (state: any) => state.commonStoarge.stepsArray
   );
-
-  const Config = window.Config;
-
-  const patientId = localStorage.getItem(SELECTED_PATIENT_ID);
-
-  const loadQuestionnaireResponse = () => {
-    const timestamp = localStorage.getItem(TIMESTAMP);
-    let url = Config.questionnaire_response + `?subject=Patient/${patientId}`;
-    if (timestamp) {
-      url += `&authored=ge${timestamp}`;
-    }
-    axios
-      .get(url)
-      .then(async (response) => {
-        if (response.data.entry.length > 0) {
-          const questionnaireResponse = response.data.entry[0].resource;
-          console.log(questionnaireResponse);
-          if (questionnaireResponse) {
-            localStorage.setItem(
-              QUESTIONNAIRE_RESPONSE,
-              JSON.stringify(questionnaireResponse)
-            );
-
-            const resource = questionnaireResponse;
-            delete resource.id;
-            delete resource.authored;
-            localStorage.setItem(
-              QUESTIONNAIRE_RESPONSE_REQUEST,
-              JSON.stringify(resource)
-            );
-
-            localStorage.setItem(
-              QUESTIONNAIRE_RESPONSE_METHOD,
-              HTTP_METHODS.POST
-            );
-            localStorage.setItem(
-              QUESTIONNAIRE_RESPONSE_URL,
-              Config.demoBaseUrl + Config.questionnaire_response
-            );
-            dispatch(
-              updateSingleStep({
-                stepName: "Questionnaire Response",
-                newStatus: StepStatus.COMPLETED,
-              })
-            );
-          }
-          return;
-        } else {
-          console.log("Else");
-          localStorage.setItem(
-            QUESTIONNAIRE_RESPONSE,
-            JSON.stringify({
-              message:
-                "Cannot find a request payload. Make sure you submit the Answers to the questions",
-            })
-          );
-          localStorage.setItem(
-            QUESTIONNAIRE_RESPONSE_REQUEST,
-            JSON.stringify({
-              message:
-                "Cannot find a request payload. Make sure you submit the Answers to the questions",
-            })
-          );
-
-          localStorage.setItem(QUESTIONNAIRE_RESPONSE_METHOD, "");
-          localStorage.setItem(QUESTIONNAIRE_RESPONSE_URL, "");
-          return;
-        }
-      })
-      .catch((error) => {
-        console.error("Error fetching questionnaire:", error);
-      });
-  };
 
   const handleStep = (step: number) => () => {
     switch (step) {
@@ -240,7 +173,6 @@ export default function HorizontalNonLinearStepper() {
         break;
       }
       case 3: {
-        loadQuestionnaireResponse();
         dispatch(resetCurrentRequest());
         dispatch(updateIsProcess(true));
 
@@ -297,6 +229,29 @@ export default function HorizontalNonLinearStepper() {
         );
         break;
       }
+      case 5: {
+        dispatch(resetCurrentRequest());
+        dispatch(updateIsProcess(true));
+
+        dispatch(
+          updateCurrentRequest({
+            "(no outbound request)": "Received from payer via webhook",
+          })
+        );
+
+        const payerNotificationString =
+          localStorage.getItem(CLAIM_PAYER_NOTIFICATION);
+        const payerNotification = payerNotificationString
+          ? JSON.parse(payerNotificationString)
+          : {};
+        dispatch(updateCurrentResponse(payerNotification));
+
+        dispatch(
+          updateCurrentRequestUrl("Payer notification (received via webhook)")
+        );
+        dispatch(updateCurrentRequestMethod("N/A"));
+        break;
+      }
       default: {
         break;
       }
@@ -309,25 +264,94 @@ export default function HorizontalNonLinearStepper() {
   );
 
   useEffect(() => {
-    console.log(globalActiveStep);
     setCurrentStep(globalActiveStep);
   }, [globalActiveStep]);
+
+  const labelActive =
+    panelTheme === "light" ? "rgba(15,23,42,0.92)" : "rgba(255,255,255,0.92)";
+  const labelMuted =
+    panelTheme === "light" ? "rgba(15,23,42,0.62)" : "rgba(255,255,255,0.62)";
+  const connectorColor =
+    panelTheme === "light" ? "rgba(15,23,42,0.22)" : "rgba(255,255,255,0.35)";
 
   return (
     <Box
       sx={{
-        marginBottom: "40px",
-        paddingLeft: "10px",
-        paddingRight: "10px",
-        borderColor: "#000000",
+        marginBottom: "12px",
+        paddingLeft: "4px",
+        paddingRight: "4px",
       }}
     >
-      <Stepper alternativeLabel nonLinear activeStep={currentStep}>
+      <Stepper
+        alternativeLabel
+        nonLinear
+        activeStep={currentStep}
+        sx={{
+          width: "100%",
+          alignItems: "flex-start",
+          "& .MuiStepConnector-line": {
+            borderColor: connectorColor,
+            borderTopWidth: 2,
+          },
+          "& .MuiStepConnector-root.Mui-active .MuiStepConnector-line, & .MuiStepConnector-root.Mui-completed .MuiStepConnector-line":
+            {
+              borderColor: panelTheme === "light" ? "#1976d2" : "#90caf9",
+            },
+          "& .MuiStepLabel-labelContainer": {
+            minHeight: 52,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: "100%",
+          },
+          "& .MuiStepLabel-label": {
+            color: labelActive,
+            textAlign: "center",
+            lineHeight: 1.25,
+            whiteSpace: "normal",
+            fontSize: "0.72rem",
+            fontWeight: 600,
+            maxWidth: "6.8rem",
+          },
+        }}
+      >
         {stepsArray.map((step, index) => (
-          <Step key={step.name} completed={step.status == StepStatus.COMPLETED}>
+          <Step
+            key={step.name}
+            completed={step.status == StepStatus.COMPLETED}
+            sx={{
+              flex: "1 1 0",
+              minWidth: 0,
+              px: 0.125,
+            }}
+          >
             <StepButton
+              disableRipple
               disabled={step.status == StepStatus.NOT_STARTED}
               onClick={handleStep(index)}
+              sx={{
+                width: "100%",
+                py: 0.5,
+                px: 0.25,
+                borderRadius: 1,
+                "&:hover": {
+                  backgroundColor:
+                    panelTheme === "light"
+                      ? "rgba(15,23,42,0.04)"
+                      : "rgba(255,255,255,0.06)",
+                },
+                "&.Mui-disabled": {
+                  backgroundColor: "transparent !important",
+                  opacity: 1,
+                },
+                "& .MuiStepLabel-label": {
+                  color:
+                    step.status === StepStatus.NOT_STARTED ? labelMuted : labelActive,
+                },
+                "&.Mui-disabled .MuiStepLabel-label": {
+                  color: labelMuted,
+                },
+              }}
             >
               {step.name}
             </StepButton>

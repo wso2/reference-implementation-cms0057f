@@ -30,6 +30,7 @@ type ClaimStatus record {|
 
 // In-memory store
 map<ClaimStatus> claimStatuses = {};
+map<json> claimNotificationBundles = {};
 
 function init() {
     _ = start cleanupTask();
@@ -49,6 +50,9 @@ function cleanupTask() {
         foreach string id in keysToRemove {
             if claimStatuses.hasKey(id) {
                 _ = claimStatuses.remove(id);
+            }
+            if claimNotificationBundles.hasKey(id) {
+                _ = claimNotificationBundles.remove(id);
             }
         }
     }
@@ -102,6 +106,7 @@ service / on new http:Listener(9099) {
                                                 } else {
                                                     claimStatuses[claimId] = {outcome: outcome, status: status};
                                                 }
+                                                claimNotificationBundles[claimId] = payload;
                                             }
                                         }
                                     }
@@ -149,6 +154,9 @@ service / on new http:Listener(9099) {
             }
             
             claimStatuses[id] = newStatus;
+            if claimNotificationBundles.hasKey(id) {
+                _ = claimNotificationBundles.remove(id);
+            }
             log:printInfo("Registered Claim ID: " + id);
             
             http:Response res = new;
@@ -183,6 +191,18 @@ service / on new http:Listener(9099) {
             http:Response res = new;
             res.statusCode = 404;
             res.setPayload({message: "ClaimResponse ID not found"});
+            return res;
+        }
+    }
+
+    // Endpoint to retrieve the notification bundle received from payer for a claim
+    resource function get claim\-notification/[string id]() returns json|http:Response {
+        if claimNotificationBundles.hasKey(id) {
+            return claimNotificationBundles.get(id);
+        } else {
+            http:Response res = new;
+            res.statusCode = 404;
+            res.setPayload({message: "Notification bundle not found for this claim"});
             return res;
         }
     }

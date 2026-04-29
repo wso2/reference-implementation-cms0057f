@@ -14,470 +14,521 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import {
-  Button,
-  SelectChangeEvent,
-  CardActions,
-  CardContent,
-  Typography,
-  Box,
-  CardHeader,
-  Alert,
-} from "@mui/material";
-import {
-  DatePicker,
-  DateValidationError,
-  PickerChangeHandlerContext,
-} from "@mui/x-date-pickers";
-import { DropDownBox } from "../components/dropDown";
-import { SCREEN_WIDTH, SCREEN_HEIGHT } from "../constants/page";
-import { useContext, useEffect, useState } from "react";
-import { updateCdsHook, updateRequest } from "../redux/cdsRequestSlice";
-import { Dayjs } from "dayjs";
+import React, { useState, useEffect } from "react";
+import "../assets/styles/main.css";
+import "bootstrap/dist/css/bootstrap.min.css";
+import "react-datepicker/dist/react-datepicker.css";
+import Form from "react-bootstrap/Form";
+import Button from "react-bootstrap/Button";
+import Select, { ActionMeta, SingleValue } from "react-select";
+import Card from "react-bootstrap/Card";
+import DatePicker from "react-datepicker";
 import { useDispatch, useSelector } from "react-redux";
-import { Link, Navigate } from "react-router-dom";
-import { LAB_TEST, ORDER_SIGN_CDS_REQUEST2 } from "../constants/data";
-import { ExpandedContext } from "../utils/expanded_context";
-import { Card } from "@chakra-ui/react";
+import { CdsCard, CdsResponse } from "../components/interfaces/cdsCard";
 import axios from "axios";
-import { updateCdsResponse } from "../redux/cdsResponseSlice";
-import MedicalImagingSign from "./MedicalImagingSign";
 import { useAuth } from "../components/AuthProvider";
+import { Navigate } from "react-router-dom";
+import { Alert, Box, Snackbar, Step, StepLabel, Stepper } from "@mui/material";
+import PatientInfo from "../components/PatientInfo";
+import { CdsHookCardsSection } from "../components/cds_hook_card";
+import {
+  appendRequestLog,
+  clearRequestLogs,
+  updateCurrentRequest,
+  updateCurrentRequestMethod,
+  updateCurrentRequestUrl,
+  updateCurrentResponse,
+  updateIsProcess,
+} from "../redux/currentStateSlice";
+import {
+  StepStatus,
+  updateActiveStep,
+  updateSingleStep,
+} from "../redux/commonStoargeSlice";
+import {
+  CDS_HOOK,
+  CDS_REQUEST,
+  CDS_REQUEST_METHOD,
+  CDS_REQUEST_URL,
+  CDS_RESPONSE,
+  MEDICATION_REQUEST,
+  MEDICATION_REQUEST_METHOD,
+  MEDICATION_REQUEST_URL,
+  MEDICATION_RESPONSE,
+  SELECTED_PATIENT_ID,
+} from "../constants/localStorageVariables";
+import { HTTP_METHODS } from "../constants/enum";
+import { selectPatient } from "../redux/patientSlice";
+import { updateStepsArray } from "../redux/commonStoargeSlice";
 
-interface Coding {
-  id?: string;
-  extension?: object;
-  system?: string;
-  version?: string;
-  code?: string;
-  display?: string;
-  userSelected?: boolean;
+// ── Imaging Type options (CPT codes for MRI Spine) ──────────────────────────
+const IMAGING_TYPE_OPTIONS = [
+  {
+    value: "72148",
+    label: "MRI Spine w/o Contrast (CPT 72148)",
+    display: "MRI lumbar spine w/o contrast",
+  },
+  {
+    value: "72149",
+    label: "MRI Spine w/ Contrast (CPT 72149)",
+    display: "MRI lumbar spine w/ contrast",
+  },
+  {
+    value: "72158",
+    label: "MRI Spine w/ & w/o Contrast (CPT 72158)",
+    display: "MRI lumbar spine w/ and w/o contrast",
+  },
+];
+
+const BODY_AREA_OPTIONS = [
+  { value: "lumbar", label: "Lumbar" },
+  { value: "cervical", label: "Cervical" },
+  { value: "thoracic", label: "Thoracic" },
+];
+
+interface Operation {
+  name: string;
+  isCompleted: boolean;
 }
 
-enum ActionType {
-  CREATE = "create",
-  UPDATE = "update",
-  DELETE = "delete",
-}
-
-interface Action {
-  type: ActionType;
-  description: string;
-  resource?: object;
-  resourceId?: string;
-}
-
-interface Source {
-  label: string;
-  url?: string;
-  icon?: string;
-  topic?: Coding;
-}
-
-interface Suggestion {
-  label: string;
-  uuid?: string;
-  isRecommended?: boolean;
-  actions?: Action[];
-}
-
-enum LinkType {
-  ABSOLUTE = "absolute",
-  SMART = "smart",
-}
-
-export interface CdsLink {
-  label: string;
-  url: string;
-  type: LinkType;
-  appContext?: string;
-}
-
-export interface CdsCard {
-  uuid?: string;
-  summary: string;
-  detail?: string;
-  indicator: string;
-  source: Source;
-  suggestions?: Suggestion[];
-  selectionBehavior?: string;
-  overrideReason?: Coding[];
-  links?: CdsLink[];
-}
-
-export interface CdsResponse {
-  cards: CdsCard[];
-  systemActions?: Action[];
-}
-
-function MedicalImaging() {
-  const { isAuthenticated } = useAuth();
-  const form_selector_width = SCREEN_WIDTH * 0.3;
-  const { expanded } = useContext(ExpandedContext);
+// ── ImagingOrderForm ─────────────────────────────────────────────────────────
+const ImagingOrderForm = ({
+  setCdsCards,
+  setServiceRequestId,
+  serviceRequestId,
+}: {
+  setCdsCards: React.Dispatch<React.SetStateAction<CdsCard[]>>;
+  setServiceRequestId: React.Dispatch<React.SetStateAction<string | null>>;
+  serviceRequestId: string | null;
+}) => {
   const dispatch = useDispatch();
-  const selectedPatientId = useSelector(
-    (state: any) => state.patient.selectedPatientId
-  );
 
-  const [selectedTestType, setSelectedTestType] = useState("");
-  const [selectedArea, setSelectedArea] = useState("");
-  const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
-  const [selectedSlots, setSelectedSlots] = useState("");
-  const [selectedTreatingDisease, setSelectedTreatingDisease] = useState("");
-
-  const [isTestTypeChanged, setIsTestTypeChanged] = useState(false);
-  const [isSelectedAreaChanged, setIsSelectedAreaChanged] = useState(false);
-  const [isSelectedDateChanged, setIsSelectedDateChanged] = useState(false);
-  const [isSelectedSlotsChanged, setIsSelectedSlotsChanged] = useState(false);
-  const [
-    isSelectedTreatingDiseaseChanged,
-    setIsSelectedTreatingDiseaseChanged,
-  ] = useState(false);
-
-  const [enableSubmitButton, setEnableSubmitButton] = useState(false);
-  const [enableNextStep, setEnableNextStep] = useState(false);
-  const [isCrdCheckFinished, setCrdCheckFinished] = useState(false);
-  const [cdsCards, setCdsCards] = useState<CdsCard[]>([]);
-
-  const validateError = (
-    <>
-      <Alert severity="error" sx={{ marginLeft: 1 }}>
-        This is an mandotary field.
-      </Alert>
-    </>
-  );
-
-  const [patientId] = useState("PA2347");
-  const [practionerId] = useState("PT567498");
-
-  const handleChangeTestType = (event: SelectChangeEvent) => {
-    setSelectedTestType(event.target.value);
-    setCrdCheckFinished(false);
-  };
-
-  const handleChangeArea = (event: SelectChangeEvent) => {
-    setSelectedArea(event.target.value);
-    setCrdCheckFinished(false);
-  };
-
-  const handleDateChange = (
-    date: Dayjs | null,
-    _context: PickerChangeHandlerContext<DateValidationError>
-  ) => {
-    setSelectedDate(date);
-    setCrdCheckFinished(false);
-  };
-
-  const handleChangeSlots = (event: SelectChangeEvent) => {
-    setSelectedSlots(event.target.value);
-    setCrdCheckFinished(false);
-  };
-
-  const handleChangeTreatingDisease = (event: SelectChangeEvent) => {
-    setSelectedTreatingDisease(event.target.value);
-    setCrdCheckFinished(false);
-  };
-
-  const handleOnBlurTestType = () => {
-    setIsTestTypeChanged(true);
-  };
-
-  const handleOnBlurArea = () => {
-    setIsSelectedAreaChanged(true);
-  };
-
-  const handleOnBlurDate = () => {
-    setIsSelectedDateChanged(true);
-  };
-
-  const handleOnBlurSlots = () => {
-    setIsSelectedSlotsChanged(true);
-  };
-
-  const handleOnTreatingDisease = () => {
-    setIsSelectedTreatingDiseaseChanged(true);
-  };
-
-  const handleScheduleClick = () => {
-    setEnableNextStep(true);
-  };
-
-  const handleCrdCheck = () => {
-    const payload = ORDER_SIGN_CDS_REQUEST2(
-      patientId,
-      practionerId,
-      selectedDate?.format("YYYY-MM-DD"),
-      selectedSlots
-    );
-
-    setCdsCards([]);
-    setEnableSubmitButton(false);
-    const Config = window.Config;
-    axios
-      .post<CdsResponse>(Config.baseUrl + Config.radiology_order, payload)
-      .then<CdsResponse>((res) => {
-        setCdsCards(res.data.cards);
-
-        dispatch(
-          updateCdsResponse({ cards: res.data.cards, systemActions: {} })
-        );
-
-        setEnableSubmitButton(true);
-        setCrdCheckFinished(true);
-        return res.data;
-      })
-      .catch((err) => console.log(err));
-  };
-
-  const isFormValid = () => {
-    return (
-      selectedTestType != "" &&
-      selectedArea != "" &&
-      selectedDate != null &&
-      selectedSlots != "" &&
-      selectedTreatingDisease != ""
-    );
-  };
-
-  useEffect(() => {
-    let formattedDate = selectedDate?.format("YYYY-MM-DD");
-    if (!formattedDate) {
-      formattedDate = "";
-    }
-
-    const a = ORDER_SIGN_CDS_REQUEST2(
-      patientId,
-      practionerId,
-      selectedDate?.format("YYYY-MM-DD"),
-      selectedSlots
-    );
-    console.log(a);
-
-    dispatch(updateCdsHook("order-sign"));
-    dispatch(updateRequest(a));
-  }, [
-    selectedSlots,
-    selectedTreatingDisease,
-    selectedPatientId,
-    selectedDate,
-    dispatch,
+  const [activeOperation, setActiveOperation] = useState(-1);
+  const [operations] = useState<Operation[]>([
+    { name: "Create imaging order", isCompleted: false },
+    { name: "Check payer requirements", isCompleted: false },
   ]);
 
-  return isAuthenticated ? (
-    <>
-      <div
-        style={{
-          display: "flex",
-          flexDirection: expanded ? "column" : "row",
-        }}
-      >
-        <Box boxShadow={enableNextStep ? 3 : 0}>
-          <div
-            style={{
-              display: "flex",
-              flexDirection: expanded ? "column" : "row",
-            }}
-          >
-            {/* {expanded && (
-              <img
-                src={appointmentBookImg}
-                alt="Healthcare"
-                style={{
-                  marginLeft: SCREEN_WIDTH * 0.05,
-                  height: SCREEN_HEIGHT * 0.5,
-                  width: SCREEN_WIDTH * 0.3,
-                }}
-              />
-            )} */}
+  const [imagingType, setImagingType] = useState<string>("");
+  const [imagingDisplay, setImagingDisplay] = useState<string>("");
+  const [bodyArea, setBodyArea] = useState<string>("");
+  const [diagnosis, setDiagnosis] = useState<string>("");
+  const [requestedDate, setRequestedDate] = useState<Date | null>(null);
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
-            <div style={{ marginLeft: 80 }}>
-              <div
-                style={{
-                  fontSize: 35,
-                  fontWeight: 700,
-                  marginBottom: 30,
-                  marginLeft: 10,
-                }}
+  const [alertMessage, setAlertMessage] = useState<string | null>(null);
+  const [alertSeverity, setAlertSeverity] = useState<
+    "error" | "warning" | "info" | "success"
+  >("info");
+  const [openSnackbar, setOpenSnackbar] = useState(false);
+
+  const savedPatientId = localStorage.getItem(SELECTED_PATIENT_ID);
+
+  useEffect(() => {
+    if (savedPatientId) {
+      dispatch(selectPatient(savedPatientId));
+    }
+  }, [dispatch, savedPatientId]);
+
+  const selectedPatientId = useSelector(
+    (state: any) => state.patient.selectedPatientId
+  ) || savedPatientId || "101";
+
+  useEffect(() => {
+    dispatch(updateIsProcess(true));
+    dispatch(
+      updateStepsArray([
+        { name: "Service request", status: StepStatus.NOT_STARTED },
+        { name: "Check Payer Requirements", status: StepStatus.NOT_STARTED },
+        { name: "Questionnaire package", status: StepStatus.NOT_STARTED },
+        { name: "Questionnaire Response", status: StepStatus.NOT_STARTED },
+        { name: "Claim Submit", status: StepStatus.NOT_STARTED },
+      ])
+    );
+  }, [dispatch]);
+
+  const isFormValid = () =>
+    !!imagingType && !!bodyArea && !!diagnosis && !!requestedDate;
+
+  // Build the ServiceRequest resource
+  const buildServiceRequestResource = () => {
+    return {
+      resourceType: "ServiceRequest",
+      id: `sr-${Math.floor(Math.random() * 1000).toString().padStart(3, "0")}`,
+      status: "draft",
+      intent: "order",
+      subject: { reference: `Patient/${selectedPatientId}` },
+      code: {
+        coding: [
+          {
+            system: "http://www.ama-assn.org/go/cpt",
+            code: imagingType,
+            display: imagingDisplay,
+          },
+        ],
+      },
+      reasonCode: diagnosis ? [{ text: diagnosis }] : undefined,
+      occurrenceDateTime: requestedDate
+        ? requestedDate.toISOString().split("T")[0]
+        : undefined,
+      bodySite: bodyArea ? [{ text: bodyArea }] : undefined,
+    };
+  };
+
+  // Build the CDS Hook request payload
+  const buildCdsPayload = (srResource: any) => {
+    const Config = window.Config;
+    return {
+      hookInstance: crypto.randomUUID(),
+      hook: "order-sign",
+      fhirServer: Config.fhirServerUrl,
+      context: {
+        userId: "Practitioner/456",
+        patientId: selectedPatientId,
+        draftOrders: {
+          resourceType: "Bundle",
+          type: "collection",
+          entry: [
+            {
+              resource: srResource,
+            },
+            {
+              resource: {
+                resourceType: "Patient",
+                id: selectedPatientId,
+              },
+            },
+          ],
+        },
+      },
+    };
+  };
+
+  const handleCheckPayerRequirements = async () => {
+    if (!isFormValid()) {
+      setAlertMessage("Please fill all required fields");
+      setAlertSeverity("error");
+      setOpenSnackbar(true);
+      return;
+    }
+
+    const Config = window.Config;
+    dispatch(clearRequestLogs());
+    let currentServiceRequestId = serviceRequestId;
+
+    // Step 1: Create Imaging Order if not already created
+    if (!currentServiceRequestId) {
+      dispatch(updateActiveStep(0));
+      setActiveOperation(0);
+      dispatch(
+        updateSingleStep({
+          stepName: "Service request",
+          newStatus: StepStatus.IN_PROGRESS,
+        })
+      );
+
+      const srResource = buildServiceRequestResource();
+      dispatch(updateCurrentRequestMethod(HTTP_METHODS.POST));
+      dispatch(updateCurrentRequestUrl(Config.baseUrl + Config.service_request));
+      dispatch(updateCurrentRequest(srResource));
+
+      localStorage.setItem(MEDICATION_REQUEST_METHOD, HTTP_METHODS.POST);
+      localStorage.setItem(MEDICATION_REQUEST_URL, Config.baseUrl + Config.service_request);
+      localStorage.setItem(MEDICATION_REQUEST, JSON.stringify(srResource));
+
+      try {
+        const res = await axios.post(Config.service_request, srResource, {
+          headers: {
+            "Content-Type": "application/fhir+json",
+          },
+        });
+        if (res.status >= 200 && res.status < 300) {
+          const createdSr = res.data;
+          dispatch(
+            appendRequestLog({
+              method: HTTP_METHODS.POST,
+              url: Config.baseUrl + Config.service_request,
+              request: srResource,
+              response: createdSr,
+            })
+          );
+          currentServiceRequestId = createdSr.id;
+          setServiceRequestId(createdSr.id);
+          operations[0].isCompleted = true;
+
+          localStorage.setItem(MEDICATION_RESPONSE, JSON.stringify(createdSr));
+
+          dispatch(
+            updateSingleStep({
+              stepName: "Service request",
+              newStatus: StepStatus.COMPLETED,
+            })
+          );
+        } else {
+          setAlertMessage("Error creating imaging order!");
+          setAlertSeverity("error");
+          setOpenSnackbar(true);
+          return;
+        }
+      } catch (err) {
+        console.error("Error creating imaging order", err);
+        setAlertMessage("Error creating imaging order!");
+        setAlertSeverity("error");
+        setOpenSnackbar(true);
+        return;
+      }
+    }
+
+    // Step 2: Check Payer Requirements
+    dispatch(updateActiveStep(1));
+    setActiveOperation(1);
+    dispatch(
+      updateSingleStep({
+        stepName: "Check Payer Requirements",
+        newStatus: StepStatus.IN_PROGRESS,
+      })
+    );
+
+    const srResourceForCds = buildServiceRequestResource();
+    srResourceForCds.id = currentServiceRequestId!;
+    const payload = buildCdsPayload(srResourceForCds);
+
+    setCdsCards([]);
+    localStorage.setItem(CDS_HOOK, "order-sign");
+    localStorage.setItem(CDS_REQUEST_METHOD, HTTP_METHODS.POST);
+    localStorage.setItem(
+      CDS_REQUEST_URL,
+      Config.demoBaseUrl + Config.crd_mri_spine
+    );
+    localStorage.setItem(CDS_REQUEST, JSON.stringify(payload));
+
+    dispatch(updateCurrentRequestMethod(HTTP_METHODS.POST));
+    dispatch(
+      updateCurrentRequestUrl(Config.demoBaseUrl + Config.crd_mri_spine)
+    );
+    dispatch(updateCurrentRequest(payload));
+
+    try {
+      const res = await axios.post<CdsResponse>(Config.crd_mri_spine, payload, {
+        headers: {
+          "Content-Type": "application/fhir+json",
+        },
+      });
+      if (res.status >= 200 && res.status < 300) {
+        setAlertMessage("Payer requirements retrieved successfully!");
+        setAlertSeverity("success");
+      } else {
+        setAlertMessage("Error retrieving payer requirements!");
+        setAlertSeverity("error");
+      }
+      setOpenSnackbar(true);
+
+      setCdsCards(res.data.cards);
+      dispatch(
+        appendRequestLog({
+          method: HTTP_METHODS.POST,
+          url: Config.demoBaseUrl + Config.crd_mri_spine,
+          request: payload,
+          response: res.data,
+        })
+      );
+      localStorage.setItem(
+        CDS_RESPONSE,
+        JSON.stringify({ cards: res.data.cards, systemActions: {} })
+      );
+      dispatch(updateCurrentResponse(res.data));
+      setIsSubmitted(true);
+
+      dispatch(
+        updateSingleStep({
+          stepName: "Check Payer Requirements",
+          newStatus: StepStatus.COMPLETED,
+        })
+      );
+    } catch (err) {
+      console.error("Error retrieving payer requirements", err);
+      setAlertMessage("Error retrieving payer requirements!");
+      setAlertSeverity("error");
+      setOpenSnackbar(true);
+    }
+  };
+
+  const handleCloseSnackbar = () => setOpenSnackbar(false);
+
+  return (
+    <div style={{ color: "black", marginTop: "20px" }}>
+      <Card style={{ marginTop: "30px", padding: "20px" }}>
+        <Card.Body>
+          <Card.Title>Medical Imaging Order</Card.Title>
+          <Form>
+            {/* Row 1: Imaging Type + Body Area */}
+            <div style={{ display: "flex", gap: "20px" }}>
+              <Form.Group
+                controlId="imagingType"
+                style={{ marginTop: "20px", flex: "1 1 100%" }}
               >
-                Book Medical Imaging
-              </div>
-
-              <DropDownBox
-                dropdown_label="Test Type *"
-                dropdown_options={LAB_TEST.test}
-                selectedValue={selectedTestType}
-                handleChange={handleChangeTestType}
-                handleOnBlur={handleOnBlurTestType}
-                form_selector_width={form_selector_width}
-                borderColor={
-                  isTestTypeChanged && selectedTestType === "" ? "red" : ""
-                }
-                isDisabled={enableNextStep}
-              />
-              {isTestTypeChanged && selectedTestType === "" && validateError}
-
-              <DropDownBox
-                dropdown_label="Targeted area for diagnosis *"
-                dropdown_options={LAB_TEST.area}
-                selectedValue={selectedArea}
-                handleChange={handleChangeArea}
-                handleOnBlur={handleOnBlurArea}
-                form_selector_width={form_selector_width}
-                borderColor={
-                  isSelectedAreaChanged && selectedArea === "" ? "red" : ""
-                }
-                isDisabled={enableNextStep}
-              />
-              {isSelectedAreaChanged && selectedArea === "" && validateError}
-
-              <div style={{ marginLeft: 8, marginBottom: 10, marginTop: 10 }}>
-                <DatePicker
-                  sx={{ minWidth: form_selector_width }}
-                  value={selectedDate}
-                  onChange={handleDateChange}
-                  onClose={handleOnBlurDate}
-                  disabled={enableNextStep}
-                />
-              </div>
-              {isSelectedDateChanged && selectedDate === null && validateError}
-
-              <DropDownBox
-                dropdown_label="Slots *"
-                dropdown_options={LAB_TEST.timeSlots}
-                selectedValue={selectedSlots}
-                handleChange={handleChangeSlots}
-                handleOnBlur={handleOnBlurSlots}
-                form_selector_width={form_selector_width}
-                borderColor={
-                  isSelectedSlotsChanged && selectedSlots === "" ? "red" : ""
-                }
-                isDisabled={enableNextStep}
-              />
-              {isSelectedSlotsChanged && selectedSlots === "" && validateError}
-
-              <DropDownBox
-                dropdown_label="Treating *"
-                dropdown_options={LAB_TEST.diseases}
-                selectedValue={selectedTreatingDisease}
-                handleChange={handleChangeTreatingDisease}
-                handleOnBlur={handleOnTreatingDisease}
-                form_selector_width={form_selector_width}
-                borderColor={
-                  isSelectedTreatingDiseaseChanged &&
-                  selectedTreatingDisease === ""
-                    ? "red"
-                    : ""
-                }
-                isDisabled={enableNextStep}
-              />
-              {isSelectedTreatingDiseaseChanged &&
-                selectedTreatingDisease === "" &&
-                validateError}
-
-              <div style={{ display: "flex", flexDirection: "row" }}>
-                <Button
-                  variant="contained"
-                  onClick={() => handleCrdCheck()}
-                  disabled={!isFormValid() || isCrdCheckFinished}
-                  style={{
-                    borderRadius: 20,
-                    marginTop: 20,
+                <Form.Label>
+                  Imaging Type <span style={{ color: "red" }}>*</span>
+                </Form.Label>
+                <Select
+                  name="imagingType"
+                  options={IMAGING_TYPE_OPTIONS}
+                  isSearchable
+                  menuPosition="fixed"
+                  placeholder="Select imaging type..."
+                  onChange={(
+                    opt: SingleValue<{ value: string; label: string; display: string }>,
+                    _meta: ActionMeta<{ value: string; label: string; display: string }>
+                  ) => {
+                    setImagingType(opt?.value ?? "");
+                    setImagingDisplay(opt?.display ?? "");
+                    setIsSubmitted(false);
+                    setCdsCards([]);
                   }}
+                />
+              </Form.Group>
+
+              <Form.Group
+                controlId="bodyArea"
+                style={{ marginTop: "20px", flex: "1 1 100%" }}
+              >
+                <Form.Label>
+                  Body Area <span style={{ color: "red" }}>*</span>
+                </Form.Label>
+                <Select
+                  name="bodyArea"
+                  options={BODY_AREA_OPTIONS}
+                  isSearchable
+                  menuPosition="fixed"
+                  placeholder="Select body area..."
+                  onChange={(
+                    opt: SingleValue<{ value: string; label: string }>,
+                    _meta: ActionMeta<{ value: string; label: string }>
+                  ) => {
+                    setBodyArea(opt?.value ?? "");
+                    setIsSubmitted(false);
+                    setCdsCards([]);
+                  }}
+                />
+              </Form.Group>
+            </div>
+
+            {/* Row 2: Diagnosis + Requested Date */}
+            <div style={{ display: "flex", gap: "20px" }}>
+              <Form.Group
+                controlId="diagnosis"
+                style={{ marginTop: "20px", flex: "2 1 100%" }}
+              >
+                <Form.Label>
+                  Diagnosis / Clinical Indication{" "}
+                  <span style={{ color: "red" }}>*</span>
+                </Form.Label>
+                <Form.Control
+                  type="text"
+                  placeholder="e.g. Lower back pain with radiculopathy"
+                  value={diagnosis}
+                  onChange={(e) => {
+                    setDiagnosis(e.target.value);
+                    setIsSubmitted(false);
+                    setCdsCards([]);
+                  }}
+                />
+              </Form.Group>
+
+              <Form.Group
+                controlId="requestedDate"
+                style={{ marginTop: "20px", flex: "1 1 100%", width: "100%" }}
+              >
+                <Form.Label>
+                  Requested Date <span style={{ color: "red" }}>*</span>
+                </Form.Label>
+                <br />
+                <DatePicker
+                  selected={requestedDate}
+                  onChange={(date: Date | null) => {
+                    setRequestedDate(date);
+                    setIsSubmitted(false);
+                    setCdsCards([]);
+                  }}
+                  dateFormat="yyyy/MM/dd"
+                  minDate={new Date()}
+                  className="form-control"
+                  wrapperClassName="date-picker-full-width"
+                  placeholderText="Select date"
+                />
+              </Form.Group>
+            </div>
+
+            {/* Submit row */}
+            <div style={{ marginTop: "30px", float: "right" }}>
+              <Box
+                sx={{ width: "100%" }}
+                display="flex"
+                flexDirection="row"
+                alignItems="center"
+                justifyContent="space-between"
+                gap={2}
+              >
+                <Stepper
+                  activeStep={activeOperation}
+                  alternativeLabel
+                  sx={{ marginTop: 6 }}
+                >
+                  {operations.map((op) => (
+                    <Step key={op.name} completed={op.isCompleted}>
+                      <StepLabel>{op.name}</StepLabel>
+                    </Step>
+                  ))}
+                </Stepper>
+                <Button
+                  variant="success"
+                  style={{ marginLeft: "30px", float: "right" }}
+                  onClick={handleCheckPayerRequirements}
+                  disabled={isSubmitted || !isFormValid()}
                 >
                   Check Payer Requirements
                 </Button>
-                <Button
-                  variant="contained"
-                  onClick={() => handleScheduleClick()}
-                  disabled={!enableSubmitButton || enableNextStep}
-                  style={{
-                    borderRadius: 20,
-                    marginLeft: 20,
-                    marginTop: 20,
-                  }}
-                >
-                  Assign imaging center
-                </Button>
-              </div>
+              </Box>
             </div>
+          </Form>
+        </Card.Body>
+        <Snackbar
+          open={openSnackbar}
+          autoHideDuration={6000}
+          onClose={handleCloseSnackbar}
+          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        >
+          <Alert onClose={handleCloseSnackbar} severity={alertSeverity}>
+            {alertMessage}
+          </Alert>
+        </Snackbar>
+      </Card>
+    </div>
+  );
+};
 
-            <div
-              style={{
-                marginLeft: SCREEN_WIDTH * 0.1,
-                marginTop: SCREEN_HEIGHT * 0.07,
-              }}
-            >
-              {!expanded && !enableNextStep && (
-                <img
-                  src="/imaging_center.webp"
-                  alt="Healthcare"
-                  style={{
-                    marginLeft: SCREEN_WIDTH * 0.05,
-                    width: 400,
-                    height: 400,
-                    borderRadius: 15,
-                  }}
-                />
-              )}
+// ── Page root ────────────────────────────────────────────────────────────────
+export default function MedicalImagingPage() {
+  const { isAuthenticated } = useAuth();
+  const [cdsCards, setCdsCards] = useState<CdsCard[]>([]);
+  const [serviceRequestId, setServiceRequestId] = useState<string | null>(null);
 
-              <div
-                style={{
-                  marginTop: expanded ? -40 : 10,
-                  marginLeft: expanded ? -40 : 0,
-                }}
-              ></div>
-            </div>
-          </div>
-          <Box sx={{ display: "flex", flexDirection: "row" }} padding={10}>
-            {cdsCards.length > 0 &&
-              cdsCards.map((card) => (
-                <Box sx={{ boxShadow: 2, borderRadius: 3, marginRight: 2 }}>
-                  <Card variant="outlined" width={310}>
-                    <CardHeader
-                      title={card.summary}
-                      subheader={card.indicator}
-                    />
-                    <CardContent>
-                      <Typography
-                        gutterBottom
-                        sx={{ color: "text.secondary", fontSize: 14, mb: 3 }}
-                      >
-                        {card.detail}
-                      </Typography>
-                      <Typography variant="h6" component="div">
-                        Suggestions
-                      </Typography>
-                      <Typography sx={{ color: "text.secondary", mb: 1.5 }}>
-                        {card.selectionBehavior}
-                      </Typography>
-                      <Typography variant="body2">
-                        <ul>
-                          {card.suggestions?.map((suggestion) => (
-                            <li>{suggestion.label}</li>
-                          ))}
-                        </ul>
-                      </Typography>
-                    </CardContent>
-                    {card.links != null && (
-                      <CardActions>
-                        <Link target="_blank" to={"prior-auth"}>
-                          Apply
-                        </Link>
-                      </CardActions>
-                    )}
-                  </Card>
-                </Box>
-              ))}
-          </Box>
-        </Box>
-        <Box boxShadow={3} marginLeft={1}>
-          {enableNextStep && <MedicalImagingSign />}
-        </Box>
-      </div>
-    </>
+  return isAuthenticated ? (
+    <div style={{ marginLeft: 50, marginBottom: 50 }}>
+      <div className="page-heading">Schedule Medical Imaging</div>
+      <PatientInfo />
+      <ImagingOrderForm
+        setCdsCards={setCdsCards}
+        setServiceRequestId={setServiceRequestId}
+        serviceRequestId={serviceRequestId}
+      />
+      <CdsHookCardsSection
+        cards={cdsCards}
+        serviceRequestId={serviceRequestId}
+        flow="imaging"
+      />
+    </div>
   ) : (
     <Navigate to="/" replace />
   );
 }
-
-export default MedicalImaging;

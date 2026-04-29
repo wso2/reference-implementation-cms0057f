@@ -29,7 +29,9 @@ declare global {
       demoBaseUrl: string;
       demoHospitalUrl: string;
       medication_request: string;
+      service_request: string;
       prescribe_medication: string;
+      crd_mri_spine: string;
       questionnaire_package: string;
       questionnaire_response: string;
       claim: string;
@@ -42,6 +44,7 @@ declare global {
       location: string;
       appointment: string;
       patient: string;
+      coverage: string;
       bulkExportFetch: string;
       bulkExportKickoffUrl: string;
       bulkExportStatusUrl: string;

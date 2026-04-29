@@ -12,7 +12,6 @@ import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
-import { stat } from 'fs';
 import DynamicTable from './DynamicTable';
 
 // Type definitions for the props and data structure

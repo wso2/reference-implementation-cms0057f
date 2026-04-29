@@ -30,7 +30,7 @@ const FetchingParamPage = () => {
     >
       <h1 style={styles.header}>Trying to Fetch Required Parameters...</h1>
       <p style={styles.message}>
-        Make sure to provide the required query parameters: <strong>coverageId</strong>, <strong>medicationRequestId</strong>, and <strong>patientId</strong>.
+        Make sure to provide the required launch parameters (e.g., <strong>patientId</strong> and <strong>questionnaire</strong>, or <strong>coverageId</strong> and <strong>medicationRequestId</strong>).
       </p>
     </div>
   );

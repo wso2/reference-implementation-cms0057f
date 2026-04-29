@@ -27,3 +27,4 @@ final mysql:Client dbClient = check new (
 );
 
 final http:Client fhirHttpClient = check new (base);
+final http:Client pdexHttpClient = check new (pdexBaseUrl);

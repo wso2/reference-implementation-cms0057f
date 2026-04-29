@@ -47,6 +47,7 @@ const string CONSENT_EVALUATION_SUCCESS = "Consent evaluation successful";
 const string CONSENT_EVALUATION_FAILED = "Consent evaluation failed";
 const string CONSENT_NOT_FOUND = "Consent not found";
 const string CONSENT_EXPIRED = "Consent has expired";
+const string CONSENT_NOT_YET_EFFECTIVE = "Consent is not yet in effect";
 const string CONSENT_INVALID_POLICY = "Consent policy does not match payer capabilities";
 const string CONSENT_INVALID_PAYER = "Payer requesting retrieval does not match consent";
 const string CONSENT_INVALID_MEMBER = "Member identity does not match";
@@ -57,3 +58,121 @@ const string CONSENT_PROVISION_REQUIRED = "Consent provision section is required
 const string CONSENT_DUPLICATE_FOUND = "Duplicate active consent found for the same patient and policy";
 const string CONSENT_SCOPE_INVALID = "Consent scope must be for patient privacy";
 const string CONSENT_SCOPE_REQUIRED = "Consent scope is required";
+const string FHIR_TO_X12_API_RESOURCE = "/transform/fhir-to-x12/x12-278";
+
+// Sample X12 headers
+final readonly & json x12Header = {
+  "interchangeControlHeader": {
+    "code": "ISA",
+    "ISA01__AuthorizationInformationQualifier": "00",
+    "ISA02__AuthorizationInformation": "",
+    "ISA03__SecurityInformationQualifier": "00",
+    "ISA04__SecurityInformation": "",
+    "ISA05__InterchangeIDQualifier": "ZZ",
+    "ISA06__InterchangeSenderID": "SENDER",
+    "ISA07__InterchangeIDQualifier": "ZZ",
+    "ISA08__InterchangeReceiverID": "RECEIVER",
+    "ISA09__InterchangeDate": "230915",
+    "ISA10__InterchangeTime": "1230",
+    "ISA11__RepetitionSeparator": "^",
+    "ISA12__InterchangeControlVersionNumber": "00501",
+    "ISA13__InterchangeControlNumber": "000000001",
+    "ISA14__AcknowledgmentRequested": "0",
+    "ISA15__InterchangeUsageIndicator": "P",
+    "ISA16__ComponentElementSeparator": ":"
+  },
+  "functionalGroupHeader": {
+    "code": "GS",
+    "GS01__FunctionalIdentifierCode": "PO",
+    "GS02__ApplicationSendersCode": "SENDAPP",
+    "GS03__ApplicationReceiversCode": "RECVAPP",
+    "GS04__Date": "20230915",
+    "GS05__Time": "1230",
+    "GS06__GroupControlNumber": "1",
+    "GS07__ResponsibleAgencyCode": "X",
+    "GS08__VersionReleaseIndustryIdentifierCode": "005010"
+  },
+  "functionalGroupTrailer": {
+    "code": "GE",
+    "GE01__NumberofTransactionSetsIncluded": "1",
+    "GE02__GroupControlNumber": "1"
+  },
+  "interchangeControlTrailer": {
+    "code": "IEA",
+    "IEA01__NumberofIncludedFunctionalGroups": "1",
+    "IEA02__InterchangeControlNumber": "000000001"
+  }
+};
+const string CONSENT_PROVISION_TYPE_INVALID = "Consent provision type must be 'permit'";
+const string CONSENT_PROVISION_ACTION_INVALID = "Consent provision must include a 'disclose' action";
+
+# Constants for PDex Payer-to-Payer Bulk Exchange
+const string PDEX_EXPORT_TYPE_P2P = "hl7.fhir.us.davinci-pdex#payertopayer";
+# Provider Access v2 exportType values (§pdex-303)
+const string PDEX_EXPORT_TYPE_PROVIDER_DELTA = "provider-delta";
+const string PDEX_EXPORT_TYPE_PROVIDER_DOWNLOAD = "provider-download";
+const string PDEX_EXPORT_TYPE_PROVIDER_SNAPSHOT = "provider-snapshot";
+const string PDEX_MEMBER_MATCH_GROUP_PROFILE = "http://hl7.org/fhir/us/davinci-pdex/StructureDefinition/pdex-member-match-group";
+const string PDEX_NO_MATCH_GROUP_PROFILE = "http://hl7.org/fhir/us/davinci-pdex/StructureDefinition/pdex-member-no-match-group";
+const string BULK_MATCH_JOB_NOT_FOUND = "Bulk member match job not found";
+const string BULK_MATCH_INVALID_EXPORT_TYPE = "Unsupported exportType. Supported values: hl7.fhir.us.davinci-pdex#payertopayer, provider-delta, provider-download, provider-snapshot";
+const string BULK_MATCH_NO_MEMBER_BUNDLES = "No MemberBundle entries found in Parameters";
+const string BULK_MATCH_MISSING_PATIENT = "MemberBundle is missing required MemberPatient";
+const string BULK_MATCH_MISSING_COVERAGE = "MemberBundle is missing required CoverageToMatch";
+const string BULK_MATCH_MISSING_CONSENT = "MemberBundle is missing required Consent";
+const string BULK_MATCH_MISSING_PREFER_HEADER = "The 'Prefer' header is required for $bulk-member-match requests";
+const string PDEX_MULTI_MEMBER_MATCH_RESULT_CS = "http://hl7.org/fhir/us/davinci-pdex/CodeSystem/PdexMultiMemberMatchResultCS";
+const string BASE_EXT_MATCH_PARAMETERS_URL = "http://hl7.org/fhir/us/davinci-pdex/StructureDefinition/base-ext-match-parameters";
+const string PDEX_MATCH_CODE = "match";
+const string PDEX_NO_MATCH_CODE = "nomatch";
+const string PDEX_CONSENT_CONSTRAINT_CODE = "consentconstraint";
+
+const string REVIEW_ACTION_URL = "http://hl7.org/fhir/us/davinci-pas/StructureDefinition/extension-reviewAction";
+const string REVIEW_ACTION_CODE_URL = "http://hl7.org/fhir/us/davinci-pas/StructureDefinition/extension-reviewActionCode";
+
+# Constants for Da Vinci Provider Access v2 (phase 1-3)
+const string PROVIDER_MEMBER_MATCH_JOB_NOT_FOUND = "Provider member match job not found";
+const string PROVIDER_MEMBER_MATCH_NO_MEMBERS = "No member references provided for provider-member-match";
+const string PROVIDER_MEMBER_MATCH_MISSING_PROVIDER = "Missing required provider identifier for provider-member-match";
+const string PROVIDER_MEMBER_MATCH_STATUS_PATH = "/_export/provider-member-match-status/";
+const string PROVIDER_MEMBER_MATCH_OPERATION_NAME = "provider-member-match";
+
+# Group profile URLs — base IG: http://hl7.org/fhir/us/davinci-pdex (PDex Data Exchange IG)
+const string PROVIDER_ACCESS_TRL_GROUP_PROFILE = "http://hl7.org/fhir/us/davinci-pdex/StructureDefinition/member-provider-treatment-relationship-group";
+const string PROVIDER_ACCESS_OPT_OUT_GROUP_PROFILE = "http://hl7.org/fhir/us/davinci-pdex/StructureDefinition/member-opt-out-group";
+# Alternate IG name used in examples and some payloads (equivalent Member Opt-Out Group)
+const string PROVIDER_ACCESS_OPT_OUT_GROUP_PROFILE_PDEX = "http://hl7.org/fhir/us/davinci-pdex/StructureDefinition/pdex-member-opt-out";
+# Characteristic / ValueSet for default opt-out scope when not repeated on each member entry
+const string OPT_OUT_SCOPE_CODE_SYSTEM = "http://hl7.org/fhir/us/davinci-pdex/CodeSystem/opt-out-scope";
+# Free-text details on member.entity (sample IG)
+const string PROVIDER_ACCESS_EXT_OPT_OUT_DETAILS = "http://hl7.org/fhir/us/davinci-pdex/StructureDefinition/opt-out-details";
+const string PROVIDER_ACCESS_NO_MATCH_GROUP_PROFILE = "http://hl7.org/fhir/us/davinci-pdex/StructureDefinition/pdex-member-no-match-group";
+const string PROVIDER_ACCESS_MATCHED_GROUP_PROFILE = "http://hl7.org/fhir/us/davinci-pdex/StructureDefinition/provider-access-matched-member-group";
+
+# Extension URLs — base IG: http://hl7.org/fhir/us/davinci-pdex
+const string PROVIDER_ACCESS_EXT_EXPIRES_AT = "http://hl7.org/fhir/us/davinci-pdex/StructureDefinition/provider-access-group-expiration";
+const string PROVIDER_ACCESS_EXT_PROVIDER_ID = "http://hl7.org/fhir/us/davinci-pdex/StructureDefinition/provider-identifier";
+const string PROVIDER_ACCESS_EXT_NO_MATCH_REASON = "http://hl7.org/fhir/us/davinci-pdex/StructureDefinition/no-match-reason";
+# ATR IG attribution list status extension (used on TRL and Matched groups)
+const string PROVIDER_ACCESS_EXT_ATR_LIST_STATUS = "http://hl7.org/fhir/us/davinci-atr/StructureDefinition/ext-attributionListStatus";
+# Member-level transmission tracking extensions (PDex §pdex-313)
+const string PROVIDER_ACCESS_EXT_LAST_TRANSMISSION = "http://hl7.org/fhir/us/davinci-pdex/StructureDefinition/base-ext-last-transmission";
+const string PROVIDER_ACCESS_EXT_LAST_TYPES = "http://hl7.org/fhir/us/davinci-pdex/StructureDefinition/base-ext-last-types";
+const string PROVIDER_ACCESS_EXT_LAST_TYPEFILTER = "http://hl7.org/fhir/us/davinci-pdex/StructureDefinition/base-ext-last-typefilter";
+# Member-level relationship type extension (TRL group member entries)
+const string PROVIDER_ACCESS_EXT_RELATIONSHIP_TYPE = "http://hl7.org/fhir/us/davinci-pdex/StructureDefinition/relationship-type";
+const string PROVIDER_ACCESS_EXT_ATTESTATION_DATE = "http://hl7.org/fhir/us/davinci-pdex/StructureDefinition/attestation-date";
+const string PROVIDER_ACCESS_EXT_TREATMENT_PERIOD_START = "http://hl7.org/fhir/us/davinci-pdex/StructureDefinition/treatment-period-start";
+# Opt-out member entry extensions (Member Opt-Out Group member entries)
+const string PROVIDER_ACCESS_EXT_OPT_OUT_SCOPE = "http://hl7.org/fhir/us/davinci-pdex/StructureDefinition/opt-out-scope";
+const string PROVIDER_ACCESS_EXT_OPT_OUT_REASON = "http://hl7.org/fhir/us/davinci-pdex/StructureDefinition/opt-out-reason";
+const string PROVIDER_ACCESS_EXT_OPT_OUT_DATE = "http://hl7.org/fhir/us/davinci-pdex/StructureDefinition/opt-out-date";
+const string PROVIDER_ACCESS_EXT_OPT_OUT_SCOPE_DETAIL = "http://hl7.org/fhir/us/davinci-pdex/StructureDefinition/opt-out-scope-detail";
+# Consent profile for Provider Treatment Attestation (new in v2)
+const string PROVIDER_TREATMENT_ATTESTATION_CONSENT_PROFILE = "http://hl7.org/fhir/us/davinci-pdex/StructureDefinition/provider-treatment-relationship-consent";
+# Opt-out scope code values
+const string OPT_OUT_SCOPE_GLOBAL = "global";
+const string OPT_OUT_SCOPE_PROVIDER_SPECIFIC = "provider-specific";
+const string OPT_OUT_SCOPE_PURPOSE_SPECIFIC = "purpose-specific";
+const string OPT_OUT_SCOPE_PAYER_SPECIFIC = "payer-specific";
+const string OPT_OUT_SCOPE_PROVIDER_CATEGORY = "provider-category";

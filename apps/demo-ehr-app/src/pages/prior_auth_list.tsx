@@ -92,7 +92,7 @@ export default function PriorAuthList() {
                                 priorAuths.map((auth) => (
                                     <tr key={auth.id}>
                                         <td>{auth.id}</td>
-                                        <td>{auth.patientName}</td>
+                                        <td>{auth.patientName || "Unknown"}</td>
                                         <td>{auth.medicationRef}</td>
                                         <td>{auth.date}</td>
                                         <td>{getStatusBadge(auth.outcome)}</td>

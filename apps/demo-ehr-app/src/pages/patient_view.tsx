@@ -128,13 +128,9 @@ export function PatientViewPage() {
   const selectedPatientId = useSelector(
     (state: any) => state.patient.selectedPatientId
   );
-  let currentPatient = PATIENT_DETAILS.find(
-    (patient) => patient.id === selectedPatientId
-  );
-
-  if (!currentPatient) {
-    currentPatient = PATIENT_DETAILS[0];
-  }
+  const currentPatient =
+    PATIENT_DETAILS.find((patient) => patient.id === selectedPatientId) ??
+    PATIENT_DETAILS[0]!;
 
   const dispatch = useDispatch();
   const Config = window.Config;
@@ -205,24 +201,24 @@ export function PatientViewPage() {
                   <Form.Label>ID</Form.Label>
                   <Form.Control
                     type="text"
-                    value={fetchedPatient?.id}
-                    disabled
+                    value={fetchedPatient?.id ?? ""}
+                    readOnly
                   />
                 </Form.Group>
                 <Form.Group style={{ marginTop: "20px", flex: "1 1 100%" }}>
                   <Form.Label>Gender</Form.Label>
                   <Form.Control
                     type="text"
-                    value={fetchedPatient?.gender.toUpperCase()}
-                    disabled
+                    value={fetchedPatient?.gender.toUpperCase() ?? ""}
+                    readOnly
                   />
                 </Form.Group>
                 <Form.Group style={{ marginTop: "20px", flex: "1 1 100%" }}>
                   <Form.Label>Birth Date</Form.Label>
                   <Form.Control
                     type="text"
-                    value={fetchedPatient?.birthDate}
-                    disabled
+                    value={fetchedPatient?.birthDate ?? ""}
+                    readOnly
                   />
                 </Form.Group>
                 <Form.Group style={{ marginTop: "20px", flex: "1 1 100%" }}>
@@ -232,9 +228,9 @@ export function PatientViewPage() {
                     value={
                       fetchedPatient?.telecom.find(
                         (contact) => contact.system === "phone"
-                      )?.value
+                      )?.value ?? ""
                     }
-                    disabled
+                    readOnly
                   />
                 </Form.Group>
                 <Form.Group style={{ marginTop: "20px", flex: "1 1 100%" }}>
@@ -244,9 +240,9 @@ export function PatientViewPage() {
                     value={
                       fetchedPatient?.telecom.find(
                         (contact) => contact.system === "email"
-                      )?.value
+                      )?.value ?? ""
                     }
-                    disabled
+                    readOnly
                   />
                 </Form.Group>
               </div>
@@ -261,17 +257,19 @@ export function PatientViewPage() {
                   <Form.Control
                     type="text"
                     value={
-                      fetchedPatient?.address[0].line.join(", ") +
-                      ", " +
-                      fetchedPatient?.address[0].city +
-                      ", " +
-                      fetchedPatient?.address[0].state +
-                      ", " +
-                      fetchedPatient?.address[0].postalCode +
-                      ", " +
-                      fetchedPatient?.address[0].country
+                      fetchedPatient
+                        ? fetchedPatient.address[0].line.join(", ") +
+                          ", " +
+                          fetchedPatient.address[0].city +
+                          ", " +
+                          fetchedPatient.address[0].state +
+                          ", " +
+                          fetchedPatient.address[0].postalCode +
+                          ", " +
+                          fetchedPatient.address[0].country
+                        : ""
                     }
-                    disabled
+                    readOnly
                   />
                 </Form.Group>
               </div>
@@ -291,13 +289,13 @@ export function PatientViewPage() {
                 }}
               >
                 <Form.Group style={{ marginTop: "20px", flex: "1 1 100%" }}>
-                  <Form.Control type="text" value="Peanut Allergy" disabled />
+                  <Form.Control type="text" value="Peanut Allergy" readOnly />
                 </Form.Group>
                 <Form.Group style={{ marginTop: "20px", flex: "1 1 100%" }}>
                   <Form.Control
                     type="text"
                     value="Lactose Intolerant"
-                    disabled
+                    readOnly
                   />
                 </Form.Group>
               </div>
@@ -318,38 +316,42 @@ export function PatientViewPage() {
           >
             <Form.Group style={{ marginTop: "20px", flex: "1 1 100%" }}>
               <Form.Label>Blood Glucose Level</Form.Label>
-              <Form.Control type="text" value="90mg/dt" disabled />
+              <Form.Control type="text" value="90mg/dt" readOnly />
               <Form.Control
                 type="text"
                 value="Before meal - 11/03/2024"
                 style={{ marginTop: 5 }}
+                readOnly
               />
             </Form.Group>
             <Form.Group style={{ marginTop: "20px", flex: "1 1 100%" }}>
               <Form.Label>Body Temperature</Form.Label>
-              <Form.Control type="text" value="98.1 °F" disabled />
+              <Form.Control type="text" value="98.1 °F" readOnly />
               <Form.Control
                 type="text"
                 value="Today"
                 style={{ marginTop: 5 }}
+                readOnly
               />
             </Form.Group>
             <Form.Group style={{ marginTop: "20px", flex: "1 1 100%" }}>
               <Form.Label>Blood pressure</Form.Label>
-              <Form.Control type="text" value="120/80 mm hg" disabled />
+              <Form.Control type="text" value="120/80 mm hg" readOnly />
               <Form.Control
                 type="text"
                 value="Today"
                 style={{ marginTop: 5 }}
+                readOnly
               />
             </Form.Group>
             <Form.Group style={{ marginTop: "20px", flex: "1 1 100%" }}>
               <Form.Label>Body Weight</Form.Label>
-              <Form.Control type="text" value="55kg" disabled />
+              <Form.Control type="text" value="55kg" readOnly />
               <Form.Control
                 type="text"
                 value="11/03/2024"
                 style={{ marginTop: 5 }}
+                readOnly
               />
             </Form.Group>
           </div>
@@ -367,42 +369,48 @@ export function PatientViewPage() {
             }}
           >
             <Form.Group style={{ marginTop: "20px", flex: "1 1 100%" }}>
-              <Form.Control type="text" value="Mr. Moscow" disabled />
+              <Form.Control type="text" value="Mr. Moscow" readOnly />
               <Form.Control
                 type="text"
                 value="Father"
                 style={{ marginTop: 5 }}
+                readOnly
               />
               <Form.Control
                 type="text"
                 value="+94 771231231"
                 style={{ marginTop: 5 }}
+                readOnly
               />
             </Form.Group>
             <Form.Group style={{ marginTop: "20px", flex: "1 1 100%" }}>
-              <Form.Control type="text" value="Mrs. Moscow" disabled />
+              <Form.Control type="text" value="Mrs. Moscow" readOnly />
               <Form.Control
                 type="text"
                 value="Mother"
                 style={{ marginTop: 5 }}
+                readOnly
               />
               <Form.Control
                 type="text"
                 value="+94 771231232"
                 style={{ marginTop: 5 }}
+                readOnly
               />
             </Form.Group>
             <Form.Group style={{ marginTop: "20px", flex: "1 1 100%" }}>
-              <Form.Control type="text" value="Mr. Elbow" disabled />
+              <Form.Control type="text" value="Mr. Elbow" readOnly />
               <Form.Control
                 type="text"
                 value="Brother"
                 style={{ marginTop: 5 }}
+                readOnly
               />
               <Form.Control
                 type="text"
                 value="+94 771231233"
                 style={{ marginTop: 5 }}
+                readOnly
               />
             </Form.Group>
           </div>

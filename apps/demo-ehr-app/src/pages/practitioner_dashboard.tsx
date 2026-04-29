@@ -102,6 +102,33 @@ function PractitionerDashBoard() {
     currentPatient = PATIENT_DETAILS[0];
   }
 
+  const handleSmartLaunch = async () => {
+    const iss = window.Config.fhirServerUrl;
+    const aud = window.Config.smartAppUrl;
+    const patientId = localStorage.getItem(SELECTED_PATIENT_ID) ?? "";
+
+    const response = await fetch(
+      window.Config.smartLaunchServiceUrl,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ aud, patientId }),
+      }
+    );
+
+    if (!response.ok) {
+      console.error("Failed to create SMART launch context");
+      return;
+    }
+
+    const { launchId } = await response.json();
+    const issEncoded = encodeURIComponent(iss);
+    window.open(
+      `${window.Config.smartAppUrl}?launch=${launchId}&iss=${issEncoded}`,
+      "_blank"
+    );
+  };
+
   return isAuthenticated ? (
     <div style={{ marginLeft: 50, marginBottom: 50 }}>
       <DetailsDiv />
@@ -117,8 +144,20 @@ function PractitionerDashBoard() {
       <div className="page-heading" style={{ marginTop: "10px" }}>
         E-Health Services
       </div>
-      <div style={{ height: "5vh" }}>
+      <div style={{ marginBottom: "40px" }}>
         <ServiceCardList services={SERVICE_CARD_DETAILS} expanded={expanded} />
+      </div>
+      <div className="page-heading" style={{ marginTop: "10px" }}>
+        SMART App Launch
+      </div>
+      <div>
+        <MultiActionAreaCard
+          serviceImagePath="/encounter_start.png"
+          serviceName="Diagnostic Reports Viewer"
+          serviceDescription="Launch a SMART on FHIR application in the context of this EHR session."
+          path=""
+          onClick={handleSmartLaunch}
+        />
       </div>
     </div>
   ) : (

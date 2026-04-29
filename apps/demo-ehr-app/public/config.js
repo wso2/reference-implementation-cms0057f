@@ -23,6 +23,11 @@ window.Config = {
   fhirServerUrl: "http://fhir-server-1853775667:9090/fhir/r4",
   dtrAppUrl: "https://1feed768-63df-4134-a86b-29feb37b8dd0.e1-us-east-azure.choreoapps.dev",
   webhookServerUrl: "/choreo-apis/cms-provider/pa-notification-service/v1",
+  asgardeoClientId: "",
+  asgardeoBaseUrl: "",
+  scope: ["openid", "profile"],
+  smartAppUrl: "",
+  smartLaunchServiceUrl: "",
 
   medication_request:
     "/choreo-apis/cms-paas/fhir-service-fm/v1/MedicationRequest",

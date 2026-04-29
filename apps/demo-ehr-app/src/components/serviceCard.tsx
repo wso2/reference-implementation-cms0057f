@@ -27,37 +27,47 @@ export default function MultiActionAreaCard({
   serviceName,
   serviceDescription,
   path,
+  onClick,
 }: ServiceCardProps) {
+  const inner = (
+    <CardActionArea sx={{ display: "flex", justifyContent: "flex-start" }}>
+      <CardMedia
+        component="img"
+        image={serviceImagePath}
+        alt="service image"
+        sx={{
+          objectFit: "contain",
+          width: "100px",
+          height: "100px",
+          margin: "1vw",
+          padding: "0.3vw",
+          borderRadius: 2,
+        }}
+      />
+      <CardContent>
+        <Typography gutterBottom variant="h5" component="div">
+          {serviceName}
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          {serviceDescription}
+        </Typography>
+      </CardContent>
+    </CardActionArea>
+  );
+
   return (
     <Card
       sx={{ maxWidth: "30vw", borderRadius: 2, backgroundColor: "#F8FAFC" }}
     >
-      <Link to={path} style={{ textDecoration: "none", color: "black" }}>
-        <CardActionArea sx={{ display: "flex", justifyContent: "flex-start" }}>
-          <CardMedia
-            component="img"
-            image={serviceImagePath}
-            alt="service image"
-            sx={{
-              objectFit: "contain",
-              width: "100px",
-              height: "100px",
-              margin: "1vw",
-              padding: "0.3vw",
-              // backgroundColor: "white",
-              borderRadius: 2,
-            }}
-          />
-          <CardContent>
-            <Typography gutterBottom variant="h5" component="div">
-              {serviceName}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {serviceDescription}
-            </Typography>
-          </CardContent>
-        </CardActionArea>
-      </Link>
+      {onClick ? (
+        <div onClick={onClick} style={{ textDecoration: "none", color: "black", cursor: "pointer" }}>
+          {inner}
+        </div>
+      ) : (
+        <Link to={path} style={{ textDecoration: "none", color: "black" }}>
+          {inner}
+        </Link>
+      )}
     </Card>
   );
 }

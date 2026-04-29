@@ -53,7 +53,7 @@ import {
 import {
   ArrowLeft,
   CheckCircle,
-  // XCircle,
+  XCircle,
   Download,
   FileText,
   Image as ImageIcon,
@@ -162,6 +162,32 @@ const formatDate = (dateString: string | undefined): string => {
   return dateString.split('T')[0];
 };
 
+// Extract DaVinci PAS reviewAction code from adjudication extension
+const extractReviewActionCode = (adjudication: unknown[]): 'approved' | 'denied' | undefined => {
+  const firstAdj = adjudication[0] as {
+    extension?: Array<{
+      url?: string;
+      extension?: Array<{
+        url?: string;
+        valueCodeableConcept?: { coding?: Array<{ code?: string }> };
+      }>;
+    }>;
+  };
+  for (const ext of firstAdj?.extension || []) {
+    if (ext.url === 'http://hl7.org/fhir/us/davinci-pas/StructureDefinition/extension-reviewAction') {
+      for (const nested of ext.extension || []) {
+        if (nested.url === 'http://hl7.org/fhir/us/davinci-pas/StructureDefinition/extension-reviewActionCode') {
+          const code = nested.valueCodeableConcept?.coding?.[0]?.code;
+          // Resolve these codes using the terminology service after fixing issue: https://github.com/wso2-enterprise/open-healthcare/issues/2108
+          if (code === 'A1') return 'approved';
+          if (code === 'A3') return 'denied';
+        }
+      }
+    }
+  }
+  return undefined;
+};
+
 // Initialize claim items with adjudication state
 const initializeItemsWithState = (items: ClaimItem[], status?: string): ClaimItemWithAdjudication[] => {
   return items.map((item) => {
@@ -186,6 +212,7 @@ const initializeItemsWithState = (items: ClaimItem[], status?: string): ClaimIte
         adjudicationPercent: eligpercentEntry.value,
         itemReviewNote: item.reviewNote || '',
         isReviewed: isComplete || adjudicationEntries.length > 0,
+        reviewActionCode: adjudicationEntries.length > 0 ? extractReviewActionCode(adjudicationEntries) : undefined,
       };
     }
 
@@ -206,6 +233,7 @@ const initializeItemsWithState = (items: ClaimItem[], status?: string): ClaimIte
       adjudicationPercent: undefined,
       itemReviewNote: item.reviewNote || '',
       isReviewed: isComplete || adjudicationEntries.length > 0,
+      reviewActionCode: adjudicationEntries.length > 0 ? extractReviewActionCode(adjudicationEntries) : undefined,
     };
   });
 };
@@ -468,17 +496,18 @@ export default function PARequestDetail() {
   const handleSaveDraft = async () => {
     if (!requestId) return;
     
-    // Filter items with complete adjudication data
-    const itemsWithAdjudication = claimItems.filter((item) => 
-      item.selectedAdjudicationCode && 
-      (item.adjudicationAmount !== undefined || item.adjudicationPercent !== undefined)
+    // Filter items with complete adjudication data (denied items are always included)
+    const itemsWithAdjudication = claimItems.filter((item) =>
+      item.reviewActionCode === 'denied' ||
+      (item.selectedAdjudicationCode &&
+        (item.adjudicationAmount !== undefined || item.adjudicationPercent !== undefined))
     );
-    
+
     if (itemsWithAdjudication.length === 0) {
       setError('Please provide adjudication details (category and amount) for at least one item before saving.');
       return;
     }
-    
+
     setSubmitting(true);
     setError(null);
     try {
@@ -491,6 +520,7 @@ export default function PARequestDetail() {
             ? { approvedPercent: item.adjudicationPercent }
             : { approvedAmount: item.adjudicationAmount }),
           itemNotes: item.itemReviewNote,
+          reviewActionCode: item.reviewActionCode,
         })),
         reviewerNotes: overallNotes,
       };
@@ -510,18 +540,25 @@ export default function PARequestDetail() {
 
   const handleCompleteReview = async () => {
     if (!requestId) return;
-    
-    // Validate that all items have complete adjudication data
-    const itemsWithoutAdjudication = claimItems.filter((item) => 
-      !item.selectedAdjudicationCode || 
-      (item.adjudicationAmount === undefined && item.adjudicationPercent === undefined)
+
+    // Validate that all non-denied items have complete adjudication data
+    const itemsWithoutAdjudication = claimItems.filter((item) =>
+      item.reviewActionCode !== 'denied' &&
+      (!item.selectedAdjudicationCode ||
+        (item.adjudicationAmount === undefined && item.adjudicationPercent === undefined))
     );
-    
+
     if (itemsWithoutAdjudication.length > 0) {
       setError(`Please provide complete adjudication details (category and amount) for all items before completing the review. Missing details for item(s): ${itemsWithoutAdjudication.map(i => i.sequence).join(', ')}`);
       return;
     }
-    
+
+    const itemsWithoutApprovalDecision = claimItems.filter((item) => !item.reviewActionCode);
+    if (itemsWithoutApprovalDecision.length > 0) {
+      setError(`Please select an approval decision (Approved or Denied) for all items before completing the review. Missing for item(s): ${itemsWithoutApprovalDecision.map(i => i.sequence).join(', ')}`);
+      return;
+    }
+
     setSubmitting(true);
     setError(null);
     try {
@@ -531,9 +568,11 @@ export default function PARequestDetail() {
           sequence: item.sequence,
           adjudicationCode: item.selectedAdjudicationCode!,
           ...(item.selectedAdjudicationCode === 'eligpercent'
-            ? { approvedPercent: item.adjudicationPercent }
-            : { approvedAmount: item.adjudicationAmount }),
+           ? { approvedPercent: item.adjudicationPercent }
+           : { approvedAmount: item.adjudicationAmount }),
           itemNotes: item.itemReviewNote,
+          reviewActionCode: item.reviewActionCode,
+          
         })),
         reviewerNotes: overallNotes,
       };
@@ -1040,18 +1079,20 @@ export default function PARequestDetail() {
                       ${(item.net?.value || item.unitPrice?.value || 0).toLocaleString()}
                     </TableCell>
                     <TableCell>
-                      {item.selectedAdjudicationCode ? (
-                        <Chip
-                          label={AdjudicationCodeDisplay[item.selectedAdjudicationCode as AdjudicationCode]}
-                          size="small"
-                          color="primary"
-                          variant="outlined"
-                        />
-                      ) : (
-                        <Typography variant="caption" color="text.secondary">
-                          Not set
-                        </Typography>
-                      )}
+                      <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                        {item.selectedAdjudicationCode ? (
+                          <Chip
+                            label={AdjudicationCodeDisplay[item.selectedAdjudicationCode as AdjudicationCode]}
+                            size="small"
+                            color="primary"
+                            variant="outlined"
+                          />
+                        ) : (
+                          <Typography variant="caption" color="text.secondary">
+                            Not set
+                          </Typography>
+                        )}
+                      </Box>
                     </TableCell>
                     <TableCell>
                       {item.isReviewed ? (
@@ -1530,7 +1571,9 @@ export default function PARequestDetail() {
                 onChange={handleItemAccordionChange(item.sequence)}
                 sx={{ 
                   border: 1, 
-                  borderColor: item.isReviewed ? 'success.main' : 'divider',
+                  borderColor: item.isReviewed
+                    ? (item.reviewActionCode === 'denied' ? 'error.main' : 'success.main')
+                    : 'divider',
                   '&:before': { display: 'none' },
                 }}
               >
@@ -1547,9 +1590,15 @@ export default function PARequestDetail() {
                         {getProductOrServiceName(item.productOrService)}
                       </Typography>
                     </Box>
-                    <Typography variant="body2" color="text.secondary">
-                      ${(item.net?.value || 0).toLocaleString()}
-                    </Typography>
+                    {item.reviewActionCode && (
+                      <Chip
+                        icon={item.reviewActionCode === 'approved' ? <CheckCircle size={14} /> : <XCircle size={14} />}
+                        label={item.reviewActionCode === 'approved' ? 'Approved' : 'Denied'}
+                        color={item.reviewActionCode === 'approved' ? 'success' : 'error'}
+                        size="small"
+                        sx={{ fontWeight: 600 }}
+                      />
+                    )}
                   </Box>
                 </AccordionSummary>
                 <AccordionDetails>
@@ -1639,10 +1688,12 @@ export default function PARequestDetail() {
                     {isProcessedView ? (
                       // Processed View - Display Only
                       <Paper variant="outlined" sx={{ p: 2 }}>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
-                          Adjudication Decision
-                        </Typography>
-                        
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                            Adjudication Decision
+                          </Typography>
+                        </Box>
+
                         {item.adjudication && item.adjudication.length > 0 ? (
                           <Box>
                             <TableContainer>
@@ -1706,9 +1757,50 @@ export default function PARequestDetail() {
                           Item Adjudication
                         </Typography>
 
-                        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 2fr auto' }, gap: 2, alignItems: 'start' }}>
+                        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr 1fr auto' }, gap: 2, alignItems: 'start' }}>
+                          {/* Approval Decision */}
+                          <FormControl fullWidth size="small" required>
+                            <InputLabel>Approval Decision</InputLabel>
+                            <Select
+                              value={item.reviewActionCode || ''}
+                              label="Approval Decision"
+                              onChange={(e) => {
+                                const val = e.target.value as 'approved' | 'denied';
+                                updateItemAdjudication(item.sequence, 'reviewActionCode', val);
+                                if (val === 'denied') {
+                                  if (!item.selectedAdjudicationCode) {
+                                    updateItemAdjudication(item.sequence, 'selectedAdjudicationCode', 'benefit');
+                                  }
+                                  updateItemAdjudication(item.sequence, 'adjudicationAmount', 0);
+                                  updateItemAdjudication(item.sequence, 'adjudicationPercent', 0);
+                                }
+                              }}
+                              renderValue={(selected) => (
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                  {selected === 'approved'
+                                    ? <CheckCircle size={16} color="green" />
+                                    : <XCircle size={16} color="red" />}
+                                  <span>{selected === 'approved' ? 'Approved' : 'Denied'}</span>
+                                </Box>
+                              )}
+                            >
+                              <MenuItem value="approved">
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                  <CheckCircle size={16} color="green" />
+                                  <span>Approved</span>
+                                </Box>
+                              </MenuItem>
+                              <MenuItem value="denied">
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                  <XCircle size={16} color="red" />
+                                  <span>Denied</span>
+                                </Box>
+                              </MenuItem>
+                            </Select>
+                          </FormControl>
+
                           {/* Adjudication Code Select */}
-                          <FormControl fullWidth size="small">
+                          <FormControl fullWidth size="small" disabled={item.reviewActionCode === 'denied'}>
                             <InputLabel>Adjudication Category</InputLabel>
                             <Select
                               value={item.selectedAdjudicationCode || ''}
@@ -1734,6 +1826,7 @@ export default function PARequestDetail() {
                               size="small"
                               label="Eligible Percentage"
                               type="number"
+                              disabled={item.reviewActionCode === 'denied'}
                               value={item.adjudicationPercent ?? ''}
                               onChange={(e) => {
                                 const value = parseFloat(e.target.value);
@@ -1756,6 +1849,7 @@ export default function PARequestDetail() {
                               size="small"
                               label="Amount"
                               type="number"
+                              disabled={item.reviewActionCode === 'denied'}
                               value={item.adjudicationAmount ?? ''}
                               onChange={(e) => {
                                 const value = parseFloat(e.target.value);

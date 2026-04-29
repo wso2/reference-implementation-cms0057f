@@ -76,6 +76,7 @@ export interface ItemAdjudicationSubmission {
   approvedAmount?: number;
   approvedPercent?: number;
   itemNotes?: string;
+  reviewActionCode?: 'approved' | 'denied';
 }
 
 /**
@@ -126,7 +127,7 @@ class PARequestsAPI {
       ...options,
       headers: {
         'Content-Type': 'application/json',
-        ...options?.headers,
+        ...options?.headers, 
       },
     });
 

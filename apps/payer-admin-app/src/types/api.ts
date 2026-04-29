@@ -192,6 +192,7 @@ export interface ClaimItemWithAdjudication extends ClaimItem {
   adjudicationPercent?: number;
   itemReviewNote?: string;
   isReviewed?: boolean;
+  reviewActionCode?: 'approved' | 'denied';
 }
 
 /**

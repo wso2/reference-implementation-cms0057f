@@ -161,6 +161,14 @@ function PractitionerDashBoard() {
       </Box>
 
       <ServiceCardList services={SERVICE_CARD_DETAILS} expanded={expanded} />
+      <Box
+        sx={{
+          mb: 3,
+          pb: 2.5,
+          borderBottom: "1px solid",
+          borderColor: "divider",
+        }}
+      >
       <Typography
         variant="h4"
         component="h1"
@@ -169,19 +177,34 @@ function PractitionerDashBoard() {
           letterSpacing: "-0.03em",
           color: "text.primary",
           fontSize: { xs: "1.65rem", sm: "2rem" },
+          mt: { xs: 4, md: 6 },
         }}
       >
         SMART App Launch
       </Typography>
-      <div>
-          <MultiActionAreaCard
-            serviceImagePath="/encounter_start.png"
-            serviceName="Diagnostic Reports Viewer"
-            serviceDescription="Launch a SMART on FHIR application in the context of this EHR session."
-            path=""
-            onClick={handleSmartLaunch}
-          />
-        </div>
+      </Box>
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: expanded
+            ? "minmax(0, 1fr)"
+            : {
+                xs: "minmax(0, 1fr)",
+                sm: "repeat(2, minmax(0, 1fr))",
+                lg: "repeat(3, minmax(0, 1fr))",
+              },
+          gap: { xs: 2.5, md: 3 },
+          width: "100%",
+        }}
+      >
+        <MultiActionAreaCard
+          serviceImagePath="/encounter_start.png"
+          serviceName="Diagnostic Reports Viewer"
+          serviceDescription="Launch a SMART on FHIR application in the context of this EHR session."
+          path=""
+          onClick={handleSmartLaunch}
+        />
+      </Box>
     </Box>
   ) : (
     <Navigate to="/" replace />

@@ -1593,7 +1593,7 @@ export default function PARequestDetail() {
                     {item.reviewActionCode && (
                       <Chip
                         icon={item.reviewActionCode === 'approved' ? <CheckCircle size={14} /> : <XCircle size={14} />}
-                        label={item.reviewActionCode === 'approved' ? 'Approved' : 'Denied'}
+                        label={item.reviewActionDisplay ?? (item.reviewActionCode === 'approved' ? 'Approved' : 'Denied')}
                         color={item.reviewActionCode === 'approved' ? 'success' : 'error'}
                         size="small"
                         sx={{ fontWeight: 600 }}

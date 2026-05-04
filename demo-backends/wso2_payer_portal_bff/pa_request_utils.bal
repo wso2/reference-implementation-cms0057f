@@ -956,6 +956,47 @@ isolated function parseClaimItems(international401:ClaimItem[] pasClaimItems, in
             }
         }
         
+        // Extract review action code from the DaVinci PAS extension and resolve its display
+        string? reviewActionDisplay = ();
+        if adjudication is json[] {
+            foreach json adj in adjudication {
+                if adj is map<json> {
+                    json extJson = adj["extension"];
+                    if extJson is json[] {
+                        foreach json ext in extJson {
+                            if ext is map<json> && ext["url"] == "http://hl7.org/fhir/us/davinci-pas/StructureDefinition/extension-reviewAction" {
+                                json innerExts = ext["extension"];
+                                if innerExts is json[] {
+                                    foreach json innerExt in innerExts {
+                                        if innerExt is map<json> && innerExt["url"] == "http://hl7.org/fhir/us/davinci-pas/StructureDefinition/extension-reviewActionCode" {
+                                            json valueConcept = innerExt["valueCodeableConcept"];
+                                            if valueConcept is map<json> {
+                                                json codings = valueConcept["coding"];
+                                                if codings is json[] && codings.length() > 0 {
+                                                    json firstCoding = codings[0];
+                                                    if firstCoding is map<json> {
+                                                        json code = firstCoding["code"];
+                                                        if code is string {
+                                                            reviewActionDisplay = lookupCodeSystemDisplay(code, reviewActionCodeSystem, reviewActionCodeSystemVersion);
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            break;
+                                        }
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+                if reviewActionDisplay is string {
+                    break;
+                }
+            }
+        }
+
         ClaimItem item = {
             sequence: pasItem.sequence,
             productOrService: productOrServiceJson,
@@ -967,7 +1008,8 @@ isolated function parseClaimItems(international401:ClaimItem[] pasClaimItems, in
             servicedPeriod: servicedPeriodJson,
             adjudication: adjudication,
             noteNumbers: noteNumbers,
-            reviewNote: reviewNote
+            reviewNote: reviewNote,
+            reviewActionDisplay: reviewActionDisplay
         };
         
         items.push(item);
@@ -1191,8 +1233,8 @@ public isolated function submitPARequestAdjudication(string responseId, Adjudica
 
         // Attach DaVinci PAS reviewAction extension to the primary adjudication entry
         if itemAdj.reviewActionCode is string {
-            string reviewCode = itemAdj.reviewActionCode == "approved" ? "A1" : "A3";
-            string reviewDisplay = itemAdj.reviewActionCode == "approved" ? "Certified in total" : "Not Certified";
+            string? reviewActionCode = itemAdj.reviewActionCode;
+            string? reviewDisplay = lookupCodeSystemDisplay(reviewActionCode, reviewActionCodeSystem, reviewActionCodeSystemVersion);
             mainAdj["extension"] = [
                 {
                     url: "http://hl7.org/fhir/us/davinci-pas/StructureDefinition/extension-reviewAction",
@@ -1202,8 +1244,8 @@ public isolated function submitPARequestAdjudication(string responseId, Adjudica
                             valueCodeableConcept: {
                                 coding: [
                                     {
-                                        system: "https://codesystem.x12.org/005010/306",
-                                        code: reviewCode,
+                                        system: reviewActionCodeSystem,
+                                        code: reviewActionCode,
                                         display: reviewDisplay
                                     }
                                 ]

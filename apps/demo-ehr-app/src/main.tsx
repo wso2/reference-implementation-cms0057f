@@ -59,8 +59,9 @@ try {
     signInRedirectURL: window.Config.baseUrl,
     signOutRedirectURL: window.Config.baseUrl,
     clientID: window.Config.asgardeoClientId,
+    clientSecret: window.Config.asgardeoClientSecret,
     baseUrl: window.Config.asgardeoBaseUrl,
-    scope: window.Config.scope
+    scope: window.Config.scope,
   });
 
 

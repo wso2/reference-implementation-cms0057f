@@ -4,6 +4,7 @@ interface Window {
   Config: {
     asgardeoBaseUrl: string;
     asgardeoClientId: string;
+    asgardeoClientSecret: string;
     smartAppUrl: string;
     smartLaunchServiceUrl: string;
     baseUrl: string;

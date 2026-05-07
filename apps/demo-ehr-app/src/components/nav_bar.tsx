@@ -36,7 +36,14 @@ export default function NavBar() {
     const fetchUserInfo = async () => {
       const user = await auth.getBasicUserInfo();
       if (user) {
-        dispatch(updateLoggedUser({ username: user.name }));
+        const username =
+          user.displayName ??
+          user.name ??
+          (user.givenName || user.familyName
+            ? `${user.givenName ?? ""} ${user.familyName ?? ""}`.trim()
+            : null) ??
+          user.sub;
+        dispatch(updateLoggedUser({ username }));
       }
     };
 

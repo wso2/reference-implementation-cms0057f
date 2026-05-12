@@ -1258,7 +1258,7 @@ public isolated function submitPARequestAdjudication(string responseId, Adjudica
         adjudicationArray.push(mainAdj);
 
         // Add benefit amount only for approved items; denied items carry no approved amount
-        if itemAdj.reviewActionCode != "denied" && itemAdj.approvedAmount is decimal {
+        if (itemAdj.reviewActionCode == "denied" || itemAdj.reviewActionCode == "approved") && itemAdj.approvedAmount is decimal {
             international401:ClaimResponseItemAdjudication benefitAdj = {
                 category: {
                     coding: [

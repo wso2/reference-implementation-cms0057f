@@ -178,9 +178,8 @@ const extractReviewActionCode = (adjudication: unknown[]): 'approved' | 'denied'
       for (const nested of ext.extension || []) {
         if (nested.url === 'http://hl7.org/fhir/us/davinci-pas/StructureDefinition/extension-reviewActionCode') {
           const code = nested.valueCodeableConcept?.coding?.[0]?.code;
-          // Resolve these codes using the terminology service after fixing issue: https://github.com/wso2-enterprise/open-healthcare/issues/2108
-          if (code === 'A1') return 'approved';
-          if (code === 'A3') return 'denied';
+          if (code === 'approved') return 'approved';
+          if (code === 'denied') return 'denied';
         }
       }
     }
@@ -1593,7 +1592,7 @@ export default function PARequestDetail() {
                     {item.reviewActionCode && (
                       <Chip
                         icon={item.reviewActionCode === 'approved' ? <CheckCircle size={14} /> : <XCircle size={14} />}
-                        label={item.reviewActionDisplay ?? (item.reviewActionCode === 'approved' ? 'Approved' : 'Denied')}
+                        label={item.reviewActionCode ?? (item.reviewActionCode === 'approved' ? 'Approved' : 'Denied')}
                         color={item.reviewActionCode === 'approved' ? 'success' : 'error'}
                         size="small"
                         sx={{ fontWeight: 600 }}

@@ -1448,6 +1448,8 @@ isolated function determineClaimType(ClaimResponse claimResponse, international4
 # 2. "denied" if all items are denied. 
 # 3. "partially-approved" if a subset of items are approved. 
 # 
+# It is assumed that an item can contain only one adjudication with the reviewAction extension.
+# 
 # NOTE: If there are no items present in a completed claim, 
 # * If a "preAuthRef" is present in claim response, it is assumed that the claim is approved without needing to review items.
 # * If a "preAuthRef" is not present, it is assumed that the claim is rejected.

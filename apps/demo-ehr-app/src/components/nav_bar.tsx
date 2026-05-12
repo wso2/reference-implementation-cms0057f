@@ -141,9 +141,9 @@ export default function NavBar() {
                   fontWeight={400}
                 >
                   {"Dr. " +
-                    loggedUser?.first_name +
+                    loggedUser?.given_name +
                     " " +
-                    loggedUser?.last_name}
+                    loggedUser?.family_name}
                 </Box>
                 <Box position="relative">
                   <Box

@@ -55,6 +55,8 @@ declare global {
       group: string;
       npi: string;
       payers: { id: string; name: string }[];
+      smartAppUrl: string;
+      smartLaunchServiceUrl: string;
     };
   }
 }

@@ -54,26 +54,6 @@ import DtrLaunchPage from "./pages/dtr_launch_page.tsx";
 import { SPAUtils } from "@asgardeo/auth-spa";
 import auth from "./utils/auth.ts";
 
-try {
-  await auth.initialize({
-    signInRedirectURL: window.Config.baseUrl,
-    signOutRedirectURL: window.Config.baseUrl,
-    clientID: window.Config.asgardeoClientId,
-    clientSecret: window.Config.asgardeoClientSecret,
-    baseUrl: window.Config.asgardeoBaseUrl,
-    scope: window.Config.scope,
-  });
-
-
-  if (SPAUtils.hasAuthSearchParamsInURL()) {
-    await auth.signIn({ callOnlyOnRedirect: true });
-  } else {
-    await auth.trySignInSilently().catch(() => {});
-  }
-} catch (e) {
-  console.error("Asgardeo initialization failed:", e);
-}
-
 axios.interceptors.request.use(async (config) => {
   try {
     const token = await auth.getAccessToken();
@@ -86,7 +66,27 @@ axios.interceptors.request.use(async (config) => {
   return config;
 });
 
-ReactDOM.createRoot(document.getElementById("root")!).render(
+(async () => {
+  try {
+    await auth.initialize({
+      signInRedirectURL: window.Config.baseUrl,
+      signOutRedirectURL: window.Config.baseUrl,
+      clientID: window.Config.asgardeoClientId,
+      clientSecret: window.Config.asgardeoClientSecret,
+      baseUrl: window.Config.asgardeoBaseUrl,
+      scope: window.Config.scope,
+    });
+
+    if (SPAUtils.hasAuthSearchParamsInURL()) {
+      await auth.signIn({ callOnlyOnRedirect: true });
+    } else {
+      await auth.trySignInSilently().catch(() => {});
+    }
+  } catch (e) {
+    console.error("Asgardeo initialization failed:", e);
+  }
+
+  ReactDOM.createRoot(document.getElementById("root")!).render(
   <Provider store={store}>
     <PersistGate loading={null} persistor={persistor}>
       <ExpandedContextProvider>
@@ -184,4 +184,5 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       </ExpandedContextProvider>
     </PersistGate>
   </Provider>
-);
+  );
+})();

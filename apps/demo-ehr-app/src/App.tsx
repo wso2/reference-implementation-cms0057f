@@ -55,6 +55,12 @@ declare global {
       group: string;
       npi: string;
       payers: { id: string; name: string }[];
+      asgardeoBaseUrl: string;
+      asgardeoClientId: string;
+      asgardeoClientSecret: string;
+      scope?: string[];
+      smartAppUrl: string;
+      smartLaunchServiceUrl: string;
     };
   }
 }

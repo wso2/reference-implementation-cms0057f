@@ -28,6 +28,7 @@ export default function MultiActionAreaCard({
   serviceName,
   serviceDescription,
   path,
+  onClick,
 }: ServiceCardProps) {
   return (
     <Card
@@ -50,8 +51,7 @@ export default function MultiActionAreaCard({
       }}
     >
       <CardActionArea
-        component={Link}
-        to={path}
+        {...(onClick ? { onClick } : { component: Link, to: path })}
         sx={{
           display: "flex",
           flexDirection: "column",

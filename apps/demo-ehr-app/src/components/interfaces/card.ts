@@ -19,6 +19,7 @@ export interface ServiceCardProps {
   serviceName: string;
   serviceDescription: string;
   path: string;
+  onClick?: () => void;
 }
 
 export interface ServiceCardListProps {

@@ -17,3 +17,6 @@
 configurable string base = ?;
 configurable string pdexBaseUrl = ?;
 configurable DatabaseConfig databaseConfig = ?;
+configurable string terminologyServiceUrl = ?;
+configurable string reviewActionCodeSystem = ?;
+configurable string? reviewActionCodeSystemVersion = ();

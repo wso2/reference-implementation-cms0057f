@@ -371,9 +371,10 @@ public type CoverageInformation record {
 # + net - field description  
 # + servicedDate - field description  
 # + servicedPeriod - field description  
-# + adjudication - field description  
-# + noteNumbers - field description  
+# + adjudication - field description
+# + noteNumbers - field description
 # + reviewNote - field description
+# + reviewActionDisplay - Human-readable display for the review action code, resolved from the terminology service
 public type ClaimItem record {
     int sequence;
     json productOrService; // FHIR CodeableConcept
@@ -386,6 +387,7 @@ public type ClaimItem record {
     json[]? adjudication;
     int[]? noteNumbers;
     string? reviewNote;
+    string? reviewActionDisplay;
 };
 
 # Patient Event Dates
@@ -483,7 +485,7 @@ public type ReviewActionCode "approved"|"denied";
 # + adjudicationCode - field description
 # + approvedAmount - field description
 # + itemNotes - field description
-# + reviewActionCode - DaVinci PAS review action: "approved" (A1 - Certified in total) or "denied" (A3 - Not Certified)
+# + reviewActionCode - DaVinci PAS review action: "approved" or "denied"
 public type ItemAdjudicationSubmission record {
     int sequence;
     string adjudicationCode; // "copay", "deductible", "benefit", etc.

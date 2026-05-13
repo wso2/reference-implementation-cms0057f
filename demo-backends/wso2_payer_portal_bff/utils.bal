@@ -20,6 +20,41 @@ import ballerina/lang.regexp;
 import ballerina/http;
 import ballerina/jwt;
 
+# Look up the display string for a code in a given CodeSystem via the terminology service.
+# Returns () on any error or if the display parameter is absent in the response.
+#
+# + code - The code to look up
+# + system - CodeSystem canonical URL
+# + version - CodeSystem version (omitted from request if not provided)
+# + return - Display string or () if unavailable
+isolated function lookupCodeSystemDisplay(string? code, string system, string? version) returns string? {
+    
+    if code is string {
+        string path = version is string
+            ? string `/CodeSystem/%24lookup?system=${system}&code=${code}&version=${version}`
+            : string `/CodeSystem/%24lookup?system=${system}&code=${code}`;
+        json|http:ClientError result = terminologyHttpClient->get(path);
+        if result is http:ClientError {
+            log:printWarn("Terminology lookup failed for code " + code + ": " + result.message());
+            return ();
+        }
+        if result is map<json> {
+            json params = result["parameter"];
+            if params is json[] {
+                foreach json param in params {
+                    if param is map<json> && param["name"] == "display" {
+                        json display = param["valueString"];
+                        if display is string {
+                            return display;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return ();
+}
+
 isolated function AddDurationToDate(string date, string durationDays) returns string|error {
     // Parse the duration days
     int days = check int:fromString(durationDays);

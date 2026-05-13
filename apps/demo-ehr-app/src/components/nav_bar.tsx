@@ -50,6 +50,7 @@ export default function NavBar() {
         );
       }
     };
+    console.log("Fetching user info..." + loggedUser.given_name );
 
     fetchUserInfo();
   }, [dispatch]);
@@ -60,6 +61,7 @@ export default function NavBar() {
   const { expanded } = useContext(ExpandedContext);
 
   const [showDropdown, setShowDropdown] = useState(false);
+  console.log("Fetched user info..." + loggedUser );
 
 
 

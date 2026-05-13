@@ -44,8 +44,8 @@ export default function NavBar() {
         dispatch(
           updateLoggedUser({
             username: loggedUser.username,
-            first_name: loggedUser.first_name,
-            last_name: loggedUser.last_name,
+            first_name: loggedUser.given_name,
+            last_name: loggedUser.family_name,
           })
         );
       }
@@ -141,9 +141,9 @@ export default function NavBar() {
                   fontWeight={400}
                 >
                   {"Dr. " +
-                    loggedUser?.given_name +
+                    loggedUser?.first_name +
                     " " +
-                    loggedUser?.family_name}
+                    loggedUser?.last_name}
                 </Box>
                 <Box position="relative">
                   <Box

@@ -39,18 +39,18 @@ export default function NavBar() {
           console.log("Logged User Info: ", data);
           return data;
         });
-
+      console.log("Fetching user info..." + loggedUser.given_name );
       if (loggedUser) {
+        console.log("Dispatching:", { given_name: loggedUser.given_name, family_name: loggedUser.family_name, username: loggedUser.username });
         dispatch(
           updateLoggedUser({
-            username: loggedUser.username,
+            username: loggedUser.sub ?? loggedUser.username,
             first_name: loggedUser.given_name,
             last_name: loggedUser.family_name,
           })
         );
       }
     };
-    console.log("Fetching user info..." + loggedUser.given_name );
 
     fetchUserInfo();
   }, [dispatch]);
@@ -143,9 +143,9 @@ export default function NavBar() {
                   fontWeight={400}
                 >
                   {"Dr. " +
-                    loggedUser?.first_name +
-                    " " +
-                    loggedUser?.last_name}
+                    ((loggedUser?.first_name && loggedUser?.last_name)
+                      ? `${loggedUser.first_name} ${loggedUser.last_name}`
+                      : (loggedUser?.username ?? ""))}
                 </Box>
                 <Box position="relative">
                   <Box

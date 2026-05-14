@@ -39,13 +39,14 @@ export default function NavBar() {
           console.log("Logged User Info: ", data);
           return data;
         });
-
+      console.log("Fetching user info..." + loggedUser.given_name );
       if (loggedUser) {
+        console.log("Dispatching:", { given_name: loggedUser.given_name, family_name: loggedUser.family_name, username: loggedUser.username });
         dispatch(
           updateLoggedUser({
-            username: loggedUser.username,
-            first_name: loggedUser.first_name,
-            last_name: loggedUser.last_name,
+            username: loggedUser.sub ?? loggedUser.username,
+            first_name: loggedUser.given_name,
+            last_name: loggedUser.family_name,
           })
         );
       }
@@ -60,6 +61,7 @@ export default function NavBar() {
   const { expanded } = useContext(ExpandedContext);
 
   const [showDropdown, setShowDropdown] = useState(false);
+  console.log("Fetched user info..." + loggedUser );
 
 
 
@@ -141,9 +143,9 @@ export default function NavBar() {
                   fontWeight={400}
                 >
                   {"Dr. " +
-                    loggedUser?.given_name +
-                    " " +
-                    loggedUser?.family_name}
+                    ((loggedUser?.first_name && loggedUser?.last_name)
+                      ? `${loggedUser.first_name} ${loggedUser.last_name}`
+                      : (loggedUser?.username ?? ""))}
                 </Box>
                 <Box position="relative">
                   <Box

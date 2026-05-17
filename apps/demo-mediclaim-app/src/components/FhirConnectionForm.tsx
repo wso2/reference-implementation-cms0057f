@@ -232,17 +232,6 @@ const FhirConnectionForm: React.FC = () => {
             />
           </div>
 
-          {/* <div className="flex items-center space-x-2 pt-2">
-            <Checkbox
-              id="practitionerMode"
-              checked={formData.practitionerMode}
-              onCheckedChange={handleCheckboxChange}
-            />
-            <Label htmlFor="practitionerMode" className="cursor-pointer">
-              Practitioner Mode
-            </Label>
-          </div> */}
-
           {error && <div className="text-sm text-destructive">{error}</div>}
 
           <Button

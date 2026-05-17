@@ -19,6 +19,7 @@ import { useDispatch } from "react-redux";
 import { selectPatient } from "../redux/patientSlice";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../components/AuthProvider";
+import auth from "../utils/auth";
 import Form from "react-bootstrap/Form";
 import Card from "react-bootstrap/Card";
 import Select, { SingleValue } from "react-select";
@@ -35,13 +36,14 @@ import {
   SELECTED_PATIENT_ID,
   SELECTED_PATIENT_NAME,
 } from "../constants/localStorageVariables";
-import { clearLocalStorageForPAPrococess, clearLocalStorageFully } from "../utils/clearLocalStorage";
+import { clearLocalStorageForPAPrococess } from "../utils/clearLocalStorage";
 import { HTTP_METHODS } from "../constants/enum";
 
 function PatientEncounter() {
   const { isAuthenticated } = useAuth();
   const [selectedPatient, setSelectedPatient] = useState("");
   const [isLoaded, setIsLoaded] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const Config = window.Config;
@@ -74,8 +76,7 @@ function PatientEncounter() {
         setIsLoaded(true);
       } catch (error) {
         console.error("Error fetching patient details:", error);
-        clearLocalStorageFully();
-        navigate("/login");
+        setFetchError("Failed to load patient list. Please try again.");
       }
     };
 
@@ -103,9 +104,7 @@ function PatientEncounter() {
       SELECTED_PATIENT_NAME,
       patients[selectedPatient].fullName
     );
-    const loggedUser = await fetch("/auth/userinfo").then((response) =>
-      response.json()
-    );
+    const loggedUser = await auth.getBasicUserInfo();
     localStorage.setItem("loggedUser", JSON.stringify(loggedUser));
     navigate("/dashboard");
   };
@@ -122,11 +121,12 @@ function PatientEncounter() {
           }}
         >
           <div className="page-heading">Select Patient</div>
-
           <Card style={{ marginTop: "30px", padding: "20px" }}>
             <Card.Body>
               <Card.Title>Search for patient</Card.Title>
-              {!isLoaded ? (
+              {fetchError ? (
+                <div style={{ color: "red", marginTop: "10px" }}>{fetchError}</div>
+              ) : !isLoaded ? (
                 <div>Loading...</div>
               ) : (
                 <Form.Group

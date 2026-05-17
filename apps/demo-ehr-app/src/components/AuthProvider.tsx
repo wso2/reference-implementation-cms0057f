@@ -6,6 +6,7 @@ import {
   useEffect,
 } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import auth from "../utils/auth";
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -15,26 +16,28 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const location = useLocation();
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const navigate = useNavigate();
-  const originalPath = location.pathname;
-
-  const getAuthenticationIfo = async () => {
-    const response = await fetch("/auth/userinfo");
-
-    if (response.status == 200) {
-      setIsAuthenticated(true);
-      const redirectTo = originalPath || "/";
-      navigate(redirectTo, { replace: true });
-    } else if (response.status == 401) {
-      setIsAuthenticated(false);
-      navigate("/login");
-    }
-  };
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    getAuthenticationIfo();
+    auth.isAuthenticated().then((authenticated) => {
+      setIsAuthenticated(authenticated ?? false);
+      setIsLoading(false);
+    });
   }, []);
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    if (isAuthenticated) {
+      if (location.pathname === "/login") {
+        navigate("/", { replace: true });
+      }
+    } else {
+      navigate("/login", { replace: true });
+    }
+  }, [isAuthenticated, isLoading]);
 
   return (
     <AuthContext.Provider value={{ isAuthenticated }}>

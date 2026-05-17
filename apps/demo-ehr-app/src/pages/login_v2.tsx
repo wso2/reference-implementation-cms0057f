@@ -15,6 +15,7 @@
 // under the License.
 
 import Button from "react-bootstrap/Button";
+import auth from "../utils/auth";
 import { PATIENT_DETAILS } from "../constants/data";
 
 function LoginV2() {
@@ -24,7 +25,6 @@ function LoginV2() {
     const fullName = patient.name[0].given[0] + " " + patient.name[0].family;
     patients[patient.id] = fullName;
   });
-
   return (
     <div>
       <div
@@ -71,7 +71,7 @@ function LoginV2() {
                 fontSize: "1.5rem",
               }}
               onClick={() => {
-                window.location.href = "/auth/login";
+                auth.signIn();
               }}
             >
               Sign In

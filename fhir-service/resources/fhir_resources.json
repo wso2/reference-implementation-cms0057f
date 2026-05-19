@@ -12,8 +12,8 @@
       "http://hl7.org/fhir/StructureDefinition/Patient"
     ],
     "interaction": ["create", "read", "search-type", "update"],
-    "searchParamString": ["family", "given", "name", "identifier"],
-    "searchParamToken": ["gender"],
+    "searchParamString": ["family", "given", "name"],
+    "searchParamToken": ["gender", "identifier"],
     "searchParamDate": ["birthdate"],
     "searchParamNumber": ["_id"]
   },
@@ -51,7 +51,8 @@
     ],
     "interaction": ["create", "read", "search-type", "update"],
     "searchParamReference": ["patient"],
-    "searchParamString": ["use", "created"],
+    "searchParamToken": ["use"],
+    "searchParamDate": ["created"],
     "searchParamNumber": ["_id"]
   },
   {
@@ -67,7 +68,8 @@
     ],
     "interaction": ["create", "read", "search-type", "update"],
     "searchParamReference": ["patient", "request"],
-    "searchParamString": ["use", "created"],
+    "searchParamToken": ["use"],
+    "searchParamDate": ["created"],
     "searchParamNumber": ["_id"]
   },
   {
@@ -100,7 +102,8 @@
     ],
     "interaction": ["create", "read", "search-type", "update"],
     "searchParamReference": ["patient"],
-    "searchParamString": ["identifier", "created"],
+    "searchParamToken": ["identifier"],
+    "searchParamDate": ["created"],
     "searchParamNumber": ["_id"]
   },
   {

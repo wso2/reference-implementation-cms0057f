@@ -60,6 +60,23 @@ isolated function generateCapabilityStatement() returns international401:Capabil
         format: capabilityStatementFormat
     };
 
+    string? configName = configFHIRServer.name;
+    if configName is string {
+        capabilityStatement.name = configName;
+    }
+    string? configTitle = configFHIRServer.title;
+    if configTitle is string {
+        capabilityStatement.title = configTitle;
+    }
+    string? configVersion = configFHIRServer.'version;
+    if configVersion is string {
+        capabilityStatement.'version = configVersion;
+    }
+    boolean? experimental = configFHIRServer.experimental;
+    if experimental is boolean {
+        capabilityStatement.experimental = experimental;
+    }
+
     international401:CapabilityStatementImplementation capabilityStatementImplementation = {
         description: configFHIRServer.implementationDescription,
         url: configFHIRServer.implementationUrl

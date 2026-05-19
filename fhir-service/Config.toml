@@ -28,7 +28,7 @@ defaultListenerPort = 8080
 
 ## Following configurations are used to build the capability statement and smart configuration.
 [configs]
-discoveryEndpoint = "https://api.asgardeo.io/t/wso2healthcare/oauth2/token/.well-known/openid-configuration"
+discoveryEndpoint = "<discoveryEndpoint>"
 [configs.smartConfiguration]
 issuer = "<issuer>"
 jwksUri = "<jwksUri>"
@@ -36,17 +36,29 @@ authorizationEndpoint = "<authorizationEndpoint>"
 tokenEndpoint = "<tokenEndpoint>"
 codeChallengeMethodsSupported = ["S256"]
 grantTypesSupported = ["authorization_code"]
-capabilities = ["launch-ehr"]
+capabilities = ["launch-ehr", "client-public", "client-confidential-symmetric", "context-ehr-patient", "context-ehr-encounter", "permission-patient", "permission-user", "permission-offline"]
 
+## CapabilityStatement (/fhir/r4/metadata) — CMS-0057-F aligned server metadata
 [configFHIRServer]
+version = "1.0.0"
+name = "WSO2 CMS-0057-F FHIR Server"
+title = "CMS-0057-F Reference Implementation FHIR Server"
 status = "active"
+experimental = false
 kind = "instance"
-implementationDescription = "FHIR server"
 fhirVersion = "4.0.1"
 format = ["json"]
+patchFormat = ["application/json-patch+json"]
+implementationUrl = "http://localhost:8080/fhir/r4"
+implementationDescription = "WSO2 CMS-0057-F Reference Implementation FHIR Server"
 
 [configRest]
 mode = "server"
+resourceFilePath = "resources/fhir_resources.json"
+interaction = ["search-system"]
+[configRest.security]
+cors = true
+discoveryEndpoint = "<discoveryEndpoint>"
 
 [ballerinax.health.fhir.r4.parser]
 validateAgainstProfile=false
@@ -57,7 +69,7 @@ url = ""
 authEnabled = false
 
 [paDatabaseConfig]
-host = "<host>"
+host = "localhost"
 port = 3306
 user = "<user>"
 password = "<password>"

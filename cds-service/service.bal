@@ -32,10 +32,7 @@ final isolated cds:CdsService[] cds_services = [
         description: "Checks coverage requirements for spine MRI orders. Returns prior auth requirement, medical necessity guidance, and required documentation. Optionally provides a DTR launch link.",
         usageRequirements: "Requires access to the patient's clinical data and the draft order in context.draftOrders. For best results, include recent exam findings, conservative treatment evidence, and prior imaging.",
         prefetch: {
-            patient: "Patient/{{context.patientId}}",
-            observations: "Observation?patient={{context.patientId}}&_sort=-date&_count=20",
-            encounter: "Encounter/{{context.encounterId}}",
-            conditions: "Condition?patient={{context.patientId}}&clinical-status=active"
+            patient: "Patient/{{context.patientId}}"
         }
     },
     {

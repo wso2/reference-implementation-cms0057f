@@ -24,6 +24,7 @@ hs_err_pid*
 replay_pid*
 
 .idea/
+.claude
 
 # maven target directories
 target
@@ -69,3 +70,6 @@ node_modules/
 **/.devcontainer.json
 **/.vite
 **/.ai
+
+#Claude
+CLAUDE.md

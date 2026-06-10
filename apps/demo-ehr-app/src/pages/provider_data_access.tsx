@@ -13,16 +13,39 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { Container, Card, Form, Button, Alert, Spinner, Table } from "react-bootstrap";
+import { Container, Card, Form, Button, Alert, Spinner, Table, Row, Col, Badge } from "react-bootstrap";
+import Select, { SingleValue } from "react-select";
+import { CloudSync, ArrowBack, Storage } from "@mui/icons-material";
 import axios from "axios";
 import {
-    clearRequestLogs,
     appendRequestLog,
+    clearRequestLogs,
+    setStackedRequestLogs,
 } from "../redux/currentStateSlice";
 import { HTTP_METHODS } from "../constants/enum";
+
+const getPatientDisplayName = (
+    patientId: string,
+    patientData?: { [resourceType: string]: any[] }
+): string => {
+    const patientResources = patientData?.Patient;
+    if (patientResources && patientResources.length > 0) {
+        const patient = patientResources[0];
+        const name = patient.name?.[0];
+        if (name) {
+            const given = name.given?.join(" ") || "";
+            const family = name.family || "";
+            const fullName = `${given} ${family}`.trim();
+            if (fullName) {
+                return `${fullName} (ID: ${patient.id ?? patientId})`;
+            }
+        }
+    }
+    return `Patient ${patientId}`;
+};
 
 function ProviderDataAccess() {
     const [loading, setLoading] = useState(false);
@@ -38,6 +61,39 @@ function ProviderDataAccess() {
     const navigate = useNavigate();
     const dispatch = useDispatch();
 
+    useEffect(() => {
+        dispatch(setStackedRequestLogs(true));
+        return () => {
+            dispatch(setStackedRequestLogs(false));
+            dispatch(clearRequestLogs());
+        };
+    }, [dispatch]);
+
+    const patientOptions = useMemo(
+        () =>
+            Object.keys(downloadedData).map((patientId) => ({
+                value: patientId,
+                label: getPatientDisplayName(patientId, downloadedData[patientId]),
+            })),
+        [downloadedData]
+    );
+
+    const logToDevConsole = (
+        method: string,
+        payerFhirUrl: string,
+        response: unknown,
+        request: Record<string, unknown> = {}
+    ) => {
+        dispatch(
+            appendRequestLog({
+                method,
+                url: payerFhirUrl,
+                request,
+                response,
+            })
+        );
+    };
+
     const handleFetchData = async () => {
         const npi = Config.npi;
         if (!npi) {
@@ -49,18 +105,14 @@ function ProviderDataAccess() {
         setLoading(true);
         setErrorMsg("");
 
-        // Clear previous logs on new sync
         dispatch(clearRequestLogs());
 
         try {
+            const orgUrl = `${Config.demoBaseUrl}${Config.organization}?identifier=${npi}`;
+
             // 1. Fetch Organization by NPI identifier
             const orgResponse = await axios.get(`${Config.organization}?identifier=${npi}`);
-
-            dispatch(appendRequestLog({
-                url: `${Config.demoBaseUrl}${Config.organization}?identifier=${npi}`,
-                method: HTTP_METHODS.GET,
-                response: orgResponse.data
-            }));
+            logToDevConsole(HTTP_METHODS.GET, orgUrl, orgResponse.data);
 
             if (!orgResponse.data || !orgResponse.data.entry || orgResponse.data.entry.length === 0) {
                 throw new Error(`No Organization found for NPI: ${npi}`);
@@ -71,14 +123,11 @@ function ProviderDataAccess() {
 
             const organizationId = orgResponse.data.entry[0].resource.id;
 
+            const groupUrl = `${Config.demoBaseUrl}${Config.group}?managing-entity=Organization/${organizationId}`;
+
             // 2. Fetch Group by managing-entity
             const groupResponse = await axios.get(`${Config.group}?managing-entity=Organization/${organizationId}`);
-
-            dispatch(appendRequestLog({
-                url: `${Config.demoBaseUrl}${Config.group}?managing-entity=Organization/${organizationId}`,
-                method: HTTP_METHODS.GET,
-                response: groupResponse.data
-            }));
+            logToDevConsole(HTTP_METHODS.GET, groupUrl, groupResponse.data);
 
             if (!groupResponse.data || !groupResponse.data.entry || groupResponse.data.entry.length === 0) {
                 throw new Error(`No Group found managed by Organization: ${organizationId}`);
@@ -90,14 +139,10 @@ function ProviderDataAccess() {
             // 3. Trigger Group Export
             console.log(`[Provider Access] Triggering Group /$export operation...`);
 
-            const exportResponse = await axios.get(`${Config.group}/${groupId}/$export`);
+            const exportUrl = `${Config.demoBaseUrl}${Config.group}/${groupId}/$export`;
 
-            // Dispatch Export Job Dev Console Event
-            dispatch(appendRequestLog({
-                url: `${Config.demoBaseUrl}${Config.group}/${groupId}/$export`,
-                method: HTTP_METHODS.GET,
-                response: exportResponse.data
-            }));
+            const exportResponse = await axios.get(`${Config.group}/${groupId}/$export`);
+            logToDevConsole(HTTP_METHODS.GET, exportUrl, exportResponse.data);
 
             if (exportResponse.data && exportResponse.data.exportUrls) {
                 console.log(`[Provider Access] Group /$export Accepted. Transaction Time: ${exportResponse.data.transactionTime}`);
@@ -109,6 +154,11 @@ function ProviderDataAccess() {
 
         } catch (error: any) {
             console.error("Provider Data Access Error:", error);
+            logToDevConsole(
+                HTTP_METHODS.GET,
+                `${Config.demoBaseUrl}${Config.organization}`,
+                error.response?.data ?? { error: error.message || "An unexpected error occurred." }
+            );
             setErrorMsg(error.response?.data?.message || error.message || "An unexpected error occurred.");
             setLoading(false);
         }
@@ -121,20 +171,24 @@ function ProviderDataAccess() {
             const MAX_RETRIES = 30; // 30 * 2s = 60s
             const originalUrl = urls[patientId];
             const exportPathIndex = originalUrl.indexOf("_export/status");
+            const proxyBasePath = window.Config.group.replace("/Group", "");
             let pollingUrl = originalUrl;
 
             if (exportPathIndex !== -1) {
                 const relativeExportUrl = originalUrl.substring(exportPathIndex);
-                // Extract base path from Config.group (e.g. /choreo-apis/cms-paas/fhir-service-fm/v1)
-                const proxyBasePath = window.Config.group.replace("/Group", "");
                 pollingUrl = `${proxyBasePath}/${relativeExportUrl}`;
             }
+
+            const payerPollingUrl = originalUrl.startsWith("http")
+                ? originalUrl
+                : `${Config.demoBaseUrl}${pollingUrl.startsWith("/") ? pollingUrl : `/${pollingUrl}`}`;
 
             while (!isReady && retries < MAX_RETRIES) {
                 try {
                     const statusResponse = await axios.get(pollingUrl);
 
                     if (statusResponse.status === 200) {
+                        logToDevConsole(HTTP_METHODS.GET, payerPollingUrl, statusResponse.data);
                         isReady = true;
                         if (statusResponse.data && statusResponse.data.output) {
                             console.log(`[Provider Access] [Patient: ${patientId}] Export completed successfully. Data received:`, statusResponse.data.output);
@@ -145,7 +199,13 @@ function ProviderDataAccess() {
                             console.warn(`[Provider Access] [Patient: ${patientId}] Export ready but no output links provided.`);
                         }
                     } else if (statusResponse.status === 202) {
-                        // Still processing
+                        logToDevConsole(HTTP_METHODS.GET, payerPollingUrl, {
+                            status: 202,
+                            message: "Export pending",
+                            patientId,
+                            attempt: retries + 1,
+                            maxRetries: MAX_RETRIES,
+                        });
                         console.log(`[Provider Access] [Patient: ${patientId}] Export pending (202). Retrying in 2 seconds... (Attempt ${retries + 1}/${MAX_RETRIES})`);
                         await new Promise((resolve) => setTimeout(resolve, 2000));
                         retries++;
@@ -154,6 +214,11 @@ function ProviderDataAccess() {
                     }
                 } catch (err: any) {
                     isReady = true; // Stop polling on error
+                    logToDevConsole(
+                        HTTP_METHODS.GET,
+                        payerPollingUrl,
+                        err.response?.data ?? { error: err.message || "Polling failed", patientId }
+                    );
                     console.error(`[Provider Access] [Patient: ${patientId}] Polling failed:`, err);
                 }
             }
@@ -184,13 +249,33 @@ function ProviderDataAccess() {
                         downloadUrl = `${proxyBasePath}/${relativeDownloadUrl}`;
                     }
 
+                    const payerDownloadUrl = originalUrl.startsWith("http")
+                        ? originalUrl
+                        : `${Config.demoBaseUrl}${downloadUrl.startsWith("/") ? downloadUrl : `/${downloadUrl}`}`;
+
                     const res = await axios.get(downloadUrl, { responseType: 'text' });
-                    // Parse NDJSON (New Line Delimited JSON)
                     const lines = res.data.split('\n').filter((line: string) => line.trim() !== '');
                     const resources = lines.map((line: string) => JSON.parse(line));
                     patientData[output.type] = resources;
-                } catch (e) {
+
+                    logToDevConsole(
+                        HTTP_METHODS.GET,
+                        payerDownloadUrl,
+                        {
+                            resourceType: output.type,
+                            patientId,
+                            recordCount: resources.length,
+                            resources,
+                        },
+                        { resourceType: output.type, patientId }
+                    );
+                } catch (e: any) {
                     console.error(`Failed to download ${output.type} for patient ${patientId}`, e);
+                    logToDevConsole(
+                        HTTP_METHODS.GET,
+                        output.url?.startsWith("http") ? output.url : `${Config.demoBaseUrl}${output.url || ""}`,
+                        e.response?.data ?? { error: e.message || "Download failed", resourceType: output.type, patientId }
+                    );
                 }
             }
         }
@@ -323,26 +408,53 @@ function ProviderDataAccess() {
         }
     };
 
+    const handlePatientSelectChange = (
+        selectedOption: SingleValue<{ value: string; label: string }>
+    ) => {
+        if (selectedOption?.value) {
+            setSelectedPatientForView(selectedOption.value);
+        }
+    };
+
+    const selectedPatientOption = patientOptions.find(
+        (option) => option.value === selectedPatientForView
+    ) ?? null;
+
     return (
-        <Container style={{ marginTop: "40px", paddingBottom: "40px" }}>
-            <Button variant="secondary" onClick={() => navigate(-1)} style={{ marginBottom: "20px" }}>
+        <Container style={{ marginTop: "40px", paddingBottom: "40px", maxWidth: 1200 }}>
+            <Button
+                variant="outline-secondary"
+                onClick={() => navigate(-1)}
+                style={{ marginBottom: "24px", borderRadius: "20px", display: "inline-flex", alignItems: "center", gap: 6 }}
+            >
+                <ArrowBack sx={{ fontSize: 18 }} />
                 Back
             </Button>
-            <div className="page-heading">Provider Data Access</div>
-            <Card style={{ marginTop: "20px", padding: "20px" }}>
-                <Card.Body>
-                    <Card.Title>Import Health Records from Clinical Systems</Card.Title>
-                    <Card.Text>
-                        Click the button below to fetch and synchronize bulk health records associated with the current clinical practice.
+
+            <div className="page-heading" style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <CloudSync sx={{ fontSize: 40, color: "#006B75" }} />
+                Provider Data Access
+            </div>
+
+            <Card className="shadow-sm border-0" style={{ marginTop: "8px" }}>
+                <Card.Body style={{ padding: "30px" }}>
+                    <Card.Title style={{ fontSize: "1.35rem", fontWeight: 600 }}>
+                        Import Health Records from Payer Networks
+                    </Card.Title>
+                    <Card.Text style={{ color: "#555", fontSize: "1.05rem", marginTop: "8px" }}>
+                        Synchronize bulk health records for your practice via the Provider Access API.
+                        API traffic with the payer FHIR server is shown in the Developer Console.
                     </Card.Text>
+
                     {Config.payers && Config.payers.length > 0 && (
-                        <Form.Group style={{ marginTop: "20px" }}>
-                            <Form.Label>
+                        <Form.Group style={{ marginTop: "24px", maxWidth: 480 }}>
+                            <Form.Label style={{ fontWeight: 600 }}>
                                 Select Payer Network <span style={{ color: "red" }}>*</span>
                             </Form.Label>
                             <Form.Select
                                 value={selectedPayer}
                                 onChange={(e) => setSelectedPayer(e.target.value)}
+                                style={{ borderRadius: 8 }}
                             >
                                 <option value="" disabled>-- Select a Payer --</option>
                                 {Config.payers.map((payer) => (
@@ -352,62 +464,106 @@ function ProviderDataAccess() {
                         </Form.Group>
                     )}
 
-                    {errorMsg && <Alert variant="danger" style={{ marginTop: "20px" }}>{errorMsg}</Alert>}
+                    {errorMsg && (
+                        <Alert variant="danger" style={{ marginTop: "20px", borderRadius: 8 }}>
+                            {errorMsg}
+                        </Alert>
+                    )}
 
                     <Button
                         variant="primary"
-                        style={{ marginTop: "20px" }}
+                        style={{
+                            marginTop: "24px",
+                            borderRadius: "20px",
+                            padding: "10px 28px",
+                            fontWeight: 600,
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 8,
+                        }}
                         onClick={handleFetchData}
                         disabled={loading || !selectedPayer}
                     >
-                        {loading ? <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" /> : "Sync Data"}
+                        {loading ? (
+                            <>
+                                <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" />
+                                Syncing...
+                            </>
+                        ) : (
+                            <>
+                                <CloudSync sx={{ fontSize: 20 }} />
+                                Sync Data
+                            </>
+                        )}
                     </Button>
                 </Card.Body>
             </Card>
 
             {Object.keys(downloadedData).length > 0 && (
-                <Card style={{ marginTop: "20px" }}>
-                    <Card.Header>Health Records Viewer</Card.Header>
-                    <Card.Body>
-                        <div style={{ display: "flex", gap: "20px", marginBottom: "20px" }}>
-                            <Form.Group style={{ flex: 1 }}>
-                                <Form.Label>Select Patient</Form.Label>
-                                <Form.Select
-                                    value={selectedPatientForView}
-                                    onChange={(e) => setSelectedPatientForView(e.target.value)}
-                                >
-                                    {Object.keys(downloadedData).map(pid => (
-                                        <option key={pid} value={pid}>{pid}</option>
-                                    ))}
-                                </Form.Select>
-                            </Form.Group>
+                <Card className="shadow-sm border-0" style={{ marginTop: "24px" }}>
+                    <Card.Header
+                        style={{
+                            backgroundColor: "#f8fafc",
+                            borderBottom: "1px solid #e2e8f0",
+                            fontWeight: 600,
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 8,
+                            padding: "16px 24px",
+                        }}
+                    >
+                        <Storage sx={{ fontSize: 22, color: "#006B75" }} />
+                        Health Records Viewer
+                        <Badge bg="secondary" style={{ marginLeft: 8 }}>
+                            {Object.keys(downloadedData).length} patient{Object.keys(downloadedData).length !== 1 ? "s" : ""}
+                        </Badge>
+                    </Card.Header>
+                    <Card.Body style={{ padding: "24px" }}>
+                        <Row className="g-3" style={{ marginBottom: "20px" }}>
+                            <Col md={6}>
+                                <Form.Group>
+                                    <Form.Label style={{ fontWeight: 600 }}>Select Patient</Form.Label>
+                                    <Select
+                                        value={selectedPatientOption}
+                                        options={patientOptions}
+                                        onChange={handlePatientSelectChange}
+                                        isSearchable
+                                        placeholder="Search by patient name..."
+                                    />
+                                </Form.Group>
+                            </Col>
 
-                            <Form.Group style={{ flex: 1 }}>
-                                <Form.Label>Select Resource Type</Form.Label>
-                                <Form.Select
-                                    value={selectedResourceTypeForView}
-                                    onChange={(e) => setSelectedResourceTypeForView(e.target.value)}
-                                >
-                                    {SUPPORTED_RESOURCE_TYPES.map(type => (
-                                        <option key={type} value={type}>{type}</option>
-                                    ))}
-                                </Form.Select>
-                            </Form.Group>
+                            <Col md={6}>
+                                <Form.Group>
+                                    <Form.Label style={{ fontWeight: 600 }}>Select Resource Type</Form.Label>
+                                    <Form.Select
+                                        value={selectedResourceTypeForView}
+                                        onChange={(e) => setSelectedResourceTypeForView(e.target.value)}
+                                        style={{ borderRadius: 8 }}
+                                    >
+                                        {SUPPORTED_RESOURCE_TYPES.map(type => (
+                                            <option key={type} value={type}>{type}</option>
+                                        ))}
+                                    </Form.Select>
+                                </Form.Group>
+                            </Col>
+                        </Row>
+
+                        <div style={{ borderRadius: 8, overflow: "hidden", border: "1px solid #e2e8f0" }}>
+                            <Table striped hover responsive className="mb-0">
+                                <thead style={{ backgroundColor: "#f1f5f9" }}>
+                                    {renderTableHeader(selectedResourceTypeForView)}
+                                </thead>
+                                <tbody>
+                                    {selectedPatientForView && downloadedData[selectedPatientForView] &&
+                                        renderDataRowList(
+                                            selectedResourceTypeForView,
+                                            downloadedData[selectedPatientForView][selectedResourceTypeForView]
+                                        )
+                                    }
+                                </tbody>
+                            </Table>
                         </div>
-
-                        <Table striped bordered hover responsive>
-                            <thead>
-                                {renderTableHeader(selectedResourceTypeForView)}
-                            </thead>
-                            <tbody>
-                                {selectedPatientForView && downloadedData[selectedPatientForView] &&
-                                    renderDataRowList(
-                                        selectedResourceTypeForView,
-                                        downloadedData[selectedPatientForView][selectedResourceTypeForView]
-                                    )
-                                }
-                            </tbody>
-                        </Table>
                     </Card.Body>
                 </Card>
             )}

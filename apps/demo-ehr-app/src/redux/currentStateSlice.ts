@@ -25,6 +25,7 @@ const initialState = {
   hook: "",
   isProcess: false,
   requestLogs: [] as any[],
+  stackedRequestLogs: false,
 };
 
 const currentStateSlice = createSlice({
@@ -56,6 +57,9 @@ const currentStateSlice = createSlice({
     clearRequestLogs(state) {
       state.requestLogs = [];
     },
+    setStackedRequestLogs(state, action) {
+      state.stackedRequestLogs = action.payload;
+    },
     resetCurrentRequest() {
       return initialState;
     },
@@ -72,5 +76,6 @@ export const {
   updateIsProcess,
   appendRequestLog,
   clearRequestLogs,
+  setStackedRequestLogs,
 } = currentStateSlice.actions;
 export default currentStateSlice.reducer;

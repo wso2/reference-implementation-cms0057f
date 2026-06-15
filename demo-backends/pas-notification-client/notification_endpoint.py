@@ -17,6 +17,7 @@ class MockEndpoint(BaseHTTPRequestHandler):
         self.wfile.write(b'{"status": "received"}')
 
 if __name__ == '__main__':
-    server = HTTPServer(('localhost', 8080), MockEndpoint)
-    print('Mock endpoint running on http://localhost:8080')
+    # 8095 (not 8080) to avoid clashing with the local fhir-service on :8080.
+    server = HTTPServer(('localhost', 8095), MockEndpoint)
+    print('Mock endpoint running on http://localhost:8095')
     server.serve_forever()

@@ -1,23 +1,21 @@
-// Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com).
-//
-// WSO2 LLC. licenses this file to you under the Apache License,
-// Version 2.0 (the "License"); you may not use this file except
-// in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing,
-// software distributed under the License is distributed on an
-// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-// KIND, either express or implied.  See the License for the
-// specific language governing permissions and limitations
-// under the License.
-
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// https://vite.dev/config/
+const devShims = {
+  name: 'dev-auth-shim',
+  configureServer(server: any) {
+    server.middlewares.use('/auth/userinfo', (_req: any, res: any) => {
+      res.setHeader('Content-Type', 'application/json')
+      res.end(JSON.stringify({ username: 'drsmith', first_name: 'Sarah', last_name: 'Smith', given_name: 'Sarah', family_name: 'Smith', id: '456' }))
+    })
+    const redir = (_req: any, res: any) => { res.writeHead(302, { Location: '/' }); res.end() }
+    server.middlewares.use('/auth/login', redir); server.middlewares.use('/auth/logout', redir)
+  },
+}
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), devShims],
+  server: {
+    port: 5174,
+    proxy: { '/fhirapi': { target: 'http://localhost:8080/fhir/r4', changeOrigin: true, rewrite: (p: string) => p.replace(/^\/fhirapi/, '') } },
+  },
 })

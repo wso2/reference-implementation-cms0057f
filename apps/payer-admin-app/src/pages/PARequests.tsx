@@ -60,7 +60,16 @@ export default function PARequests() {
     const [totalPages, setTotalPages] = useState(1);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [refreshKey, setRefreshKey] = useState(0);
     const isProcessedView = location.pathname.includes('processed');
+
+    // Refetch when the tab regains focus, so a PA request submitted elsewhere
+    // (e.g. from the EHR) appears without a manual page reload.
+    useEffect(() => {
+        const onFocus = () => setRefreshKey((k) => k + 1);
+        window.addEventListener('focus', onFocus);
+        return () => window.removeEventListener('focus', onFocus);
+    }, []);
 
     // Fetch PA requests from API
     useEffect(() => {
@@ -92,7 +101,7 @@ export default function PARequests() {
         };
 
         fetchRequests();
-    }, [searchQuery, selectedUrgencies, selectedStatuses, page, location.pathname, isProcessedView]);
+    }, [searchQuery, selectedUrgencies, selectedStatuses, page, location.pathname, isProcessedView, refreshKey]);
 
     const handleFilterClick = (event: React.MouseEvent<HTMLElement>) => {
         setFilterAnchorEl(event.currentTarget);

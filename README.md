@@ -13,6 +13,12 @@ The **integration layer** is built with [Ballerina](https://ballerina.io/use-cas
 
 > This guide is written to be **followed top to bottom on a local developer machine**. Each step builds on the previous one. If you only want one provision, jump to the matching scenario in [§7 Try each CMS‑0057‑F flow](#7-try-each-cms-0057-f-flow) after completing steps 1–5.
 
+### 🎥 Demo walkthrough
+
+Watch the four provisions run end‑to‑end through the demo apps:
+
+[![CMS‑0057‑F reference implementation — demo walkthrough](https://img.youtube.com/vi/VR9Mgo6Jv0E/maxresdefault.jpg)](https://www.youtube.com/watch?v=VR9Mgo6Jv0E)
+
 ---
 
 ## Table of contents

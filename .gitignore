@@ -73,3 +73,7 @@ node_modules/
 
 #Claude
 CLAUDE.md
+
+# Local WSO2 platform downloaded by setup-platform.sh
+/platform/
+/services_logs/

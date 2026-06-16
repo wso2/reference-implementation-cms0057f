@@ -43,6 +43,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const query = useQuery();
 
+  // Persist launch params to sessionStorage SYNCHRONOUSLY (during render), before
+  // child routes render. Without this, the async auth check can redirect to "/" /
+  // "/fetching" and drop the URL query params before they are saved, so the
+  // launch (patientId + questionnaire / coverageId+medicationRequestId) is lost.
+  ["patientId", "questionnaire", "coverageId", "medicationRequestId", "serviceRequestId"].forEach((k) => {
+    const v = query.get(k);
+    if (v) sessionStorage.setItem(k, v);
+  });
+
   const getAuthenticationIfo = async () => {
     const response = await fetch("/auth/userinfo");
 

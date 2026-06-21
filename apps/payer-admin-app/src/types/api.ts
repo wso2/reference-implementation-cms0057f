@@ -181,6 +181,7 @@ export interface ClaimItem {
   adjudication?: unknown[];
   noteNumbers?: number[];
   reviewNote?: string;
+  reviewActionDisplay?: string;
 }
 
 /**

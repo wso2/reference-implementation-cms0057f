@@ -16,6 +16,7 @@
 import ballerina/http;
 import ballerina/log;
 import ballerina/url;
+import ballerina/uuid;
 import ballerinax/health.fhir.r4.international401;
 
 public listener http:Listener bulkExportListener = new (8091);
@@ -198,7 +199,7 @@ isolated service /pdex on bulkExportListener {
             clientSecret: payerConfig.clientSecret,
             scopes: payerConfig.scopes,
             fileServerUrl: payerConfig.fileServerUrl,
-            authEnabled: true
+            authEnabled: payerConfig.authEnabled
         };
 
         http:Client|error httpClient = createHttpClient(serverConfig);
@@ -211,7 +212,9 @@ isolated service /pdex on bulkExportListener {
             return error("Error creating HTTP client: " + httpClient.message());
         }
 
-        international401:Parameters memberMatchParams = check createMemberMatchParams(request, httpClient);
+        // MemberPatient must be fetched from the LOCAL FHIR server (our own record of the member),
+        // not from the old payer's server.
+        international401:Parameters memberMatchParams = check createMemberMatchParams(request, clientFhirClient);
         log:printDebug("Created member match parameters.", requestId = requestId);
 
         // Call $member-match
@@ -229,7 +232,10 @@ isolated service /pdex on bulkExportListener {
         }
 
         if matchResponse.statusCode < 200 || matchResponse.statusCode >= 300 {
-            log:printError("Member match failed with status: " + matchResponse.statusCode.toString());
+            string|error errBody = matchResponse.getTextPayload();
+            log:printError("Member match failed.",
+                statusCode = matchResponse.statusCode.toString(),
+                body = errBody is string ? errBody : "(no body)");
             error memberMatchError = error("Member match failed");
             string|error dbResult = updatePayerDataExchangeRequestStatus(requestId, "FAILED");
             if dbResult is error {
@@ -293,7 +299,7 @@ isolated service /pdex on bulkExportListener {
 
         foreach string resType in resourcesToCheck {
             string encodedMemberId = check url:encode(memberId, "UTF-8");
-            string path = string `/${resType}?patient=${encodedMemberId}&_tag=http://wso2.com/fhir/pdex-source|old-payer-data`;
+            string path = string `/${resType}?patient=${encodedMemberId}`;
             log:printDebug("Querying resource type for synced data.", resourceType = resType, path = path);
             http:Response|http:ClientError resp = fhirClient->get(path);
             if resp is http:Response && resp.statusCode == 200 {
@@ -323,5 +329,240 @@ isolated service /pdex on bulkExportListener {
         log:printDebug("Completed synced data fetch.", resultCount = results.length().toString());
 
         return results;
+    }
+
+    // Resource function to reset a stuck IN_PROGRESS request back to PENDING.
+    //
+    // @param requestId - The ID of the request to reset.
+    // @return The response indicating the success or failure of the operation.
+    isolated resource function post 'pdex\-data\-requests/[string requestId]/reset()
+            returns json|http:BadRequest|http:NotFound|error {
+        log:printDebug("Reset request invoked.", requestId = requestId);
+        PayerDataExchangeRequest|error req = getPayerDataExchangeRequest(requestId);
+        if req is error {
+            return <http:NotFound>{body: {message: "Request not found", requestId: requestId}};
+        }
+        string[] resettableStatuses = ["IN_PROGRESS", "BULK_MATCH_SUBMITTED", "EXPORT_IN_PROGRESS", "SYNCING"];
+        if resettableStatuses.indexOf(req.bulkDataSyncStatus ?: "") == () {
+            return <http:BadRequest>{body: {
+                message: "Only in-flight requests can be reset (IN_PROGRESS, BULK_MATCH_SUBMITTED, EXPORT_IN_PROGRESS, SYNCING)",
+                requestId: requestId,
+                currentStatus: req.bulkDataSyncStatus
+            }};
+        }
+        // Neutralize any associated background job so polling tasks short-circuit on next tick
+        string? jobId = req.bulkExportJobId;
+        if jobId is string {
+            string|error cancelResult = updateBulkExportJobStatus(jobId, "FAILED");
+            if cancelResult is error {
+                log:printError("Failed to mark bulk job FAILED during reset; proceeding with request reset",
+                    cancelResult, requestId = requestId, jobId = jobId);
+            } else {
+                log:printInfo("Marked bulk job FAILED as part of request reset.", requestId = requestId, jobId = jobId);
+            }
+        }
+        string|error result = updatePayerDataExchangeRequestStatus(requestId, "PENDING");
+        if result is error {
+            log:printError("Failed to reset request status to PENDING", result, requestId = requestId);
+            return result;
+        }
+        log:printInfo("Request reset to PENDING.", requestId = requestId);
+        return {message: "Request reset to PENDING", requestId: requestId};
+    }
+
+    // Resource function to trigger bulk payer data exchange using $bulk-member-match.
+    //
+    // @param payload - List of requestIds to batch into a single $bulk-member-match call.
+    // @return batchId and status, or error.
+    isolated resource function post 'trigger\-bulk\-data\-exchange(
+        @http:Payload TriggerBulkDataExchangeRequest payload
+    ) returns http:Response|http:BadRequest|http:Conflict|http:InternalServerError|http:BadGateway|error {
+
+        string[] requestIds = payload.requestIds;
+        if requestIds.length() == 0 {
+            return <http:BadRequest>{body: {message: "At least one requestId is required"}};
+        }
+
+        // 1. Load and validate all requests
+        PayerDataExchangeRequest[] requests = [];
+        foreach string reqId in requestIds {
+            PayerDataExchangeRequest|error reqResult = getPayerDataExchangeRequest(reqId);
+            if reqResult is error {
+                log:printError("Error occurred while retrieving payer data exchange request", reqResult, requestId = reqId);
+                return <http:InternalServerError>{body: {message: "Unable to retrieve request", requestId: reqId}};
+            }
+            PayerDataExchangeRequest req = reqResult;
+            if !(req.consent ?: "").equalsIgnoreCaseAscii("APPROVED") {
+                return <http:BadRequest>{body: {
+                    message: "Consent not approved for requestId: " + reqId,
+                    requestId: reqId
+                }};
+            }
+            if req.bulkDataSyncStatus == "IN_PROGRESS" || req.bulkDataSyncStatus == "COMPLETED" {
+                return <http:Conflict>{body: {
+                    message: "Request " + reqId + " is already " + (req.bulkDataSyncStatus ?: "processed"),
+                    requestId: reqId,
+                    currentStatus: req.bulkDataSyncStatus
+                }};
+            }
+            requests.push(req);
+        }
+
+        // 2. Validate all requests belong to same payer
+        string payerId = requests[0].payerId;
+        foreach PayerDataExchangeRequest req in requests {
+            if req.payerId != payerId {
+                return <http:BadRequest>{body: {
+                    message: "All requestIds must belong to the same payer",
+                    requestId: req.requestId ?: ""
+                }};
+            }
+        }
+
+        // 3. Load payer config + build serverConfig
+        PayerConfig payerConfig = check getPayerConfig(payerId);
+        BulkExportServerConfig serverConfig = {
+            baseUrl: payerConfig.baseUrl,
+            tokenUrl: payerConfig.tokenUrl,
+            clientId: payerConfig.clientId,
+            clientSecret: payerConfig.clientSecret,
+            scopes: payerConfig.scopes,
+            fileServerUrl: payerConfig.fileServerUrl,
+            authEnabled: payerConfig.authEnabled
+        };
+
+        // 4. Create HTTP client pointed at old payer, fetch Patient resources from LOCAL FHIR server
+        http:Client httpClient = check createHttpClient(serverConfig);
+
+        // 5. Build bulk member match Parameters JSON
+        BulkMatchParamsResult paramsResult = check buildBulkMemberMatchParams(requests, clientFhirClient);
+
+        // 6. POST to $bulk-member-match (async)
+        http:Response|http:ClientError matchResponse = httpClient->post(
+            "/Group/$bulk-member-match",
+            paramsResult.params,
+            headers = {"Prefer": "respond-async"},
+            mediaType = "application/fhir+json"
+        );
+        if matchResponse is http:ClientError {
+            return error("Error calling $bulk-member-match: " + matchResponse.message());
+        }
+        if matchResponse.statusCode != 202 {
+            return error("$bulk-member-match returned unexpected status: "
+                + matchResponse.statusCode.toString());
+        }
+
+        // 7. Persist the bulk export job and link requests to it
+        string jobId = uuid:createType1AsString();
+        BulkExportJob newJob = {
+            jobId: jobId,
+            payerId: payerId,
+            status: "INITIATED"
+        };
+        string|error insertResult = insertBulkExportJob(newJob);
+        if insertResult is error {
+            log:printError("Failed to persist bulk export job", insertResult, jobId = jobId);
+            return <http:InternalServerError>{body: {message: "Failed to create bulk export job"}};
+        }
+        string|error linkResult = linkRequestsToBulkJob(requestIds, jobId);
+        if linkResult is error {
+            log:printError("Failed to link requests to bulk job; compensating", linkResult, jobId = jobId);
+            _ = check updateBulkExportJobStatus(jobId, "FAILED");
+            _ = check unlinkRequestsFromBulkJob(requestIds);
+            return <http:InternalServerError>{body: {message: "Failed to link requests to bulk export job"}};
+        }
+        string|error statusResult = updateBulkExportJobStatus(jobId, "BULK_MATCH_POLLING");
+        if statusResult is error {
+            log:printError("Failed to update bulk job status; compensating", statusResult, jobId = jobId);
+            _ = check updateBulkExportJobStatus(jobId, "FAILED");
+            _ = check unlinkRequestsFromBulkJob(requestIds);
+            return <http:InternalServerError>{body: {message: "Failed to update bulk export job status"}};
+        }
+
+        // 8. Validate Content-Location header (required by bulk-data protocol)
+        string|http:HeaderNotFoundError contentLocation = matchResponse.getHeader("content-location");
+        if contentLocation is http:HeaderNotFoundError || contentLocation == "" {
+            log:printError("Upstream did not return Content-Location header; marking job FAILED.", jobId = jobId);
+            _ = check updateBulkExportJobStatus(jobId, "FAILED");
+            foreach string reqId in requestIds {
+                _ = check updatePayerDataExchangeRequestStatus(reqId, "FAILED");
+            }
+            return <http:BadGateway>{body: {
+                message: "Upstream server did not return a Content-Location header as required by the bulk data protocol"
+            }};
+        }
+        string pollingUrl = contentLocation;
+
+        log:printInfo("$bulk-member-match accepted.",
+            jobId = jobId, pollingUrl = pollingUrl,
+            memberCount = paramsResult.memberIdToRequestIdMap.length());
+        log:printDebug("$bulk-member-match request payload.",
+            jobId = jobId, payload = paramsResult.params.toJsonString());
+
+        // 9. Schedule Stage 1 background polling task
+        error? scheduleErr = scheduleBulkMatchJob(
+            new BulkMatchPollingTask(
+                jobId,
+                pollingUrl,
+                serverConfig,
+                paramsResult.memberIdToRequestIdMap,
+                requestIds,
+                payerId,
+                requests[0].oldPayerName
+            ),
+            clientServiceConfig.defaultIntervalInSec
+        );
+        if scheduleErr is error {
+            log:printError("Failed to schedule bulk match job; compensating", scheduleErr, jobId = jobId);
+            _ = check updateBulkExportJobStatus(jobId, "FAILED");
+            _ = check unlinkRequestsFromBulkJob(requestIds);
+            return <http:InternalServerError>{body: {message: "Failed to schedule bulk match polling"}};
+        }
+
+        // 10. Update all requests to BULK_MATCH_SUBMITTED
+        foreach string reqId in requestIds {
+            string|error submitResult = updatePayerDataExchangeRequestStatus(reqId, "BULK_MATCH_SUBMITTED");
+            if submitResult is error {
+                log:printError("Failed to mark request BULK_MATCH_SUBMITTED; compensating",
+                    submitResult, requestId = reqId, jobId = jobId);
+                _ = check updateBulkExportJobStatus(jobId, "FAILED");
+                foreach string failReqId in requestIds {
+                    _ = check updatePayerDataExchangeRequestStatus(failReqId, "FAILED");
+                }
+                return <http:InternalServerError>{body: {message: "Failed to update request status after scheduling"}};
+            }
+        }
+
+        log:printInfo("Bulk member match initiated.", jobId = jobId, requestCount = requestIds.length());
+        string statusUrl = clientServiceConfig.baseUrl + "/pdex/bulk-export-jobs/" + jobId;
+        http:Response resp = new;
+        resp.statusCode = 202;
+        resp.setHeader("Content-Location", statusUrl);
+        resp.setJsonPayload({
+            jobId: jobId,
+            message: "Bulk member match initiated",
+            requestCount: requestIds.length(),
+            statusUrl: statusUrl
+        });
+        return resp;
+    }
+
+    // Resource function to poll bulk export job status.
+    //
+    // @param jobId - The bulk export job ID returned by trigger-bulk-data-exchange.
+    // @return Combined job status and individual request statuses.
+    isolated resource function get 'bulk\-export\-jobs/[string jobId]()
+            returns BulkExportJobStatusResponse|http:NotFound|error {
+        log:printDebug("Fetching bulk export job status.", jobId = jobId);
+        BulkExportJob|error job = getBulkExportJob(jobId);
+        if job is error {
+            return <http:NotFound>{body: {message: "Bulk export job not found", jobId: jobId}};
+        }
+        PayerDataExchangeRequest[]|error requests = getRequestsByBulkJobId(jobId);
+        if requests is error {
+            log:printError("Error fetching requests for bulk job", requests, jobId = jobId);
+            return error("Internal server error while retrieving requests for bulk job");
+        }
+        return {job: job, requests: requests};
     }
 }

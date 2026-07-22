@@ -14,6 +14,17 @@ CREATE TABLE IF NOT EXISTS payers (
   PRIMARY KEY (id)
 );
 
+CREATE TABLE IF NOT EXISTS bulk_export_jobs (
+    job_id                      VARCHAR(36) PRIMARY KEY,
+    payer_id                    VARCHAR(255) NOT NULL,
+    status                      VARCHAR(50) NOT NULL DEFAULT 'INITIATED',
+    created_at                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    completed_at                TIMESTAMP NULL,
+    FOREIGN KEY (payer_id) REFERENCES payers(id)
+);
+
+CREATE INDEX idx_bulk_export_jobs_status ON bulk_export_jobs(status);
+
 CREATE TABLE IF NOT EXISTS payer_data_exchange_requests (
     request_id VARCHAR(36) PRIMARY KEY,
     member_id VARCHAR(255) NOT NULL,
@@ -24,8 +35,10 @@ CREATE TABLE IF NOT EXISTS payer_data_exchange_requests (
     consent_status VARCHAR(50) DEFAULT 'PENDING',
     bulk_data_sync_status VARCHAR(50) DEFAULT 'PENDING',
     export_summary TEXT,
+    bulk_export_job_id VARCHAR(36) NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (payer_id) REFERENCES payers(id)
+    FOREIGN KEY (payer_id) REFERENCES payers(id),
+    FOREIGN KEY (bulk_export_job_id) REFERENCES bulk_export_jobs(job_id)
 );
 
 -- Create index on email for faster lookups

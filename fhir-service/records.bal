@@ -767,14 +767,14 @@ final int STANDARD = 1;
 final int EXPEDITED = 2;
 
 // Claim statuses
-final int APPROVED = 3;
-final int PARTIALLY_APPROVED = 4;
-final int DENIED = 5;
+final int APPROVED_STATUS = 3;
+final int PARTIALLY_APPROVED_STATUS = 4;
+final int DENIED_STATUS = 5;
 
-public enum X12ReviewActionCodes {
-    A1 = "A1", // Approved
-    A2 = "A2", // Partially Approved
-    A3 = "A3" // Denied
+public enum ClaimResponseDecisionCodes {
+    APPROVED = "approved",
+    PARTIALLY_APPROVED = "partially_approved",
+    DENIED = "denied"
 }
 
 public enum ClaimResponseOutcome {

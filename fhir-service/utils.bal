@@ -1448,6 +1448,8 @@ isolated function determineClaimType(ClaimResponse claimResponse, international4
 # 2. "denied" if all items are denied. 
 # 3. "partially-approved" if a subset of items are approved. 
 # 
+# It is assumed that an item can contain only one adjudication with the reviewAction extension.
+# 
 # NOTE: If there are no items present in a completed claim, 
 # * If a "preAuthRef" is present in claim response, it is assumed that the claim is approved without needing to review items.
 # * If a "preAuthRef" is not present, it is assumed that the claim is rejected.
@@ -1481,13 +1483,13 @@ isolated function determineClaimStatus(ClaimResponse claimResponse) returns int 
                 log:printDebug(string `Number of items: ${numberOfItems}`);
                 log:printDebug(string `Number of approved adjudications: ${numberOfApprovedAdjudications}`);
                 log:printDebug(string `Aggregated status: Approved`);
-                return APPROVED;
+                return APPROVED_STATUS;
             }
             // When there are no items present in a "completed" claim, this can mean the request is rejected.
             log:printDebug(string `Number of items: ${numberOfItems}`);
             log:printDebug(string `Number of approved adjudications: ${numberOfApprovedAdjudications}`);
             log:printDebug(string `Aggregated status: Denied`);
-            return DENIED;
+            return DENIED_STATUS;
         }
 
         foreach davincipas:PASClaimResponseItem item in items {
@@ -1516,7 +1518,7 @@ isolated function determineClaimStatus(ClaimResponse claimResponse) returns int 
                                                 if reviewActionCodings is r4:Coding[] {
                                                     foreach r4:Coding reviewActionCoding in reviewActionCodings {
                                                         r4:code? code = reviewActionCoding.code;
-                                                        if code is string && code == A1 {
+                                                        if code is string && code.toLowerAscii() == APPROVED {
                                                                 numberOfApprovedAdjudications += 1;
                                                         }
                                                     }
@@ -1535,15 +1537,15 @@ isolated function determineClaimStatus(ClaimResponse claimResponse) returns int 
         log:printDebug(string `Number of approved adjudications: ${numberOfApprovedAdjudications}`);
         if numberOfItems == numberOfApprovedAdjudications {
             log:printDebug(string `Aggregated status: Approved`);
-            return APPROVED;
+            return APPROVED_STATUS;
         }
         if numberOfApprovedAdjudications == 0 {
             log:printDebug(string `Aggregated status: Denied`);
-            return DENIED;
+            return DENIED_STATUS;
         }
         if numberOfItems > numberOfApprovedAdjudications {
             log:printDebug(string `Aggregated status: Partially Approved`);
-            return PARTIALLY_APPROVED;
+            return PARTIALLY_APPROVED_STATUS;
         }
     }
     // When a completed claim doesn't have items, if a "preAuthRef" is present, this can mean the whole 
@@ -1552,11 +1554,11 @@ isolated function determineClaimStatus(ClaimResponse claimResponse) returns int 
         log:printDebug(string `Number of items: ${numberOfItems}`);
         log:printDebug(string `Number of approved adjudications: ${numberOfApprovedAdjudications}`);
         log:printDebug(string `Aggregated status: Approved`);
-        return APPROVED;
+        return APPROVED_STATUS;
     }
     log:printDebug(string `Number of items: ${numberOfItems}`);
     log:printDebug(string `Number of approved adjudications: ${numberOfApprovedAdjudications}`);
     // When there are no items present in a "completed" claim, this can mean the request is rejected.
     log:printDebug(string `Aggregated status: Denied`);
-    return DENIED;
+    return DENIED_STATUS;
 }

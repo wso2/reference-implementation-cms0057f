@@ -86,26 +86,49 @@ isolated service /pdex on bulkExportListener {
     //
     // @param 'limit - The number of records to retrieve (default 10).
     // @param offset - The number of records to skip (default 0).
+    // @param search - Optional search query to filter requests.
+    // @param status - Optional status filter list.
     // @return The list of payer data exchange requests with pagination details.
-    isolated resource function get 'pdex\-data\-requests(int 'limit = 10, int offset = 0) returns json|error {
+    isolated resource function get 'pdex\-data\-requests(
+        int 'limit = 10, 
+        int offset = 0, 
+        string? search = (), 
+        string[]? status = ()
+    ) returns json|error {
         log:printDebug("Fetching payer data exchange requests.", pageLimit = 'limit.toString(), offset = offset.toString());
-        PayerDataExchangeRequestResult|error result = getPayerDataExchangeRequests('limit, offset);
+        PayerDataExchangeRequestResult|error result = getPayerDataExchangeRequests('limit, offset, search, status);
         if result is error {
             log:printError("Error occurred while retrieving payer data exchange requests", result);
             return result;
         }
 
         string baseUrl = clientServiceConfig.baseUrl + "/pdex/pdex-data-requests";
+        string filterParams = "";
+        if search is string && search.trim().length() > 0 {
+            string|error encodedSearch = url:encode(search.trim(), "UTF-8");
+            if encodedSearch is string {
+                filterParams += string `&search=${encodedSearch}`;
+            }
+        }
+        if status is string[] && status.length() > 0 {
+            foreach string s in status {
+                string|error encodedStatus = url:encode(s.trim(), "UTF-8");
+                if encodedStatus is string {
+                    filterParams += string `&status=${encodedStatus}`;
+                }
+            }
+        }
+
         string? next = ();
         string? previous = ();
 
         if (offset + 'limit) < result.totalCount {
-            next = string `${baseUrl}?limit=${'limit}&offset=${offset + 'limit}`;
+            next = string `${baseUrl}?limit=${'limit}&offset=${offset + 'limit}${filterParams}`;
         }
 
         if offset > 0 {
             int prevOffset = (offset - 'limit) > 0 ? (offset - 'limit) : 0;
-            previous = string `${baseUrl}?limit=${'limit}&offset=${prevOffset}`;
+            previous = string `${baseUrl}?limit=${'limit}&offset=${prevOffset}${filterParams}`;
         }
 
         log:printDebug("Returning payer data exchange request page.", resultCount = result.requests.length().toString(), totalCount = result.totalCount.toString());

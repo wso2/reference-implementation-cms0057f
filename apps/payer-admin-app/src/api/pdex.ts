@@ -139,15 +139,57 @@ export interface ErrorPayload {
   method: string;
 }
 
+export interface GetPdexDataRequestsParams {
+  limit?: number;
+  offset?: number;
+  search?: string;
+  status?: string[];
+}
+
 /**
- * Get all PDEX data requests with pagination
+ * Get all PDEX data requests with pagination and optional search and status filters
  */
 export async function getPdexDataRequests(
-  limit: number = 10,
-  offset: number = 0
+  paramsOrLimit: GetPdexDataRequestsParams | number = 10,
+  offsetArg: number = 0,
+  searchArg?: string,
+  statusArg?: string[]
 ): Promise<PdexDataRequestsMappedResponse> {
+  let limit = 10;
+  let offset = 0;
+  let search: string | undefined;
+  let status: string[] | undefined;
+
+  if (typeof paramsOrLimit === 'object') {
+    limit = paramsOrLimit.limit ?? 10;
+    offset = paramsOrLimit.offset ?? 0;
+    search = paramsOrLimit.search;
+    status = paramsOrLimit.status;
+  } else {
+    limit = paramsOrLimit;
+    offset = offsetArg;
+    search = searchArg;
+    status = statusArg;
+  }
+
+  const queryParams = new URLSearchParams();
+  queryParams.append('limit', limit.toString());
+  queryParams.append('offset', offset.toString());
+
+  if (search && search.trim()) {
+    queryParams.append('search', search.trim());
+  }
+
+  if (status && status.length > 0) {
+    status.forEach((s) => {
+      if (s) {
+        queryParams.append('status', s);
+      }
+    });
+  }
+
   const response = await fetch(
-    `${API_BASE_URL}/pdex-data-requests?limit=${limit}&offset=${offset}`
+    `${API_BASE_URL}/pdex-data-requests?${queryParams.toString()}`
   );
 
   if (!response.ok) {

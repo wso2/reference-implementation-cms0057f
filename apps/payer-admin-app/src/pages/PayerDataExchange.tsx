@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../components/useAuth';
 import {
@@ -58,13 +58,18 @@ export default function PayerDataExchange() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch data from API
-  const handleRefresh = async () => {
+  // Fetch data from API with server-side filters
+  const handleRefresh = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const offset = (page - 1) * ITEMS_PER_PAGE;
-      const response = await getPdexDataRequests(ITEMS_PER_PAGE, offset);
+      const response = await getPdexDataRequests({
+        limit: ITEMS_PER_PAGE,
+        offset,
+        search: searchQuery.trim() || undefined,
+        status: selectedStatuses.length > 0 ? selectedStatuses : undefined,
+      });
       setRequests(response.results);
       setTotalCount(response.count);
     } catch (err) {
@@ -72,12 +77,11 @@ export default function PayerDataExchange() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, searchQuery, selectedStatuses]);
 
   useEffect(() => {
     handleRefresh();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page]);
+  }, [handleRefresh]);
 
   // Show loading while checking authentication
   if (authLoading) {
@@ -93,6 +97,11 @@ export default function PayerDataExchange() {
     return null;
   }
 
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+    setPage(1);
+  };
+
   const handleFilterClick = (event: React.MouseEvent<HTMLElement>) => {
     setFilterAnchorEl(event.currentTarget);
   };
@@ -107,10 +116,12 @@ export default function PayerDataExchange() {
         ? prev.filter((s) => s !== status)
         : [...prev, status]
     );
+    setPage(1);
   };
 
   const clearFilters = () => {
     setSelectedStatuses([]);
+    setPage(1);
   };
   
   const handleRowClick = (exchangeId: string) => {
@@ -127,23 +138,13 @@ export default function PayerDataExchange() {
         return 'warning';
       case 'Error':
         return 'error';
+      case 'Pending':
       default:
         return 'default';
     }
   };
 
-  const filteredRequests = requests.filter((request) => {
-    const matchesSearch =
-      request.payerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      request.exchangeId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      request.patientId.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchesStatus = selectedStatuses.length === 0 || selectedStatuses.includes(request.syncStatus);
-
-    return matchesSearch && matchesStatus;
-  });
-
-  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
+  const totalPages = Math.max(1, Math.ceil(totalCount / ITEMS_PER_PAGE));
 
   const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
     setPage(value);
@@ -338,7 +339,7 @@ export default function PayerDataExchange() {
           fullWidth
           placeholder="Search by Payer"
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={handleSearchChange}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
@@ -414,11 +415,11 @@ export default function PayerDataExchange() {
               <FormControlLabel
                 control={
                   <Checkbox
-                    checked={selectedStatuses.includes('Initiate')}
-                    onChange={() => handleStatusToggle('Initiate')}
+                    checked={selectedStatuses.includes('Pending')}
+                    onChange={() => handleStatusToggle('Pending')}
                   />
                 }
-                label="Initiate"
+                label="Pending"
               />
             </FormGroup>
           </Box>                      
@@ -461,7 +462,7 @@ export default function PayerDataExchange() {
           <TableBody>
             {loading ? (
               <LoadingTableSkeleton rows={4} columns={5} />
-            ) : filteredRequests.map((request) => (
+            ) : requests.map((request) => (
               <TableRow
                 key={request.exchangeId}
                 onClick={() => handleRowClick(request.exchangeId)}
@@ -494,7 +495,7 @@ export default function PayerDataExchange() {
         </Table>
       </TableContainer>
 
-      {!loading && filteredRequests.length === 0 && (
+      {!loading && requests.length === 0 && (
         <Box sx={{ textAlign: 'center', py: 4 }}>
           <Typography variant="body1" color="text.secondary">
             No requests found matching your criteria
@@ -503,7 +504,7 @@ export default function PayerDataExchange() {
       )}
 
       {/* Pagination */}
-      {!loading && filteredRequests.length > 0 && (
+      {!loading && requests.length > 0 && (
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
           <Pagination
             count={totalPages}

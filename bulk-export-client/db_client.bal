@@ -51,8 +51,60 @@ public isolated function insertPayerDataExchangeRequest(PayerDataExchangeRequest
     }
 }
 
-public isolated function getPayerDataExchangeRequests(int 'limit = 10, int offset = 0) returns PayerDataExchangeRequestResult|error {
-    sql:ParameterizedQuery countQuery = `SELECT COUNT(*) AS totalCount FROM payer_data_exchange_requests`;
+public isolated function getPayerDataExchangeRequests(
+    int 'limit = 10, 
+    int offset = 0, 
+    string? search = (), 
+    string[]? status = ()
+) returns PayerDataExchangeRequestResult|error {
+    sql:ParameterizedQuery whereClause = ` WHERE 1=1`;
+
+    if search is string && search.trim().length() > 0 {
+        string escaped = re`\\`.replaceAll(search.trim(), "\\\\");
+        escaped = re`%`.replaceAll(escaped, "\\%");
+        escaped = re`_`.replaceAll(escaped, "\\_");
+        string searchPattern = "%" + escaped + "%";
+        whereClause = sql:queryConcat(whereClause, 
+            ` AND (r.request_id LIKE ${searchPattern} ESCAPE '\\' OR r.member_id LIKE ${searchPattern} ESCAPE '\\' OR r.payer_id LIKE ${searchPattern} ESCAPE '\\' OR p.name LIKE ${searchPattern} ESCAPE '\\')`
+        );
+    }
+
+    if status is string[] && status.length() > 0 {
+        string[] dbStatuses = [];
+        foreach string s in status {
+            string[] parts = re`,`.split(s);
+            foreach string part in parts {
+                string upper = part.trim().toUpperAscii();
+                if upper == "COMPLETED" || upper == "FINISHED" {
+                    dbStatuses.push("COMPLETED");
+                } else if upper == "IN_PROGRESS" || upper == "IN PROGRESS" {
+                    dbStatuses.push("IN_PROGRESS");
+                } else if upper == "FAILED" || upper == "ERROR" {
+                    dbStatuses.push("FAILED");
+                } else if upper == "PENDING" || upper == "INITIATE" {
+                    dbStatuses.push("PENDING");
+                } else if upper.length() > 0 {
+                    dbStatuses.push(upper);
+                }
+            }
+        }
+        if dbStatuses.length() > 0 {
+            sql:ParameterizedQuery statusInClause = ` AND r.bulk_data_sync_status IN (`;
+            foreach int i in 0 ..< dbStatuses.length() {
+                if i > 0 {
+                    statusInClause = sql:queryConcat(statusInClause, `, `);
+                }
+                statusInClause = sql:queryConcat(statusInClause, `${dbStatuses[i]}`);
+            }
+            statusInClause = sql:queryConcat(statusInClause, `)`);
+            whereClause = sql:queryConcat(whereClause, statusInClause);
+        }
+    }
+
+    sql:ParameterizedQuery countQuery = sql:queryConcat(
+        `SELECT COUNT(*) AS totalCount FROM payer_data_exchange_requests r LEFT JOIN payers p ON r.payer_id = p.id`,
+        whereClause
+    );
     int|sql:Error totalCount = dbClient->queryRow(countQuery);
 
     if totalCount is sql:Error {
@@ -60,23 +112,26 @@ public isolated function getPayerDataExchangeRequests(int 'limit = 10, int offse
         return error("An internal error occurred while fetching the data.");
     }
 
-    sql:ParameterizedQuery query = `SELECT 
-                                        r.request_id AS requestId, 
-                                        r.payer_id AS payerId, 
-                                        r.member_id AS memberId, 
-                                        p.name AS oldPayerName, 
-                                        p.state AS oldPayerState, 
-                                        r.old_coverage_id AS oldCoverageId, 
-                                        r.coverage_start_date AS coverageStartDate, 
-                                        r.coverage_end_date AS coverageEndDate,
-                                        r.bulk_data_sync_status AS bulkDataSyncStatus, 
-                                        r.consent_status AS consent, 
-                                        r.created_at AS createdDate, 
-                                        r.export_summary AS exportSummary
-                                    FROM payer_data_exchange_requests r
-                                    LEFT JOIN payers p ON r.payer_id = p.id
-                                    ORDER BY CASE WHEN r.bulk_data_sync_status = 'PENDING' THEN 1 ELSE 2 END, r.created_at DESC
-                                    LIMIT ${'limit} OFFSET ${offset}`;
+    sql:ParameterizedQuery query = sql:queryConcat(
+        `SELECT 
+            r.request_id AS requestId, 
+            r.payer_id AS payerId, 
+            r.member_id AS memberId, 
+            p.name AS oldPayerName, 
+            p.state AS oldPayerState, 
+            r.old_coverage_id AS oldCoverageId, 
+            r.coverage_start_date AS coverageStartDate, 
+            r.coverage_end_date AS coverageEndDate, 
+            r.bulk_data_sync_status AS bulkDataSyncStatus, 
+            r.consent_status AS consent, 
+            r.created_at AS createdDate, 
+            r.export_summary AS exportSummary
+        FROM payer_data_exchange_requests r
+        LEFT JOIN payers p ON r.payer_id = p.id`,
+        whereClause,
+        ` ORDER BY CASE WHEN r.bulk_data_sync_status = 'PENDING' THEN 1 ELSE 2 END, r.created_at DESC
+        LIMIT ${'limit} OFFSET ${offset}`
+    );
                                     
     stream<PayerDataExchangeRequest, sql:Error?> resultStream = dbClient->query(query);
     PayerDataExchangeRequest[]|error requests = from PayerDataExchangeRequest request in resultStream

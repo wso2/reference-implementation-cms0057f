@@ -16,6 +16,7 @@
 
 import ballerina/log;
 import ballerina/http;
+import ballerina/url;
 
 listener http:Listener bff_listener = new (6091);
 
@@ -687,8 +688,28 @@ service /v1 on bff_listener {
     // Payer to Payer data Exchange proxy endpoints
     // ============================================================
 
-    isolated resource function get 'pdex\-data\-requests(int 'limit = 10, int offset = 0) returns json|error {
-        json|error response = pdexHttpClient->get("/pdex-data-requests?limit=" + 'limit.toString() + "&offset=" + offset.toString());
+    isolated resource function get 'pdex\-data\-requests(
+        int 'limit = 10, 
+        int offset = 0, 
+        string? search = (), 
+        string[]? status = ()
+    ) returns json|error {
+        string queryPath = "/pdex-data-requests?limit=" + 'limit.toString() + "&offset=" + offset.toString();
+        if search is string && search.trim().length() > 0 {
+            string|error encodedSearch = url:encode(search.trim(), "UTF-8");
+            if encodedSearch is string {
+                queryPath += "&search=" + encodedSearch;
+            }
+        }
+        if status is string[] && status.length() > 0 {
+            foreach string s in status {
+                string|error encodedStatus = url:encode(s.trim(), "UTF-8");
+                if encodedStatus is string {
+                    queryPath += "&status=" + encodedStatus;
+                }
+            }
+        }
+        json|error response = pdexHttpClient->get(queryPath);
         if response is error {
             log:printError("Failed to retrieve Payer Data Exchange requests: " + response.message());
             return response;

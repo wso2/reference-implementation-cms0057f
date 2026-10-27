@@ -594,7 +594,7 @@ paths:
             application/fhir+json:
               schema:
                 $ref: '#/components/schemas/OperationOutcome'
-  /Claim/$inquiry:
+  /Claim/$inquire:
     post:
       summary: Inquire about the status of a previously submitted prior authorization Claim
       tags:

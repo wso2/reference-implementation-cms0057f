@@ -441,7 +441,7 @@ final r4:ResourceAPIConfig ClaimApiConfig = {
             ]
         },
         {
-            name: "inquiry",
+            name: "inquire",
             active: true,
             parameters: [
                 {

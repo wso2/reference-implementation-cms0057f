@@ -653,7 +653,7 @@ service /fhir/r4/Claim on new fhirr4:Listener(config = ClaimApiConfig) {
         return claimSubmit(parameters);
     }
 
-    isolated resource function post \$inquiry(r4:FHIRContext fhirContext, Parameters parameters) returns r4:FHIRError|r4:Bundle|error {
+    isolated resource function post \$inquire(r4:FHIRContext fhirContext, Parameters parameters) returns r4:FHIRError|r4:Bundle|error {
         return claimInquiry(parameters);
     }
 

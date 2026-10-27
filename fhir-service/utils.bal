@@ -664,7 +664,7 @@ public isolated function claimSubmit(r4:Bundle|international401:Parameters paylo
     return r4:createFHIRError("Bundle entries missing or empty", r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
 }
 
-# Handles the Da Vinci PAS Claim/$inquiry operation. Looks up previously submitted prior authorization
+# Handles the Da Vinci PAS Claim/$inquire operation. Looks up previously submitted prior authorization
 # requests that match the inquiry Claim and returns their current ClaimResponses.
 # Ref: https://hl7.org/fhir/us/davinci-pas/STU2/OperationDefinition-Claim-inquiry.html
 #

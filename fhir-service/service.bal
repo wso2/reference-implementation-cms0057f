@@ -653,6 +653,10 @@ service /fhir/r4/Claim on new fhirr4:Listener(config = ClaimApiConfig) {
         return claimSubmit(parameters);
     }
 
+    isolated resource function post \$inquiry(r4:FHIRContext fhirContext, Parameters parameters) returns r4:FHIRError|r4:Bundle|error {
+        return claimInquiry(parameters);
+    }
+
     isolated resource function post \$submit\-attachment(r4:FHIRContext fhirContext, Parameters parameters) 
         returns r4:OperationOutcome|error {
         // persist attachments and get the corresponding attachment references

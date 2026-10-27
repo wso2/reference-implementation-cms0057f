@@ -439,6 +439,22 @@ final r4:ResourceAPIConfig ClaimApiConfig = {
                     min: 1
                 }
             ]
+        },
+        {
+            name: "inquiry",
+            active: true,
+            parameters: [
+                {
+                    name: "resource",
+                    active: true,
+                    min: 1
+                },
+                {
+                    name: "return",
+                    active: true,
+                    min: 0
+                }
+            ]
         }
 
     ],

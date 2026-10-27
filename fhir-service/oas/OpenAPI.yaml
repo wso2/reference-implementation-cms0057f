@@ -594,6 +594,23 @@ paths:
             application/fhir+json:
               schema:
                 $ref: '#/components/schemas/OperationOutcome'
+  /Claim/$inquiry:
+    post:
+      summary: Inquire about the status of a previously submitted prior authorization Claim
+      tags:
+      - POST
+      - Claim
+      requestBody:
+        required: true
+        content:
+          application/fhir+json:
+            schema:
+              $ref: '#/components/schemas/Parameters'
+      responses:
+        '200':
+          description: Bundle containing the matching ClaimResponses
+        '404':
+          description: No prior authorization found matching the inquiry
   /ClaimResponse:
     get:
       tags:

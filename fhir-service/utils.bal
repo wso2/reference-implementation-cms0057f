@@ -570,24 +570,7 @@ public isolated function claimSubmit(r4:Bundle|international401:Parameters paylo
     submissionBundle = check payload.cloneWithType(r4:Bundle);
     r4:BundleEntry[]? entries = submissionBundle.entry;
     if entries is r4:BundleEntry[] && entries.length() > 0 {
-        international401:Claim? claim = ();
-        foreach var entry in entries {
-            anydata 'resource = entry?.'resource;
-            if 'resource is international401:Claim {
-                claim = 'resource;
-                break;
-            } else if 'resource is map<anydata> {
-                map<anydata> resourceMap = <map<anydata>>'resource;
-                anydata resourceType = resourceMap["resourceType"];
-                if resourceType is string && resourceType == "Claim" {
-                    international401:Claim|error c = 'resource.cloneWithType(international401:Claim);
-                    if c is international401:Claim {
-                        claim = c;
-                        break;
-                    }
-                }
-            }
-        }
+        international401:Claim? claim = extractClaimFromBundleEntries(entries);
 
         if claim is international401:Claim {
             string claimId = uuid:createType1AsString();
@@ -681,7 +664,138 @@ public isolated function claimSubmit(r4:Bundle|international401:Parameters paylo
     return r4:createFHIRError("Bundle entries missing or empty", r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
 }
 
-public isolated function submitAttachments(international401:Parameters payload) 
+# Handles the Da Vinci PAS Claim/$inquiry operation. Looks up previously submitted prior authorization
+# requests that match the inquiry Claim and returns their current ClaimResponses.
+# Ref: https://hl7.org/fhir/us/davinci-pas/STU2/OperationDefinition-Claim-inquiry.html
+#
+# + payload - PAS Inquiry Request Bundle, or Parameters wrapping it as the `resource` parameter
+# + return - Bundle containing the matching ClaimResponses, or an error
+public isolated function claimInquiry(r4:Bundle|international401:Parameters payload) returns r4:FHIRError|r4:Bundle|error {
+    r4:Bundle inquiryBundle = check extractInquiryBundle(payload);
+    r4:BundleEntry[]? entries = inquiryBundle.entry;
+    if entries is () || entries.length() == 0 {
+        return r4:createFHIRError("Bundle entries missing or empty", r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+    }
+
+    international401:Claim? inquiryClaim = extractClaimFromBundleEntries(entries);
+    if inquiryClaim is () {
+        return r4:createFHIRError("Claim resource not found in bundle", r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+    }
+    string? patientRef = inquiryClaim.patient.reference;
+    if patientRef is () {
+        return r4:createFHIRError("Inquiry Claim must reference the patient", r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+    }
+
+    map<string[]> claimSearchParams = {"patient": [patientRef]};
+    string[] identifierTokens = [];
+    foreach r4:Identifier identifier in inquiryClaim.identifier ?: [] {
+        string? value = identifier.value;
+        if value is string {
+            string? system = identifier.system;
+            identifierTokens.push(system is string ? system + "|" + value : value);
+        }
+    }
+    if identifierTokens.length() > 0 {
+        claimSearchParams["identifier"] = [string:'join(",", ...identifierTokens)];
+    }
+    r4:Bundle claimBundle = check search(fhirConnector, CLAIM, claimSearchParams);
+
+    r4:BundleEntry[] responseEntries = [];
+    foreach r4:BundleEntry claimEntry in claimBundle.entry ?: [] {
+        json claimJson = claimEntry?.'resource.toJson();
+        json|error claimId = claimJson.id;
+        if claimId !is string || !isSameProvider(inquiryClaim.provider.toJson(), claimJson) {
+            continue;
+        }
+        r4:Bundle claimResponseBundle = check search(fhirConnector, CLAIM_RESPONSE, {"request": ["Claim/" + claimId]});
+        foreach r4:BundleEntry claimResponseEntry in claimResponseBundle.entry ?: [] {
+            json|error claimResponseId = claimResponseEntry?.'resource.toJson().id;
+            responseEntries.push({
+                'resource: claimResponseEntry?.'resource,
+                fullUrl: "urn:uuid:" + (claimResponseId is string ? claimResponseId : uuid:createType1AsString())
+            });
+        }
+    }
+
+    if responseEntries.length() == 0 {
+        return r4:createFHIRError("No prior authorization found matching the inquiry", r4:ERROR, r4:PROCESSING_NOT_FOUND,
+                httpStatusCode = http:STATUS_NOT_FOUND);
+    }
+    return {
+        'type: r4:BUNDLE_TYPE_COLLECTION,
+        timestamp: time:utcToString(time:utcNow()),
+        entry: responseEntries
+    };
+}
+
+# Extracts the PAS Inquiry Request Bundle from the $inquiry payload.
+#
+# + payload - Bundle, or Parameters wrapping the Bundle as the `resource` parameter
+# + return - Inquiry Bundle or error
+isolated function extractInquiryBundle(r4:Bundle|international401:Parameters payload) returns r4:Bundle|r4:FHIRError {
+    if payload is r4:Bundle {
+        return payload;
+    }
+    international401:Parameters parameters = <international401:Parameters>payload;
+    foreach international401:ParametersParameter item in parameters.'parameter ?: [] {
+        if item.name == "resource" {
+            r4:Bundle|error bundle = item.'resource.cloneWithType();
+            if bundle is r4:Bundle {
+                return bundle;
+            }
+        }
+    }
+    return r4:createFHIRError("Bundle not found in parameters", r4:ERROR, r4:INVALID, httpStatusCode = http:STATUS_BAD_REQUEST);
+}
+
+# Finds the first Claim resource in the given Bundle entries.
+#
+# + entries - Bundle entries
+# + return - Claim resource if present
+isolated function extractClaimFromBundleEntries(r4:BundleEntry[] entries) returns international401:Claim? {
+    foreach var entry in entries {
+        anydata 'resource = entry?.'resource;
+        if 'resource is international401:Claim {
+            return 'resource;
+        } else if 'resource is map<anydata> {
+            map<anydata> resourceMap = <map<anydata>>'resource;
+            anydata resourceType = resourceMap["resourceType"];
+            if resourceType is string && resourceType == "Claim" {
+                international401:Claim|error c = 'resource.cloneWithType(international401:Claim);
+                if c is international401:Claim {
+                    return c;
+                }
+            }
+        }
+    }
+    return ();
+}
+
+# Checks whether a stored Claim was submitted by the provider given in the inquiry.
+# The provider is matched on the reference id, falling back to the identifier value.
+#
+# + inquiryProvider - Provider reference from the inquiry Claim
+# + storedClaim - Stored Claim resource
+# + return - true if the providers match or cannot be compared
+isolated function isSameProvider(json inquiryProvider, json storedClaim) returns boolean {
+    json|error storedProvider = storedClaim.provider;
+    if storedProvider !is json {
+        return true;
+    }
+    json|error inquiryRef = inquiryProvider.reference;
+    json|error storedRef = storedProvider.reference;
+    if inquiryRef is string && storedRef is string {
+        return extractRefId(inquiryRef) == extractRefId(storedRef);
+    }
+    json|error inquiryIdentifier = inquiryProvider.identifier.value;
+    json|error storedIdentifier = storedProvider.identifier.value;
+    if inquiryIdentifier is string && storedIdentifier is string {
+        return inquiryIdentifier == storedIdentifier;
+    }
+    return true;
+}
+
+public isolated function submitAttachments(international401:Parameters payload)
     returns r4:FHIRError|davincipas:PASClaimSupportingInfo[]|error {
 
     international401:Parameters|error 'parameters = 
